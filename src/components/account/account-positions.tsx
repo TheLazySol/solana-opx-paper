@@ -184,7 +184,10 @@ export function PositionsTable() {
               </td>
             </tr>
             {expandedAssets.includes(position.asset) && position.legs.map((leg, idx) => (
-              <tr key={`${position.asset}-${idx}`} className="bg-gray-900/25">
+              <tr 
+                key={`${position.asset}-${idx}`} 
+                className="border-b border-gray-800/50"
+              >
                 <td className="py-2 px-3 pl-10">
                   {leg.type} ${leg.strike} {leg.expiry}
                 </td>
