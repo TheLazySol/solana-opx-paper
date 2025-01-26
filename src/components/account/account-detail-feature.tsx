@@ -26,19 +26,22 @@ export default function AccountDetailFeature() {
   }
 
   return (
-    <div>
-      <AppHero
-        title={<AccountBalance address={address} />}
-        subtitle={
+    <div className="max-w-4xl mx-auto px-4">
+      <div className="flex flex-col items-center justify-center mb-8">
+        <AppHero
+          title={<AccountBalance address={address} />}
+          subtitle={
+            <div className="my-4">
+              <ExplorerLink path={`account/${address}`} label={ellipsify(address.toString())} />
+            </div>
+          }
+        >
           <div className="my-4">
-            <ExplorerLink path={`account/${address}`} label={ellipsify(address.toString())} />
+            <AccountButtons address={address} />
           </div>
-        }
-      >
-        <div className="my-4">
-          <AccountButtons address={address} />
-        </div>
-      </AppHero>
+        </AppHero>
+      </div>
+      
       <div className="space-y-8">
         <AccountTokens address={address} />
         <AccountTransactions address={address} />

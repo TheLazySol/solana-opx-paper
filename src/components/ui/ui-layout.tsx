@@ -74,8 +74,8 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
         <Toaster position="bottom-right" />
       </main>
       <footer className="border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+        <div className="container flex items-center justify-center h-16">
+          <p className="text-center text-sm leading-loose">
             <span className="text-violet-500">© 2025 Epicentral Labs || Powered by Solana</span>
           </p>
         </div>
