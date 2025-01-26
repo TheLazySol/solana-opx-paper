@@ -7,6 +7,15 @@ import { ReactNode, useState } from 'react'
 import { AppModal } from '../ui/ui-layout'
 import { ClusterNetwork, useCluster } from './cluster-data-access'
 import { Connection } from '@solana/web3.js'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Check, ChevronDown } from "lucide-react"
 
 export function ExplorerLink({ path, label, className }: { path: string; label: string; className?: string }) {
   const { getExplorerUrl } = useCluster()
@@ -51,24 +60,28 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
 
 export function ClusterUiSelect() {
   const { clusters, setCluster, cluster } = useCluster()
+  
   return (
-    <div className="dropdown dropdown-end">
-      <label tabIndex={0} className="btn btn-primary rounded-btn">
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex items-center px-3 py-2 text-sm font-medium rounded-md border shadow-sm hover:bg-accent">
         {cluster.name}
-      </label>
-      <ul tabIndex={0} className="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52 mt-4">
+        <ChevronDown className="ml-2 h-4 w-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Select Cluster</DropdownMenuLabel>
+        <DropdownMenuSeparator />
         {clusters.map((item) => (
-          <li key={item.name}>
-            <button
-              className={`btn btn-sm ${item.active ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setCluster(item)}
-            >
-              {item.name}
-            </button>
-          </li>
+          <DropdownMenuItem
+            key={item.name}
+            onClick={() => setCluster(item)}
+            className={`${item.active ? 'bg-accent' : ''}`}
+          >
+            <span>{item.name}</span>
+            {item.active && <Check className="ml-2 h-4 w-4" />}
+          </DropdownMenuItem>
         ))}
-      </ul>
-    </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
