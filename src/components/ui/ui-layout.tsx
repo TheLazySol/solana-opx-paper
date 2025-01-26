@@ -18,23 +18,27 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
     <div className="min-h-screen bg-background">
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
-          <Link className="font-bold text-xl" href="/">
-            Placeholder
-          </Link>
-          <nav className="flex items-center space-x-6 ml-6">
-            {links.map(({ label, path }) => (
-              <Link
-                key={path}
-                href={path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname.startsWith(path) ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center space-x-4">
+          <div className="flex-none">
+            <Link className="font-bold text-xl" href="/">
+              Placeholder
+            </Link>
+          </div>
+          <div className="flex-1 flex justify-center">
+            <nav className="flex items-center space-x-6">
+              {links.map(({ label, path }) => (
+                <Link
+                  key={path}
+                  href={path}
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    pathname.startsWith(path) ? 'text-foreground' : 'text-muted-foreground'
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex-none flex items-center space-x-4">
             <ThemeToggle />
             <WalletButton />
             <ClusterUiSelect />
