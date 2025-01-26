@@ -73,12 +73,18 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
         </Suspense>
         <Toaster position="bottom-right" />
       </main>
-      <footer className="border-t py-6 md:py-0">
-        <div className="container flex items-center justify-center h-16">
-          <p className="text-center text-sm leading-loose">
-            <span className="text-violet-500">© 2025 Epicentral Labs || Powered by Solana</span>
-          </p>
-        </div>
+      <footer className="py-4 text-center text-sm">
+        <span className="text-[#4a85ff]">
+          © 2025 Epicentral Labs || Powered by{' '}
+          <a 
+            href="https://solana.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="underline hover:opacity-80"
+          >
+            Solana
+          </a>
+        </span>
       </footer>
     </div>
   )
