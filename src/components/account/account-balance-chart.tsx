@@ -77,7 +77,7 @@ export function AccountBalanceChart() {
               labelStyle={{ color: '#666', marginBottom: '4px' }}
               itemStyle={{ color: '#fff', fontSize: '14px' }}
               formatter={(value: number) => [
-                <span className={value >= 0 ? 'text-green-500' : 'text-red-500'}>
+                <span key="value" className={value >= 0 ? 'text-green-500' : 'text-red-500'}>
                   {value >= 0 ? '+' : ''}{value.toFixed(2)}%
                 </span>,
                 'Change'
