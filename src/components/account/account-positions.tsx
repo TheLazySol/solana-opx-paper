@@ -10,6 +10,7 @@ type OptionLeg = {
   strike: number
   expiry: string
   position: number
+  marketPrice: number
   delta: number
   theta: number
   gamma: number
@@ -39,13 +40,14 @@ type AssetPosition = {
 const mockPositions: AssetPosition[] = [
   {
     asset: 'SOL',
-    marketPrice: 98.54,
+    marketPrice: 247.92,
     legs: [
       {
         type: 'Call',
-        strike: 100,
+        strike: 250,
         expiry: '2024-02-23',
         position: -2,
+        marketPrice: 1.45,
         delta: -0.45,
         theta: 0.05,
         gamma: 0.02,
@@ -53,13 +55,14 @@ const mockPositions: AssetPosition[] = [
         rho: 0.01,
         collateral: 200,
         value: 180,
-        pnl: -20,
+        pnl: 60,
       },
       {
         type: 'Put',
-        strike: 90,
+        strike: 240,
         expiry: '2024-02-23',
         position: 1,
+        marketPrice: 0.56,
         delta: -0.30,
         theta: 0.03,
         gamma: 0.01,
@@ -168,7 +171,9 @@ export function PositionsTable() {
                 <td className="py-2 px-3 pl-10">
                   {leg.type} ${leg.strike} {leg.expiry}
                 </td>
-                <td className="text-right py-2 px-3">-</td>
+                <td className="text-right py-2 px-3">
+                  ${leg.marketPrice.toFixed(2)}
+                </td>
                 <td className="text-right py-2 px-3">{leg.position}</td>
                 <td className="text-right py-2 px-3">{leg.delta.toFixed(2)}</td>
                 <td className="text-right py-2 px-3">{leg.theta.toFixed(3)}</td>
