@@ -28,7 +28,7 @@ export default function DashboardFeature() {
       {/* Hero Section */}
       <div className="max-w-4xl w-full text-center space-y-12 mb-16">
         <div className="space-y-6">
-          <h1 className="text-7xl font-bold tracking-tight">
+          <h1 className="text-7xl font-thin tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">
             Epicentral DOEX
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -40,7 +40,10 @@ export default function DashboardFeature() {
       {/* Resources Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
         {resources.map((resource) => (
-          <Card key={resource.title} className="hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all">
+          <Card 
+            key={resource.title} 
+            className="hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]"
+          >
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 {resource.title}
