@@ -7,7 +7,8 @@ import { useParams } from 'next/navigation'
 
 import { ExplorerLink } from '../cluster/cluster-ui'
 import { AppHero, ellipsify } from '../ui/ui-layout'
-import { AccountBalance, AccountButtons, AccountTokens, AccountTransactions } from './account-ui'
+import { AccountBalance, AccountButtons, AccountTransactions } from './account-ui'
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 export default function AccountDetailFeature() {
   const params = useParams()
@@ -42,10 +43,25 @@ export default function AccountDetailFeature() {
         </AppHero>
       </div>
       
-      <div className="space-y-8">
-        <AccountTokens address={address} />
-        <AccountTransactions address={address} />
-      </div>
+      {/* Positions Container */}
+      <Card className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000] mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Positions</CardTitle>
+        </CardHeader>
+        <CardContent className="min-h-[200px]">
+          {/* Content will go here */}
+        </CardContent>
+      </Card>
+
+      {/* Transaction History Container */}
+      <Card className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Transaction History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AccountTransactions address={address} />
+        </CardContent>
+      </Card>
     </div>
   )
 }
