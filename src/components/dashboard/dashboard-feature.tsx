@@ -17,9 +17,9 @@ export default function DashboardFeature() {
       <div className="max-w-3xl w-full text-center space-y-12">
         {/* Header Section */}
         <div className="space-y-6">
-          <h1 className="text-7xl font-bold tracking-tight">gm</h1>
+          <h1 className="text-7xl font-bold tracking-tight">Solana DOEX</h1>
           <p className="text-xl text-muted-foreground">
-            Say hi to your new Solana dApp.
+            A decentralized options exchange
           </p>
         </div>
 

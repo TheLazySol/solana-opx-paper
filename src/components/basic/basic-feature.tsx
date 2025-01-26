@@ -17,7 +17,7 @@ export default function BasicFeature() {
           title="Basic"
           subtitle={
             <div className="space-y-4">
-              <p>Run the program by clicking the "Run program" button.</p>
+              <p>Run the program by clicking the &quot;Run program&quot; button.</p>
               <p>
                 <ExplorerLink
                   path={`account/${programId}`}
