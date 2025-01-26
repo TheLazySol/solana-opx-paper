@@ -134,7 +134,24 @@ export function PositionsTable() {
                 className="py-2 px-3 flex items-center gap-2 cursor-pointer" 
                 onClick={() => toggleAsset(position.asset)}
               >
-                {expandedAssets.includes(position.asset) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                <div className={`
+                  w-4 h-4 flex items-center justify-center 
+                  rounded-full border border-gray-700
+                  transition-all duration-200
+                  ${expandedAssets.includes(position.asset) 
+                    ? 'bg-blue-500/10 border-blue-500/50' 
+                    : 'hover:border-gray-600'
+                  }
+                `}>
+                  <ChevronRight 
+                    size={12} 
+                    className={`
+                      text-gray-400
+                      transition-transform duration-200
+                      ${expandedAssets.includes(position.asset) ? 'rotate-90' : ''}
+                    `}
+                  />
+                </div>
                 {position.asset}
               </td>
               <td className="text-right py-2 px-3">${position.marketPrice.toFixed(2)}</td>
