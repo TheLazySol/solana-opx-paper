@@ -80,7 +80,7 @@ const mockPositions: AssetPosition[] = [
     netRho: 0.00,
     totalCollateral: 290,
     totalValue: 275,
-    totalPnl: -15,
+    totalPnl: 65,
   },
 ]
 
@@ -147,7 +147,7 @@ export function PositionsTable() {
               <td className="text-right py-2 px-3">${position.totalCollateral.toFixed(2)}</td>
               <td className="text-right py-2 px-3">${position.totalValue.toFixed(2)}</td>
               <td className="text-right py-2 px-3">
-                <span className="text-red-500">
+                <span className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
                   {position.totalPnl >= 0 ? '+$' : '-$'}
                   {Math.abs(position.totalPnl).toFixed(2)}
                 </span>
