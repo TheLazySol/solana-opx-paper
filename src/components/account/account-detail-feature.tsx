@@ -9,6 +9,7 @@ import { ExplorerLink } from '../cluster/cluster-ui'
 import { AppHero, ellipsify } from '../ui/ui-layout'
 import { AccountBalance, AccountButtons, AccountTransactions } from './account-ui'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { AccountBalanceChart } from './account-balance-chart'
 
 export default function AccountDetailFeature() {
   const params = useParams()
@@ -31,16 +32,8 @@ export default function AccountDetailFeature() {
       <div className="flex flex-col items-center justify-center mb-8">
         <AppHero
           title={<AccountBalance address={address} />}
-          subtitle={
-            <div className="my-4">
-              <ExplorerLink path={`account/${address}`} label={ellipsify(address.toString())} />
-            </div>
-          }
-        >
-          <div className="my-4">
-            <AccountButtons address={address} />
-          </div>
-        </AppHero>
+          subtitle={<AccountBalanceChart />}
+        />
       </div>
       
       {/* Positions Container */}
