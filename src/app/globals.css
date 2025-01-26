@@ -90,3 +90,29 @@ body {
 .wallet-adapter-button {
     font-family: inherit !important;
 }
+
+@layer utilities {
+  /* Modern scrollbar styling */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(75, 75, 75, 0.3) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 75, 75, 0.3);
+    border-radius: 20px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 75, 75, 0.5);
+  }
+}

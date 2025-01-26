@@ -1,7 +1,9 @@
 'use client'
 
 import { PublicKey } from '@solana/web3.js'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
+import { Button } from '../ui/button'
 
 import { useParams } from 'next/navigation'
 
@@ -10,6 +12,7 @@ import { AppHero, ellipsify } from '../ui/ui-layout'
 import { AccountBalance, AccountButtons, AccountTransactions } from './account-ui'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AccountBalanceChart } from './account-balance-chart'
+import { PositionsTable } from './account-positions'
 
 export default function AccountDetailFeature() {
   const params = useParams()
@@ -27,8 +30,21 @@ export default function AccountDetailFeature() {
     return <div>Error loading account</div>
   }
 
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefreshPositions = () => {
+    setIsRefreshing(true)
+    console.log('Refreshing positions...')
+    // Add logic to refresh positions
+    
+    // Reset the animation after a delay (simulating refresh)
+    setTimeout(() => {
+      setIsRefreshing(false)
+    }, 1000)
+  }
+
   return (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-[90%] mx-auto px-4">
       <div className="flex flex-col items-center justify-center mb-8">
         <AppHero
           title={<AccountBalance address={address} />}
@@ -38,11 +54,25 @@ export default function AccountDetailFeature() {
       
       {/* Positions Container */}
       <Card className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000] mb-8">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">Positions</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefreshPositions}
+            className="h-8 w-8 text-gray-400 hover:text-gray-100 transition-colors"
+            disabled={isRefreshing}
+          >
+            <RefreshCw 
+              size={16} 
+              className={`${isRefreshing ? 'animate-spin' : ''} transition-transform duration-300`}
+            />
+          </Button>
         </CardHeader>
-        <CardContent className="min-h-[200px]">
-          {/* Content will go here */}
+        <CardContent>
+          <div className="overflow-x-auto scrollbar-custom">
+            <PositionsTable />
+          </div>
         </CardContent>
       </Card>
 

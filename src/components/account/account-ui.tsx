@@ -190,7 +190,7 @@ export function AccountTransactions({ address }: { address: PublicKey }) {
   const query = useGetSignatures({ address })
 
   return (
-    <div className="overflow-x-auto max-h-[200px] scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+    <div className="overflow-x-auto max-h-[200px] scrollbar-custom">
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-card z-10">
           <tr>
