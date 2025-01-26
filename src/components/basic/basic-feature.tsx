@@ -14,7 +14,7 @@ export default function BasicFeature() {
     <div className="max-w-4xl mx-auto px-4">
       <div className="flex flex-col items-center justify-center text-center">
         <AppHero
-          title="Basic"
+          title="Mint Option"
           subtitle={
             <div className="space-y-4">
               <p>Run the program by clicking the &quot;Run program&quot; button.</p>
