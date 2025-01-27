@@ -2,7 +2,8 @@
 
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from '../wallet/wallet-button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { MyLendingPositions } from './my-lending-positions'
+import { LendingPools } from './lending-pools'
 
 export function OMLPFeature() {
   const { publicKey } = useWallet()
@@ -23,17 +24,18 @@ export function OMLPFeature() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            Option Margin Liquidity Pool
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Content will go here */}
-        </CardContent>
-      </Card>
+    <div className="container max-w-6xl mx-auto py-10 space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-center">
+          Option Margin Liquidity Pool
+        </h1>
+        <p className="text-center text-muted-foreground mt-2">
+          Lend your tokens into variety of lending pools with variable APY based on utilization of the pools
+        </p>
+      </div>
+      
+      <MyLendingPositions />
+      <LendingPools />
     </div>
   )
 } 
