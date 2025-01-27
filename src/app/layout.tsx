@@ -22,6 +22,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <div 
+          className="fixed inset-0 z-[-1]"
+          style={{
+            backgroundImage: 'url("/WebPageBackground.png")',
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.15
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

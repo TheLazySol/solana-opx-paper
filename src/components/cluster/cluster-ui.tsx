@@ -11,11 +11,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 export function ExplorerLink({ path, label, className }: { path: string; label: string; className?: string }) {
   const { getExplorerUrl } = useCluster()
@@ -63,21 +61,22 @@ export function ClusterUiSelect() {
   
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center px-3 py-2 text-sm font-medium rounded-md border shadow-sm hover:bg-accent">
+      <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-sm 
+        bg-background hover:bg-accent transition-colors rounded-md border border-input">
         {cluster.name}
-        <ChevronDown className="ml-2 h-4 w-4" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Select Cluster</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end" className="w-[200px]">
         {clusters.map((item) => (
           <DropdownMenuItem
             key={item.name}
             onClick={() => setCluster(item)}
-            className={`${item.active ? 'bg-accent' : ''}`}
+            className={`${item.active ? 'bg-accent' : ''} cursor-pointer`}
           >
-            <span>{item.name}</span>
-            {item.active && <Check className="ml-2 h-4 w-4" />}
+            <span className="flex-1">{item.name}</span>
+            {item.active && (
+              <span className="text-xs text-muted-foreground ml-2">Active</span>
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
