@@ -31,7 +31,9 @@ export default function DashboardFeature() {
       </p>
 
       <Button 
-        className="bg-background text-foreground border-2 hover:border-[#4a85ff] hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all duration-300"
+        className="bg-background hover:bg-background text-foreground border-2 
+          hover:border-[#4a85ff] hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] 
+          transition-all duration-300"
         size="lg"
       >
         Trade Now
