@@ -6,28 +6,44 @@ import { ExternalLink } from 'lucide-react'
 
 const resources = [
   {
-    title: 'Documentation',
-    description: 'Official Solana documentation and guides',
-    href: 'https://docs.solana.com',
+    title: "Trade More for Less",
+    description: "One contract represents 100 of the underlying asset, without borrowing.",
   },
   {
-    title: 'Developer Resources',
-    description: 'Tools and resources for Solana developers',
-    href: 'https://solana.com/developers',
+    title: "Hedging Strategies",
+    description: "Allow for more strategic hedging opportunities to help mitigate risks.",
   },
   {
-    title: 'Cookbook',
-    description: 'Code recipes and best practices',
-    href: 'https://solanacookbook.com',
+    title: "Market Making",
+    description: "Short sell options and earn premiums every 400ms.",
   },
+  {
+    title: "Lending",
+    description: "Provide liquidity to the Option Margin Liquidity Pool (OMLP), earn yield.",
+  },
+]
+
+const additionalResources = [
+  {
+    title: "Docs",
+    href: "https://docs.epicentrallabs.com/"
+  },
+  {
+    title: "GitHub",
+    href: "https://github.com/EpicentralLabs"
+  },
+  {
+    title: "Discord",
+    href: "https://discord.gg/5asAuY2sR8"
+  }
 ]
 
 export default function DashboardFeature() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)] gap-8 -mt-[10%]">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-8">
       <h1 className="text-5xl font-bold">Epicentral DOEX</h1>
       <p className="text-xl text-muted-foreground">
-        A decentralized options exchange created by Epicentral Labs
+        The first decentralized options exchange on Solana
       </p>
 
       <Button 
@@ -40,57 +56,39 @@ export default function DashboardFeature() {
       </Button>
 
       {/* Resources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
         {resources.map((resource) => (
           <Card 
-            key={resource.title} 
-            className="hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]"
+            key={resource.title}
+            className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]"
           >
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                {resource.title}
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
-              </CardTitle>
-              <CardDescription>{resource.description}</CardDescription>
+              <CardTitle className="text-xl font-semibold">{resource.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start hover:bg-[#4a85ff]/10"
-                onClick={() => window.open(resource.href, '_blank')}
-              >
-                Learn more
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                {resource.description}
+              </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Additional Resources */}
-      <div className="mt-12 text-center">
-        <h2 className="text-xl font-semibold mb-6">Additional Resources</h2>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => window.open('https://faucet.solana.com', '_blank')}
-            className="hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]"
-          >
-            Solana Faucet
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => window.open('https://solana.stackexchange.com', '_blank')}
-            className="hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]"
-          >
-            Stack Overflow
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => window.open('https://github.com/solana-developers', '_blank')}
-            className="hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]"
-          >
-            GitHub
-          </Button>
+      <div className="flex flex-col items-center gap-4 mt-16">
+        <h2 className="text-2xl font-semibold">Additional Resources</h2>
+        <div className="flex gap-4">
+          {additionalResources.map((resource) => (
+            <a
+              key={resource.title}
+              href={resource.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-md border border-gray-200 dark:border-gray-800 hover:border-[#4a85ff] hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all duration-300"
+            >
+              {resource.title}
+            </a>
+          ))}
         </div>
       </div>
     </div>
