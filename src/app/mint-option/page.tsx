@@ -33,6 +33,7 @@ import {
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { AssetPrice } from '@/components/price/asset-price'
 
 // Generate expiration dates (bi-weekly and monthly for a year)
 const generateExpirationDates = () => {
@@ -66,14 +67,24 @@ const formSchema = z.object({
   expirationDate: z.string({
     required_error: "Please select an expiration date.",
   }),
-  strikePrice: z.string().refine((val: string) => !isNaN(Number(val)) && Number(val) % 1 === 0, {
-    message: "Strike price must be a whole number.",
+  strikePrice: z.string().refine((val: string) => {
+    const num = Number(val);
+    return !isNaN(num) && num > 0 && num % 1 === 0;
+  }, {
+    message: "Strike price must be a positive whole number.",
   }),
-  quantity: z.string().refine((val: string) => !isNaN(Number(val)) && Number(val) > 0, {
-    message: "Quantity must be greater than 0.",
+  quantity: z.string().refine((val: string) => {
+    const num = Number(val);
+    return !isNaN(num) && num > 0 && num % 1 === 0;
+  }, {
+    message: "Quantity must be a positive whole number.",
   }),
-  premium: z.string().refine((val: string) => !isNaN(Number(val)) && Number(val) > 0, {
-    message: "Premium must be greater than 0.",
+  premium: z.string().refine((val: string) => {
+    const num = Number(val);
+    const decimalPlaces = val.includes('.') ? val.split('.')[1].length : 0;
+    return !isNaN(num) && num >= 0.000001 && decimalPlaces <= 6;
+  }, {
+    message: "Premium must be at least 0.000001 and have maximum 6 decimal places.",
   }),
 })
 
@@ -109,7 +120,10 @@ export default function MintOptionPage() {
                 render={({ field }: { field: FormField }) => (
                   <FormItem>
                     <FormLabel>Underlying Asset</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select underlying asset" />
@@ -120,6 +134,9 @@ export default function MintOptionPage() {
                         <SelectItem value="LABS">LABS</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      <AssetPrice asset={field.value} />
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -162,10 +179,12 @@ export default function MintOptionPage() {
                         placeholder="Enter strike price" 
                         onChange={(e) => field.onChange(e.target.value)}
                         value={field.value}
+                        min="1"
+                        step="1"
                       />
                     </FormControl>
                     <FormDescription>
-                      Enter a whole number for the strike price.
+                      Enter a positive whole number for the strike price.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -179,7 +198,14 @@ export default function MintOptionPage() {
                   <FormItem>
                     <FormLabel>Number of Options</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter quantity" {...field} />
+                      <Input 
+                        type="number" 
+                        placeholder="Enter quantity" 
+                        onChange={(e) => field.onChange(e.target.value)}
+                        value={field.value}
+                        min="1"
+                        step="1"
+                      />
                     </FormControl>
                     <FormDescription className="flex items-center gap-2">
                       <InfoIcon className="h-4 w-4" />
@@ -197,7 +223,15 @@ export default function MintOptionPage() {
                   <FormItem>
                     <FormLabel>Premium per Option</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter premium amount" {...field} />
+                      <Input 
+                        type="number" 
+                        placeholder="Enter premium amount" 
+                        onChange={(e) => field.onChange(e.target.value)}
+                        value={field.value}
+                        min="0.000001"
+                        step="0.000001"
+                        max="999999999.999999"
+                      />
                     </FormControl>
                     <FormDescription>
                       This is the total price a buyer would pay for 1 option.
