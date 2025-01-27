@@ -56,7 +56,7 @@ export default function DashboardFeature() {
       buttonText: "Mint Options"
     },
     {
-      title: "Lending",
+      title: "Earn Yield",
       description: "Provide liquidity to the Option Margin Liquidity Pool (OMLP), earn yield.",
       buttonText: "Provide Liquidity"
     }
