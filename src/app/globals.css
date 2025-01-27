@@ -121,7 +121,8 @@ body {
 .wallet-adapter-button-trigger {
   background: #4a85ff !important;
   height: 36px !important;
-  padding: 0 16px !important;
+  padding: 0 24px !important;
+  min-width: 140px !important;
   font-size: 14px !important;
   line-height: 36px !important;
   border-radius: 6px !important;
