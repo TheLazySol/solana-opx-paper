@@ -6,6 +6,7 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '../ui/button'
 
 import { useParams } from 'next/navigation'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 import { ExplorerLink } from '../cluster/cluster-ui'
 import { AppHero, ellipsify } from '../ui/ui-layout'
@@ -14,10 +15,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AccountBalanceChart } from './account-balance-chart'
 import { PositionsTable } from './account-positions'
 import { PortfolioValueChart } from './portfolio-value-chart'
+import { WalletButton } from '../wallet/wallet-button'
 
 export default function AccountDetailFeature() {
   const params = useParams()
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const { publicKey } = useWallet()
   
   const address = useMemo(() => {
     if (!params.address) {
@@ -36,6 +39,21 @@ export default function AccountDetailFeature() {
     setTimeout(() => {
       setIsRefreshing(false)
     }, 1000)
+  }
+
+  if (!publicKey) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]">
+        <div className="flex flex-col items-center gap-6">
+          <p className="text-lg text-muted-foreground">
+            Connect wallet to view portfolio
+          </p>
+          <div className="flex justify-center">
+            <WalletButton />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!address) {
