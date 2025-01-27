@@ -24,21 +24,21 @@ const resources = [
 
 export default function DashboardFeature() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)] px-4">
-      {/* Hero Section */}
-      <div className="max-w-4xl w-full text-center space-y-12 mb-16">
-        <div className="space-y-6">
-          <h1 className="text-7xl font-thin tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">
-            Epicentral DOEX
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            A decentralized options exchange created by Epicentral Labs
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)] gap-8 -mt-[10%]">
+      <h1 className="text-5xl font-bold">Epicentral DOEX</h1>
+      <p className="text-xl text-muted-foreground">
+        A decentralized options exchange created by Epicentral Labs
+      </p>
+
+      <Button 
+        className="bg-background text-foreground border-2 hover:border-[#4a85ff] hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] transition-all duration-300"
+        size="lg"
+      >
+        Trade Now
+      </Button>
 
       {/* Resources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
         {resources.map((resource) => (
           <Card 
             key={resource.title} 
