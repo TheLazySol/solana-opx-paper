@@ -21,13 +21,16 @@ export function AccountBalance({ address }: { address: PublicKey }) {
   const percentageChange = 2.45 // This should match the last value from chart data
 
   return (
-    <div className="flex items-center gap-3">
-      <h1 className="text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
-        ${(546.88).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </h1>
-      <span className={`text-2xl ${percentageChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-        {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%
-      </span>
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-gray-500 text-lg">Portfolio Value:</span>
+      <div className="flex items-center gap-3">
+        <h1 className="text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
+          ${(546.88).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </h1>
+        <span className={`text-2xl ${percentageChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%
+        </span>
+      </div>
     </div>
   )
 }

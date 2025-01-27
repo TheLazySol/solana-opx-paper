@@ -80,15 +80,63 @@ body {
     height: 100%;
 }
 
-.wallet-adapter-button-trigger {
-    background: rgb(100, 26, 230) !important;
-    border-radius: 8px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+/* Remove or comment out the old styles */
+/* .wallet-adapter-button {
+  background-color: #4a85ff !important;
 }
-.wallet-adapter-dropdown-list,
-.wallet-adapter-button {
-    font-family: inherit !important;
+
+.wallet-adapter-button:hover {
+  background-color: rgba(74, 133, 255, 0.9) !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: rgba(74, 133, 255, 0.9) !important;
+} */
+
+/* Wallet Button Styles */
+.wallet-adapter-button-trigger {
+  background: #4a85ff !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  line-height: 36px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  color: white !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+/* Dropdown styles */
+.wallet-adapter-dropdown {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Modal styles */
+.wallet-adapter-modal-wrapper {
+  background: #1a1a1a !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: #4a85ff !important;
+}
+
+.wallet-adapter-modal-title {
+  color: white !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 0 4px !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
 }
 
 @layer utilities {

@@ -7,6 +7,9 @@ import {ReactNode, Suspense, useEffect, useRef} from 'react'
 import toast, {Toaster} from 'react-hot-toast'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
+import { Button } from '@/components/ui/button'
+import { ChevronDown } from 'lucide-react'
+import { useCluster } from '../cluster/cluster-data-access'
 
 import {AccountChecker} from '../account/account-ui'
 import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
@@ -16,6 +19,7 @@ import {ThemeToggle} from '../theme-toggle'
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()
   const { theme } = useTheme()
+  const { cluster } = useCluster()
 
   return (
     <div className="min-h-screen bg-background">

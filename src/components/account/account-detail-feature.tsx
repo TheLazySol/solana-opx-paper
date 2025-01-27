@@ -13,9 +13,12 @@ import { AccountBalance, AccountButtons, AccountTransactions } from './account-u
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AccountBalanceChart } from './account-balance-chart'
 import { PositionsTable } from './account-positions'
+import { PortfolioValueChart } from './portfolio-value-chart'
 
 export default function AccountDetailFeature() {
   const params = useParams()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
   const address = useMemo(() => {
     if (!params.address) {
       return
@@ -26,21 +29,17 @@ export default function AccountDetailFeature() {
       console.log(`Invalid public key`, e)
     }
   }, [params])
-  if (!address) {
-    return <div>Error loading account</div>
-  }
-
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefreshPositions = () => {
     setIsRefreshing(true)
     console.log('Refreshing positions...')
-    // Add logic to refresh positions
-    
-    // Reset the animation after a delay (simulating refresh)
     setTimeout(() => {
       setIsRefreshing(false)
     }, 1000)
+  }
+
+  if (!address) {
+    return <div>Error loading account</div>
   }
 
   return (
@@ -48,10 +47,13 @@ export default function AccountDetailFeature() {
       <div className="flex flex-col items-center justify-center mb-8">
         <AppHero
           title={<AccountBalance address={address} />}
-          subtitle={<AccountBalanceChart />}
+          subtitle=""
         />
       </div>
       
+      {/* Portfolio Value Chart */}
+      <PortfolioValueChart />
+
       {/* Positions Container */}
       <Card className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000] mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
