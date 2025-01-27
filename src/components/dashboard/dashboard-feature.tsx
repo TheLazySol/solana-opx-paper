@@ -39,6 +39,29 @@ const additionalResources = [
 ]
 
 export default function DashboardFeature() {
+  const cards = [
+    {
+      title: "Trade More for Less",
+      description: "One contract represents 100 of the underlying asset, without borrowing.",
+      buttonText: "Trade Now"
+    },
+    {
+      title: "Hedging Strategies",
+      description: "Allow for more strategic hedging opportunities to help mitigate risks.",
+      buttonText: "Learn Options"
+    },
+    {
+      title: "Market Making",
+      description: "Short sell options and earn premiums every 400ms.",
+      buttonText: "Mint Options"
+    },
+    {
+      title: "Lending",
+      description: "Provide liquidity to the Option Margin Liquidity Pool (OMLP), earn yield.",
+      buttonText: "Provide Liquidity"
+    }
+  ]
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-8">
       <h1 className="text-7xl font-light tracking-wide text-center
@@ -50,31 +73,26 @@ export default function DashboardFeature() {
         The first decentralized options exchange on Solana
       </p>
 
-      <Button 
-        className="bg-background hover:bg-background text-foreground border-2 
-          hover:border-[#4a85ff] hover:shadow-[0_0_15px_rgba(74,133,255,0.3)] 
-          transition-all duration-300"
-        size="lg"
-      >
-        Trade Now
-      </Button>
-
-      {/* Resources Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-        {resources.map((resource) => (
-          <Card 
-            key={resource.title}
-            className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]"
+        {cards.map((card, index) => (
+          <div
+            key={index}
+            className="p-6 rounded-xl bg-white dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000] 
+              transition-all duration-300
+              border border-[#4a85ff]/20 dark:border-0
+              [box-shadow:_0_0_1px_rgba(128,128,128,0.2)]"
           >
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">{resource.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {resource.description}
-              </p>
-            </CardContent>
-          </Card>
+            <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{card.description}</p>
+            <Button 
+              variant="outline"
+              className="w-full bg-transparent border border-gray-200 dark:border-gray-800 
+                hover:border-[#4a85ff] hover:bg-[#4a85ff]/5 hover:text-[#4a85ff] 
+                transition-all duration-300 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+            >
+              {card.buttonText}
+            </Button>
+          </div>
         ))}
       </div>
 
