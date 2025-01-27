@@ -15,7 +15,7 @@ export const metadata = {
 
 const links: { label: string; path: string }[] = [
   { label: 'Portfolio', path: '/account' },
-  { label: 'Mint Option', path: '/basic' },
+  { label: 'Mint Option', path: '/mint-option' },
 ]
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
