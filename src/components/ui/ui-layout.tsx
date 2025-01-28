@@ -18,8 +18,15 @@ import {ThemeToggle} from '../theme-toggle'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()
-  const { theme } = useTheme()
+  const { resolvedTheme, theme, systemTheme } = useTheme()
   const { cluster } = useCluster()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const logoSrc = resolvedTheme === 'dark' ? '/epicentral-logo-light.png' : '/epicentral-logo-dark.png'
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,17 +34,21 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
         <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">
           <div className="w-[200px]">
             <Link href="/" className="block transition-transform hover:scale-105 duration-200">
-              <Image 
-                src={theme === 'dark' ? '/epicentral-logo-light.png' : '/epicentral-logo-dark.png'}
-                alt="Epicentral Labs Logo"
-                width={120}
-                height={35}
-                className="h-[35px] w-auto object-contain"
-                priority
-                onError={(e) => {
-                  console.error('Error loading image:', e);
-                }}
-              />
+              {mounted ? (
+                <Image 
+                  src={logoSrc}
+                  alt="Epicentral Labs Logo"
+                  width={120}
+                  height={35}
+                  className="h-[35px] w-auto object-contain"
+                  priority
+                  onError={(e) => {
+                    console.error('Error loading image:', e);
+                  }}
+                />
+              ) : (
+                <div className="h-[35px] w-[120px]" />
+              )}
             </Link>
           </div>
           <div className="flex-1 flex justify-center">
