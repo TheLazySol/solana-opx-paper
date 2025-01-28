@@ -24,6 +24,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { OrdersContainer } from "./OrdersContainer"
 
 interface OptionParameter {
   id: string
@@ -103,7 +105,7 @@ export function OptionsChain() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-end">
         {/* Left side - Price and Asset Selector */}
         <div className="flex flex-col gap-2">
@@ -187,6 +189,9 @@ export function OptionsChain() {
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
+
+      {/* Orders Section */}
+      <OrdersContainer />
     </div>
   )
 } 
