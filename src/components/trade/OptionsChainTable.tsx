@@ -6,7 +6,7 @@ interface OptionsChainTableProps {
 
 export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
   // Mock data - replace with real data later
-  const marketPrice = 25; // Example market price
+  const marketPrice = 24.54; // Changed from 25 to 24.54
   const strikes = Array.from({ length: 10 }, (_, i) => ({
     strike: 20 + i,
     isMarketPrice: 20 + i === Math.floor(marketPrice) || (20 + i < marketPrice && 21 + i > marketPrice),
@@ -30,61 +30,53 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
     }
   }))
 
+  const isCallITM = (strike: number) => strike < marketPrice;
+  const isPutITM = (strike: number) => strike > marketPrice;
+
   // Function to reorder Call side parameters
   const getCallParameters = (params: typeof parameters) => {
-    const baseParams = params.filter(p => !['gamma', 'vega', 'rho'].includes(p.id));
-    const greeks = params.filter(p => ['gamma', 'vega', 'rho'].includes(p.id));
-    
-    // Find index after OI and before Theta
-    const oiIndex = baseParams.findIndex(p => p.id === 'oi');
-    
-    // Order: Rho, Vega, Gamma for Call side
-    const orderedGreeks = greeks.sort((a, b) => {
-      const order = { rho: 0, vega: 1, gamma: 2 };
-      return order[a.id as keyof typeof order] - order[b.id as keyof typeof order];
-    });
+    const orderMap = {
+      'iv': 0,
+      'volume': 1,
+      'oi': 2,
+      'rho': 3,
+      'vega': 4,
+      'gamma': 5,
+      'theta': 6,
+      'delta': 7,
+      'bid': 8,
+      'ask': 9
+    };
 
-    return [
-      ...baseParams.slice(0, oiIndex + 1),
-      ...orderedGreeks,
-      ...baseParams.slice(oiIndex + 1)
-    ];
+    return [...params].sort((a, b) => 
+      (orderMap[a.id as keyof typeof orderMap] ?? 0) - 
+      (orderMap[b.id as keyof typeof orderMap] ?? 0)
+    );
   };
 
-  // Function to get Put side parameters with correct order and Bid/Ask flipped
+  // Function to get Put side parameters
   const getPutParameters = (params: typeof parameters) => {
-    const baseParams = params.filter(p => !['gamma', 'vega', 'rho'].includes(p.id));
-    const greeks = params.filter(p => ['gamma', 'vega', 'rho'].includes(p.id));
-    
-    // Find index after OI and before Theta
-    const oiIndex = baseParams.findIndex(p => p.id === 'oi');
-    
-    // Order: Gamma, Vega, Rho for Put side
-    const orderedGreeks = greeks.sort((a, b) => {
-      const order = { gamma: 0, vega: 1, rho: 2 };
-      return order[a.id as keyof typeof order] - order[b.id as keyof typeof order];
-    });
+    const orderMap = {
+      'bid': 0,
+      'ask': 1,
+      'delta': 2,
+      'theta': 3,
+      'gamma': 4,
+      'vega': 5,
+      'rho': 6,
+      'oi': 7,
+      'volume': 8,
+      'iv': 9
+    };
 
-    // Create the full ordered array
-    const ordered = [
-      ...baseParams.slice(0, oiIndex + 1),
-      ...orderedGreeks,
-      ...baseParams.slice(oiIndex + 1)
-    ];
-
-    // Flip bid/ask
-    const result = [...ordered];
-    const bidIndex = result.findIndex(p => p.id === 'bid');
-    const askIndex = result.findIndex(p => p.id === 'ask');
-    if (bidIndex !== -1 && askIndex !== -1) {
-      [result[bidIndex], result[askIndex]] = [result[askIndex], result[bidIndex]];
-    }
-    
-    return result.reverse();
+    return [...params].sort((a, b) => 
+      (orderMap[a.id as keyof typeof orderMap] ?? 0) - 
+      (orderMap[b.id as keyof typeof orderMap] ?? 0)
+    );
   };
 
   return (
-    <table className="w-full min-w-[800px]">
+    <table className="w-full">
       <thead>
         <tr className="bg-muted/50">
           {/* Call Parameters */}
@@ -105,20 +97,34 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
       <tbody>
         {strikes.map((row, i) => (
           <>
-            <tr key={i} className="border-t hover:bg-muted/50">
+            <tr key={i} className="border-t hover:bg-muted/70">
               {/* Call Side */}
               {getCallParameters(parameters).map(param => (
-                <td key={`call-${param.id}`} className="p-2 text-sm">
+                <td 
+                  key={`call-${param.id}`} 
+                  className={`p-2 text-sm ${
+                    isCallITM(row.strike) 
+                      ? 'dark:bg-muted/55 bg-gray-200/90' 
+                      : ''
+                  }`}
+                >
                   {row.call[param.id as keyof typeof row.call]?.toFixed(2)}
                 </td>
               ))}
               {/* Strike Price */}
-              <td className="p-2 text-sm font-bold text-center bg-muted/50 dark:bg-muted/50 bg-gray-100">
+              <td className="p-2 text-sm font-bold text-center dark:bg-muted/80 bg-gray-300">
                 ${row.strike.toFixed(2)}
               </td>
               {/* Put Side */}
               {getPutParameters(parameters).map(param => (
-                <td key={`put-${param.id}`} className="p-2 text-sm">
+                <td 
+                  key={`put-${param.id}`} 
+                  className={`p-2 text-sm ${
+                    isPutITM(row.strike) 
+                      ? 'dark:bg-muted/55 bg-gray-200/90' 
+                      : ''
+                  }`}
+                >
                   {row.put[param.id as keyof typeof row.put]?.toFixed(2)}
                 </td>
               ))}
