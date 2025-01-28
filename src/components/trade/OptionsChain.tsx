@@ -34,6 +34,9 @@ const defaultParameters: OptionParameter[] = [
 
 export function OptionsChain() {
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
+  
+  // Calculate height based on number of strikes
+  const tableHeight = Math.min(600, 10 * 42 + 50); // 10 strikes * 42px per row + 50px buffer
 
   const toggleParameter = (id: string) => {
     const parameter = parameters.find(p => p.id === id)
@@ -86,7 +89,7 @@ export function OptionsChain() {
       </div>
 
       <div className="relative border rounded-md">
-        <ScrollArea className="h-[600px] w-full">
+        <ScrollArea className="w-full" style={{ height: `${tableHeight}px` }}>
           <div className="min-w-[800px]">
             <OptionsChainTable parameters={parameters.filter(p => p.visible)} />
           </div>
