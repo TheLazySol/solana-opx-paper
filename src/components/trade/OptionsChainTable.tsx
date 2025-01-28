@@ -6,8 +6,10 @@ interface OptionsChainTableProps {
 
 export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
   // Mock data - replace with real data later
+  const marketPrice = 25; // Example market price
   const strikes = Array.from({ length: 10 }, (_, i) => ({
     strike: 20 + i,
+    isMarketPrice: 20 + i === Math.floor(marketPrice) || (20 + i < marketPrice && 21 + i > marketPrice),
     call: {
       iv: Math.random() * 100,
       volume: Math.floor(Math.random() * 1000),
@@ -49,24 +51,38 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
       </thead>
       <tbody>
         {strikes.map((row, i) => (
-          <tr key={i} className="border-t hover:bg-muted/50">
-            {/* Call Side */}
-            {parameters.map(param => (
-              <td key={`call-${param.id}`} className="p-2 text-sm">
-                {row.call[param.id as keyof typeof row.call]?.toFixed(2)}
+          <>
+            <tr key={i} className="border-t hover:bg-muted/50">
+              {/* Call Side */}
+              {parameters.map(param => (
+                <td key={`call-${param.id}`} className="p-2 text-sm">
+                  {row.call[param.id as keyof typeof row.call]?.toFixed(2)}
+                </td>
+              ))}
+              {/* Strike Price */}
+              <td className="p-2 text-sm font-bold text-center">
+                ${row.strike.toFixed(2)}
               </td>
-            ))}
-            {/* Strike Price */}
-            <td className="p-2 text-sm font-bold text-center">
-              ${row.strike.toFixed(2)}
-            </td>
-            {/* Put Side */}
-            {parameters.map(param => (
-              <td key={`put-${param.id}`} className="p-2 text-sm">
-                {row.put[param.id as keyof typeof row.put]?.toFixed(2)}
-              </td>
-            ))}
-          </tr>
+              {/* Put Side */}
+              {parameters.map(param => (
+                <td key={`put-${param.id}`} className="p-2 text-sm">
+                  {row.put[param.id as keyof typeof row.put]?.toFixed(2)}
+                </td>
+              ))}
+            </tr>
+            {row.isMarketPrice && (
+              <tr className="market-price-row">
+                <td colSpan={parameters.length * 2 + 1} className="p-0">
+                  <div className="relative">
+                    <div className="absolute w-full border-t-2 border-blue-500" />
+                    <div className="absolute right-4 -top-3 bg-background px-2 text-xs text-blue-500">
+                      Market Price: ${marketPrice}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </>
         ))}
       </tbody>
     </table>
