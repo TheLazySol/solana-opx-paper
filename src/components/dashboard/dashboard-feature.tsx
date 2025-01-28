@@ -52,7 +52,7 @@ export default function DashboardFeature() {
     },
     {
       title: "Market Making",
-      description: "Short sell options and earn premiums every 400ms.",
+      description: "Short-sell options on margin and collect premiums every 400ms.",
       buttonText: "Mint Options"
     },
     {
