@@ -97,7 +97,7 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
       <tbody>
         {strikes.map((row, i) => (
           <>
-            <tr key={i} className="border-t hover:bg-muted/70">
+            <tr key={i} className="border-t dark:hover:bg-muted/70 hover:bg-gray-100">
               {/* Call Side */}
               {getCallParameters(parameters).map(param => (
                 <td 
