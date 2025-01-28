@@ -1,5 +1,13 @@
 "use client"
 
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 interface OptionsChainTableProps {
   parameters: { id: string; name: string; visible: boolean }[]
 }
@@ -75,6 +83,118 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
     );
   };
 
+  const getColumnHeader = (param: { id: string; name: string }) => {
+    switch (param.id) {
+      case 'iv':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Implied Volatility: The expected change in value +/- of the option by exp date.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'volume':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Amount of contracts traded per the associated strike price.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'oi':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Open Interest: The amount of options that are in a current position and have not been exercised yet.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'theta':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Time Decay: How much value the option contract loses every 24 hours.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'delta':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Amount an option&apos;s price changes for a $1 change in the underlying asset.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'bid':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  The highest a buyer is willing to pay for an option contract.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'ask':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  The lowest a seller is willing to sell an option contract.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      default:
+        return param.name;
+    }
+  };
+
   return (
     <table className="w-full">
       <thead>
@@ -82,14 +202,14 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
           {/* Call Parameters */}
           {getCallParameters(parameters).map(param => (
             <th key={`call-${param.id}`} className="p-2 text-sm">
-              {param.name}
+              {getColumnHeader(param)}
             </th>
           ))}
           <th className="p-2 text-sm font-bold bg-muted/50 dark:bg-muted/50 bg-gray-100">Strike</th>
           {/* Put Parameters */}
           {getPutParameters(parameters).map(param => (
             <th key={`put-${param.id}`} className="p-2 text-sm">
-              {param.name}
+              {getColumnHeader(param)}
             </th>
           ))}
         </tr>

@@ -146,13 +146,16 @@ export function OptionsChain() {
             <div className="flex flex-col gap-1">
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm text-muted-foreground underline underline-offset-4 cursor-help block">
-                      Expiration Date:
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={5}>
-                    <p className="text-sm">This is the date of when the option contracts expire and become invalid.</p>
+                  <div className="flex items-center">
+                    <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                      Expiration Date
+                    </TooltipTrigger>
+                    <span className="text-sm">:</span>
+                  </div>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      The date when the option contract expires and becomes invalid.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
