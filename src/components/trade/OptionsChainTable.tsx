@@ -7,12 +7,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { OptionOrder, OptionSide, OrderType } from "@/types/order"
 
 interface OptionsChainTableProps {
   parameters: { id: string; name: string; visible: boolean }[]
+  onOrderCreate: (order: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => void
 }
 
-export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
+export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTableProps) {
   // Mock data - replace with real data later
   const marketPrice = 24.54; // Changed from 25 to 24.54
   const strikes = Array.from({ length: 10 }, (_, i) => ({
@@ -195,6 +197,21 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
     }
   };
 
+  const handlePriceClick = (
+    price: number,
+    strike: number,
+    orderType: OrderType,
+    optionSide: OptionSide
+  ) => {
+    onOrderCreate({
+      strike,
+      price,
+      type: orderType,
+      optionSide,
+      size: 1, // Default size
+    })
+  }
+
   return (
     <table className="w-full">
       <thead>
@@ -226,9 +243,22 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
                     isCallITM(row.strike) 
                       ? 'dark:bg-muted/55 bg-gray-200/90' 
                       : ''
+                  } ${
+                    (param.id === 'bid' || param.id === 'ask') 
+                      ? 'cursor-pointer hover:bg-accent' 
+                      : ''
                   }`}
+                  onClick={() => {
+                    if (param.id === 'bid') {
+                      handlePriceClick(row.call.bid, row.strike, 'buy', 'call')
+                    } else if (param.id === 'ask') {
+                      handlePriceClick(row.call.ask, row.strike, 'sell', 'call')
+                    }
+                  }}
                 >
-                  {row.call[param.id as keyof typeof row.call]?.toFixed(2)}
+                  {param.id === 'iv' 
+                    ? `${row.call[param.id].toFixed(2)}%`
+                    : row.call[param.id as keyof typeof row.call]?.toFixed(2)}
                 </td>
               ))}
               {/* Strike Price */}
@@ -243,9 +273,22 @@ export function OptionsChainTable({ parameters }: OptionsChainTableProps) {
                     isPutITM(row.strike) 
                       ? 'dark:bg-muted/55 bg-gray-200/90' 
                       : ''
+                  } ${
+                    (param.id === 'bid' || param.id === 'ask') 
+                      ? 'cursor-pointer hover:bg-accent' 
+                      : ''
                   }`}
+                  onClick={() => {
+                    if (param.id === 'bid') {
+                      handlePriceClick(row.put.bid, row.strike, 'buy', 'put')
+                    } else if (param.id === 'ask') {
+                      handlePriceClick(row.put.ask, row.strike, 'sell', 'put')
+                    }
+                  }}
                 >
-                  {row.put[param.id as keyof typeof row.put]?.toFixed(2)}
+                  {param.id === 'iv' 
+                    ? `${row.put[param.id].toFixed(2)}%`
+                    : row.put[param.id as keyof typeof row.put]?.toFixed(2)}
                 </td>
               ))}
             </tr>

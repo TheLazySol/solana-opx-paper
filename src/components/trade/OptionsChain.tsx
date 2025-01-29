@@ -26,6 +26,10 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { OrdersContainer } from "./OrdersContainer"
+import { OptionOrder } from "@/types/order"
+import { v4 as uuidv4 } from 'uuid'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { Keypair, PublicKey } from '@solana/web3.js'
 
 interface OptionParameter {
   id: string
@@ -86,6 +90,8 @@ export function OptionsChain() {
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
   const [selectedAsset, setSelectedAsset] = useState("SOL")
   const [selectedExpiry, setSelectedExpiry] = useState("2025-02-02")
+  const [orders, setOrders] = useState<OptionOrder[]>([])
+  const { publicKey } = useWallet()
   
   // Get current price data based on selected asset
   const currentPriceData = mockMarketPrices[selectedAsset as keyof typeof mockMarketPrices]
@@ -102,6 +108,53 @@ export function OptionsChain() {
         param.id === id ? { ...param, visible: !param.visible } : param
       )
     )
+  }
+
+  const handleOrderCreate = (orderData: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => {
+    if (!publicKey) {
+      console.error('Wallet not connected')
+      return
+    }
+
+    // Check if this order type already exists
+    const existingOrder = orders.find(order => 
+      order.strike === orderData.strike && 
+      order.optionSide === orderData.optionSide && 
+      order.type === orderData.type
+    )
+
+    if (existingOrder) {
+      // If it exists, increment its quantity
+      handleUpdateQuantity(existingOrder.publicKey.toString(), (existingOrder.size || 1) + 1)
+      return
+    }
+
+    if (orders.length >= 4) {
+      console.error('Maximum number of legs reached')
+      return
+    }
+
+    const newOrder: OptionOrder = {
+      ...orderData,
+      publicKey: new PublicKey(Keypair.generate().publicKey),
+      timestamp: new Date(),
+      owner: publicKey,
+      status: 'pending',
+      size: 1,
+    }
+    setOrders((prev) => [newOrder, ...prev])
+  }
+
+  const handleUpdateQuantity = (publicKey: string, newSize: number) => {
+    setOrders(prev => prev.map(order => 
+      order.publicKey.toString() === publicKey 
+        ? { ...order, size: newSize }
+        : order
+    ))
+  }
+
+  const handleRemoveOrder = (publicKey: string) => {
+    setOrders((prev) => prev.filter((order) => order.publicKey.toString() !== publicKey))
   }
 
   return (
@@ -183,10 +236,13 @@ export function OptionsChain() {
       </div>
 
       {/* Options Table */}
-      <div className="relative border rounded-md">
+      <div className="relative border rounded-md shadow-md">
         <ScrollArea className="w-full" style={{ height: `${tableHeight}px` }}>
           <div className="min-w-[800px]">
-            <OptionsChainTable parameters={parameters.filter(p => p.visible)} />
+            <OptionsChainTable 
+              parameters={parameters.filter(p => p.visible)} 
+              onOrderCreate={handleOrderCreate}
+            />
           </div>
           <ScrollBar orientation="vertical" />
           <ScrollBar orientation="horizontal" />
@@ -194,7 +250,12 @@ export function OptionsChain() {
       </div>
 
       {/* Orders Section */}
-      <OrdersContainer />
+      <OrdersContainer 
+        orders={orders} 
+        onRemoveOrder={handleRemoveOrder}
+        onUpdateQuantity={handleUpdateQuantity}
+        selectedAsset={selectedAsset}
+      />
     </div>
   )
 } 
