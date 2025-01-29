@@ -228,9 +228,33 @@ export function OptionsChain() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex h-9 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
-              <Filter className="h-4 w-4" />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex h-9 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                  <Filter className="h-4 w-4" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {parameters.map((param) => (
+                  <div key={param.id} className="flex items-center space-x-2 p-2">
+                    <Checkbox
+                      id={param.id}
+                      checked={param.visible}
+                      disabled={param.required}
+                      onCheckedChange={() => toggleParameter(param.id)}
+                    />
+                    <label
+                      htmlFor={param.id}
+                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                        param.required ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+                      }`}
+                    >
+                      {param.name}
+                    </label>
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
