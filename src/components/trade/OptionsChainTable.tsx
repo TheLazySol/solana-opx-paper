@@ -215,6 +215,7 @@ export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTab
   return (
     <table className="w-full">
       <thead>
+        {/* Parameters Row */}
         <tr className="bg-muted/50">
           {/* Call Parameters */}
           {getCallParameters(parameters).map(param => (
@@ -229,6 +230,26 @@ export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTab
               {getColumnHeader(param)}
             </th>
           ))}
+        </tr>
+        
+        {/* Calls/Puts Label Row */}
+        <tr className="bg-muted/50 border-t border-border/50">
+          {/* Calls Label */}
+          <th 
+            colSpan={getCallParameters(parameters).length} 
+            className="py-1 px-2 text-xs font-medium text-center text-[#4a85ff]"
+          >
+            Calls
+          </th>
+          {/* Strike Column */}
+          <th className="py-1 bg-gray-300 dark:bg-muted/80" />
+          {/* Puts Label */}
+          <th 
+            colSpan={getPutParameters(parameters).length} 
+            className="py-1 px-2 text-xs font-medium text-center text-[#4a85ff]"
+          >
+            Puts
+          </th>
         </tr>
       </thead>
       <tbody>
