@@ -48,7 +48,10 @@ export function OrdersContainer({
     const direction = order.type === 'buy' ? 'Long' : 'Short'
     return (
       <div className="flex items-center gap-1">
-        <span className={order.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
+        <span className={order.type === 'buy' 
+          ? 'text-green-500' 
+          : 'text-red-500'
+        }>
           {direction}
         </span>
         <span>

@@ -244,8 +244,10 @@ export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTab
                       ? 'dark:bg-muted/55 bg-gray-200/90' 
                       : ''
                   } ${
-                    (param.id === 'bid' || param.id === 'ask') 
-                      ? 'cursor-pointer hover:bg-accent' 
+                    param.id === 'bid'
+                      ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
+                      : param.id === 'ask'
+                      ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 text-rose-600 dark:text-rose-400'
                       : ''
                   }`}
                   onClick={() => {
@@ -274,8 +276,10 @@ export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTab
                       ? 'dark:bg-muted/55 bg-gray-200/90' 
                       : ''
                   } ${
-                    (param.id === 'bid' || param.id === 'ask') 
-                      ? 'cursor-pointer hover:bg-accent' 
+                    param.id === 'bid'
+                      ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
+                      : param.id === 'ask'
+                      ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 text-rose-600 dark:text-rose-400'
                       : ''
                   }`}
                   onClick={() => {
