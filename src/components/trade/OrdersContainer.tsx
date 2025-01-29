@@ -3,6 +3,8 @@ import { SummaryContainer } from "./SummaryContainer"
 import { OptionOrder } from "@/types/order"
 import { X, Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react"
 
 interface OrdersContainerProps {
   orders: OptionOrder[]
@@ -11,12 +13,15 @@ interface OrdersContainerProps {
   selectedAsset: string
 }
 
+type PositionStatus = "pending" | "open" | "closed"
+
 export function OrdersContainer({ 
   orders, 
   onRemoveOrder, 
   onUpdateQuantity,
   selectedAsset 
 }: OrdersContainerProps) {
+  const [status, setStatus] = useState<PositionStatus>("pending")
   const maxLegs = 4
   const isMaxLegsReached = orders.length >= maxLegs
 
@@ -62,21 +67,49 @@ export function OrdersContainer({
   }
 
   return (
-    <div className="grid grid-cols-4 gap-4">
-      {/* Main Orders Panel (3/4) */}
+    <div className="grid grid-cols-5 gap-4">
+      {/* Main Orders Panel (3/5) */}
       <Card className="col-span-3 shadow-md dark:bg-card/20 bg-card/40">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Orders</CardTitle>
-          {isMaxLegsReached && (
-            <span className="text-sm text-[#4a85ff]">
-              Maximum legs reached (4)
-            </span>
-          )}
+        <CardHeader className="space-y-2 pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">Positions</CardTitle>
+            {isMaxLegsReached && (
+              <span className="text-sm text-[#4a85ff]">
+                Maximum legs reached (4)
+              </span>
+            )}
+          </div>
+          <Tabs 
+            value={status} 
+            onValueChange={(value) => setStatus(value as PositionStatus)}
+            className="w-[210px]"
+          >
+            <TabsList className="h-7 bg-muted/50 dark:bg-muted/20 p-0.5 grid grid-cols-3">
+              <TabsTrigger 
+                value="pending" 
+                className="text-xs h-6 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
+              >
+                Pending
+              </TabsTrigger>
+              <TabsTrigger 
+                value="open" 
+                className="text-xs h-6 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
+              >
+                Open
+              </TabsTrigger>
+              <TabsTrigger 
+                value="closed" 
+                className="text-xs h-6 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
+              >
+                Closed
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </CardHeader>
         <CardContent>
           {uniqueOrders.length === 0 ? (
             <div className="text-sm text-muted-foreground">
-              No active orders. Select options above to create an order.
+              No {status} positions. {status === 'pending' && 'Select options above to create a position.'}
             </div>
           ) : (
             <div className="space-y-2">
@@ -128,8 +161,12 @@ export function OrdersContainer({
         </CardContent>
       </Card>
 
-      {/* Summary Panel (1/4) */}
-      <SummaryContainer />
+      {/* Summary Panel (2/5) */}
+      <SummaryContainer 
+        orders={uniqueOrders} 
+        selectedAsset={selectedAsset}
+        className="col-span-2"
+      />
     </div>
   )
 } 
