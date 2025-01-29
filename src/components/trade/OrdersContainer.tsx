@@ -1,16 +1,21 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { SummaryContainer } from "./SummaryContainer"
 import { OptionOrder } from "@/types/order"
-import { X, Plus, Minus } from "lucide-react"
+import { X, Plus, Minus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
+import { MarketPrices } from "@/types/market"
 
 interface OrdersContainerProps {
   orders: OptionOrder[]
   onRemoveOrder: (publicKey: string) => void
   onUpdateQuantity: (publicKey: string, newSize: number) => void
   selectedAsset: string
+  onUpdateLimitPrice: (publicKey: string, price: number) => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
+  currentMarketPrices?: MarketPrices
 }
 
 type PositionStatus = "pending" | "open" | "closed"
@@ -19,7 +24,11 @@ export function OrdersContainer({
   orders, 
   onRemoveOrder, 
   onUpdateQuantity,
-  selectedAsset 
+  selectedAsset,
+  onUpdateLimitPrice,
+  onRefresh,
+  isRefreshing = false,
+  currentMarketPrices
 }: OrdersContainerProps) {
   const [status, setStatus] = useState<PositionStatus>("pending")
   const maxLegs = 4
@@ -131,7 +140,7 @@ export function OrdersContainer({
       case "closed":
         return (
           <div className="text-sm text-muted-foreground">
-            No closed positions. Positions that have been exercised or expired will appear here.
+            No closed positions. Positions that have been closed, exercised or expired will appear here.
           </div>
         );
     }
@@ -144,11 +153,24 @@ export function OrdersContainer({
         <CardHeader className="space-y-2 pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold">Positions</CardTitle>
-            {status === "pending" && isMaxLegsReached && (
-              <span className="text-sm text-[#4a85ff]">
-                Maximum legs reached (4)
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {status === "pending" && isMaxLegsReached && (
+                <span className="text-sm text-[#4a85ff]">
+                  Maximum legs reached (4)
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-gray-100 transition-colors"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw 
+                  className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                />
+              </Button>
+            </div>
           </div>
           <Tabs 
             value={status} 
@@ -187,6 +209,10 @@ export function OrdersContainer({
         orders={status === "pending" ? uniqueOrders : []} 
         selectedAsset={selectedAsset}
         className="col-span-2"
+        onUpdateLimitPrice={onUpdateLimitPrice}
+        onRefresh={onRefresh}
+        isRefreshing={isRefreshing}
+        currentMarketPrices={currentMarketPrices}
       />
     </div>
   )

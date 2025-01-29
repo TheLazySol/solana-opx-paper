@@ -1,5 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { RefreshCw } from "lucide-react"
 import { useState } from "react"
 import { OptionOrder } from "@/types/order"
 
@@ -7,22 +10,96 @@ interface SummaryContainerProps {
   orders: OptionOrder[]
   selectedAsset: string
   className?: string
+  onUpdateLimitPrice?: (publicKey: string, price: number) => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
+  currentMarketPrices?: MarketPrices
 }
 
 type OrderMode = "market" | "limit"
 
+interface MarketPrices {
+  [key: string]: {
+    bid: number;
+    ask: number;
+  }
+}
+
 export function SummaryContainer({ 
   orders, 
   selectedAsset,
-  className = "" 
+  className = "",
+  onUpdateLimitPrice,
+  onRefresh,
+  isRefreshing = false,
+  currentMarketPrices
 }: SummaryContainerProps) {
   const [mode, setMode] = useState<OrderMode>("market")
+  const [limitPrices, setLimitPrices] = useState<Record<string, string>>({})
+  const [priceErrors, setPriceErrors] = useState<Record<string, string>>({})
 
   const calculateLegTotal = (order: OptionOrder) => {
     const contractSize = 100
     const quantity = order.size || 1
-    const total = order.price * quantity * contractSize
+    const price = mode === "limit" 
+      ? Number(limitPrices[order.publicKey.toString()] || order.price)
+      : order.price
+    const total = price * quantity * contractSize
     return order.type === 'buy' ? total : -total
+  }
+
+  const validateLimitPrice = (order: OptionOrder, price: number): string => {
+    const orderKey = `${order.optionSide}-${order.strike}`
+    const latestPrices = currentMarketPrices?.[orderKey]
+
+    if (order.type === 'buy') {
+      const currentAsk = latestPrices?.ask ?? order.askPrice
+      if (price > currentAsk) {
+        return `Cannot exceed current Ask Price of ${currentAsk.toFixed(2)}`
+      }
+    } else { // sell order
+      const currentBid = latestPrices?.bid ?? order.bidPrice
+      if (price < currentBid) {
+        return `Cannot be below current Bid Price of ${currentBid.toFixed(2)}`
+      }
+    }
+    return ''
+  }
+
+  const handleLimitPriceChange = (publicKey: string, value: string) => {
+    // Allow empty string or numbers with decimals
+    if (value !== '' && !/^\d*\.?\d*$/.test(value)) return
+
+    setLimitPrices(prev => ({
+      ...prev,
+      [publicKey]: value
+    }))
+
+    // Only validate and update parent if we have a number value
+    if (value !== '') {
+      const numValue = Number(value)
+      if (!isNaN(numValue)) {
+        const order = orders.find(o => o.publicKey.toString() === publicKey)
+        if (!order) return
+
+        const error = validateLimitPrice(order, numValue)
+        setPriceErrors(prev => ({
+          ...prev,
+          [publicKey]: error
+        }))
+
+        // Only update parent if there's no error
+        if (!error && onUpdateLimitPrice) {
+          onUpdateLimitPrice(publicKey, numValue)
+        }
+      }
+    } else {
+      // Clear error when input is empty
+      setPriceErrors(prev => ({
+        ...prev,
+        [publicKey]: ''
+      }))
+    }
   }
 
   const formatTotal = (total: number) => {
@@ -45,23 +122,44 @@ export function SummaryContainer({
   const renderOrderSummary = (order: OptionOrder) => {
     const direction = order.type === 'buy' ? 'Long' : 'Short'
     const total = calculateLegTotal(order)
+    const publicKey = order.publicKey.toString()
+    const hasError = !!priceErrors[publicKey]
     
     return (
-      <div key={order.publicKey.toString()} className="flex justify-between items-center py-1">
-        <div className="text-sm">
-          <span className={order.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
-            {direction}
-          </span>
-          {' '}
-          {selectedAsset} {order.optionSide.toUpperCase()} ${order.strike} Strike @ {order.price.toFixed(2)}
-          {' '}
-          <span className="text-muted-foreground">
-            ({order.size || 1})
-          </span>
+      <div key={publicKey} className="flex flex-col gap-1">
+        <div className="flex justify-between items-center py-1">
+          <div className="text-sm flex items-center">
+            <span className={`${order.type === 'buy' ? 'text-green-500' : 'text-red-500'} mr-1`}>
+              {direction}
+            </span>
+            <span>{selectedAsset} {order.optionSide.toUpperCase()} ${order.strike} Strike</span>
+            <span className="mx-1">@</span>
+            {mode === "limit" ? (
+              <div className="inline-flex flex-col">
+                <Input
+                  type="text"
+                  value={limitPrices[publicKey] !== undefined ? limitPrices[publicKey] : order.price.toFixed(2)}
+                  onChange={(e) => handleLimitPriceChange(publicKey, e.target.value)}
+                  className={`w-20 h-6 px-1.5 text-sm ${hasError ? 'border-red-500' : ''}`}
+                  placeholder={order.price.toFixed(2)}
+                />
+              </div>
+            ) : (
+              <span>{order.price.toFixed(2)}</span>
+            )}
+            <span className="text-muted-foreground ml-1">
+              ({order.size || 1})
+            </span>
+          </div>
+          <div className="text-sm font-medium">
+            {formatTotal(total)}
+          </div>
         </div>
-        <div className="text-sm font-medium">
-          {formatTotal(total)}
-        </div>
+        {hasError && (
+          <div className="text-xs text-red-500 pl-20">
+            {priceErrors[publicKey]}
+          </div>
+        )}
       </div>
     )
   }
@@ -73,7 +171,20 @@ export function SummaryContainer({
   return (
     <Card className={`shadow-md dark:bg-card/20 bg-card/40 ${className}`}>
       <CardHeader className="space-y-2 pb-2">
-        <CardTitle className="text-lg font-semibold">Order Summary</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold">Order Summary</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:text-gray-100 transition-colors"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw 
+              className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
+          </Button>
+        </div>
         <Tabs 
           value={mode} 
           onValueChange={(value) => setMode(value as OrderMode)}
@@ -96,25 +207,19 @@ export function SummaryContainer({
         </Tabs>
       </CardHeader>
       <CardContent>
-        {mode === "market" ? (
-          orders.length > 0 ? (
-            <div className="space-y-2">
-              {orders.map(renderOrderSummary)}
-              <div className="pt-2 mt-2 border-t flex justify-between items-center">
-                <span className="text-sm font-medium">Total</span>
-                <span className="text-sm font-medium">
-                  {formatTotal(calculateGrandTotal(orders))}
-                </span>
-              </div>
+        {orders.length > 0 ? (
+          <div className="space-y-2">
+            {orders.map(renderOrderSummary)}
+            <div className="pt-2 mt-2 border-t flex justify-between items-center">
+              <span className="text-sm font-medium">Total</span>
+              <span className="text-sm font-medium">
+                {formatTotal(calculateGrandTotal(orders))}
+              </span>
             </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              No orders selected.
-            </div>
-          )
+          </div>
         ) : (
           <div className="text-sm text-muted-foreground">
-            Limit order summary will appear here.
+            No orders selected.
           </div>
         )}
       </CardContent>

@@ -9,36 +9,58 @@ import {
 } from "@/components/ui/tooltip"
 import { OptionOrder, OptionSide, OrderType } from "@/types/order"
 
+interface Option {
+  strike: number
+  call: {
+    iv: number
+    volume: number
+    oi: number
+    theta: number
+    delta: number
+    bid: number
+    ask: number
+  }
+  put: {
+    iv: number
+    volume: number
+    oi: number
+    theta: number
+    delta: number
+    bid: number
+    ask: number
+  }
+}
+
 interface OptionsChainTableProps {
   parameters: { id: string; name: string; visible: boolean }[]
   onOrderCreate: (order: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => void
+  marketPrice: number
+  options: Option[]
+  assetType: 'SOL' | 'LABS'
 }
 
-export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTableProps) {
-  // Mock data - replace with real data later
-  const marketPrice = 24.54; // Changed from 25 to 24.54
-  const strikes = Array.from({ length: 10 }, (_, i) => ({
-    strike: 20 + i,
-    isMarketPrice: 20 + i === Math.floor(marketPrice) || (20 + i < marketPrice && 21 + i > marketPrice),
-    call: {
-      iv: Math.random() * 100,
-      volume: Math.floor(Math.random() * 1000),
-      oi: Math.floor(Math.random() * 5000),
-      theta: -(Math.random() * 0.1),
-      delta: Math.random(),
-      bid: 1.5 + Math.random(),
-      ask: 1.7 + Math.random(),
-    },
-    put: {
-      iv: Math.random() * 100,
-      volume: Math.floor(Math.random() * 1000),
-      oi: Math.floor(Math.random() * 5000),
-      theta: -(Math.random() * 0.1),
-      delta: -Math.random(),
-      bid: 1.5 + Math.random(),
-      ask: 1.7 + Math.random(),
-    }
+export function OptionsChainTable({ 
+  parameters, 
+  onOrderCreate, 
+  marketPrice = 24.54,
+  options = [], 
+  assetType = 'SOL'
+}: OptionsChainTableProps) {
+  // Only use the provided options, remove default strikes
+  const strikes = options.map(option => ({
+    ...option,
+    isMarketPrice: option.strike === Math.floor(marketPrice) || 
+                   (option.strike < marketPrice && (option.strike + 1) > marketPrice)
   }))
+
+  // If no strikes, show empty message or return null
+  if (strikes.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-8 text-muted-foreground">
+        No options available. Mint an option to get started.
+      </div>
+    )
+  }
 
   const isCallITM = (strike: number) => strike < marketPrice;
   const isPutITM = (strike: number) => strike > marketPrice;
@@ -208,7 +230,9 @@ export function OptionsChainTable({ parameters, onOrderCreate }: OptionsChainTab
       price,
       type: orderType,
       optionSide,
-      size: 1, // Default size
+      size: 1,
+      bidPrice: price * 0.95,  // Example bid price
+      askPrice: price * 1.05   // Example ask price
     })
   }
 

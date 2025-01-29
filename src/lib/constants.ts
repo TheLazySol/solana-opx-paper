@@ -1,0 +1,33 @@
+import { format } from 'date-fns'
+
+export const EXPIRATION_DATES = [
+  { value: '2025-01-28', label: 'Jan-28-2025 (M)' },
+  { value: '2025-02-11', label: 'Feb-11-2025' },
+  { value: '2025-02-25', label: 'Feb-25-2025 (M)' },
+  { value: '2025-02-28', label: 'Feb-28-2025' },
+  { value: '2025-03-11', label: 'Mar-11-2025 (M)' },
+  { value: '2025-03-25', label: 'Mar-25-2025' },
+  { value: '2025-03-28', label: 'Mar-28-2025 (M)' },
+  { value: '2025-04-08', label: 'Apr-08-2025' },
+  { value: '2025-04-22', label: 'Apr-22-2025 (M)' },
+  { value: '2025-04-28', label: 'Apr-28-2025' },
+  { value: '2025-05-06', label: 'May-06-2025 (M)' },
+  { value: '2025-05-20', label: 'May-20-2025' },
+  { value: '2025-06-03', label: 'Jun-03-2025 (M)' },
+  { value: '2025-06-17', label: 'Jun-17-2025' },
+  { value: '2025-07-01', label: 'Jul-01-2025 (M)' },
+  { value: '2025-07-15', label: 'Jul-15-2025' },
+  { value: '2025-07-29', label: 'Jul-29-2025 (M)' },
+  { value: '2025-08-12', label: 'Aug-12-2025' },
+  { value: '2025-08-26', label: 'Aug-26-2025 (M)' },
+  { value: '2025-09-09', label: 'Sep-09-2025' },
+  { value: '2025-09-23', label: 'Sep-23-2025 (M)' },
+  { value: '2025-10-07', label: 'Oct-07-2025' },
+  { value: '2025-10-21', label: 'Oct-21-2025 (M)' },
+  { value: '2025-11-04', label: 'Nov-04-2025' },
+  { value: '2025-11-18', label: 'Nov-18-2025 (M)' },
+  { value: '2025-12-02', label: 'Dec-02-2025' },
+  { value: '2025-12-16', label: 'Dec-16-2025 (M)' },
+  { value: '2025-12-30', label: 'Dec-30-2025' },
+  { value: '2026-01-01', label: 'Jan-01-2026 (M)' }
+] 

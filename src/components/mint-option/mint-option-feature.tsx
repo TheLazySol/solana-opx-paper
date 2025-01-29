@@ -27,34 +27,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AssetPrice } from '@/components/price/asset-price'
-
-// Generate expiration dates (bi-weekly and monthly for a year)
-const generateExpirationDates = () => {
-  const dates: Date[] = []
-  const uniqueDates = new Map<string, Date>()
-  const today = new Date()
-  
-  // Generate bi-weekly dates
-  for (let i = 0; i < 26; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + (i * 14))
-    uniqueDates.set(date.toISOString(), date)
-  }
-  
-  // Generate monthly dates
-  for (let i = 1; i <= 12; i++) {
-    const date = new Date(today)
-    date.setMonth(today.getMonth() + i)
-    uniqueDates.set(date.toISOString(), date)
-  }
-  
-  return Array.from(uniqueDates.values())
-    .sort((a, b) => a.getTime() - b.getTime())
-    .map(date => format(date, 'PPP'))
-}
+import { EXPIRATION_DATES } from "@/lib/constants"
 
 const formSchema = z.object({
-  asset: z.string({
+  asset: z.enum(['SOL', 'LABS'], {
     required_error: "Please select an underlying asset.",
   }),
   expirationDate: z.string({
@@ -65,6 +41,9 @@ const formSchema = z.object({
     return !isNaN(num) && num > 0 && num % 1 === 0;
   }, {
     message: "Strike price must be a positive whole number.",
+  }),
+  optionType: z.enum(['call', 'put'], {
+    required_error: "Please select option type.",
   }),
   quantity: z.string().refine((val: string) => {
     const num = Number(val);
@@ -95,7 +74,30 @@ export function MintOptionFeature() {
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    const newOption = {
+      strike: Number(values.strikePrice),
+      call: {
+        iv: Math.random() * 100,
+        volume: 0,
+        oi: 0,
+        theta: -(Math.random() * 0.1),
+        delta: Math.random(),
+        bid: Number(values.premium) * 0.95,
+        ask: Number(values.premium) * 1.05,
+      },
+      put: {
+        iv: Math.random() * 100,
+        volume: 0,
+        oi: 0,
+        theta: -(Math.random() * 0.1),
+        delta: -Math.random(),
+        bid: Number(values.premium) * 0.95,
+        ask: Number(values.premium) * 1.05,
+      }
+    }
+
+    // Here you would typically dispatch this to your state management solution
+    console.log('New option created:', newOption)
   }
 
   return (
@@ -107,7 +109,80 @@ export function MintOptionFeature() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* ... rest of your form fields ... */}
+              <FormField
+                control={form.control}
+                name="asset"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asset</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select asset" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SOL">SOL</SelectItem>
+                        <SelectItem value="LABS">LABS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="expirationDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expiration Date</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={EXPIRATION_DATES[0].value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select expiration date" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {EXPIRATION_DATES.map((date) => (
+                          <SelectItem 
+                            key={date.value} 
+                            value={date.value}
+                            className="text-sm"
+                          >
+                            {date.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="optionType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Option Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select option type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="call">Call</SelectItem>
+                        <SelectItem value="put">Put</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* ... other form fields ... */}
               <Button type="submit" className="w-full">Mint Option</Button>
             </form>
           </Form>

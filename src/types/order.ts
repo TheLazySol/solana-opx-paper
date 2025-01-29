@@ -7,6 +7,8 @@ export interface OptionOrder {
   publicKey: PublicKey  // Solana account address for the order
   strike: number
   price: number
+  bidPrice: number  // Add highest bid price
+  askPrice: number  // Add lowest ask price
   type: OrderType
   optionSide: OptionSide
   timestamp: Date

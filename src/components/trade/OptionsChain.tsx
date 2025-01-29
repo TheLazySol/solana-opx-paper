@@ -30,6 +30,7 @@ import { OptionOrder } from "@/types/order"
 import { v4 as uuidv4 } from 'uuid'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
+import { EXPIRATION_DATES } from "@/lib/constants"
 
 interface OptionParameter {
   id: string
@@ -71,27 +72,22 @@ const mockMarketPrices = {
   }
 }
 
-// Add mock expiration dates - will be replaced with real data later
-const expirationDates = [
-  { value: "2025-02-02", label: "Feb-2-2025" },
-  { value: "2025-03-02", label: "Mar-2-2025" },
-  { value: "2025-04-02", label: "Apr-2-2025" },
-  { value: "2025-05-02", label: "May-2-2025" },
-  { value: "2025-06-02", label: "Jun-2-2025" },
-  { value: "2025-07-02", label: "Jul-2-2025" },
-  { value: "2025-08-02", label: "Aug-2-2025" },
-  { value: "2025-09-02", label: "Sep-2-2025" },
-  { value: "2025-10-02", label: "Oct-2-2025" },
-  { value: "2025-11-02", label: "Nov-2-2025" },
-  { value: "2025-12-02", label: "Dec-2-2025" },
-]
+interface MarketPrices {
+  [key: string]: {
+    bid: number;
+    ask: number;
+  }
+}
 
 export function OptionsChain() {
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
   const [selectedAsset, setSelectedAsset] = useState("SOL")
-  const [selectedExpiry, setSelectedExpiry] = useState("2025-02-02")
+  const [selectedExpiry, setSelectedExpiry] = useState(EXPIRATION_DATES[0].value)
   const [orders, setOrders] = useState<OptionOrder[]>([])
   const { publicKey } = useWallet()
+  const [limitPrices, setLimitPrices] = useState<Record<string, number>>({})
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [marketPrices, setMarketPrices] = useState<MarketPrices>({})
   
   // Get current price data based on selected asset
   const currentPriceData = mockMarketPrices[selectedAsset as keyof typeof mockMarketPrices]
@@ -141,6 +137,8 @@ export function OptionsChain() {
       owner: publicKey,
       status: 'pending',
       size: 1,
+      bidPrice: orderData.type === 'buy' ? orderData.price : orderData.price * 0.95, // Example bid price
+      askPrice: orderData.type === 'buy' ? orderData.price * 1.05 : orderData.price, // Example ask price
     }
     setOrders((prev) => [newOrder, ...prev])
   }
@@ -155,6 +153,71 @@ export function OptionsChain() {
 
   const handleRemoveOrder = (publicKey: string) => {
     setOrders((prev) => prev.filter((order) => order.publicKey.toString() !== publicKey))
+  }
+
+  const handleLimitPriceUpdate = (publicKey: string, price: number) => {
+    setLimitPrices(prev => ({
+      ...prev,
+      [publicKey]: price
+    }))
+  }
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      // Fetch latest market prices
+      const latestPrices = await fetchLatestMarketPrices() // You'll need to implement this
+      setMarketPrices(latestPrices)
+      
+      // Update orders with new prices
+      setOrders(prevOrders => prevOrders.map(order => {
+        const orderKey = `${order.optionSide}-${order.strike}`
+        const latestPrices = marketPrices[orderKey]
+        if (latestPrices) {
+          return {
+            ...order,
+            price: order.type === 'buy' ? latestPrices.ask : latestPrices.bid,
+            bidPrice: latestPrices.bid,
+            askPrice: latestPrices.ask
+          }
+        }
+        return order
+      }))
+
+      // Revalidate all current limit orders with new prices
+      orders.forEach(order => {
+        const publicKey = order.publicKey.toString()
+        const currentLimitPrice = limitPrices[publicKey]
+        if (currentLimitPrice) {
+          handleLimitPriceUpdate(publicKey, Number(currentLimitPrice))
+        }
+      })
+    } catch (error) {
+      console.error('Failed to refresh market prices:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const fetchLatestMarketPrices = async (): Promise<MarketPrices> => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Generate mock updated prices
+    const mockPrices: MarketPrices = {}
+    
+    // For each existing order, generate new prices
+    orders.forEach(order => {
+      const key = `${order.optionSide}-${order.strike}`
+      const randomChange = (Math.random() - 0.5) * 0.5 // -0.25 to +0.25 change
+      
+      mockPrices[key] = {
+        bid: order.bidPrice * (1 + randomChange),
+        ask: order.askPrice * (1 + randomChange)
+      }
+    })
+    
+    return mockPrices
   }
 
   return (
@@ -220,7 +283,7 @@ export function OptionsChain() {
                   <SelectValue placeholder="Select date" />
                 </SelectTrigger>
                 <SelectContent>
-                  {expirationDates.map((date) => (
+                  {EXPIRATION_DATES.map((date) => (
                     <SelectItem key={date.value} value={date.value}>
                       {date.label}
                     </SelectItem>
@@ -266,6 +329,9 @@ export function OptionsChain() {
             <OptionsChainTable 
               parameters={parameters.filter(p => p.visible)} 
               onOrderCreate={handleOrderCreate}
+              marketPrice={currentPriceData.price}
+              options={[]}  // Initially empty array
+              assetType={selectedAsset as 'SOL' | 'LABS'}
             />
           </div>
           <ScrollBar orientation="vertical" />
@@ -279,6 +345,10 @@ export function OptionsChain() {
         onRemoveOrder={handleRemoveOrder}
         onUpdateQuantity={handleUpdateQuantity}
         selectedAsset={selectedAsset}
+        onUpdateLimitPrice={handleLimitPriceUpdate}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        currentMarketPrices={marketPrices}
       />
     </div>
   )
