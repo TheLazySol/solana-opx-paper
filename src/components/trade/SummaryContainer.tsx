@@ -16,16 +16,16 @@ export function SummaryContainer() {
           onValueChange={(value) => setMode(value as OrderMode)}
           className="w-[140px]"
         >
-          <TabsList className="h-7 bg-muted/50 dark:bg-muted/20 p-0.5">
+          <TabsList className="h-7 bg-muted/50 dark:bg-muted/20 p-0.5 grid grid-cols-2">
             <TabsTrigger 
               value="market" 
-              className="text-xs h-6 px-3 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
+              className="text-xs h-6 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
             >
               Market
             </TabsTrigger>
             <TabsTrigger 
               value="limit" 
-              className="text-xs h-6 px-3 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
+              className="text-xs h-6 data-[state=active]:bg-background dark:data-[state=active]:bg-muted/60"
             >
               Limit
             </TabsTrigger>
