@@ -32,6 +32,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
 import { EXPIRATION_DATES } from "@/lib/constants"
 import { getTokenPrice } from '@/lib/birdeye'
+import { usePageVisibility } from '@/hooks/usePageVisibility'
 
 interface OptionParameter {
   id: string
@@ -79,6 +80,10 @@ export function OptionsChain() {
   const [priceChange24h, setPriceChange24h] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isTableRefreshing, setIsTableRefreshing] = useState(false)
+  const [previousPrice, setPreviousPrice] = useState<number | null>(null)
+  const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
+  const [initialLoad, setInitialLoad] = useState(true)
+  const isPageVisible = usePageVisibility()
   
   // Get current price data based on selected asset
   const currentPriceData = {
@@ -217,51 +222,103 @@ export function OptionsChain() {
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout
+    let isSubscribed = true
 
     const fetchPrice = async () => {
-      setIsLoading(true)
+      if (!isPageVisible) return // Skip if page is not visible
+      
+      if (initialLoad) setIsLoading(true)
       try {
         const priceData = await getTokenPrice(selectedAsset)
-        if (priceData) {
-          console.log(`Fetched ${selectedAsset} price:`, priceData) // Add logging
+        if (priceData && isSubscribed) {
+          if (currentPrice !== null && priceData.price !== currentPrice) {
+            setPreviousPrice(currentPrice)
+            setPriceChangeDirection(priceData.price > currentPrice ? 'up' : 'down')
+            setTimeout(() => {
+              if (isSubscribed) {
+                setPriceChangeDirection(null)
+              }
+            }, 1000)
+          }
           setCurrentPrice(priceData.price)
           setPriceChange24h(priceData.priceChange24h)
         }
       } catch (error) {
         console.error('Error fetching price:', error)
       } finally {
-        setIsLoading(false)
+        if (initialLoad) {
+          setInitialLoad(false)
+          setIsLoading(false)
+        }
       }
     }
 
-    // Fetch immediately
-    fetchPrice()
-
-    // Then fetch every 60 seconds
-    intervalId = setInterval(fetchPrice, 60000)
+    if (isPageVisible) { // Only set up interval if page is visible
+      fetchPrice() // Initial fetch
+      intervalId = setInterval(fetchPrice, 5000)
+    }
 
     return () => {
+      isSubscribed = false
       if (intervalId) {
         clearInterval(intervalId)
       }
     }
-  }, [selectedAsset])
+  }, [selectedAsset, isPageVisible]) // Add isPageVisible to dependencies
 
-  const formatPrice = (price: number | null, symbol: string) => {
-    if (!price) return '--.--'
+  const formatPriceWithAnimation = (currentPrice: number | null, previousPrice: number | null, symbol: string) => {
+    if (!currentPrice) return '--.--'
     
-    return price.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: symbol === 'SOL' ? 2 : 6
-    })
+    const formatNumber = (num: number) => {
+      return num.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: symbol === 'SOL' ? 2 : 6
+      })
+    }
+
+    const current = formatNumber(currentPrice)
+    const previous = previousPrice ? formatNumber(previousPrice) : null
+
+    if (!previous || !priceChangeDirection) {
+      return <span>${current}</span>
+    }
+
+    // Split the price strings into characters
+    const currentChars = current.split('')
+    const previousChars = previous.split('')
+
+    return (
+      <span>
+        $
+        {currentChars.map((char, index) => {
+          const hasChanged = char !== previousChars[index]
+          const isDigit = /\d/.test(char)
+          
+          // Only apply animation to digits that have changed
+          return (
+            <span
+              key={index}
+              className={isDigit && hasChanged ? `price-${priceChangeDirection}` : undefined}
+            >
+              {char}
+            </span>
+          )
+        })}
+      </span>
+    )
   }
 
   const handleTableRefresh = async () => {
     setIsTableRefreshing(true)
     try {
-      // Refresh price data
       const priceData = await getTokenPrice(selectedAsset)
       if (priceData) {
+        // Use the same logic as in the useEffect
+        if (currentPrice !== null && priceData.price !== currentPrice) {
+          setPreviousPrice(currentPrice)
+          setPriceChangeDirection(priceData.price > currentPrice ? 'up' : 'down')
+          setTimeout(() => setPriceChangeDirection(null), 1000)
+        }
         setCurrentPrice(priceData.price)
         setPriceChange24h(priceData.priceChange24h)
       }
@@ -278,12 +335,12 @@ export function OptionsChain() {
         {/* Left side - Price and Asset Selector */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-col">
-            {isLoading ? (
+            {initialLoad && isLoading ? (
               <div className="h-9 animate-pulse bg-muted rounded" />
             ) : (
               <>
                 <h2 className="text-3xl font-bold">
-                  ${formatPrice(currentPrice, selectedAsset)}
+                  {formatPriceWithAnimation(currentPrice, previousPrice, selectedAsset)}
                 </h2>
                 <span className={`text-sm font-medium mb-2 ${
                   priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
