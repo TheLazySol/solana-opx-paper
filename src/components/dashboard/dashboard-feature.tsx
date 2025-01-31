@@ -98,7 +98,7 @@ export default function DashboardFeature() {
 
       {/* Additional Resources */}
       <div className="flex flex-col items-center gap-4 mt-16">
-        <h2 className="text-2xl font-semibold">Additional Resources</h2>
+        <h2 className="text-xl font-medium opacity-50">Additional Resources</h2>
         <div className="flex gap-4">
           {additionalResources.map((resource) => (
             <a
