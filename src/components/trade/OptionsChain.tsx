@@ -262,6 +262,7 @@ export function OptionsChain() {
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let isSubscribed = true
+    const PRICE_UPDATE_INTERVAL = 5000 // 5 seconds
 
     const fetchPrice = async () => {
       if (!isPageVisible) return
@@ -286,10 +287,11 @@ export function OptionsChain() {
       }
     }
 
-    if (isPageVisible) {
-      fetchPrice()
-      intervalId = setInterval(fetchPrice, 5000)
-    }
+    // Initial fetch
+    fetchPrice()
+    
+    // Set up interval for subsequent fetches
+    intervalId = setInterval(fetchPrice, PRICE_UPDATE_INTERVAL)
 
     return () => {
       isSubscribed = false
@@ -347,12 +349,21 @@ export function OptionsChain() {
   const handleTableRefresh = async () => {
     setIsTableRefreshing(true)
     try {
+      // Force fetch latest price
       const priceData = await getTokenPrice(selectedAsset)
       if (priceData) {
+        // Update with latest price immediately
         dispatch({ 
           type: 'UPDATE_PRICE', 
           price: priceData.price, 
           priceChange24h: priceData.priceChange24h 
+        })
+        
+        // Also update stored price data
+        storePriceData(selectedAsset, {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+          timestamp: Date.now()
         })
       }
     } catch (error) {

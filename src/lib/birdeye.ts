@@ -23,12 +23,13 @@ export async function getTokenPrice(tokenSymbol: string) {
       throw new Error(data.message || 'Failed to fetch price')
     }
     
-    // Add some logging to debug the response
-    console.log(`Price data for ${tokenSymbol}:`, data)
-    
+    // Extract price and 24h change from response
+    const price = data.data.value
+    const priceChange24h = data.data.priceChange24H || 0
+
     return {
-      price: data.data.value,
-      priceChange24h: data.data.priceChange24H || 0,
+      price,
+      priceChange24h,
       timestamp: data.data.timestamp
     }
   } catch (error) {
