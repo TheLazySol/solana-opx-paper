@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useReducer } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -70,11 +70,33 @@ type FormField = {
   onBlur: () => void;
 }
 
+interface PriceState {
+  currentPrice: number | null;
+  previousPrice: number | null;
+  priceChange24h: number;
+}
+
+const priceReducer = (state: PriceState, action: any) => {
+  switch (action.type) {
+    case 'UPDATE_PRICE':
+      return {
+        ...state,
+        previousPrice: state.currentPrice ?? 0,
+        currentPrice: action.price,
+        priceChange24h: action.priceChange24h,
+      };
+    default:
+      return state;
+  }
+};
+
 export function MintOptionFeature() {
   const [selectedAsset, setSelectedAsset] = useState<string>('')
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
-  const [previousPrice, setPreviousPrice] = useState<number | null>(null)
-  const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
+  const [priceState, dispatch] = useReducer(priceReducer, {
+    currentPrice: null,
+    previousPrice: null,
+    priceChange24h: 0
+  });
   const [isLoading, setIsLoading] = useState(false)
   const [initialLoad, setInitialLoad] = useState(true)
   const isPageVisible = usePageVisibility()
@@ -83,42 +105,66 @@ export function MintOptionFeature() {
     resolver: zodResolver(formSchema),
   })
 
+  const formatPriceWithAnimation = (currentPrice: number | null, previousPrice: number | null) => {
+    if (!currentPrice) return '--.--'
+    
+    const formattedPrice = currentPrice.toFixed(2)
+    const hasChanged = currentPrice !== previousPrice
+    const direction = hasChanged ? (currentPrice > (previousPrice ?? 0) ? 'up' : 'down') : null
+
+    return (
+      <span 
+        key={`price-${currentPrice}-${Date.now()}`} 
+        className={`inline-block tabular-nums ${hasChanged ? `price-flash-${direction}` : ''}`}
+      >
+        ${formattedPrice}
+      </span>
+    )
+  }
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let isSubscribed = true
+    const PRICE_UPDATE_INTERVAL = 5000 // 5 seconds
 
     const fetchPrice = async () => {
-      if (!selectedAsset || !isPageVisible) return
+      if (!selectedAsset) return
       
-      if (initialLoad) setIsLoading(true)
       try {
         const priceData = await getTokenPrice(selectedAsset)
         if (priceData && isSubscribed) {
-          setPreviousPrice(currentPrice)
-          setCurrentPrice(priceData.price)
+          console.log('New price data:', priceData)
+          dispatch({ 
+            type: 'UPDATE_PRICE', 
+            price: priceData.price, 
+            priceChange24h: priceData.priceChange24h 
+          });
+
+          if (initialLoad) {
+            setInitialLoad(false)
+            setIsLoading(false)
+          }
         }
       } catch (error) {
         console.error('Error fetching price:', error)
-      } finally {
-        if (initialLoad && isSubscribed) {
-          setInitialLoad(false)
-          setIsLoading(false)
-        }
       }
     }
 
-    if (selectedAsset && isPageVisible) {
+    if (selectedAsset) {
+      console.log('Setting up price updates for:', selectedAsset)
       fetchPrice()
-      intervalId = setInterval(fetchPrice, 5000)
+      intervalId = setInterval(fetchPrice, PRICE_UPDATE_INTERVAL)
     }
 
     return () => {
       isSubscribed = false
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
+      if (intervalId) clearInterval(intervalId)
     }
-  }, [selectedAsset, isPageVisible, currentPrice, initialLoad])
+  }, [selectedAsset, initialLoad])
+
+  useEffect(() => {
+    console.log('Price state updated:', priceState)
+  }, [priceState])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newOption = {
@@ -145,47 +191,6 @@ export function MintOptionFeature() {
 
     // Here you would typically dispatch this to your state management solution
     console.log('New option created:', newOption)
-  }
-
-  const formatPriceWithAnimation = (currentPrice: number | null, previousPrice: number | null, symbol: string) => {
-    if (!currentPrice) return 'N/A'
-    
-    const formatNumber = (num: number) => {
-      return num.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: symbol === 'SOL' ? 2 : 6
-      })
-    }
-
-    const current = formatNumber(currentPrice)
-    const previous = previousPrice ? formatNumber(previousPrice) : null
-
-    if (!previous || !priceChangeDirection) {
-      return <span>${current}</span>
-    }
-
-    // Split the price strings into characters
-    const currentChars = current.split('')
-    const previousChars = previous.split('')
-
-    return (
-      <span>
-        $
-        {currentChars.map((char, index) => {
-          const hasChanged = char !== previousChars[index]
-          const isDigit = /\d/.test(char)
-          
-          return (
-            <span
-              key={index}
-              className={isDigit && hasChanged ? `price-${priceChangeDirection}` : undefined}
-            >
-              {char}
-            </span>
-          )
-        })}
-      </span>
-    )
   }
 
   return (
@@ -229,7 +234,7 @@ export function MintOptionFeature() {
                           </div>
                         ) : (
                           <div className="text-sm text-muted-foreground">
-                            Current market price: {formatPriceWithAnimation(currentPrice, previousPrice, selectedAsset)}
+                            Current market price: {formatPriceWithAnimation(priceState.currentPrice, priceState.previousPrice)}
                           </div>
                         )}
                       </div>
