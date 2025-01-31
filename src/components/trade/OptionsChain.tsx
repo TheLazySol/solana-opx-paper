@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useReducer } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { ChevronDown, Filter, RefreshCw } from "lucide-react"
@@ -33,6 +33,7 @@ import { Keypair, PublicKey } from '@solana/web3.js'
 import { EXPIRATION_DATES } from "@/lib/constants"
 import { getTokenPrice } from '@/lib/birdeye'
 import { usePageVisibility } from '@/hooks/usePageVisibility'
+import { getPriceFromStorage, storePriceData } from '@/lib/priceStorage'
 
 interface OptionParameter {
   id: string
@@ -67,6 +68,30 @@ interface MarketPrices {
   }
 }
 
+interface PriceState {
+  currentPrice: number | null;
+  previousPrice: number | null;
+  priceChange24h: number;
+  isLoading: boolean;
+  initialLoad: boolean;
+}
+
+const priceReducer = (state: PriceState, action: any) => {
+  switch (action.type) {
+    case 'UPDATE_PRICE':
+      return {
+        ...state,
+        previousPrice: state.currentPrice ?? 0,
+        currentPrice: action.price,
+        priceChange24h: action.priceChange24h,
+        isLoading: false,
+        initialLoad: false
+      };
+    default:
+      return state;
+  }
+};
+
 export function OptionsChain() {
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
   const [selectedAsset, setSelectedAsset] = useState("SOL")
@@ -76,20 +101,22 @@ export function OptionsChain() {
   const [limitPrices, setLimitPrices] = useState<Record<string, number>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [marketPrices, setMarketPrices] = useState<MarketPrices>({})
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
-  const [priceChange24h, setPriceChange24h] = useState<number>(0)
-  const [isLoading, setIsLoading] = useState(true)
+  const [priceState, dispatch] = useReducer(priceReducer, {
+    currentPrice: null,
+    previousPrice: null,
+    priceChange24h: 0,
+    isLoading: true,
+    initialLoad: true
+  })
   const [isTableRefreshing, setIsTableRefreshing] = useState(false)
-  const [previousPrice, setPreviousPrice] = useState<number | null>(null)
   const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
-  const [initialLoad, setInitialLoad] = useState(true)
   const isPageVisible = usePageVisibility()
   
   // Get current price data based on selected asset
   const currentPriceData = {
-    price: currentPrice ?? 0,
-    change: priceChange24h,
-    direction: priceChange24h >= 0 ? 'up' as const : 'down' as const
+    price: priceState.currentPrice ?? 0,
+    change: priceState.priceChange24h,
+    direction: priceState.priceChange24h >= 0 ? 'up' as const : 'down' as const
   }
 
   // Calculate height based on number of strikes
@@ -220,51 +247,79 @@ export function OptionsChain() {
     return mockPrices
   }
 
+  // Initialize with stored data if available
+  useEffect(() => {
+    const storedData = getPriceFromStorage(selectedAsset)
+    if (storedData) {
+      dispatch({ 
+        type: 'UPDATE_PRICE', 
+        price: storedData.price, 
+        priceChange24h: storedData.priceChange24h 
+      })
+    }
+  }, [selectedAsset])
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let isSubscribed = true
 
     const fetchPrice = async () => {
-      if (!isPageVisible) return // Skip if page is not visible
+      if (!isPageVisible) return
       
-      if (initialLoad) setIsLoading(true)
       try {
         const priceData = await getTokenPrice(selectedAsset)
         if (priceData && isSubscribed) {
-          if (currentPrice !== null && priceData.price !== currentPrice) {
-            setPreviousPrice(currentPrice)
-            setPriceChangeDirection(priceData.price > currentPrice ? 'up' : 'down')
-            setTimeout(() => {
-              if (isSubscribed) {
-                setPriceChangeDirection(null)
-              }
-            }, 1000)
-          }
-          setCurrentPrice(priceData.price)
-          setPriceChange24h(priceData.priceChange24h)
+          dispatch({ 
+            type: 'UPDATE_PRICE', 
+            price: priceData.price, 
+            priceChange24h: priceData.priceChange24h 
+          });
+          
+          storePriceData(selectedAsset, {
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+            timestamp: Date.now()
+          })
         }
       } catch (error) {
         console.error('Error fetching price:', error)
-      } finally {
-        if (initialLoad) {
-          setInitialLoad(false)
-          setIsLoading(false)
-        }
       }
     }
 
-    if (isPageVisible) { // Only set up interval if page is visible
-      fetchPrice() // Initial fetch
+    if (isPageVisible) {
+      fetchPrice()
       intervalId = setInterval(fetchPrice, 5000)
     }
 
     return () => {
       isSubscribed = false
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
+      if (intervalId) clearInterval(intervalId)
     }
-  }, [selectedAsset, isPageVisible]) // Add isPageVisible to dependencies
+  }, [selectedAsset, isPageVisible])
+
+  const PriceDigit = ({ 
+    currentDigit, 
+    previousDigit, 
+    isNumber,
+    isPartOfChangedSegment
+  }: { 
+    currentDigit: string
+    previousDigit?: string
+    isNumber: boolean
+    isPartOfChangedSegment: boolean
+  }) => {
+    const direction = isPartOfChangedSegment && previousDigit 
+      ? (Number(currentDigit) > Number(previousDigit) ? 'up' : 'down') 
+      : null
+
+    if (!isNumber) return <span>{currentDigit}</span>
+
+    return (
+      <span className={isPartOfChangedSegment ? (direction === 'up' ? 'price-flash-up' : 'price-flash-down') : ''}>
+        {currentDigit}
+      </span>
+    )
+  }
 
   const formatPriceWithAnimation = (currentPrice: number | null, previousPrice: number | null, symbol: string) => {
     if (!currentPrice) return '--.--'
@@ -277,33 +332,14 @@ export function OptionsChain() {
     }
 
     const current = formatNumber(currentPrice)
-    const previous = previousPrice ? formatNumber(previousPrice) : null
 
-    if (!previous || !priceChangeDirection) {
-      return <span>${current}</span>
-    }
-
-    // Split the price strings into characters
-    const currentChars = current.split('')
-    const previousChars = previous.split('')
-
+    // Always create a new span element with a unique key to force re-render
     return (
-      <span>
-        $
-        {currentChars.map((char, index) => {
-          const hasChanged = char !== previousChars[index]
-          const isDigit = /\d/.test(char)
-          
-          // Only apply animation to digits that have changed
-          return (
-            <span
-              key={index}
-              className={isDigit && hasChanged ? `price-${priceChangeDirection}` : undefined}
-            >
-              {char}
-            </span>
-          )
-        })}
+      <span 
+        key={`price-${currentPrice}-${Date.now()}`} 
+        className={`tabular-nums ${currentPrice !== previousPrice ? `price-flash-${currentPrice > (previousPrice ?? 0) ? 'up' : 'down'}` : ''}`}
+      >
+        ${current}
       </span>
     )
   }
@@ -313,14 +349,11 @@ export function OptionsChain() {
     try {
       const priceData = await getTokenPrice(selectedAsset)
       if (priceData) {
-        // Use the same logic as in the useEffect
-        if (currentPrice !== null && priceData.price !== currentPrice) {
-          setPreviousPrice(currentPrice)
-          setPriceChangeDirection(priceData.price > currentPrice ? 'up' : 'down')
-          setTimeout(() => setPriceChangeDirection(null), 1000)
-        }
-        setCurrentPrice(priceData.price)
-        setPriceChange24h(priceData.priceChange24h)
+        dispatch({ 
+          type: 'UPDATE_PRICE', 
+          price: priceData.price, 
+          priceChange24h: priceData.priceChange24h 
+        })
       }
     } catch (error) {
       console.error('Error refreshing data:', error)
@@ -335,18 +368,18 @@ export function OptionsChain() {
         {/* Left side - Price and Asset Selector */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-col">
-            {initialLoad && isLoading ? (
+            {priceState.initialLoad && priceState.isLoading ? (
               <div className="h-9 animate-pulse bg-muted rounded" />
             ) : (
               <>
                 <h2 className="text-3xl font-bold">
-                  {formatPriceWithAnimation(currentPrice, previousPrice, selectedAsset)}
+                  {formatPriceWithAnimation(priceState.currentPrice, priceState.previousPrice, selectedAsset)}
                 </h2>
                 <span className={`text-sm font-medium mb-2 ${
-                  priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
+                  priceState.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
                 }`}>
-                  {priceChange24h >= 0 ? '↑' : '↓'} {
-                    Math.abs(priceChange24h).toFixed(2)
+                  {priceState.priceChange24h >= 0 ? '↑' : '↓'} {
+                    Math.abs(priceState.priceChange24h).toFixed(2)
                   }%
                 </span>
               </>

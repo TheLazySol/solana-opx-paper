@@ -94,15 +94,7 @@ export function MintOptionFeature() {
       try {
         const priceData = await getTokenPrice(selectedAsset)
         if (priceData && isSubscribed) {
-          if (currentPrice !== null && priceData.price !== currentPrice) {
-            setPreviousPrice(currentPrice)
-            setPriceChangeDirection(priceData.price > currentPrice ? 'up' : 'down')
-            setTimeout(() => {
-              if (isSubscribed) {
-                setPriceChangeDirection(null)
-              }
-            }, 1000)
-          }
+          setPreviousPrice(currentPrice)
           setCurrentPrice(priceData.price)
         }
       } catch (error) {
@@ -126,7 +118,7 @@ export function MintOptionFeature() {
         clearInterval(intervalId)
       }
     }
-  }, [selectedAsset, isPageVisible])
+  }, [selectedAsset, isPageVisible, currentPrice, initialLoad])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newOption = {

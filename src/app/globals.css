@@ -209,29 +209,26 @@ body {
   background-color: rgba(75, 75, 75, 0.5);
 }
 
-/* Add these animation classes */
-@keyframes priceUp {
-  0% {
-    background-color: rgba(34, 197, 94, 0.4); /* Increased opacity for green */
-  }
-  100% {
-    background-color: transparent;
-  }
+/* Add this new style */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-@keyframes priceDown {
-  0% {
-    background-color: rgba(239, 68, 68, 0.4); /* Increased opacity for red */
-  }
-  100% {
-    background-color: transparent;
-  }
+/* Add these new keyframes and classes */
+@keyframes priceFlashGreen {
+  0% { background-color: rgba(34, 197, 94, 0.3); }
+  100% { background-color: transparent; }
 }
 
-.price-up {
-  animation: priceUp 1s ease-out;
+@keyframes priceFlashRed {
+  0% { background-color: rgba(239, 68, 68, 0.3); }
+  100% { background-color: transparent; }
 }
 
-.price-down {
-  animation: priceDown 1s ease-out;
+.price-flash-up {
+  animation: priceFlashGreen 0.3s ease-out forwards;
+}
+
+.price-flash-down {
+  animation: priceFlashRed 0.3s ease-out forwards;
 }

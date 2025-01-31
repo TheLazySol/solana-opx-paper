@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react'
 
 export function usePageVisibility() {
-  const [isVisible, setIsVisible] = useState(!document.hidden)
+  // Initialize with true and update after mount
+  const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    // Only access document after component mounts
+    if (typeof document !== 'undefined') {
       setIsVisible(!document.hidden)
-    }
 
-    // Listen to visibility change events
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+      const handleVisibilityChange = () => {
+        setIsVisible(!document.hidden)
+      }
 
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
     }
   }, [])
 
