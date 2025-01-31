@@ -64,10 +64,10 @@ export default function DashboardFeature() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-8">
-      <h1 className="text-7xl font-light tracking-wide text-center
+      <h1 className="text-8xl font-light tracking-wide text-center
         [text-shadow:_0_0_30px_rgba(255,255,255,0.5),_0_0_60px_rgba(255,255,255,0.2)]
         transition-all duration-300 hover:[text-shadow:_0_0_40px_rgba(255,255,255,0.6),_0_0_80px_rgba(255,255,255,0.3)]">
-        Epicentral OPX
+        Solana OPX
       </h1>
       <p className="text-xl text-muted-foreground">
         The first decentralized options exchange on Solana
