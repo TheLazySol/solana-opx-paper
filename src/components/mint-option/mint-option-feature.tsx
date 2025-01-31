@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { format } from 'date-fns'
 import { CalendarIcon, InfoIcon } from 'lucide-react'
+import { getTokenPrice } from '@/lib/birdeye'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -69,9 +70,45 @@ type FormField = {
 }
 
 export function MintOptionFeature() {
+  const [selectedAsset, setSelectedAsset] = useState<string>('')
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   })
+
+  // Add useEffect to fetch price when asset changes
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout
+
+    const fetchPrice = async () => {
+      if (!selectedAsset) return
+      
+      setIsLoading(true)
+      try {
+        const priceData = await getTokenPrice(selectedAsset)
+        if (priceData) {
+          setCurrentPrice(priceData.price)
+        }
+      } catch (error) {
+        console.error('Error fetching price:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPrice()
+    
+    // Update price every 60 seconds
+    intervalId = setInterval(fetchPrice, 60000)
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [selectedAsset])
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newOption = {
@@ -100,6 +137,15 @@ export function MintOptionFeature() {
     console.log('New option created:', newOption)
   }
 
+  const formatPrice = (price: number | null, symbol: string) => {
+    if (!price) return 'N/A'
+    
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: symbol === 'SOL' ? 2 : 6
+    })
+  }
+
   return (
     <div className="container max-w-2xl mx-auto py-10">
       <Card>
@@ -115,7 +161,13 @@ export function MintOptionFeature() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asset</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        setSelectedAsset(value)
+                      }} 
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select asset" />
@@ -126,6 +178,19 @@ export function MintOptionFeature() {
                         <SelectItem value="LABS">LABS</SelectItem>
                       </SelectContent>
                     </Select>
+                    {selectedAsset && (
+                      <div className="mt-2">
+                        {isLoading ? (
+                          <div className="text-sm text-muted-foreground animate-pulse">
+                            Loading price...
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            Current market price: ${formatPrice(currentPrice, selectedAsset)}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -182,7 +247,74 @@ export function MintOptionFeature() {
                 )}
               />
 
-              {/* ... other form fields ... */}
+              <FormField
+                control={form.control}
+                name="strikePrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Strike Price</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5">$</span>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="0"
+                          className="pl-6"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Enter the strike price for the option
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="number" placeholder="1" />
+                    </FormControl>
+                    <FormDescription>
+                      Number of contracts to mint
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="premium"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Premium</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5">$</span>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.000001"
+                          placeholder="0.000000"
+                          className="pl-6"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Set the premium price per contract
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button type="submit" className="w-full">Mint Option</Button>
             </form>
           </Form>

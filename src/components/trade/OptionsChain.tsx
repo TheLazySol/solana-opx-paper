@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { ChevronDown, Filter } from "lucide-react"
+import { ChevronDown, Filter, RefreshCw } from "lucide-react"
 import { OptionsChainTable } from "./OptionsChainTable"
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
 import { EXPIRATION_DATES } from "@/lib/constants"
+import { getTokenPrice } from '@/lib/birdeye'
 
 interface OptionParameter {
   id: string
@@ -58,20 +59,6 @@ const underlyingAssets = [
   { value: "LABS", label: "Epicentral Labs (LABS)" },
 ]
 
-// Mock market prices - will be replaced with API data later
-const mockMarketPrices = {
-  SOL: {
-    price: 24.54,
-    change: 2.34,  // Percentage change
-    direction: 'up' as const // or 'down'
-  },
-  LABS: {
-    price: 1.23,
-    change: -0.67,
-    direction: 'down' as const
-  }
-}
-
 interface MarketPrices {
   [key: string]: {
     bid: number;
@@ -88,9 +75,17 @@ export function OptionsChain() {
   const [limitPrices, setLimitPrices] = useState<Record<string, number>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [marketPrices, setMarketPrices] = useState<MarketPrices>({})
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
+  const [priceChange24h, setPriceChange24h] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isTableRefreshing, setIsTableRefreshing] = useState(false)
   
   // Get current price data based on selected asset
-  const currentPriceData = mockMarketPrices[selectedAsset as keyof typeof mockMarketPrices]
+  const currentPriceData = {
+    price: currentPrice ?? 0,
+    change: priceChange24h,
+    direction: priceChange24h >= 0 ? 'up' as const : 'down' as const
+  }
 
   // Calculate height based on number of strikes
   const tableHeight = Math.min(600, 10 * 42 + 50); // 10 strikes * 42px per row + 50px buffer
@@ -220,24 +215,85 @@ export function OptionsChain() {
     return mockPrices
   }
 
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout
+
+    const fetchPrice = async () => {
+      setIsLoading(true)
+      try {
+        const priceData = await getTokenPrice(selectedAsset)
+        if (priceData) {
+          console.log(`Fetched ${selectedAsset} price:`, priceData) // Add logging
+          setCurrentPrice(priceData.price)
+          setPriceChange24h(priceData.priceChange24h)
+        }
+      } catch (error) {
+        console.error('Error fetching price:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    // Fetch immediately
+    fetchPrice()
+
+    // Then fetch every 60 seconds
+    intervalId = setInterval(fetchPrice, 60000)
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [selectedAsset])
+
+  const formatPrice = (price: number | null, symbol: string) => {
+    if (!price) return '--.--'
+    
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: symbol === 'SOL' ? 2 : 6
+    })
+  }
+
+  const handleTableRefresh = async () => {
+    setIsTableRefreshing(true)
+    try {
+      // Refresh price data
+      const priceData = await getTokenPrice(selectedAsset)
+      if (priceData) {
+        setCurrentPrice(priceData.price)
+        setPriceChange24h(priceData.priceChange24h)
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error)
+    } finally {
+      setIsTableRefreshing(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         {/* Left side - Price and Asset Selector */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-col">
-            <h2 className="text-3xl font-bold">
-              ${currentPriceData.price.toFixed(2)}
-            </h2>
-            <span className={`text-sm font-medium mb-2 ${
-              currentPriceData.direction === 'up' 
-                ? 'text-green-500' 
-                : 'text-red-500'
-            }`}>
-              {currentPriceData.direction === 'up' ? '↑' : '↓'} {
-                Math.abs(currentPriceData.change).toFixed(2)
-              }%
-            </span>
+            {isLoading ? (
+              <div className="h-9 animate-pulse bg-muted rounded" />
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold">
+                  ${formatPrice(currentPrice, selectedAsset)}
+                </h2>
+                <span className={`text-sm font-medium mb-2 ${
+                  priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {priceChange24h >= 0 ? '↑' : '↓'} {
+                    Math.abs(priceChange24h).toFixed(2)
+                  }%
+                </span>
+              </>
+            )}
           </div>
           <Select
             value={selectedAsset}
@@ -258,7 +314,7 @@ export function OptionsChain() {
 
         {/* Right side - Expiration and Filter */}
         <div className="flex flex-col">
-          <div className="flex items-end gap-4 justify-end">
+          <div className="flex items-end gap-2 justify-end">
             <div className="flex flex-col gap-1">
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
@@ -291,6 +347,7 @@ export function OptionsChain() {
                 </SelectContent>
               </Select>
             </div>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex h-9 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
@@ -318,6 +375,15 @@ export function OptionsChain() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Refresh Button - now after the filter dropdown */}
+            <button
+              onClick={handleTableRefresh}
+              disabled={isTableRefreshing}
+              className="flex h-9 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${isTableRefreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
       </div>

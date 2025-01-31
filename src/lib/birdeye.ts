@@ -1,33 +1,38 @@
 import { TOKENS } from './tokens'
 
-const BIRDEYE_API_URL = 'https://public-api.birdeye.so/public/price_v2';
+const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
 
 export async function getTokenPrice(tokenSymbol: string) {
-  const token = TOKENS[tokenSymbol as keyof typeof TOKENS];
-  if (!token) return null;
+  const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
+  if (!token) return null
 
   try {
-    const url = `${BIRDEYE_API_URL}?address=${token.address}&vsToken=So11111111111111111111111111111111111111112`
-    console.log('Fetching price for:', tokenSymbol, 'URL:', url);
-    
-    const response = await fetch(url, {
+    const options = {
       method: 'GET',
       headers: {
-        'X-API-KEY': process.env.NEXT_PUBLIC_BIRDEYE_API_KEY || '',
-        'Accept': 'application/json',
-      },
-    });
-    
-    const data = await response.json();
-    console.log('Birdeye response:', data);
+        accept: 'application/json',
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.NEXT_PUBLIC_BIRDEYE_API_KEY || 'cc9494cebc5741378eacdf8aa528feb1'
+      }
+    }
+
+    const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token.address}`, options)
+    const data = await response.json()
     
     if (!data.success) {
-      throw new Error(data.message || 'Failed to fetch price');
+      throw new Error(data.message || 'Failed to fetch price')
     }
     
-    return data.data.price;
+    // Add some logging to debug the response
+    console.log(`Price data for ${tokenSymbol}:`, data)
+    
+    return {
+      price: data.data.value,
+      priceChange24h: data.data.priceChange24H || 0,
+      timestamp: data.data.timestamp
+    }
   } catch (error) {
-    console.error(`Error fetching ${tokenSymbol} price:`, error);
-    return null;
+    console.error(`Error fetching ${tokenSymbol} price:`, error)
+    return null
   }
 }

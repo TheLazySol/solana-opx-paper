@@ -14,7 +14,9 @@ export function AssetPrice({ asset }: { asset: string | undefined }) {
       setLoading(true)
       try {
         const tokenPrice = await getTokenPrice(asset)
-        setPrice(tokenPrice)
+        if (tokenPrice) {
+          setPrice(tokenPrice.price)
+        }
       } catch (error) {
         console.error('Error fetching price:', error)
       } finally {
@@ -27,13 +29,22 @@ export function AssetPrice({ asset }: { asset: string | undefined }) {
     return () => clearInterval(interval)
   }, [asset])
 
+  const formatPrice = (price: number | null, symbol: string) => {
+    if (!price) return 'N/A'
+    
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: symbol === 'SOL' ? 2 : 6
+    })
+  }
+
   if (!asset) return null
   if (loading) return <div className="text-sm text-muted-foreground">Loading price...</div>
   if (!price) return <div className="text-sm text-muted-foreground">Price unavailable</div>
 
   return (
     <div className="text-sm text-muted-foreground">
-      Current market price: ${price.toFixed(2)}
+      Current market price: ${formatPrice(price, asset)}
     </div>
   )
 } 
