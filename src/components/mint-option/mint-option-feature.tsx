@@ -19,6 +19,17 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AssetPrice } from '@/components/price/asset-price'
+import { EXPIRATION_DATES } from "@/lib/constants"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -26,10 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AssetPrice } from '@/components/price/asset-price'
-import { EXPIRATION_DATES } from "@/lib/constants"
 
 const formSchema = z.object({
   asset: z.enum(['SOL', 'LABS'], {
@@ -37,7 +44,10 @@ const formSchema = z.object({
   }),
   expirationDate: z.string({
     required_error: "Please select an expiration date.",
-  }),
+  }).refine(
+    (date) => EXPIRATION_DATES.some(d => d.value === date),
+    "Please select a valid expiration date."
+  ),
   strikePrice: z.string().refine((val: string) => {
     const num = Number(val);
     return !isNaN(num) && num > 0 && num % 1 === 0;
@@ -195,7 +205,7 @@ export function MintOptionFeature() {
 
   return (
     <div className="container max-w-2xl mx-auto py-10">
-      <Card>
+      <Card className="bg-black text-white border-none">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Mint an Option</CardTitle>
         </CardHeader>
@@ -207,36 +217,27 @@ export function MintOptionFeature() {
                 name="asset"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asset</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setSelectedAsset(value)
-                        setInitialLoad(true) // Reset initial load for new asset
-                      }} 
-                      defaultValue={field.value}
-                    >
+                    <FormLabel className="text-white">Underlying Asset</FormLabel>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value)
+                      setSelectedAsset(value)
+                      setInitialLoad(true)
+                    }} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select asset" />
+                        <SelectTrigger className="bg-black text-white border-gray-700">
+                          <SelectValue placeholder="Select underlying asset" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-black text-white border-gray-700">
                         <SelectItem value="SOL">SOL</SelectItem>
                         <SelectItem value="LABS">LABS</SelectItem>
                       </SelectContent>
                     </Select>
                     {selectedAsset && (
                       <div className="mt-2">
-                        {initialLoad && isLoading ? (
-                          <div className="text-sm text-muted-foreground animate-pulse">
-                            Loading price...
-                          </div>
-                        ) : (
-                          <div className="text-sm text-muted-foreground">
-                            Current market price: {formatPriceWithAnimation(priceState.currentPrice, priceState.previousPrice)}
-                          </div>
-                        )}
+                        <div className="text-sm text-blue-400">
+                          Current market price: ${priceState.currentPrice?.toFixed(6) || '0.00'}
+                        </div>
                       </div>
                     )}
                     <FormMessage />
@@ -249,45 +250,19 @@ export function MintOptionFeature() {
                 name="expirationDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Expiration Date</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={EXPIRATION_DATES[0].value}>
+                    <FormLabel className="text-white">Expiration Date</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-black text-white border-gray-700">
                           <SelectValue placeholder="Select expiration date" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-black text-white border-gray-700 max-h-[300px]">
                         {EXPIRATION_DATES.map((date) => (
-                          <SelectItem 
-                            key={date.value} 
-                            value={date.value}
-                            className="text-sm"
-                          >
-                            {date.label}
+                          <SelectItem key={date.value} value={date.value}>
+                            {format(new Date(date.value), "MMMM do, yyyy")}
                           </SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="optionType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Option Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select option type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="call">Call</SelectItem>
-                        <SelectItem value="put">Put</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -300,20 +275,16 @@ export function MintOptionFeature() {
                 name="strikePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Strike Price</FormLabel>
+                    <FormLabel className="text-white">Strike Price</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5">$</span>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="0"
-                          className="pl-6"
-                        />
-                      </div>
+                      <Input
+                        {...field}
+                        placeholder="Enter strike price"
+                        className="bg-black text-white border-gray-700"
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Enter the strike price for the option
+                    <FormDescription className="text-blue-400">
+                      Enter a positive whole number for the strike price.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -325,12 +296,16 @@ export function MintOptionFeature() {
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity</FormLabel>
+                    <FormLabel className="text-white">Number of Options</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" placeholder="1" />
+                      <Input
+                        {...field}
+                        placeholder="Enter quantity"
+                        className="bg-black text-white border-gray-700"
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Number of contracts to mint
+                    <FormDescription className="text-blue-400">
+                      Each option represents 100 tokens of the underlying asset.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -342,28 +317,25 @@ export function MintOptionFeature() {
                 name="premium"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Premium</FormLabel>
+                    <FormLabel className="text-white">Premium per Option</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5">$</span>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.000001"
-                          placeholder="0.000000"
-                          className="pl-6"
-                        />
-                      </div>
+                      <Input
+                        {...field}
+                        placeholder="Enter premium amount"
+                        className="bg-black text-white border-gray-700"
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Set the premium price per contract
+                    <FormDescription className="text-blue-400">
+                      This is the total price a buyer would pay for 1 option.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full">Mint Option</Button>
+              <Button type="submit" className="w-full bg-white text-black hover:bg-gray-200">
+                Mint Option
+              </Button>
             </form>
           </Form>
         </CardContent>
