@@ -26,14 +26,14 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { OrdersContainer } from "./OrdersContainer"
-import { OptionOrder } from "@/types/order"
+import { OptionOrder, convertOrderToOption } from "@/types/order"
 import { v4 as uuidv4 } from 'uuid'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
-import { EXPIRATION_DATES } from "@/lib/constants"
 import { getTokenPrice } from '@/lib/birdeye'
 import { usePageVisibility } from '@/hooks/usePageVisibility'
 import { getPriceFromStorage, storePriceData } from '@/lib/priceStorage'
+import { useOptionsStore } from "@/stores/optionsStore"
 
 interface OptionParameter {
   id: string
@@ -95,8 +95,8 @@ const priceReducer = (state: PriceState, action: any) => {
 export function OptionsChain() {
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
   const [selectedAsset, setSelectedAsset] = useState("SOL")
-  const [selectedExpiry, setSelectedExpiry] = useState(EXPIRATION_DATES[0].value)
-  const [orders, setOrders] = useState<OptionOrder[]>([])
+  const [selectedExpiry, setSelectedExpiry] = useState<string>("")
+  const [expirationDates, setExpirationDates] = useState<Array<{ value: string; label: string }>>([])
   const { publicKey } = useWallet()
   const [limitPrices, setLimitPrices] = useState<Record<string, number>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -111,6 +111,15 @@ export function OptionsChain() {
   const [isTableRefreshing, setIsTableRefreshing] = useState(false)
   const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
   const isPageVisible = usePageVisibility()
+  const options = useOptionsStore((state) => state.options)
+  
+  // Replace the orders state with the store's options
+  const [orders, setOrders] = useState<OptionOrder[]>(options)
+  
+  // Update orders when store changes
+  useEffect(() => {
+    setOrders(options)
+  }, [options])
   
   // Get current price data based on selected asset
   const currentPriceData = {
@@ -299,6 +308,32 @@ export function OptionsChain() {
     }
   }, [selectedAsset, isPageVisible])
 
+  // Add this effect to update available expiration dates when options change
+  useEffect(() => {
+    if (orders.length > 0) {
+      const uniqueDates = Array.from(new Set(orders.map(order => order.expirationDate)))
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+        .map(date => ({
+          value: date,
+          label: new Date(date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        }))
+      
+      setExpirationDates(uniqueDates)
+      
+      // Set the first available date as selected if none is selected
+      if (!selectedExpiry && uniqueDates.length > 0) {
+        setSelectedExpiry(uniqueDates[0].value)
+      }
+    } else {
+      setExpirationDates([])
+      setSelectedExpiry("")
+    }
+  }, [orders, selectedExpiry])
+
   const PriceDigit = ({ 
     currentDigit, 
     previousDigit, 
@@ -437,14 +472,24 @@ export function OptionsChain() {
                 onValueChange={setSelectedExpiry}
               >
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select date" />
+                  {expirationDates.length > 0 ? (
+                    <SelectValue placeholder="Select date" />
+                  ) : (
+                    <span className="text-muted-foreground">No dates available</span>
+                  )}
                 </SelectTrigger>
                 <SelectContent>
-                  {EXPIRATION_DATES.map((date) => (
-                    <SelectItem key={date.value} value={date.value}>
-                      {date.label}
-                    </SelectItem>
-                  ))}
+                  {expirationDates.length > 0 ? (
+                    expirationDates.map((date) => (
+                      <SelectItem key={date.value} value={date.value}>
+                        {date.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      No options available
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -497,8 +542,9 @@ export function OptionsChain() {
               parameters={parameters.filter(p => p.visible)} 
               onOrderCreate={handleOrderCreate}
               marketPrice={currentPriceData.price}
-              options={[]}  // Initially empty array
+              options={convertOrderToOption(orders)}
               assetType={selectedAsset as 'SOL' | 'LABS'}
+              selectedExpiry={selectedExpiry}
             />
           </div>
           <ScrollBar orientation="vertical" />

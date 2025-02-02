@@ -13,7 +13,7 @@ export const metadata = {
   ],
 }
 
-const links: { label: string; path: string }[] = [
+const links = [
   { label: 'Trade', path: '/trade' },
   { label: 'Portfolio', path: '/account' },
   { label: 'Mint Option', path: '/mint-option' },

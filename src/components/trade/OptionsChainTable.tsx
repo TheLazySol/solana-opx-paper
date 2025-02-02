@@ -37,6 +37,7 @@ interface OptionsChainTableProps {
   marketPrice: number
   options: Option[]
   assetType: 'SOL' | 'LABS'
+  selectedExpiry: string
 }
 
 export function OptionsChainTable({ 
@@ -44,7 +45,8 @@ export function OptionsChainTable({
   onOrderCreate, 
   marketPrice = 24.54,
   options = [], 
-  assetType = 'SOL'
+  assetType = 'SOL',
+  selectedExpiry
 }: OptionsChainTableProps) {
   // Only use the provided options, remove default strikes
   const strikes = options.map(option => ({
@@ -231,9 +233,16 @@ export function OptionsChainTable({
       type: orderType,
       optionSide,
       size: 1,
-      bidPrice: price * 0.95,  // Example bid price
-      askPrice: price * 1.05   // Example ask price
+      bidPrice: price * 0.95,
+      askPrice: price * 1.05,
+      expirationDate: selectedExpiry
     })
+  }
+
+  // Add this helper function
+  const formatValue = (value: number | undefined) => {
+    if (value === undefined || value === 0) return "-"
+    return value.toFixed(2)
   }
 
   return (
@@ -303,9 +312,7 @@ export function OptionsChainTable({
                     }
                   }}
                 >
-                  {param.id === 'iv' 
-                    ? `${row.call[param.id].toFixed(2)}%`
-                    : row.call[param.id as keyof typeof row.call]?.toFixed(2)}
+                  {param.id === 'iv' ? formatValue(row.call.iv) + '%' : formatValue(row.call[param.id as keyof typeof row.call])}
                 </td>
               ))}
               {/* Strike Price */}
@@ -335,9 +342,7 @@ export function OptionsChainTable({
                     }
                   }}
                 >
-                  {param.id === 'iv' 
-                    ? `${row.put[param.id].toFixed(2)}%`
-                    : row.put[param.id as keyof typeof row.put]?.toFixed(2)}
+                  {param.id === 'iv' ? formatValue(row.put.iv) + '%' : formatValue(row.put[param.id as keyof typeof row.put])}
                 </td>
               ))}
             </tr>

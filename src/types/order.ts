@@ -18,4 +18,51 @@ export interface OptionOrder {
   optionMint?: PublicKey // The option token mint address
   size?: number        // Number of contracts
   status: 'pending' | 'filled' | 'cancelled'
+  expirationDate: string
+}
+
+export interface Option {
+  strike: number
+  call: {
+    iv: number
+    volume: number
+    oi: number
+    theta: number
+    delta: number
+    bid: number
+    ask: number
+  }
+  put: {
+    iv: number
+    volume: number
+    oi: number
+    theta: number
+    delta: number
+    bid: number
+    ask: number
+  }
+}
+
+export function convertOrderToOption(orders: OptionOrder[]): Option[] {
+  const optionsMap = new Map<number, Option>()
+  
+  orders.forEach(order => {
+    const strike = order.strike
+    if (!optionsMap.has(strike)) {
+      optionsMap.set(strike, {
+        strike,
+        call: { iv: 0, volume: 0, oi: 0, theta: 0, delta: 0, bid: 0, ask: 0 },
+        put: { iv: 0, volume: 0, oi: 0, theta: 0, delta: 0, bid: 0, ask: 0 }
+      })
+    }
+    
+    const option = optionsMap.get(strike)!
+    const side = order.optionSide === 'call' ? option.call : option.put
+    
+    // Only update bid/ask prices, leave other values as 0 (will show as "-")
+    side.bid = order.type === 'sell' ? order.bidPrice : order.price
+    side.ask = order.type === 'sell' ? order.price : order.askPrice
+  })
+
+  return Array.from(optionsMap.values())
 } 

@@ -1,6 +1,6 @@
 import { MintOptionForm } from "@/components/mint/MintOptionForm"
 
-export default function MintOptionPage() {
+export default function MintPage() {
   return (
     <div className="container max-w-2xl py-10">
       <div className="mb-8">
