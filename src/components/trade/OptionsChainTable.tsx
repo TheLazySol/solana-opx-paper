@@ -48,12 +48,23 @@ export function OptionsChainTable({
   assetType = 'SOL',
   selectedExpiry
 }: OptionsChainTableProps) {
-  // Only use the provided options, remove default strikes
-  const strikes = options.map(option => ({
-    ...option,
-    isMarketPrice: option.strike === Math.floor(marketPrice) || 
-                   (option.strike < marketPrice && (option.strike + 1) > marketPrice)
-  }))
+  // Add the helper function first
+  const shouldShowMarketPriceLine = (strike: number, marketPrice: number, options: Option[]) => {
+    const allStrikes = options.map(o => o.strike).sort((a, b) => a - b)
+    
+    if (allStrikes.length === 0) return false
+    
+    // Find the strike price that's just below the market price
+    return strike === Math.max(...allStrikes.filter(s => s < marketPrice))
+  }
+
+  // Then use it in the strikes mapping
+  const strikes = [...options]
+    .sort((a, b) => a.strike - b.strike)
+    .map(option => ({
+      ...option,
+      isMarketPrice: shouldShowMarketPriceLine(option.strike, marketPrice, options)
+    }))
 
   // If no strikes, show empty message or return null
   if (strikes.length === 0) {
@@ -349,10 +360,15 @@ export function OptionsChainTable({
             {row.isMarketPrice && (
               <tr className="market-price-row">
                 <td colSpan={parameters.length * 2 + 1} className="p-0">
-                  <div className="relative">
-                    <div className="absolute w-full border-t-2 border-blue-500" />
-                    <div className="absolute right-4 -top-3 bg-background px-2 text-xs text-blue-500">
-                      Market Price: ${marketPrice}
+                  <div className="relative h-[1px]">
+                    <div 
+                      className="absolute w-full border-t-2 border-blue-500" 
+                    />
+                    <div 
+                      className="absolute right-4 bg-background px-2 text-xs text-blue-500"
+                      style={{ top: '-10px' }}
+                    >
+                      Market Price: ${marketPrice.toFixed(2)}
                     </div>
                   </div>
                 </td>

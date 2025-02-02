@@ -147,9 +147,6 @@ export function SummaryContainer({
             ) : (
               <span>{order.price.toFixed(2)}</span>
             )}
-            <span className="text-muted-foreground ml-1">
-              ({order.size || 1})
-            </span>
           </div>
           <div className="text-sm font-medium">
             {formatTotal(total)}

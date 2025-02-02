@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import { MarketPrices } from "@/types/market"
+import { useWallet } from "@solana/wallet-adapter-react"
 
 interface OrdersContainerProps {
   orders: OptionOrder[]
@@ -30,9 +31,15 @@ export function OrdersContainer({
   isRefreshing = false,
   currentMarketPrices
 }: OrdersContainerProps) {
+  const { publicKey } = useWallet()
   const [status, setStatus] = useState<PositionStatus>("pending")
   const maxLegs = 4
   const isMaxLegsReached = orders.length >= maxLegs
+
+  // Filter orders to only show those owned by the connected wallet
+  const walletOrders = orders.filter(order => 
+    order.owner.toString() === publicKey?.toString()
+  )
 
   const handleQuantityChange = (order: OptionOrder, increment: boolean) => {
     const newSize = increment ? (order.size || 1) + 1 : (order.size || 1) - 1
@@ -78,13 +85,13 @@ export function OrdersContainer({
   const renderContent = () => {
     switch (status) {
       case "pending":
-        return uniqueOrders.length === 0 ? (
+        return walletOrders.length === 0 ? (
           <div className="text-sm text-muted-foreground">
-            No pending positions. Select options above to create a position.
+            No pending positions. Mint an option to create a position.
           </div>
         ) : (
           <div className="space-y-2">
-            {uniqueOrders.map((order) => (
+            {walletOrders.map((order) => (
               <div
                 key={order.publicKey.toString()}
                 className="flex items-center justify-between py-1.5 px-2 border rounded-lg shadow-sm 
@@ -94,35 +101,14 @@ export function OrdersContainer({
                 <div className="flex items-center gap-4">
                   {formatOrderDescription(order)}
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-5 w-5 p-0"
-                      onClick={() => handleQuantityChange(order, false)}
-                    >
-                      <Minus className="h-2.5 w-2.5" />
-                    </Button>
-                    <span className="min-w-[1.5rem] text-center text-sm">
-                      {order.size || 1}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-5 w-5 p-0"
-                      onClick={() => handleQuantityChange(order, true)}
-                    >
-                      <Plus className="h-2.5 w-2.5" />
-                    </Button>
-                  </div>
+                <div className="flex items-center">
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 hover:bg-destructive/90 hover:text-destructive-foreground"
+                    size="sm"
+                    className="h-7 px-3 text-xs hover:bg-destructive/90 hover:text-destructive-foreground"
                     onClick={() => onRemoveOrder(order.publicKey.toString())}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    Cancel
                   </Button>
                 </div>
               </div>
@@ -206,7 +192,7 @@ export function OrdersContainer({
 
       {/* Summary Panel (2/5) */}
       <SummaryContainer 
-        orders={status === "pending" ? uniqueOrders : []} 
+        orders={orders} 
         selectedAsset={selectedAsset}
         className="col-span-2"
         onUpdateLimitPrice={onUpdateLimitPrice}

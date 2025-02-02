@@ -19,6 +19,7 @@ export interface OptionOrder {
   size?: number        // Number of contracts
   status: 'pending' | 'filled' | 'cancelled'
   expirationDate: string
+  fromChainAction?: boolean  // Add this property
 }
 
 export interface Option {
@@ -59,9 +60,13 @@ export function convertOrderToOption(orders: OptionOrder[]): Option[] {
     const option = optionsMap.get(strike)!
     const side = order.optionSide === 'call' ? option.call : option.put
     
-    // Only update bid/ask prices, leave other values as 0 (will show as "-")
-    side.bid = order.type === 'sell' ? order.bidPrice : order.price
-    side.ask = order.type === 'sell' ? order.price : order.askPrice
+    // Only set ask price for sell orders (newly minted options)
+    // Keep bid at 0 so it shows as "-"
+    if (order.type === 'sell') {
+      side.ask = order.price
+    } else {
+      side.bid = order.price
+    }
   })
 
   return Array.from(optionsMap.values())

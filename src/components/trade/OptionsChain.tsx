@@ -112,14 +112,9 @@ export function OptionsChain() {
   const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
   const isPageVisible = usePageVisibility()
   const options = useOptionsStore((state) => state.options)
-  
-  // Replace the orders state with the store's options
-  const [orders, setOrders] = useState<OptionOrder[]>(options)
-  
-  // Update orders when store changes
-  useEffect(() => {
-    setOrders(options)
-  }, [options])
+  const addOption = useOptionsStore((state) => state.addOption)
+  const removeOption = useOptionsStore((state) => state.removeOption)
+  const updateOption = useOptionsStore((state) => state.updateOption)
   
   // Get current price data based on selected asset
   const currentPriceData = {
@@ -143,28 +138,7 @@ export function OptionsChain() {
   }
 
   const handleOrderCreate = (orderData: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => {
-    if (!publicKey) {
-      console.error('Wallet not connected')
-      return
-    }
-
-    // Check if this order type already exists
-    const existingOrder = orders.find(order => 
-      order.strike === orderData.strike && 
-      order.optionSide === orderData.optionSide && 
-      order.type === orderData.type
-    )
-
-    if (existingOrder) {
-      // If it exists, increment its quantity
-      handleUpdateQuantity(existingOrder.publicKey.toString(), (existingOrder.size || 1) + 1)
-      return
-    }
-
-    if (orders.length >= 4) {
-      console.error('Maximum number of legs reached')
-      return
-    }
+    if (!publicKey) return
 
     const newOrder: OptionOrder = {
       ...orderData,
@@ -172,23 +146,18 @@ export function OptionsChain() {
       timestamp: new Date(),
       owner: publicKey,
       status: 'pending',
-      size: 1,
-      bidPrice: orderData.type === 'buy' ? orderData.price : orderData.price * 0.95, // Example bid price
-      askPrice: orderData.type === 'buy' ? orderData.price * 1.05 : orderData.price, // Example ask price
+      size: 1
     }
-    setOrders((prev) => [newOrder, ...prev])
+
+    addOption(newOrder)
   }
 
   const handleUpdateQuantity = (publicKey: string, newSize: number) => {
-    setOrders(prev => prev.map(order => 
-      order.publicKey.toString() === publicKey 
-        ? { ...order, size: newSize }
-        : order
-    ))
+    updateOption(publicKey, { size: newSize })
   }
 
   const handleRemoveOrder = (publicKey: string) => {
-    setOrders((prev) => prev.filter((order) => order.publicKey.toString() !== publicKey))
+    removeOption(publicKey)
   }
 
   const handleLimitPriceUpdate = (publicKey: string, price: number) => {
@@ -206,22 +175,22 @@ export function OptionsChain() {
       setMarketPrices(latestPrices)
       
       // Update orders with new prices
-      setOrders(prevOrders => prevOrders.map(order => {
-        const orderKey = `${order.optionSide}-${order.strike}`
-        const latestPrices = marketPrices[orderKey]
-        if (latestPrices) {
-          return {
-            ...order,
-            price: order.type === 'buy' ? latestPrices.ask : latestPrices.bid,
-            bidPrice: latestPrices.bid,
-            askPrice: latestPrices.ask
+      if (publicKey) {
+        options.forEach(order => {
+          const orderKey = `${order.optionSide}-${order.strike}`
+          const latestPrices = marketPrices[orderKey]
+          if (latestPrices) {
+            updateOption(order.publicKey.toString(), {
+              price: order.type === 'buy' ? latestPrices.ask : latestPrices.bid,
+              bidPrice: latestPrices.bid,
+              askPrice: latestPrices.ask
+            })
           }
-        }
-        return order
-      }))
+        })
+      }
 
       // Revalidate all current limit orders with new prices
-      orders.forEach(order => {
+      options.forEach(order => {
         const publicKey = order.publicKey.toString()
         const currentLimitPrice = limitPrices[publicKey]
         if (currentLimitPrice) {
@@ -243,7 +212,7 @@ export function OptionsChain() {
     const mockPrices: MarketPrices = {}
     
     // For each existing order, generate new prices
-    orders.forEach(order => {
+    options.forEach(order => {
       const key = `${order.optionSide}-${order.strike}`
       const randomChange = (Math.random() - 0.5) * 0.5 // -0.25 to +0.25 change
       
@@ -310,8 +279,8 @@ export function OptionsChain() {
 
   // Add this effect to update available expiration dates when options change
   useEffect(() => {
-    if (orders.length > 0) {
-      const uniqueDates = Array.from(new Set(orders.map(order => order.expirationDate)))
+    if (options.length > 0) {
+      const uniqueDates = Array.from(new Set(options.map(order => order.expirationDate)))
         .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
         .map(date => ({
           value: date,
@@ -332,7 +301,7 @@ export function OptionsChain() {
       setExpirationDates([])
       setSelectedExpiry("")
     }
-  }, [orders, selectedExpiry])
+  }, [options, selectedExpiry])
 
   const PriceDigit = ({ 
     currentDigit, 
@@ -542,7 +511,7 @@ export function OptionsChain() {
               parameters={parameters.filter(p => p.visible)} 
               onOrderCreate={handleOrderCreate}
               marketPrice={currentPriceData.price}
-              options={convertOrderToOption(orders)}
+              options={convertOrderToOption(options)}
               assetType={selectedAsset as 'SOL' | 'LABS'}
               selectedExpiry={selectedExpiry}
             />
@@ -554,7 +523,7 @@ export function OptionsChain() {
 
       {/* Orders Section */}
       <OrdersContainer 
-        orders={orders} 
+        orders={options}
         onRemoveOrder={handleRemoveOrder}
         onUpdateQuantity={handleUpdateQuantity}
         selectedAsset={selectedAsset}
