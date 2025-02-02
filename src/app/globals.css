@@ -1,9 +1,12 @@
+/* Import Tailwind CSS base styles, components, and utilities */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Define base theme variables and styles */
 @layer base {
   :root {
+    /* Light theme color variables */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
 
@@ -33,8 +36,12 @@
     --ring: 0 0% 3.9%;
  
     --radius: 0.5rem;
+
+    /* Scrollbar styling */
     scrollbar-width: thin;
     scrollbar-color: rgba(75, 75, 75, 0.3) transparent;
+
+    /* Chart colors for light theme */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -42,6 +49,7 @@
     --chart-5: 27 87% 67%;
   }
  
+  /* Dark theme color overrides */
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
@@ -70,6 +78,8 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Chart colors for dark theme */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -78,10 +88,12 @@
   }
 }
  
+/* Apply base styles to all elements */
 @layer base {
   * {
     @apply border-border;
   }
+  /* Set background and text colors for body */
   body {
     @apply bg-background text-foreground;
     background-image: url('/WebPageBackground.png');
@@ -94,17 +106,19 @@
   }
 }
 
+/* Dark theme body background override */
 .dark body {
   background-color: rgba(0, 0, 0, 0.85);
   background-blend-mode: multiply;
 }
 
+/* Full height layout */
 html,
 body {
     height: 100%;
 }
 
-/* Remove or comment out the old styles */
+/* Legacy wallet adapter styles - commented out */
 /* .wallet-adapter-button {
   background-color: #4a85ff !important;
 }
@@ -117,7 +131,8 @@ body {
   background-color: rgba(74, 133, 255, 0.9) !important;
 } */
 
-/* Wallet Button Styles */
+/* Wallet adapter styling */
+/* Main wallet button */
 .wallet-adapter-button-trigger {
   background: #4a85ff !important;
   height: 36px !important;
@@ -135,13 +150,13 @@ body {
   gap: 8px !important;
 }
 
-/* Dropdown styles */
+/* Wallet dropdown container */
 .wallet-adapter-dropdown {
   display: flex !important;
   align-items: center !important;
 }
 
-/* Modal styles */
+/* Wallet modal styling */
 .wallet-adapter-modal-wrapper {
   background: #1a1a1a !important;
 }
@@ -164,8 +179,9 @@ body {
   font-weight: 500 !important;
 }
 
+/* Custom utility classes */
 @layer utilities {
-  /* Modern scrollbar styling */
+  /* Modern scrollbar styling for custom elements */
   .scrollbar-custom {
     scrollbar-width: thin;
     scrollbar-color: rgba(75, 75, 75, 0.3) transparent;
@@ -190,7 +206,7 @@ body {
   }
 }
 
-/* Webkit browsers (Chrome, Safari, etc) */
+/* Global scrollbar styling for Webkit browsers */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -209,12 +225,12 @@ body {
   background-color: rgba(75, 75, 75, 0.5);
 }
 
-/* Add this new style */
+/* Numeric font variant for consistent number widths */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Add these new keyframes and classes */
+/* Price change animation keyframes and classes */
 @keyframes priceFlashGreen {
   0% { background-color: rgba(34, 197, 94, 0.3); }
   100% { background-color: transparent; }
@@ -225,6 +241,7 @@ body {
   100% { background-color: transparent; }
 }
 
+/* Classes for price change animations */
 .price-flash-up {
   animation: priceFlashGreen 0.3s ease-out forwards;
 }
