@@ -162,7 +162,7 @@ export function MintOptionForm() {
     if (values.strikePrice && values.expirationDate) {
       debounceTimer.current = setTimeout(() => {
         calculateOptionPrice(values)
-      }, 1000) // 1 second delay
+      }, 5000)
     }
 
     return () => {
@@ -170,7 +170,7 @@ export function MintOptionForm() {
         clearTimeout(debounceTimer.current)
       }
     }
-  }, [form.watch(['strikePrice', 'expirationDate', 'optionType', 'asset']), calculateOptionPrice])
+  }, [form, calculateOptionPrice])
 
   const addOptionToSummary = () => {
     const values = form.getValues()
