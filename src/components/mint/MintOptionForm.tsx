@@ -65,6 +65,23 @@ const formSchema = z.object({
     .min(1, { message: "Quantity must be at least 1" })
 })
 
+function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    // Add 14 days (2 weeks)
+    currentDate.setDate(currentDate.getDate() + 14);
+  }
+  return dates;
+}
+
+// Generate the allowed dates
+const startDate = new Date(2025, 0, 1); // January 1st, 2025
+const endDate = new Date(2026, 0, 1);   // January 1st, 2026
+const allowedDates = getBiWeeklyDates(startDate, endDate);
+
 export function MintOptionForm() {
   const router = useRouter()
   const { publicKey } = useWallet()
@@ -264,13 +281,28 @@ export function MintOptionForm() {
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date() || date > new Date(2025, 12, 31)
-                    }
+                    disabled={(date) => {
+                      // Disable dates before current UTC time
+                      const now = new Date();
+                      if (date < now) return true;
+                      
+                      // Disable dates not in the allowed bi-weekly dates
+                      return !allowedDates.some(allowedDate => 
+                        allowedDate.getFullYear() === date.getFullYear() &&
+                        allowedDate.getMonth() === date.getMonth() &&
+                        allowedDate.getDate() === date.getDate()
+                      );
+                    }}
                     initialFocus
+                    defaultMonth={startDate}
+                    fromDate={new Date()} // Current date as minimum
+                    toDate={endDate}      // January 1st, 2026 as maximum
                   />
                 </PopoverContent>
               </Popover>
+              <FormDescription>
+                Select from available bi-weekly expiration dates
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
