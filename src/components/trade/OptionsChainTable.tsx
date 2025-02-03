@@ -251,9 +251,10 @@ export function OptionsChainTable({
   }
 
   // Add this helper function
-  const formatValue = (value: number | undefined) => {
+  const formatValue = (value: number | undefined, isVolume = false) => {
     if (typeof value !== 'number' || value === 0) return "-"
-    return value.toFixed(2)
+    // Format volume as whole number, other values with 2 decimal places
+    return isVolume ? Math.round(value).toString() : value.toFixed(2)
   }
 
   return (
@@ -323,7 +324,12 @@ export function OptionsChainTable({
                     }
                   }}
                 >
-                  {param.id === 'iv' ? formatValue(row.call.iv) + '%' : formatValue(row.call[param.id as keyof typeof row.call])}
+                  {param.id === 'iv' 
+                    ? formatValue(row.call.iv) + '%' 
+                    : param.id === 'volume'
+                    ? formatValue(row.call.volume, true)
+                    : formatValue(row.call[param.id as keyof typeof row.call])
+                  }
                 </td>
               ))}
               {/* Strike Price */}
@@ -353,7 +359,12 @@ export function OptionsChainTable({
                     }
                   }}
                 >
-                  {param.id === 'iv' ? formatValue(row.put.iv) + '%' : formatValue(row.put[param.id as keyof typeof row.put])}
+                  {param.id === 'iv' 
+                    ? formatValue(row.put.iv) + '%' 
+                    : param.id === 'volume'
+                    ? formatValue(row.put.volume, true)
+                    : formatValue(row.put[param.id as keyof typeof row.put])
+                  }
                 </td>
               ))}
             </tr>
