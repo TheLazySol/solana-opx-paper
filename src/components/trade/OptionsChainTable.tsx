@@ -252,7 +252,7 @@ export function OptionsChainTable({
 
   // Add this helper function
   const formatValue = (value: number | undefined) => {
-    if (value === undefined || value === 0) return "-"
+    if (typeof value !== 'number' || value === 0) return "-"
     return value.toFixed(2)
   }
 

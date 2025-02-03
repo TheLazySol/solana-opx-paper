@@ -60,14 +60,13 @@ export function convertOrderToOption(orders: OptionOrder[]): Option[] {
     const option = optionsMap.get(strike)!
     const side = order.optionSide === 'call' ? option.call : option.put
     
-    // Update volume based on order size
-    side.volume += order.size || 1
-    
-    // Set prices as before
+    // Update volume for all trades (buys, sells, and mints)
     if (order.type === 'sell') {
       side.ask = order.price
-    } else {
+      side.volume += order.size || 1  // Add volume for sells/mints
+    } else if (order.type === 'buy') {
       side.bid = order.price
+      side.volume += order.size || 1  // Add volume for buys
     }
   })
 

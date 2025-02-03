@@ -36,6 +36,7 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { useOptionsStore } from "@/stores/optionsStore"
 import { PublicKey, Keypair } from "@solana/web3.js"
 import { OptionOrder } from "@/types/order"
+import { MakerSummary } from "./MakerSummary"
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -58,6 +59,8 @@ export function MintOptionForm() {
   const { publicKey } = useWallet()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const addOption = useOptionsStore((state) => state.addOption)
+  const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([])
+  const maxLegs = 4
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,31 +73,79 @@ export function MintOptionForm() {
     },
   })
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!publicKey) return
+  // Watch form values for MakerSummary
+  const formValues = form.watch()
+
+  const addOptionToSummary = () => {
+    const values = form.getValues()
+    
+    // Get unique strikes and option types
+    const uniqueStrikes = new Set(pendingOptions.map(opt => opt.strikePrice))
+    const uniqueOptionTypes = new Set(pendingOptions.map(opt => opt.optionType))
+    
+    // Check if new option would exceed limits
+    if (!uniqueStrikes.has(values.strikePrice)) {
+      if (uniqueStrikes.size >= 4) {
+        form.setError('root', { 
+          message: 'Maximum of 4 different strike prices allowed' 
+        })
+        return
+      }
+    }
+    
+    if (!uniqueOptionTypes.has(values.optionType) && uniqueOptionTypes.size >= 2) {
+      form.setError('root', { 
+        message: 'Only calls and puts are allowed' 
+      })
+      return
+    }
+    
+    // Add the option if it passes the checks
+    setPendingOptions(prev => [...prev, values])
+    form.reset({
+      asset: "SOL",
+      optionType: "call",
+      strikePrice: '',
+      premium: '',
+      quantity: 1,
+      expirationDate: values.expirationDate // Keep the same date
+    })
+    form.clearErrors('root')
+  }
+
+  const removeOptionFromSummary = (index: number) => {
+    setPendingOptions(prev => prev.filter((_, i) => i !== index))
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault() // Prevent default form submission
+    if (!publicKey || pendingOptions.length === 0) return
 
     setIsSubmitting(true)
     try {
-      const newOption: OptionOrder = {
-        publicKey: new PublicKey(Keypair.generate().publicKey),
-        strike: Number(values.strikePrice),
-        price: Number(values.premium),
-        bidPrice: 0,
-        askPrice: Number(values.premium),
-        type: 'sell',
-        optionSide: values.optionType,
-        timestamp: new Date(),
-        owner: publicKey,
-        status: 'pending',
-        size: values.quantity,
-        expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
-      }
+      // Create all pending options
+      pendingOptions.forEach(values => {
+        const newOption: OptionOrder = {
+          publicKey: new PublicKey(Keypair.generate().publicKey),
+          strike: Number(values.strikePrice),
+          price: Number(values.premium),
+          bidPrice: 0,
+          askPrice: Number(values.premium),
+          type: 'sell',
+          optionSide: values.optionType,
+          timestamp: new Date(),
+          owner: publicKey,
+          status: 'pending',
+          size: values.quantity,
+          expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
+        }
+        addOption(newOption)
+      })
 
-      addOption(newOption)
-
+      setPendingOptions([])
       router.push("/trade")
     } catch (error) {
-      console.error('Error minting option:', error)
+      console.error('Error minting options:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -102,7 +153,7 @@ export function MintOptionForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={onSubmit} className="space-y-8">
         <FormField
           control={form.control}
           name="asset"
@@ -238,7 +289,7 @@ export function MintOptionForm() {
           name="quantity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Quantity (1 = 100 tokens)</FormLabel>
+              <FormLabel>Quantity</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -255,8 +306,38 @@ export function MintOptionForm() {
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Minting..." : "Mint Option"}
+        {form.formState.errors.root && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.root.message}
+          </p>
+        )}
+
+        <Button 
+          type="button" 
+          variant="secondary"
+          onClick={addOptionToSummary}
+          disabled={!form.formState.isValid || !form.getValues().strikePrice || !form.getValues().premium}
+        >
+          Add Option
+        </Button>
+
+        <MakerSummary 
+          options={pendingOptions}
+          onRemoveOption={removeOptionFromSummary}
+        />
+
+        {pendingOptions.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Please add at least 1 option contract to the summary before minting!
+          </p>
+        )}
+
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || pendingOptions.length === 0}
+          className="w-full"
+        >
+          {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
         </Button>
       </form>
     </Form>
