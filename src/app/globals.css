@@ -10,31 +10,40 @@
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
 
+    /* Card colors */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
  
+    /* Popover colors */
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
  
+    /* Primary colors */
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 98%;
  
+    /* Secondary colors */
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
  
+    /* Muted colors */
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
  
+    /* Accent colors */
     --accent: 0 0% 96.1%;
     --accent-foreground: 0 0% 9%;
  
+    /* Destructive colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
+    /* Border, input and ring colors */
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
  
+    /* Border radius */
     --radius: 0.5rem;
 
     /* Scrollbar styling */
@@ -51,30 +60,39 @@
  
   /* Dark theme color overrides */
   .dark {
+    /* Background and text colors */
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
  
+    /* Card colors */
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
  
+    /* Popover colors */
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
  
+    /* Primary colors */
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
  
+    /* Secondary colors */
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
  
+    /* Muted colors */
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
  
+    /* Accent colors */
     --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
  
+    /* Destructive colors */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
  
+    /* Border, input and ring colors */
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
@@ -96,8 +114,11 @@
   /* Set background and text colors for body */
   body {
     @apply bg-background text-foreground;
-    background-image: url('/WebPageBackground.png');
-    background-size: cover;
+    background-image: 
+      radial-gradient(circle at 30% 40%, rgba(74, 133, 255, 0.15) 0%, transparent 70%),
+      radial-gradient(circle at 70% 60%, rgba(74, 133, 255, 0.15) 0%, transparent 70%),
+      url('/WebPageBackground.png');
+    background-size: 100% 100%, 100% 100%, cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
@@ -109,7 +130,7 @@
 /* Dark theme body background override */
 .dark body {
   background-color: rgba(0, 0, 0, 0.85);
-  background-blend-mode: multiply;
+  background-blend-mode: multiply, multiply, multiply, multiply;
 }
 
 /* Full height layout */

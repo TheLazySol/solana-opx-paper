@@ -146,7 +146,8 @@ export function OptionsChain() {
       timestamp: new Date(),
       owner: publicKey,
       status: 'pending',
-      size: 1
+      size: 1,
+      volume: 1 // Initialize volume
     }
 
     addOption(newOrder)

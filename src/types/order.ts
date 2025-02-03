@@ -20,6 +20,7 @@ export interface OptionOrder {
   status: 'pending' | 'filled' | 'cancelled'
   expirationDate: string
   fromChainAction?: boolean  // Add this property
+  volume?: number
 }
 
 export interface Option {

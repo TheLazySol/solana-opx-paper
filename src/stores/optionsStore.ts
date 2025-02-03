@@ -9,6 +9,7 @@ interface OptionsState {
   removeOption: (publicKey: string) => void
   updateOption: (publicKey: string, updates: Partial<OptionOrder>) => void
   clearOptions: () => void
+  updateVolume: (strike: number, optionSide: 'call' | 'put', size: number) => void
 }
 
 const persistConfig: PersistOptions<OptionsState> = {
@@ -52,7 +53,28 @@ export const useOptionsStore = create<OptionsState>()(
   persist(
     (set) => ({
       options: [],
-      addOption: (option) => set((state) => ({ options: [...state.options, option] })),
+      addOption: (option) => set((state) => {
+        const existingOptions = state.options
+        const matchingOption = existingOptions.find(
+          o => o.strike === option.strike && o.optionSide === option.optionSide
+        )
+        
+        if (matchingOption) {
+          return {
+            options: [
+              ...existingOptions.filter(o => o !== matchingOption),
+              {
+                ...option,
+                volume: (matchingOption.volume || 0) + (option.size || 1)
+              }
+            ]
+          }
+        }
+        
+        return { 
+          options: [...state.options, { ...option, volume: option.size }] 
+        }
+      }),
       removeOption: (publicKey) => set((state) => ({ 
         options: state.options.filter((o) => o.publicKey.toString() !== publicKey)
       })),
@@ -61,7 +83,19 @@ export const useOptionsStore = create<OptionsState>()(
           o.publicKey.toString() === publicKey ? { ...o, ...updates } : o
         )
       })),
-      clearOptions: () => set({ options: [] })
+      clearOptions: () => set({ options: [] }),
+      updateVolume: (strike, optionSide, size) => set((state) => {
+        const updatedOptions = state.options.map(option => {
+          if (option.strike === strike && option.optionSide === optionSide) {
+            return {
+              ...option,
+              volume: (option.volume || 0) + size
+            }
+          }
+          return option
+        })
+        return { options: updatedOptions }
+      })
     }),
     persistConfig
   )
