@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -37,6 +37,9 @@ import { useOptionsStore } from "@/stores/optionsStore"
 import { PublicKey, Keypair } from "@solana/web3.js"
 import { OptionOrder } from "@/types/order"
 import { MakerSummary } from "./MakerSummary"
+import { calculateOption } from '@/lib/option-calculator'
+import { AssetPrice } from '../price/asset-price'
+import { getTokenPrice } from '@/lib/birdeye'
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -104,6 +107,70 @@ export function MintOptionForm() {
 
   // Watch form values for MakerSummary
   const formValues = form.watch()
+
+  // Add state for calculated values
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
+
+  // Add debounce timer ref
+  const debounceTimer = useRef<NodeJS.Timeout>()
+
+  // Update the calculateOptionPrice function
+  const calculateOptionPrice = useCallback(async (values: z.infer<typeof formSchema>) => {
+    const spotPrice = await getTokenPrice(values.asset)
+    if (!spotPrice || !values.expirationDate) return
+
+    const timeUntilExpiry = Math.floor(
+      (values.expirationDate.getTime() - Date.now()) / 1000
+    )
+
+    try {
+      // Convert volatility from percentage to decimal (35% -> 0.35) | These values will be imported via another API
+      const volatility = 0.35  // 35%
+      // Convert risk-free rate from percentage to decimal (8% -> 0.08) | The risk free value can actually be pulled from another API
+      const riskFreeRate = 0.08  // 8%
+
+      console.log('Calculating with:', {
+        spotPrice: spotPrice.price,
+        strikePrice: Number(values.strikePrice),
+        timeUntilExpiry,
+        volatility,
+        riskFreeRate
+      });
+
+      const result = await calculateOption({
+        isCall: values.optionType === 'call',
+        strikePrice: Number(values.strikePrice),
+        spotPrice: spotPrice.price,
+        timeUntilExpirySeconds: timeUntilExpiry,
+        volatility,
+        riskFreeRate
+      })
+
+      setCalculatedPrice(result.price)
+    } catch (error) {
+      console.error('Error calculating option:', error)
+    }
+  }, [])
+
+  // Replace the existing useEffect with this debounced version
+  useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current)
+    }
+
+    const values = form.getValues()
+    if (values.strikePrice && values.expirationDate) {
+      debounceTimer.current = setTimeout(() => {
+        calculateOptionPrice(values)
+      }, 1000) // 1 second delay
+    }
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current)
+      }
+    }
+  }, [form.watch(['strikePrice', 'expirationDate', 'optionType', 'asset']), calculateOptionPrice])
 
   const addOptionToSummary = () => {
     const values = form.getValues()
@@ -360,8 +427,10 @@ export function MintOptionForm() {
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
-                  placeholder="Enter premium"
+                  step="0.0001"
+                  placeholder={calculatedPrice 
+                    ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
+                    : "Enter premium"}
                   {...field}
                 />
               </FormControl>
@@ -445,6 +514,12 @@ export function MintOptionForm() {
         >
           {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
         </Button>
+
+        {calculatedPrice !== null && (
+          <div className="text-sm text-muted-foreground">
+            Suggested premium: ${calculatedPrice.toFixed(2)}
+          </div>
+        )}
       </form>
     </Form>
   )
