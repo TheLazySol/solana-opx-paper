@@ -7,8 +7,8 @@ import {ThemeProvider} from '@/components/theme-provider'
 import type { Metadata } from 'next'
 
 export const metadata = {
-  title: 'Epicentral DOEX',
-  description: 'A decentralized options exchange created by Epicentral Labs',
+  title: 'Solana OPX | Epicentral Labs',
+  description: 'The first decentralized options exchange on Solana',
   icons: [
     { rel: 'icon', url: '/favicon.png' },
   ],
