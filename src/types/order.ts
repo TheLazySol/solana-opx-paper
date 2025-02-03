@@ -60,8 +60,10 @@ export function convertOrderToOption(orders: OptionOrder[]): Option[] {
     const option = optionsMap.get(strike)!
     const side = order.optionSide === 'call' ? option.call : option.put
     
-    // Only set ask price for sell orders (newly minted options)
-    // Keep bid at 0 so it shows as "-"
+    // Update volume based on order size
+    side.volume += order.size || 1
+    
+    // Set prices as before
     if (order.type === 'sell') {
       side.ask = order.price
     } else {

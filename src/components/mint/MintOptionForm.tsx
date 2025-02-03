@@ -49,6 +49,8 @@ const formSchema = z.object({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     { message: "Premium must be a positive number" }
   ),
+  quantity: z.coerce.number()
+    .min(1, { message: "Quantity must be a positive number" })
 })
 
 export function MintOptionForm() {
@@ -62,6 +64,9 @@ export function MintOptionForm() {
     defaultValues: {
       asset: "SOL",
       optionType: "call",
+      strikePrice: '',
+      premium: '',
+      quantity: 1,
     },
   })
 
@@ -81,7 +86,7 @@ export function MintOptionForm() {
         timestamp: new Date(),
         owner: publicKey,
         status: 'pending',
-        size: 1,
+        size: values.quantity,
         expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
       }
 
@@ -222,6 +227,28 @@ export function MintOptionForm() {
               </FormControl>
               <FormDescription>
                 The price to purchase this option
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="quantity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Quantity (1 = 100 tokens)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Enter quantity"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Each option contract represents 100 tokens of the underlying asset
               </FormDescription>
               <FormMessage />
             </FormItem>

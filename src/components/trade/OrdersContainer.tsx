@@ -77,6 +77,9 @@ export function OrdersContainer({
         </span>
         <span>
           {selectedAsset} {order.optionSide.toUpperCase()} ${order.strike} Strike @ {order.price.toFixed(2)}
+          <span className="text-muted-foreground ml-2">
+            ({order.size || 1} contract{(order.size || 1) > 1 ? 's' : ''})
+          </span>
         </span>
       </div>
     )
