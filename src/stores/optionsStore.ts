@@ -8,6 +8,7 @@ interface OptionsState {
   addOption: (option: OptionOrder) => void
   removeOption: (publicKey: string) => void
   updateOption: (publicKey: string, updates: Partial<OptionOrder>) => void
+  clearOptions: () => void
 }
 
 const persistConfig: PersistOptions<OptionsState> = {
@@ -59,7 +60,8 @@ export const useOptionsStore = create<OptionsState>()(
         options: state.options.map((o) => 
           o.publicKey.toString() === publicKey ? { ...o, ...updates } : o
         )
-      }))
+      })),
+      clearOptions: () => set({ options: [] })
     }),
     persistConfig
   )

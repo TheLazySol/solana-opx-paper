@@ -36,10 +36,25 @@ export function OrdersContainer({
   const maxLegs = 4
   const isMaxLegsReached = orders.length >= maxLegs
 
-  // Filter orders to only show those owned by the connected wallet
-  const walletOrders = orders.filter(order => 
-    order.owner.toString() === publicKey?.toString()
-  )
+  // Filter orders by wallet and status
+  const getFilteredOrders = () => {
+    const walletOrders = orders.filter(order => 
+      order.owner.toString() === publicKey?.toString()
+    )
+
+    switch (status) {
+      case "pending":
+        // Only show orders from chain actions (bid/ask clicks)
+        return walletOrders.filter(order => order.fromChainAction)
+      case "open":
+        // Show minted options (short positions)
+        return walletOrders.filter(order => !order.fromChainAction)
+      case "closed":
+        return []
+      default:
+        return []
+    }
+  }
 
   const handleQuantityChange = (order: OptionOrder, increment: boolean) => {
     const newSize = increment ? (order.size || 1) + 1 : (order.size || 1) - 1
@@ -86,54 +101,45 @@ export function OrdersContainer({
   }
 
   const renderContent = () => {
-    switch (status) {
-      case "pending":
-        return walletOrders.length === 0 ? (
-          <div className="text-sm text-muted-foreground">
-            No pending positions. Mint an option to create a position.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {walletOrders.map((order) => (
-              <div
-                key={order.publicKey.toString()}
-                className="flex items-center justify-between py-1.5 px-2 border rounded-lg shadow-sm 
-                  dark:bg-black bg-white hover:bg-zinc-50 dark:hover:bg-muted/20 
-                  transition-colors border-border/50"
-              >
-                <div className="flex items-center gap-4">
-                  {formatOrderDescription(order)}
-                </div>
-                <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-3 text-xs hover:bg-destructive/90 hover:text-destructive-foreground"
-                    onClick={() => onRemoveOrder(order.publicKey.toString())}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        );
+    const filteredOrders = getFilteredOrders()
 
-      case "open":
-        return (
-          <div className="text-sm text-muted-foreground">
-            No open positions. Create and submit a position to see it here.
-          </div>
-        );
-
-      case "closed":
-        return (
-          <div className="text-sm text-muted-foreground">
-            No closed positions. Positions that have been closed, exercised or expired will appear here.
-          </div>
-        );
+    if (filteredOrders.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground">
+          {status === "pending" && "No pending orders. Orders from the option chain will appear here."}
+          {status === "open" && "No open positions. Mint an option to create a position."}
+          {status === "closed" && "No closed positions. Positions that have been closed will appear here."}
+        </div>
+      )
     }
-  };
+
+    return (
+      <div className="space-y-2">
+        {filteredOrders.map((order) => (
+          <div
+            key={order.publicKey.toString()}
+            className="flex items-center justify-between py-1.5 px-2 border rounded-lg shadow-sm 
+              dark:bg-black bg-white hover:bg-zinc-50 dark:hover:bg-muted/20 
+              transition-colors border-border/50"
+          >
+            <div className="flex items-center gap-4">
+              {formatOrderDescription(order)}
+            </div>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-xs hover:bg-destructive/90 hover:text-destructive-foreground"
+                onClick={() => onRemoveOrder(order.publicKey.toString())}
+              >
+                {status === "open" ? "Close" : "Cancel"}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-5 gap-4">
