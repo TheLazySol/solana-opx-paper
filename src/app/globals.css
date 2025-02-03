@@ -225,6 +225,41 @@ body {
   .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     background-color: rgba(75, 75, 75, 0.5);
   }
+
+  .scrollbar-hide-delay {
+    /* Only apply to vertical scrollbar */
+    scrollbar-width: auto;
+    transition: scrollbar-width 0.5s ease-in-out;
+  }
+  
+  /* Vertical scrollbar */
+  .scrollbar-hide-delay::-webkit-scrollbar:vertical {
+    width: 6px;
+    transition: width 0.5s ease-in-out;
+  }
+  
+  /* Horizontal scrollbar - keep it visible */
+  .scrollbar-hide-delay::-webkit-scrollbar:horizontal {
+    height: 6px;
+  }
+  
+  .scrollbar-hide-delay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-hide-delay::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 75, 75, 0.3);
+    border-radius: 20px;
+  }
+  
+  /* Hide only vertical scrollbar when not scrolling */
+  .scrollbar-hide-delay:not(:hover):not(:focus):not(:active)::-webkit-scrollbar:vertical {
+    width: 0;
+  }
+  
+  .scrollbar-hide-delay:not(:hover):not(:focus):not(:active) {
+    scrollbar-width: none;
+  }
 }
 
 /* Global scrollbar styling for Webkit browsers */

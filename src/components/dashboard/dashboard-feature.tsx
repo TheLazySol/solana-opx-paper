@@ -63,7 +63,11 @@ export default function DashboardFeature() {
   ]
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-8">
+    <div className="flex flex-col items-center justify-center 
+      min-h-screen py-32 gap-8 
+      px-4 sm:px-6 lg:px-8
+      scrollbar-hide-delay"
+    >
       <div className="relative">
         <div className="absolute inset-0 -z-10 
           bg-[radial-gradient(circle_at_center,rgba(74,133,255,0.2)_0%,transparent_70%)] 
@@ -99,9 +103,9 @@ export default function DashboardFeature() {
             <p className="text-sm text-muted-foreground mb-4">{card.description}</p>
             <Button 
               variant="outline"
-              className="w-full bg-transparent border border-[#4a85ff]/20
-                hover:border-[#4a85ff] hover:bg-[#4a85ff]/10 hover:text-[#4a85ff] 
-                transition-all duration-300 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+              className="w-full bg-transparent border border-[#e5e5e5] dark:border-[#2e2e2e]
+                hover:border-[#4a85ff] hover:text-[#4a85ff] hover:stroke-[#4a85ff] hover:bg-transparent
+                transition-all duration-300"
             >
               {card.buttonText}
             </Button>
@@ -110,7 +114,7 @@ export default function DashboardFeature() {
       </div>
 
       {/* Additional Resources */}
-      <div className="flex flex-col items-center gap-4 mt-32">
+      <div className="flex flex-col items-center gap-4 mt-48">
         <h2 className="text-xl font-medium opacity-50">Additional Resources</h2>
         <div className="flex gap-4">
           {additionalResources.map((resource) => (
