@@ -41,17 +41,28 @@ import { MakerSummary } from "./MakerSummary"
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
   optionType: z.enum(["call", "put"]),
-  expirationDate: z.date(),
+  expirationDate: z.date({
+    required_error: "Expiration date is required",
+  }),
   strikePrice: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    (val) => {
+      const num = Number(val);
+      if (isNaN(num) || num <= 0) return false;
+      return true;
+    },
     { message: "Strike price must be a positive number" }
   ),
   premium: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    (val) => {
+      const num = Number(val);
+      return !isNaN(num) && num > 0;
+    },
     { message: "Premium must be a positive number" }
   ),
-  quantity: z.coerce.number()
-    .min(1, { message: "Quantity must be a positive number" })
+  quantity: z.coerce
+    .number()
+    .int({ message: "Quantity must be a whole number" })
+    .min(1, { message: "Quantity must be at least 1" })
 })
 
 export function MintOptionForm() {
@@ -70,6 +81,7 @@ export function MintOptionForm() {
       strikePrice: '',
       premium: '',
       quantity: 1,
+      expirationDate: undefined,
     },
   })
 
@@ -78,6 +90,14 @@ export function MintOptionForm() {
 
   const addOptionToSummary = () => {
     const values = form.getValues()
+    
+    // Validate all fields are present
+    if (!values.strikePrice || !values.premium || !values.expirationDate) {
+      form.setError('root', { 
+        message: 'Please fill in all required fields' 
+      })
+      return
+    }
     
     // Get unique strikes and option types
     const uniqueStrikes = new Set(pendingOptions.map(opt => opt.strikePrice))
@@ -151,6 +171,13 @@ export function MintOptionForm() {
     }
   }
 
+  console.log('Form State:', {
+    values: formValues,
+    errors: form.formState.errors,
+    isValid: form.formState.isValid,
+    isDirty: form.formState.isDirty,
+  })
+
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-8">
@@ -182,17 +209,26 @@ export function MintOptionForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Option Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select option type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="call">Call</SelectItem>
-                  <SelectItem value="put">Put</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={field.value === "call" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => field.onChange("call")}
+                  >
+                    Call
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={field.value === "put" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => field.onChange("put")}
+                  >
+                    Put
+                  </Button>
+                </div>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -249,9 +285,30 @@ export function MintOptionForm() {
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
+                  step={form.watch("asset") === "SOL" ? "1" : "0.000001"}
+                  min="0"
                   placeholder="Enter strike price"
                   {...field}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const asset = form.watch("asset");
+                    
+                    if (value === "") {
+                      field.onChange(value);
+                      return;
+                    }
+
+                    const num = Number(value);
+                    if (num < 0) return;
+
+                    if (asset === "SOL") {
+                      // For SOL, only allow whole numbers
+                      field.onChange(Math.floor(num).toString());
+                    } else {
+                      // For LABS, limit to 6 decimal places
+                      field.onChange(Number(num.toFixed(6)).toString());
+                    }
+                  }}
                 />
               </FormControl>
               <FormDescription>
@@ -294,8 +351,20 @@ export function MintOptionForm() {
                 <Input
                   type="number"
                   min="1"
+                  step="1"
                   placeholder="Enter quantity"
                   {...field}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      field.onChange(value);
+                      return;
+                    }
+                    
+                    const num = parseInt(value);
+                    if (num < 1) return;
+                    field.onChange(Math.floor(num));
+                  }}
                 />
               </FormControl>
               <FormDescription>
@@ -316,7 +385,12 @@ export function MintOptionForm() {
           type="button" 
           variant="secondary"
           onClick={addOptionToSummary}
-          disabled={!form.formState.isValid || !form.getValues().strikePrice || !form.getValues().premium}
+          disabled={
+            !form.formState.isValid || 
+            !form.getValues("strikePrice") || 
+            !form.getValues("premium") ||
+            !form.getValues("expirationDate")
+          }
         >
           Add Option
         </Button>
