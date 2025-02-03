@@ -97,12 +97,12 @@
   body {
     @apply bg-background text-foreground;
     background-image: url('/WebPageBackground.png');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
     background-attachment: fixed;
-    background-color: rgba(255, 255, 255, 0.95);
-    background-blend-mode: overlay;
+    min-height: 100vh;
+    margin: 0;
   }
 }
 

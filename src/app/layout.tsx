@@ -4,6 +4,7 @@ import {SolanaProvider} from '@/components/solana/solana-provider'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
+import type { Metadata } from 'next'
 
 export const metadata = {
   title: 'Epicentral DOEX',
@@ -23,17 +24,15 @@ const links = [
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-        <div 
-          className="fixed inset-0 z-[-1]"
-          style={{
-            backgroundImage: 'url("/WebPageBackground.png")',
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            opacity: 0.15
-          }}
-        />
+      <body style={{
+        backgroundImage: "url('/WebPageBackground.png')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        minHeight: '100vh',
+        margin: 0,
+      }}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
