@@ -7,4 +7,11 @@ export interface BirdeyePriceResponse {
   };
   success: boolean;
   message?: string;
+}
+
+export interface TokenPriceData {
+  price: number;
+  priceChange24h: number;
+  timestamp: number;
+  humanTime: string;
 } 

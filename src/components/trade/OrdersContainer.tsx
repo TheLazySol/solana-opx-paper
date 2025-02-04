@@ -146,14 +146,9 @@ export function OrdersContainer({
       {/* Main Orders Panel (3/5) */}
       <Card className="col-span-3 shadow-md dark:bg-card/20 bg-card/40">
         <CardHeader className="space-y-2 pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Positions</CardTitle>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Positions</h2>
             <div className="flex items-center gap-2">
-              {status === "pending" && isMaxLegsReached && (
-                <span className="text-sm text-[#4a85ff]">
-                  Maximum legs reached (4)
-                </span>
-              )}
               <Button
                 variant="ghost"
                 size="icon"

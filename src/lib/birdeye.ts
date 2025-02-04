@@ -35,6 +35,7 @@ export async function getTokenPrice(tokenSymbol: string) {
     
     return {
       price: data.data.value,
+      priceChange24h: data.data.priceChange24H || 0,
       timestamp: data.data.updateUnixTime,
       humanTime: data.data.updateHumanTime
     }

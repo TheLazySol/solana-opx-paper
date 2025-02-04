@@ -34,6 +34,7 @@ import { getTokenPrice } from '@/lib/birdeye'
 import { usePageVisibility } from '@/hooks/usePageVisibility'
 import { getPriceFromStorage, storePriceData } from '@/lib/priceStorage'
 import { useOptionsStore } from "@/stores/optionsStore"
+import { TokenPriceData } from '@/types/birdeye'
 
 interface OptionParameter {
   id: string
