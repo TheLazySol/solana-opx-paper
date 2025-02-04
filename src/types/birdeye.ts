@@ -3,7 +3,8 @@ export interface BirdeyePriceResponse {
     value: number;
     updateUnixTime: number;
     updateHumanTime: string;
+    priceChange24H?: number;
   };
   success: boolean;
-  timestamp: number;
+  message?: string;
 } 
