@@ -18,12 +18,19 @@ import {
 
 export function AccountBalance({ address }: { address: PublicKey }) {
   const query = useGetBalance({ address })
+  const percentageChange = 2.45 // This should match the last value from chart data
 
   return (
-    <div>
-      <h1 className="text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
-        {query.data ? <BalanceSol balance={query.data} /> : '...'} SOL
-      </h1>
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-gray-500 text-lg">Portfolio Value:</span>
+      <div className="flex items-center gap-3">
+        <h1 className="text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
+          ${(546.88).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </h1>
+        <span className={`text-2xl ${percentageChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%
+        </span>
+      </div>
     </div>
   )
 }
@@ -188,77 +195,42 @@ export function AccountTokens({ address }: { address: PublicKey }) {
 
 export function AccountTransactions({ address }: { address: PublicKey }) {
   const query = useGetSignatures({ address })
-  const [showAll, setShowAll] = useState(false)
-
-  const items = useMemo(() => {
-    if (showAll) return query.data
-    return query.data?.slice(0, 5)
-  }, [query.data, showAll])
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between">
-        <h2 className="text-2xl font-bold">Transaction History</h2>
-        <div className="space-x-2">
-          {query.isLoading ? (
-            <span className="loading loading-spinner"></span>
-          ) : (
-            <button className="btn btn-sm btn-outline" onClick={() => query.refetch()}>
-              <IconRefresh size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-      {query.isError && <pre className="alert alert-error">Error: {query.error?.message.toString()}</pre>}
-      {query.isSuccess && (
-        <div>
-          {query.data.length === 0 ? (
-            <div>No transactions found.</div>
-          ) : (
-            <table className="table border-4 rounded-lg border-separate border-base-300">
-              <thead>
-                <tr>
-                  <th>Signature</th>
-                  <th className="text-right">Slot</th>
-                  <th>Block Time</th>
-                  <th className="text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items?.map((item) => (
-                  <tr key={item.signature}>
-                    <th className="font-mono">
-                      <ExplorerLink path={`tx/${item.signature}`} label={ellipsify(item.signature, 8)} />
-                    </th>
-                    <td className="font-mono text-right">
-                      <ExplorerLink path={`block/${item.slot}`} label={item.slot.toString()} />
-                    </td>
-                    <td>{new Date((item.blockTime ?? 0) * 1000).toISOString()}</td>
-                    <td className="text-right">
-                      {item.err ? (
-                        <div className="badge badge-error" title={JSON.stringify(item.err)}>
-                          Failed
-                        </div>
-                      ) : (
-                        <div className="badge badge-success">Success</div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {(query.data?.length ?? 0) > 5 && (
-                  <tr>
-                    <td colSpan={4} className="text-center">
-                      <button className="btn btn-xs btn-outline" onClick={() => setShowAll(!showAll)}>
-                        {showAll ? 'Show Less' : 'Show All'}
-                      </button>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+    <div className="overflow-x-auto max-h-[200px] scrollbar-custom">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 bg-card z-10">
+          <tr>
+            <th className="text-left py-2 px-2">Signature</th>
+            <th className="text-left py-2 px-2">Slot</th>
+            <th className="text-left py-2 px-2">Block Time</th>
+            <th className="text-center py-2 px-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {query.data?.map((item) => (
+            <tr 
+              key={item.signature} 
+              className="border-b dark:border-gray-800 hover:bg-accent/10 transition-colors cursor-pointer"
+            >
+              <td className="py-1.5 px-2">
+                <ExplorerLink 
+                  path={`tx/${item.signature}`} 
+                  label={ellipsify(item.signature)}
+                  className="hover:text-blue-500 transition-colors" 
+                />
+              </td>
+              <td className="py-1.5 px-2">{item.slot}</td>
+              <td className="py-1.5 px-2">
+                {new Date(item.blockTime! * 1000).toISOString()}
+              </td>
+              <td className="text-center py-1.5 px-2">
+                <span className="text-green-500">Success</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

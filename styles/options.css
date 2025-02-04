@@ -1,0 +1,44 @@
+.options-chain {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.options-row {
+  border-bottom: 1px solid #2a2a2a;
+}
+
+/* ITM options styling */
+.itm {
+  background-color: rgba(38, 38, 38, 0.95);
+  color: #ffffff;
+}
+
+/* OTM options styling */
+.otm {
+  background-color: rgba(28, 28, 28, 0.95);
+  color: #ffffff;
+}
+
+/* Strike price column styling */
+.strike-price {
+  background-color: #333333;
+  font-weight: bold;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+/* Positive and negative values */
+.positive {
+  color: #00ff1a;
+}
+
+.negative {
+  color: #ff3b3b;
+}
+
+/* Cell styling */
+.cell {
+  padding: 6px 10px;
+  text-align: right;
+}

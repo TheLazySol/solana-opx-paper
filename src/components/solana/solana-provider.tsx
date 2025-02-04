@@ -16,9 +16,20 @@ import { useCluster } from '../cluster/cluster-data-access'
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
-export const WalletButton = dynamic(async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton, {
-  ssr: false,
-})
+export const WalletButton = dynamic(
+  async () => {
+    const { WalletMultiButton } = await import('@solana/wallet-adapter-react-ui')
+    return function CustomWalletButton(props: any) {
+      return (
+        <WalletMultiButton 
+          {...props} 
+          className="bg-[#4a85ff] hover:bg-[#4a85ff]/90 text-white border-0 h-9"
+        />
+      )
+    }
+  },
+  { ssr: false }
+)
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
   const { cluster } = useCluster()
