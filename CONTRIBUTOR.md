@@ -7,13 +7,13 @@ Pull requests, bug reports, and all other forms of contribution are welcomed!
 Please follow these naming conventions:
 
 - Feature Branches: ```Feature/<feature-name>```
-    - Exemple: ```Feature/option-lab-page```
+    - Example: ```Feature/option-lab-page```
 - Patch Branches: ```Patch/<patch-name>```
-    - Exemple: ```Patch/remve-template-message```
+    - Example: ```Patch/remve-template-message```
 - Bug Fix Branches: ```Bugfix/<bugfix-name>```
-    - Exemple: ```Bugfix/fix-loop```
+    - Example: ```Bugfix/fix-loop```
 - Release Branches: ```Release/<version>```
-    - Exemple: ```Realease/1.0.1```
+    - Example: ```Realease/1.0.1```
 
 ## Versioning
 
