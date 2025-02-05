@@ -27,6 +27,10 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 
+Example:
+    - ```1.2.3-beta```
+    - ```4.5.6-latest```
+
 ## Commenting Style
 
 Write clear, concise comments above functions, classes, and complex logic to explain what and why the code does what it does.
