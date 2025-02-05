@@ -31,7 +31,7 @@ Additional labels for pre-release and build metadata are available as extensions
 
 Write clear, concise comments above functions, classes, and complex logic to explain what and why the code does what it does.
 
-Exemple:
+Example:
 
 ```/solana-opx/src/hooks/usePageVisibility.ts```
 
