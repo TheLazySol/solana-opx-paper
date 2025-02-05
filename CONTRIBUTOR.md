@@ -80,7 +80,8 @@ When creating issues or working on existing ones:
 
 ### Taging
 
-When referencing specific issues or PRs in commits or PR descriptions, include the issue number and a hyperlink to the issue: ```Fixes [#123](linkhere)```
+- When referencing specific issues or PRs in commits or PR descriptions, include the issue number and a hyperlink to the issue: ```Fixes [#123](linkhere)```.
+- In issues and PRs include priority-level tags such as ```low```, ```medium``` and ```high```.
 
 ## Code Reviews
 
