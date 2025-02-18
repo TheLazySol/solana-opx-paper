@@ -44,7 +44,12 @@ export interface Option {
     ask: number
   }
 }
-
+/**
+ * Converts an array of `OptionOrder` objects into an array of `Option` objects.
+ *
+ * @param orders - An array of `OptionOrder` objects to be converted.
+ * @returns An array of `Option` objects created from the provided `OptionOrder` objects.
+ */
 export function convertOrderToOption(orders: OptionOrder[]): Option[] {
   const optionsMap = new Map<number, Option>()
   
