@@ -1,29 +1,6 @@
 import { calculateOption } from "@/lib/tests/option-calculator";
+import { convertTimeToYears } from "@/utils/math/convertTimeToYears";
 
-/**
- * Interface for the parameters used in option calculations.
- * 
- * @interface OptionParams
- * @property {number} strikePrice - The strike price of the option.
- * @property {number} spotPrice - The current spot price of the underlying asset.
- * @property {number} timeUntilExpirySeconds - The time until option expiry in seconds.
- * @property {number} volatility - The implied volatility of the option.
- * @property {number} riskFreeRate - The risk-free rate used in option pricing.
- * @property {boolean} isCall - Whether the option is a call or a put option.
- */
-interface OptionParams {
-  strikePrice: number;
-  spotPrice: number;
-  timeUntilExpirySeconds: number;
-  volatility: number;
-  riskFreeRate: number;
-  isCall: boolean;
-}
-
-// Helper function to calculate time in years
-const convertTimeToYears = (timeInSeconds: number) => timeInSeconds / 31_536_000;
-
-// Helper function for creating expected results
 const getExpectedValues = (optionType: "call" | "put") => {
   const commonGreeks = {
     gamma: 0.0620, 
@@ -51,7 +28,37 @@ const getExpectedValues = (optionType: "call" | "put") => {
     };
   }
 };
-
+const validateParams = (params: OptionParams) => {
+    // Check if spot price and strike price are reasonable
+    if (params.spotPrice <= 0 || params.strikePrice <= 0) {
+      throw new Error("Spot price and strike price must be positive values.");
+    }
+  
+    // Check if volatility is within a reasonable range (0-1 for most cases, but can be higher in some markets)
+    if (params.volatility < 0 || params.volatility > 5) {
+      throw new Error("Volatility must be between 0 and 5.");
+    }
+  
+    // Check if risk-free rate is reasonable (e.g., not negative or too high)
+    if (params.riskFreeRate < 0 || params.riskFreeRate > 1) {
+      throw new Error("Risk-free rate must be between 0 and 1.");
+    }
+  
+    // Check if time until expiry is a positive number
+    if (params.timeUntilExpirySeconds <= 0) {
+      throw new Error("Time until expiry must be a positive value.");
+    }
+  
+    // Check for unrealistic scenarios where a call option price would be very low or negative
+    if (params.isCall && params.strikePrice > params.spotPrice) {
+      throw new Error("For call options, the strike price should not be significantly higher than the spot price.");
+    }
+  
+    // Check for unrealistic scenarios where a put option price would be very high or negative
+    if (!params.isCall && params.strikePrice < params.spotPrice) {
+      throw new Error("For put options, the strike price should not be significantly lower than the spot price.");
+    }
+  };
 describe("Option Pricing Calculation", () => {
   let params: OptionParams;
 
@@ -59,14 +66,18 @@ describe("Option Pricing Calculation", () => {
     // Common parameters for both tests
     params = {
       strikePrice: 250,
-      spotPrice: 218.54,
+      spotPrice: 265.14,
       timeUntilExpirySeconds: 716747, // 8.3 days in seconds
-      volatility: 0.35,
+      volatility: 0.55,
       riskFreeRate: 0.08,
       isCall: true // Default to call option
     };
   });
 
+  /**
+   * Test case for calculating the price and Greeks of a call option.
+   * The test compares the calculated option price and Greeks with the expected values.
+   */
   it("should calculate call option correctly", () => {
     const timeToExpiryYears = convertTimeToYears(params.timeUntilExpirySeconds);
     const expected = getExpectedValues("call");
@@ -81,6 +92,10 @@ describe("Option Pricing Calculation", () => {
     expect(result.greeks.rho).toBeCloseTo(expected.greeks.rho, 4);
   });
 
+  /**
+   * Test case for calculating the price and Greeks of a put option.
+   * The test compares the calculated option price and Greeks with the expected values.
+   */
   it("should calculate put option correctly", () => {
     const timeToExpiryYears = convertTimeToYears(params.timeUntilExpirySeconds);
     const expected = getExpectedValues("put");
@@ -95,6 +110,10 @@ describe("Option Pricing Calculation", () => {
     expect(result.greeks.rho).toBeCloseTo(expected.greeks.rho, 4);
   });
 
+  /**
+   * Test case for handling expired options.
+   * The test sets the time to expiry to 0 and checks that the price and Greeks are all 0.
+   */
   it("should handle expired options correctly", () => {
     params.timeUntilExpirySeconds = 0; // Expired option
     const result = calculateOption({ ...params, isCall: true });
@@ -107,15 +126,26 @@ describe("Option Pricing Calculation", () => {
     expect(result.greeks.rho).toBe(0);
   });
 
-  // Additional edge case tests
-  it("should handle options with very short expiry time", () => {
-    params.timeUntilExpirySeconds = 1; // 1 second to expiry
+  /**
+   * Test case for handling options with very short expiry time.
+   * The test sets the expiry time to 1 second and checks that the price and delta are close to 0.
+   */it("should handle options with very short expiry time", () => {
+  const expiryTimes = [5, 1, 0.5, 0.1]; // 5 seconds, 1 second, 500ms, 100ms
+  expiryTimes.forEach(time => {
+    params.timeUntilExpirySeconds = time;
+    console.log(`Testing with expiry time: ${time} seconds`);
     const result = calculateOption({ ...params, isCall: true });
-
+    console.log(`Result for expiry time ${time} seconds:`, result);
     expect(result.price).toBeCloseTo(0, 4);
-    expect(result.greeks.delta).toBeCloseTo(0, 4); // Delta might be near 0 in this case
+    expect(result.greeks.delta).toBeCloseTo(0, 4);
   });
+});
 
+
+  /**
+   * Test case for handling options with extremely high volatility.
+   * The test sets the volatility to 5.0 and ensures that the price is greater than 0.
+   */
   it("should handle options with very high volatility", () => {
     params.volatility = 5.0; // Extremely high volatility
     const result = calculateOption({ ...params, isCall: true });
