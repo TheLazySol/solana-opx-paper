@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 import { useState } from "react"
-import { OptionOrder } from "@/types/order"
+import { OptionOrder } from "@/types/options/orderTypes"
 
 interface SummaryContainerProps {
   orders: OptionOrder[]

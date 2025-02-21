@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getTokenPrice } from '@/lib/birdeye'
+import { getTokenPrice } from '@/lib/api/getTokenPrice'
 
 export function AssetPrice({ asset }: { asset: string | undefined }) {
   const [price, setPrice] = useState<number | null>(null)

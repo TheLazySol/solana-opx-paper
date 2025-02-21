@@ -1,45 +1,36 @@
 'use client'
 
+import { defaultClusters } from '@/lib/clusters/defaultCluster'
+import { getClusterUrlParam } from '@/lib/clusters/getClusterUrlParam'
+import { Cluster, ClusterNetwork, ClusterProviderContext } from '@/types/solana/solanaClusters'
+
 import { clusterApiUrl, Connection } from '@solana/web3.js'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { createContext, ReactNode, useContext } from 'react'
 import toast from 'react-hot-toast'
 
-export interface Cluster {
-  name: string
-  endpoint: string
-  network?: ClusterNetwork
-  active?: boolean
-}
 
-export enum ClusterNetwork {
-  Mainnet = 'mainnet-beta',
-  Testnet = 'testnet',
-  Devnet = 'devnet',
-  Custom = 'custom',
-}
 
-// By default, we don't configure the mainnet-beta cluster
-// The endpoint provided by clusterApiUrl('mainnet-beta') does not allow access from the browser due to CORS restrictions
-// To use the mainnet-beta cluster, provide a custom endpoint
-export const defaultClusters: Cluster[] = [
-  {
-    name: 'devnet',
-    endpoint: clusterApiUrl('devnet'),
-    network: ClusterNetwork.Devnet,
-  },
-  { name: 'local', endpoint: 'http://localhost:8899' },
-  {
-    name: 'testnet',
-    endpoint: clusterApiUrl('testnet'),
-    network: ClusterNetwork.Testnet,
-  },
-]
-
+/**
+ * Atom storing the currently selected cluster with persistent storage.
+ * Key: 'solana-cluster'
+ * Default value: first cluster in the defaultClusters array.
+ */
 const clusterAtom = atomWithStorage<Cluster>('solana-cluster', defaultClusters[0])
+
+/**
+ * Atom storing the list of available clusters with persistent storage.
+ * Key: 'solana-clusters'
+ * Default value: defaultClusters array.
+ */
 const clustersAtom = atomWithStorage<Cluster[]>('solana-clusters', defaultClusters)
 
+/**
+ * Derived atom that returns the list of clusters with the active cluster flagged.
+ *
+ * @returns {Cluster[]} An array of clusters where the active cluster has its `active` property set to true.
+ */
 const activeClustersAtom = atom<Cluster[]>((get) => {
   const clusters = get(clustersAtom)
   const cluster = get(clusterAtom)
@@ -48,24 +39,32 @@ const activeClustersAtom = atom<Cluster[]>((get) => {
     active: item.name === cluster.name,
   }))
 })
-
+/**
+ * Derived atom that returns the currently active cluster.
+ *
+ * @returns {Cluster} The active cluster, defaulting to the first cluster if none is explicitly active.
+ */
 const activeClusterAtom = atom<Cluster>((get) => {
   const clusters = get(activeClustersAtom)
 
   return clusters.find((item) => item.active) || clusters[0]
 })
 
-export interface ClusterProviderContext {
-  cluster: Cluster
-  clusters: Cluster[]
-  addCluster: (cluster: Cluster) => void
-  deleteCluster: (cluster: Cluster) => void
-  setCluster: (cluster: Cluster) => void
-  getExplorerUrl(path: string): string
-}
-
+/**
+ * React context for managing Solana clusters.
+ * Provides access to the current cluster, the list of clusters, and functions to modify them.
+ */
 const Context = createContext<ClusterProviderContext>({} as ClusterProviderContext)
-
+/**
+ * ClusterProvider component that supplies cluster state and actions to its children.
+ *
+ * This component uses Jotai atoms to manage state and provides methods for adding, deleting,
+ * and setting the active cluster, as well as a helper function for constructing explorer URLs.
+ *
+ * @param {Object} props - Component props.
+ * @param {ReactNode} props.children - Child components that require access to the cluster context.
+ * @returns {JSX.Element} The provider component wrapping its children with cluster context.
+ */
 export function ClusterProvider({ children }: { children: ReactNode }) {
   const cluster = useAtomValue(activeClusterAtom)
   const clusters = useAtomValue(activeClustersAtom)
@@ -96,22 +95,5 @@ export function useCluster() {
   return useContext(Context)
 }
 
-function getClusterUrlParam(cluster: Cluster): string {
-  let suffix = ''
-  switch (cluster.network) {
-    case ClusterNetwork.Devnet:
-      suffix = 'devnet'
-      break
-    case ClusterNetwork.Mainnet:
-      suffix = ''
-      break
-    case ClusterNetwork.Testnet:
-      suffix = 'testnet'
-      break
-    default:
-      suffix = `custom&customUrl=${encodeURIComponent(cluster.endpoint)}`
-      break
-  }
+export { ClusterNetwork }
 
-  return suffix.length ? `?cluster=${suffix}` : ''
-}

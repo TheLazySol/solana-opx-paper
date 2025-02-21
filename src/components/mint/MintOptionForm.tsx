@@ -27,19 +27,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/misc/utils"
 import { format } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { useWallet } from "@solana/wallet-adapter-react"
-import { useOptionsStore } from "@/stores/optionsStore"
+import { useOptionsStore } from "@/stores/options/optionsStore"
 import { PublicKey, Keypair } from "@solana/web3.js"
-import { OptionOrder } from "@/types/order"
+import { OptionOrder } from "@/types/options/orderTypes"
 import { MakerSummary } from "./MakerSummary"
-import { calculateOption } from '@/lib/option-calculator'
+import { calculateOption } from '@/lib/tests/option-calculator'
 import { AssetPrice } from '../price/asset-price'
-import { getTokenPrice } from '@/lib/birdeye'
+import { getTokenPrice } from '@/lib/api/getTokenPrice'
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),

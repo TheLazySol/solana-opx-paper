@@ -26,56 +26,22 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { OrdersContainer } from "./OrdersContainer"
-import { OptionOrder, convertOrderToOption } from "@/types/order"
-import { v4 as uuidv4 } from 'uuid'
+import { OptionOrder, OptionParameter } from "@/types/options/orderTypes"
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
-import { getTokenPrice } from '@/lib/birdeye'
+import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { usePageVisibility } from '@/hooks/usePageVisibility'
-import { getPriceFromStorage, storePriceData } from '@/lib/priceStorage'
-import { useOptionsStore } from "@/stores/optionsStore"
-import { TokenPriceData } from '@/types/birdeye'
+import { getPriceFromStorage, storePriceData } from '@/lib/misc/priceStorage'
+import { useOptionsStore } from "@/stores/options/optionsStore"
+import { TokenPriceData } from '@/types/api/birdeye'
+import { MarketPrices } from "@/types/market/marketTypes"
+import { PriceState } from "@/types/market/priceTypes"
+import { underlyingAssets } from "@/types/misc"
+import { defaultParameters } from "@/types/options/optionParameters"
+import { convertOrderToOption } from "@/lib/options/convertOrderToOption"
 
-interface OptionParameter {
-  id: string
-  name: string
-  visible: boolean
-  required?: boolean
-}
 
-const defaultParameters: OptionParameter[] = [
-  { id: "bid", name: "Bid", visible: true, required: true },
-  { id: "ask", name: "Ask", visible: true, required: true },
-  { id: "volume", name: "Volume", visible: true, required: true },
-  { id: "oi", name: "OI", visible: true },
-  { id: "iv", name: "IV", visible: true },
-  { id: "delta", name: "Delta", visible: true },
-  { id: "theta", name: "Theta", visible: true },
-  { id: "gamma", name: "Gamma", visible: false },
-  { id: "vega", name: "Vega", visible: false },
-  { id: "rho", name: "Rho", visible: false }
-]
 
-// Define available underlying assets
-const underlyingAssets = [
-  { value: "SOL", label: "Solana (SOL)" },
-  { value: "LABS", label: "Epicentral Labs (LABS)" },
-]
-
-interface MarketPrices {
-  [key: string]: {
-    bid: number;
-    ask: number;
-  }
-}
-
-interface PriceState {
-  currentPrice: number | null;
-  previousPrice: number | null;
-  priceChange24h: number;
-  isLoading: boolean;
-  initialLoad: boolean;
-}
 
 const priceReducer = (state: PriceState, action: any) => {
   switch (action.type) {

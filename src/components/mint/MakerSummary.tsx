@@ -1,19 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MakerSummaryProps } from "@/types/mint/optionTypes"
 
-interface OptionSummary {
-  asset: string
-  optionType: 'call' | 'put'
-  strikePrice: string
-  premium: string
-  quantity: number
-}
-
-interface MakerSummaryProps {
-  options: OptionSummary[]
-  onRemoveOption: (index: number) => void
-}
 
 export function MakerSummary({ options, onRemoveOption }: MakerSummaryProps) {
   return (

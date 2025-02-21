@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { OptionOrder, OptionSide, OrderType } from "@/types/order"
+import { OptionOrder, OptionSide, OrderType } from "@/types/options/orderTypes"
 
 interface Option {
   strike: number
