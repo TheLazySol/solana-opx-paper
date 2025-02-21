@@ -1,4 +1,4 @@
-import { BirdeyePriceResponse } from '@/types/api/birdeye'
+import { BirdeyePriceResponse } from '@/types/api/birdeyeTypes'
 import { BIRDEYE_API_URL } from '@/constants/constants'
 import { TOKENS } from '@/constants/tokens/tokens'
 

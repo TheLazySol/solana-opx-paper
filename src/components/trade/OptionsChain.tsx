@@ -33,7 +33,7 @@ import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { usePageVisibility } from '@/hooks/usePageVisibility'
 import { getPriceFromStorage, storePriceData } from '@/lib/misc/priceStorage'
 import { useOptionsStore } from "@/stores/options/optionsStore"
-import { TokenPriceData } from '@/types/api/birdeye'
+import { TokenPriceData } from '@/types/api/birdeyeTypes'
 import { MarketPrices } from "@/types/market/marketTypes"
 import { PriceState } from "@/types/market/priceTypes"
 import { underlyingAssets } from "@/types/misc"
