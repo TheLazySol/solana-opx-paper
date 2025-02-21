@@ -1,8 +1,14 @@
-import { BirdeyePriceResponse } from '@/types/birdeye'
-import { TOKENS } from './tokens'
+import { BirdeyePriceResponse } from '@/types/api/birdeye'
+import { BIRDEYE_API_URL } from '@/constants/constants'
+import { TOKENS } from '@/constants/tokens/tokens'
 
-const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
-
+/**
+ * Fetches the latest price of a given token from the Birdeye API.
+ *
+ * @param {string} tokenSymbol - The symbol of the token to fetch the price for.
+ * @returns {Promise<{ price: number; priceChange24h: number; timestamp: number; humanTime: string } | null>} 
+ *          A promise that resolves to an object containing price details or null if an error occurs.
+ */
 export async function getTokenPrice(tokenSymbol: string) {
   const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
   if (!token) return null
@@ -17,9 +23,8 @@ export async function getTokenPrice(tokenSymbol: string) {
       }
     }
 
-    // Validate API key
-    if (!options.headers['X-API-KEY']) {
-      throw new Error('BIRDEYE_API_KEY is not configured')
+    if (!options.headers['X-API-KEY'] && !BIRDEYE_API_URL) {
+      throw new Error('BIRDEYE_API_KEY or BIRDEYE_API_URL is not configured')
     }
 
     const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token.address}`, options)

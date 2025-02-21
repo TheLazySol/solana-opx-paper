@@ -1,26 +1,9 @@
-interface OptionCalculation {
-  price: number;
-  greeks: {
-    delta: number;
-    gamma: number;
-    theta: number;
-    vega: number;
-    rho: number;
-  };
-}
+import { OptionCalculation } from "@/types/options/optionCalculation";
+import { normalCDF, normalPDF } from "@/utils/math/optionsArithmetic";
+import { testCalculation } from "@/utils/tests/testCalculation";
 
-// Standard normal cumulative distribution function
-function normalCDF(x: number): number {
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-x * x / 2);
-  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return x > 0 ? 1 - p : p;
-}
 
-// Normal probability density function
-function normalPDF(x: number): number {
-  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-}
+
 
 export function calculateOption(params: {
   isCall: boolean;
@@ -123,10 +106,7 @@ export function calculateOption(params: {
   return result;
 }
 
-// Add this test function at the bottom of the file
-function testCalculation() {
-  // Using the same values as in Rust test
-  const testParams = {
+  const params = {
     isCall: true,
     strikePrice: 250,
     spotPrice: 218.54,
@@ -135,10 +115,5 @@ function testCalculation() {
     riskFreeRate: 0.08
   };
 
-  console.log('Running test calculation with Rust test values:');
-  const result = calculateOption(testParams);
-  console.log('Test result:', result);
-}
-
-// Run the test
-testCalculation();
+  const result = testCalculation(params);
+  console.log(result);
