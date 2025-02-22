@@ -1,4 +1,5 @@
 import { OptionCalculation } from "@/types/options/optionCalculation";
+import { convertTimeToYears } from "@/utils/math/convertTimeToYears";
 import { normalCDF, normalPDF } from "@/utils/math/optionsArithmetic";
 import { testCalculation } from "@/utils/tests/testCalculation";
 
@@ -51,8 +52,7 @@ export function calculateOption(params: {
     riskFreeRate: (params.riskFreeRate * 100).toFixed(1) + '%'
   });
 
-  // Convert time to years (same as Rust implementation)
-  const timeToExpiry = params.timeUntilExpirySeconds / 31_536_000;
+  const timeToExpiry = convertTimeToYears(params.timeUntilExpirySeconds);
   
   if (timeToExpiry <= 0) {
     console.log('Option Expired');
