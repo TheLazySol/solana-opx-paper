@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
+    "@helius-dev/kite": "^1.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-checkbox": "^1.1.3",
     "@radix-ui/react-dialog": "^1.1.5",
