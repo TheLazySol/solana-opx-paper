@@ -27,7 +27,6 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { OrdersContainer } from "./OrdersContainer"
 import { OptionOrder, convertOrderToOption } from "@/types/order"
-import { v4 as uuidv4 } from 'uuid'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
 import { getTokenPrice } from '@/lib/birdeye'
