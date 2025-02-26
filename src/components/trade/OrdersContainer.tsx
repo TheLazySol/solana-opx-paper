@@ -1,11 +1,11 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { SummaryContainer } from "./SummaryContainer"
-import { OptionOrder } from "@/types/order"
+import { OptionOrder } from "@/types/options/orderTypes"
 import { X, Plus, Minus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
-import { MarketPrices } from "@/types/market"
+import { MarketPrices } from "@/types/market/marketTypes"
 import { useWallet } from "@solana/wallet-adapter-react"
 
 interface OrdersContainerProps {

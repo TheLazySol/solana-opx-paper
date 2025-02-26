@@ -19,9 +19,10 @@
       }
     ],
     "baseUrl": ".",
-    "paths": {
+   "paths": {
       "@project/anchor": ["anchor/src"],
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@constants/*": ["src/constants/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

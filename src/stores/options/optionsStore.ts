@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, PersistOptions } from 'zustand/middleware'
-import { OptionOrder } from '@/types/order'
+import { OptionOrder } from '@/types/options/orderTypes'
 import { PublicKey } from '@solana/web3.js'
 
 interface OptionsState {

@@ -3,7 +3,7 @@
 import { Button } from '../ui/button'
 import { RefreshCw, DollarSign, Coins } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/misc/utils'
 
 type Pool = {
   token: string

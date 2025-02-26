@@ -90,8 +90,7 @@ export function calculateOption(params: {
     riskFreeRate: (params.riskFreeRate * 100).toFixed(1) + '%'
   });
 
-  // Convert time to years (same as Rust implementation)
-  const timeToExpiry = params.timeUntilExpirySeconds / 31_536_000;
+  const timeToExpiry = convertTimeToYears(params.timeUntilExpirySeconds);
   
   if (timeToExpiry <= 0) {
     console.log('Option Expired');
@@ -193,10 +192,16 @@ function testCalculation() {
     riskFreeRate: 0.08
   };
 
-  console.log('Running test calculation with Rust test values:');
-  const result = calculateOption(testParams);
-  console.log('Test result:', result);
+  return calculateOption(testParams);
 }
 
-// Run the test
-testCalculation();
+/**
+ * Helper function to convert time from seconds to years
+ * @param seconds Time in seconds
+ * @returns Time in years
+ */
+function convertTimeToYears(seconds: number): number {
+  return seconds / (365 * 24 * 60 * 60);
+}
+
+export { testCalculation };

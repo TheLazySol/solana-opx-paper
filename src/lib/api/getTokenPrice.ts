@@ -33,9 +33,8 @@ export async function getTokenPrice(tokenSymbol: string) {
       }
     }
 
-    // Validate API key
-    if (!options.headers['X-API-KEY']) {
-      throw new Error('BIRDEYE_API_KEY is not configured')
+    if (!options.headers['X-API-KEY'] && !BIRDEYE_API_URL) {
+      throw new Error('BIRDEYE_API_KEY or BIRDEYE_API_URL is not configured')
     }
 
     const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token.address}`, options)
