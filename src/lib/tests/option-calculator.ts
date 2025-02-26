@@ -1,40 +1,78 @@
-import { OptionCalculation } from "@/types/options/optionCalculation";
-import { convertTimeToYears } from "@/utils/math/convertTimeToYears";
-import { normalCDF, normalPDF } from "@/utils/math/optionsArithmetic";
-import { testCalculation } from "@/utils/tests/testCalculation";
-
-
+interface OptionCalculation {
+  price: number;
+  greeks: {
+    delta: number;
+    gamma: number;
+    theta: number;
+    vega: number;
+    rho: number;
+  };
+}
 
 /**
- * Calculates the price and Greeks (delta, gamma, theta, vega, rho) for an option.
+ * Calculates the cumulative distribution function (CDF) of a standard normal distribution.
  * 
- * This function implements the Black-Scholes option pricing model to calculate 
- * the price and the Greeks of an option (Call or Put). The model is used to evaluate 
- * the option's theoretical price based on the spot price, strike price, time to expiry, 
- * volatility, and the risk-free interest rate.
+ * This function returns the probability that a standard normal random variable is less than or equal to a given value.
  * 
- * @param {Object} params - The parameters for the option calculation.
- * @param {boolean} params.isCall - A flag indicating whether the option is a 'call' (true) or 'put' (false).
- * @param {number} params.strikePrice - The strike price of the option.
- * @param {number} params.spotPrice - The current spot price of the underlying asset.
- * @param {number} params.timeUntilExpirySeconds - The time until the option expires, in seconds.
- * @param {number} params.volatility - The volatility of the underlying asset (annualized standard deviation).
- * @param {number} params.riskFreeRate - The risk-free interest rate (annual rate, decimal form).
- * 
- * @returns {OptionCalculation} - The calculated option price and the Greeks (delta, gamma, theta, vega, rho).
+ * @param x - The value for which the CDF is calculated.
+ * @returns {number} - The cumulative probability corresponding to the given value `x`.
  * 
  * @example
- * const params = {
- *   isCall: true,
- *   strikePrice: 250,
- *   spotPrice: 218.54,
- *   timeUntilExpirySeconds: 716747, // 8.3 days in seconds
- *   volatility: 0.35,
- *   riskFreeRate: 0.08
- * };
- * const result = calculateOption(params);
- * console.log(result);
+ * const probability = normalCDF(1.96);
+ * console.log(probability); // ~0.975
  */
+function normalCDF(x: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x > 0 ? 1 - p : p;
+}
+
+/**
+ * Calculates the probability density function (PDF) of a standard normal distribution.
+ * 
+ * This function returns the probability density at a given value for a standard normal random variable.
+ * 
+ * @param x - The value for which the PDF is calculated.
+ * @returns {number} - The probability density corresponding to the given value `x`.
+ * 
+ * @example
+ * const density = normalPDF(1.96);
+ * console.log(density); // ~0.058
+ */
+function normalPDF(x: number): number {
+  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
+
+/**
+ * Calculates the price and Greeks (delta, gamma, theta, vega, rho) of an option using the Black-Scholes model.
+ * 
+ * This function computes the option price and its Greek values (sensitivity measures) based on the Black-Scholes formula.
+ * It takes into account whether the option is a call or put, the strike price, spot price, time to expiry, volatility, 
+ * and the risk-free interest rate.
+ * 
+ * @param params - The parameters required for option pricing.
+ * @param params.isCall - A boolean indicating whether the option is a call (true) or put (false).
+ * @param params.strikePrice - The strike price of the option.
+ * @param params.spotPrice - The current spot price of the underlying asset.
+ * @param params.timeUntilExpirySeconds - The time remaining until expiry in seconds.
+ * @param params.volatility - The volatility of the underlying asset (as a decimal, e.g., 0.2 for 20%).
+ * @param params.riskFreeRate - The annual risk-free interest rate (as a decimal, e.g., 0.05 for 5%).
+ * @returns {OptionCalculation} - The calculated option price and Greeks.
+ * 
+ * @example
+ * const optionResult = calculateOption({
+ *   isCall: true,
+ *   strikePrice: 100,
+ *   spotPrice: 105,
+ *   timeUntilExpirySeconds: 3600 * 24 * 30, // 30 days
+ *   volatility: 0.2,
+ *   riskFreeRate: 0.05
+ * });
+ * console.log(optionResult.price); // Option price
+ * console.log(optionResult.greeks.delta); // Option delta
+ */
+
 export function calculateOption(params: {
   isCall: boolean;
   strikePrice: number;
@@ -135,14 +173,24 @@ export function calculateOption(params: {
   return result;
 }
 
-  // const params = {
-  //   isCall: true,
-  //   strikePrice: 250,
-  //   spotPrice: 218.54,
-  //   timeUntilExpirySeconds: 716747, // 8.3 days in seconds
-  //   volatility: 0.35,
-  //   riskFreeRate: 0.08
-  // };
+/**
+ * Test function to run an option calculation using parameters from the Rust test case.
+ * 
+ * This function runs the `calculateOption` function with predefined test parameters to validate the option pricing and Greeks.
+ * 
+ * @example
+ * testCalculation();
+ */
+function testCalculation() {
+  // Using the same values as in Rust test
+  const testParams = {
+    isCall: true,
+    strikePrice: 250,
+    spotPrice: 218.54,
+    timeUntilExpirySeconds: 716747, // 8.3 days in seconds
+    volatility: 0.35,
+    riskFreeRate: 0.08
+  };
 
   // const result = testCalculation(params);
   // console.log(result);
