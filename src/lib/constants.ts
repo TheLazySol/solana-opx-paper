@@ -1,6 +1,17 @@
 import { format } from 'date-fns'
 
-// Helper function to format the date
+/**
+ * Formats a given date string into a more readable format.
+ * 
+ * This function takes a string representing a date and returns it in a format like "January 31st, 2025".
+ * 
+ * @param dateStr - A string representing a date in a valid format (e.g., '2025-01-31').
+ * @returns {string} - The formatted date as a string (e.g., "January 31st, 2025").
+ * 
+ * @example
+ * const formattedDate = formatExpirationDate('2025-01-31');
+ * console.log(formattedDate); // "January 31st, 2025"
+ */
 const formatExpirationDate = (dateStr: string) => {
   const date = new Date(dateStr);
   return format(date, "MMMM do, yyyy");

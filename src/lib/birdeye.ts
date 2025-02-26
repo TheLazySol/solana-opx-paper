@@ -2,7 +2,23 @@ import { BirdeyePriceResponse } from '@/types/birdeye'
 import { TOKENS } from './tokens'
 
 const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
-
+/**
+ * Fetches the price of a token from the Birdeye API.
+ * 
+ * This function makes a request to the Birdeye API to get the price of a token
+ * on the Solana blockchain. It also retrieves the 24-hour price change and
+ * the timestamp of the last update.
+ * 
+ * @param tokenSymbol - The symbol of the token (e.g., 'SOL', 'USDC').
+ * @returns {Promise<{ price: number, priceChange24h: number, timestamp: number, humanTime: string } | null>} 
+ * - The price data if the request is successful, otherwise `null`.
+ * 
+ * @throws {Error} - Throws an error if the API request fails or if the API key is not configured.
+ * 
+ * @example
+ * const tokenPrice = await getTokenPrice('SOL');
+ * console.log(tokenPrice); // { price, priceChange24h, timestamp, humanTime }
+ */
 export async function getTokenPrice(tokenSymbol: string) {
   const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
   if (!token) return null
