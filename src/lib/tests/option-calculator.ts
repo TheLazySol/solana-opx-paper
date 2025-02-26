@@ -192,5 +192,16 @@ function testCalculation() {
     riskFreeRate: 0.08
   };
 
-  // const result = testCalculation(params);
-  // console.log(result);
+  return calculateOption(testParams);
+}
+
+/**
+ * Helper function to convert time from seconds to years
+ * @param seconds Time in seconds
+ * @returns Time in years
+ */
+function convertTimeToYears(seconds: number): number {
+  return seconds / (365 * 24 * 60 * 60);
+}
+
+export { testCalculation };
