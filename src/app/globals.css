@@ -45,11 +45,6 @@
  
     /* Border radius */
     --radius: 0.5rem;
-
-    /* Scrollbar styling */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(75, 75, 75, 0.3) transparent;
-
     /* Chart colors for dark theme */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -61,52 +56,42 @@
 
 }
  
-/* Apply base styles to all elements */
 @layer base {
   * {
     @apply border-border;
   }
-  /* Set background and text colors for body */
   body {
     @apply bg-background text-foreground;
     background-image: 
-      url('/WebPageBackground.png'),
-      radial-gradient(circle at 30% 40%, rgba(74, 133, 255, 0.15) 0%, transparent 70%),
-      radial-gradient(circle at 70% 60%, rgba(74, 133, 255, 0.15) 0%, transparent 70%);
-    background-size: 100% 100%, 100% 100%, cover;
+      radial-gradient(circle at 20% 30%, rgba(74, 133, 255, 0.15) 0%, transparent 20%),
+      radial-gradient(circle at 50% 50%, rgba(74, 133, 255, 0.1) 0%, transparent 40%),
+      url('/WebPageBackground.png');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
     min-height: 100vh;
-    margin: 0;
+    position: relative;
   }
 }
 
-.dark body {
-  background-color: rgba(0, 0, 0, 0.85);
-  background-blend-mode: multiply, multiply, multiply, multiply;
+/* Glass morphism effect for cards */
+.card-glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* Full height layout */
-html,
-body {
-    height: 100%;
+/* Override shadcn card component for glass effect */
+.card {
+  @apply bg-transparent border-white/10;
 }
 
-/* Legacy wallet adapter styles - commented out */
-/* .wallet-adapter-button {
-  background-color: #4a85ff !important;
+.card:hover {
+  @apply border-[#4a85ff]/30;
 }
 
-.wallet-adapter-button:hover {
-  background-color: rgba(74, 133, 255, 0.9) !important;
-}
-
-.wallet-adapter-button:not([disabled]):hover {
-  background-color: rgba(74, 133, 255, 0.9) !important;
-} */
-
-/* Wallet adapter styling */
 /* Main wallet button */
 .wallet-adapter-button-trigger {
   background: #4a85ff !important;
@@ -125,6 +110,49 @@ body {
   gap: 8px !important;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(74, 133, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 30% 70%, rgba(37, 37, 37, 0.05) 0%, transparent 20%);
+  animation: gradientMove 20s ease infinite;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+/* Hide scrollbar when inactive */
+body {
+  scrollbar-gutter: stable;
+}
+
+body:not(:hover)::-webkit-scrollbar-thumb {
+  opacity: 0;
+}
+
 /* Wallet dropdown container */
 .wallet-adapter-dropdown {
   display: flex !important;
@@ -133,11 +161,11 @@ body {
 
 /* Wallet modal styling */
 .wallet-adapter-modal-wrapper {
-  background: #1a1a1a !important;
+  background: #101010 !important;
 }
 
 .wallet-adapter-modal-button-close {
-  background: #4a85ff !important;
+  background: #101010 !important;
 }
 
 .wallet-adapter-modal-title {
@@ -159,7 +187,7 @@ body {
   /* Modern scrollbar styling for custom elements */
   .scrollbar-custom {
     scrollbar-width: thin;
-    scrollbar-color: rgba(75, 75, 75, 0.3) transparent;
+    scrollbar-color: #1b1b1b4d transparent;
   }
 
   .scrollbar-custom::-webkit-scrollbar {
@@ -172,12 +200,12 @@ body {
   }
 
   .scrollbar-custom::-webkit-scrollbar-thumb {
-    background-color: rgba(75, 75, 75, 0.3);
+    background-color: #4b4b4b4d;
     border-radius: 20px;
   }
 
   .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(75, 75, 75, 0.5);
+    background-color: #4b4b4b4d;
   }
 
   .scrollbar-hide-delay {
@@ -249,6 +277,19 @@ body {
 @keyframes priceFlashRed {
   0% { background-color: rgba(239, 68, 68, 0.3); }
   100% { background-color: transparent; }
+}
+
+/* Gradient animation */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 /* Classes for price change animations */
