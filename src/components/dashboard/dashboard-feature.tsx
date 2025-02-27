@@ -89,8 +89,6 @@ export default function DashboardFeature() {
             key={index}
             className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
               transition-all duration-300
-              hover:shadow-[0_0_15px_2px_rgba(255,255,255,0.1),_0_0_30px_4px_rgba(255,255,255,0.06)]
-              hover:border-[1.5px_solid_rgba(255,255,255,0.3)]
               hover:bg-transparent
               overflow-hidden"
           >
@@ -103,10 +101,9 @@ export default function DashboardFeature() {
             <CardFooter className="p-6 pt-0">
               <Button 
                 variant="outline"
-                className="w-full bg-transparent border border-[#e5e5e5]/30 dark:border-[#2e2e2e]
-                  hover:border-[#4a85ff] hover:text-[#4a85ff] hover:stroke-[#4a85ff] hover:bg-transparent
-                  hover:scale-105
-                  transition-all duration-300"
+                className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
+                  hover:bg-gray-900 hover:scale-95
+                  transition-all duration-200"
               >
                 {card.buttonText}
               </Button>
