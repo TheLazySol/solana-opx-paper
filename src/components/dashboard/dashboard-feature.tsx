@@ -74,8 +74,8 @@ export default function DashboardFeature() {
           blur-xl scale-150">
         </div>
         <h1 className="text-8xl font-light tracking-wide text-center
-          [text-shadow:_0_0_20px_rgba(255,255,255,0.2),_0_0_30px_rgba(255,255,255,0.2)]
-          transition-all duration-300 hover:[text-shadow:_0_0_30px_rgba(255,255,255,0.3),_0_0_30px_rgba(255,255,255,0.3)]">
+          [text-shadow:_0_0_30px_rgba(255,255,255,0.5),_0_0_60px_rgba(255,255,255,0.2)]
+          transition-all duration-300 hover:[text-shadow:_0_0_40px_rgba(255,255,255,0.6),_0_0_80px_rgba(255,255,255,0.3)]">
           Solana OPX
         </h1>
       </div>
@@ -91,11 +91,11 @@ export default function DashboardFeature() {
         {cards.map((card, index) => (
           <Card
             key={index}
-            className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30
+            className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
               transition-all duration-300
-              dark:hover:border-[#ffffff]/40
+              hover:border-[#4a85ff]/40 dark:hover:border-[#4a85ff]/40
               hover:bg-[#4a85ff]/5 
-              hover:shadow-[0_0_20px_rgba(74,133,255,0.1)]
+              hover:shadow-[0_0_30px_rgba(74,133,255,0.2)]
               overflow-hidden"
           >
             <CardHeader className="p-6 pb-2">
