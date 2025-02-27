@@ -69,13 +69,11 @@ export default function DashboardFeature() {
       scrollbar-hide-delay"
     >
       <div className="relative">
-        <div className="absolute inset-0 -z-10 
-          bg-[radial-gradient(circle_at_center,rgba(74,133,255,0.2)_0%,transparent_70%)] 
-          blur-xl scale-150">
+        <div className="absolute inset-0 -z-10">
         </div>
         <h1 className="text-8xl font-light tracking-wide text-center
-          [text-shadow:_0_0_30px_rgba(255,255,255,0.5),_0_0_60px_rgba(255,255,255,0.2)]
-          transition-all duration-300 hover:[text-shadow:_0_0_40px_rgba(255,255,255,0.6),_0_0_80px_rgba(255,255,255,0.3)]">
+          [text-shadow:_0_0_10px_rgba(255,255,255,0.2),_0_0_30px_rgba(255,255,255,0.2)]
+          transition-all duration-300 hover:[text-shadow:_0_0_20px_rgba(255,255,255,0.2),_0_0_40px_rgba(255,255,255,0.2)]">
           Solana OPX
         </h1>
       </div>
@@ -84,18 +82,16 @@ export default function DashboardFeature() {
       </p>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-        <div className="absolute inset-0 -z-10 
-          bg-[radial-gradient(circle_at_center,rgba(74,133,255,0.15)_0%,transparent_70%)] 
-          blur-lg scale-150">
+        <div className="absolute inset-0 -z-10">
         </div>
         {cards.map((card, index) => (
           <Card
             key={index}
             className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
               transition-all duration-300
-              hover:border-[#4a85ff]/40 dark:hover:border-[#4a85ff]/40
-              hover:bg-[#4a85ff]/5 
-              hover:shadow-[0_0_30px_rgba(74,133,255,0.2)]
+              hover:shadow-[0_0_15px_2px_rgba(255,255,255,0.1),_0_0_30px_4px_rgba(255,255,255,0.06)]
+              hover:border-[1.5px_solid_rgba(255,255,255,0.3)]
+              hover:bg-transparent
               overflow-hidden"
           >
             <CardHeader className="p-6 pb-2">
@@ -109,6 +105,7 @@ export default function DashboardFeature() {
                 variant="outline"
                 className="w-full bg-transparent border border-[#e5e5e5]/30 dark:border-[#2e2e2e]
                   hover:border-[#4a85ff] hover:text-[#4a85ff] hover:stroke-[#4a85ff] hover:bg-transparent
+                  hover:scale-105
                   transition-all duration-300"
               >
                 {card.buttonText}
