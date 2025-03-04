@@ -25,7 +25,7 @@ interface MarketPrices {
   }
 }
 
-export function SummaryContainer({ 
+export function SetOrderContainer({ 
   orders, 
   selectedAsset,
   className = "",
@@ -166,10 +166,10 @@ export function SummaryContainer({
   }
 
   return (
-    <Card className={`shadow-md dark:bg-card/20 bg-card/40 ${className}`}>
+    <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 ${className}`}>
       <CardHeader className="space-y-2 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Order Summary</CardTitle>
+          <CardTitle className="text-lg font-semibold">Set Order</CardTitle>
           <Button
             variant="ghost"
             size="icon"

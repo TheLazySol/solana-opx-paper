@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { SummaryContainer } from "./SetOrderContainer"
+import { SetOrderContainer } from "./SetOrderContainer"
 import { OptionOrder } from "@/types/options/orderTypes"
 import { X, Plus, Minus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -142,12 +142,12 @@ export function OrdersContainer({
   }
 
   return (
-    <div className="grid grid-cols-5 gap-4">
-      {/* Main Orders Panel (3/5) */}
-      <Card className="col-span-3 shadow-md dark:bg-card/20 bg-card/40">
+    <div className="grid grid-cols-5 gap-6">
+      {/* Orders Panel (3/5) */}
+      <Card className="col-span-3 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300">
         <CardHeader className="space-y-2 pb-2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Positions</h2>
+            <h2 className="text-lg font-semibold">Option Positions</h2>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -195,7 +195,7 @@ export function OrdersContainer({
       </Card>
 
       {/* Summary Panel (2/5) */}
-      <SummaryContainer 
+      <SetOrderContainer 
         orders={orders} 
         selectedAsset={selectedAsset}
         className="col-span-2"
