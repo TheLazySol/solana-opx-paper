@@ -14,8 +14,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { 
-  BarChart, 
-  Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -61,7 +61,7 @@ interface OmlpChartProps {
 }
 
 export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
-  // Static historical data
+  // Static historical data with more data points for smoother lines
   const staticData = [
     {
       name: 'Jan',
@@ -79,7 +79,25 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
       name: 'Mar',
       supplyApy: 17.2,
       borrowApy: 23.8,
-      utilization: 81.0
+      utilization: 70.8
+    },
+    {
+      name: 'Apr',
+      supplyApy: 16.5,
+      borrowApy: 22.3,
+      utilization: 27.5
+    },
+    {
+      name: 'May',
+      supplyApy: 18.1,
+      borrowApy: 24.6,
+      utilization: 28.9
+    },
+    {
+      name: 'Jun',
+      supplyApy: poolData.supplyApy,
+      borrowApy: poolData.borrowApy,
+      utilization: poolData.utilization
     }
   ]
 
@@ -104,7 +122,7 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
         
         <div className="h-[400px] w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
+            <LineChart
               data={staticData}
               margin={{
                 top: 20,
@@ -122,22 +140,13 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
                 axisLine={false}
               />
               <YAxis 
-                yAxisId="left"
                 orientation="left"
                 stroke="#888888"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}%`}
-              />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `${value}%`}
+                domain={[0, 'auto']}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -149,28 +158,34 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
                 formatter={(value) => [`${value}%`, '']}
               />
               <Legend />
-              <Bar 
-                yAxisId="left"
+              <Line 
+                type="monotone"
                 dataKey="supplyApy" 
                 name="Supply APY" 
-                fill="#4ade80" 
-                radius={[4, 4, 0, 0]} 
+                stroke="#4ade80" 
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
-              <Bar 
-                yAxisId="left"
+              <Line 
+                type="monotone"
                 dataKey="borrowApy" 
                 name="Borrow APY" 
-                fill="#ef4444" 
-                radius={[4, 4, 0, 0]} 
+                stroke="#ef4444" 
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
-              <Bar 
-                yAxisId="right"
+              <Line 
+                type="monotone"
                 dataKey="utilization" 
                 name="Utilization" 
-                fill="#4a85ff" 
-                radius={[4, 4, 0, 0]} 
+                stroke="#4a85ff" 
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         </div>
         
