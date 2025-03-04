@@ -41,6 +41,7 @@ import { MakerSummary } from "./MakerSummary"
 import { calculateOption } from '@/lib/tests/option-calculator'
 import { AssetPrice } from '../price/asset-price'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
+import { TOKENS } from '@/lib/api/tokens'
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -371,8 +372,11 @@ export function OptionLabForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
-                    <SelectItem value="LABS">Epicentral Labs (LABS)</SelectItem>
+                    {Object.entries(TOKENS).map(([symbol, token]) => (
+                      <SelectItem key={symbol} value={symbol}>
+                        {token.name} ({token.symbol})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
