@@ -130,7 +130,7 @@ export function LendingPools() {
                 <td className="text-right p-4">
                   {formatValue(pool.supply, pool.tokenPrice, pool.token)}
                 </td>
-                <td className="text-right p-4">{pool.supplyApy}%</td>
+                <td className="text-right p-4 text-green-500">{pool.supplyApy}%</td>
                 <td className="text-right p-4">
                   {formatValue(pool.borrowed, pool.tokenPrice, pool.token)}
                 </td>
