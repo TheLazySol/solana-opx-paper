@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { RefreshCw, DollarSign, Coins, BarChart } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/misc/utils'
+import { OmlpChart } from './omlp-pool-chart'
 
 type Pool = {
   token: string
@@ -42,6 +43,8 @@ const mockPools: Pool[] = [
 export function LendingPools() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showUSD, setShowUSD] = useState(true)
+  const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
+  const [graphOpen, setGraphOpen] = useState(false)
   
   const tvl = mockPools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -62,6 +65,11 @@ export function LendingPools() {
       return `$${Math.round(value * tokenPrice).toLocaleString()}`
     }
     return `${Math.round(value).toLocaleString()} ${token}`
+  }
+
+  const handleOpenChart = (pool: Pool) => {
+    setSelectedPool(pool)
+    setGraphOpen(true)
   }
 
   return (
@@ -144,7 +152,12 @@ export function LendingPools() {
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <Button>Deposit</Button>
-                    <Button variant="outline" size="icon" className="bg-black hover:bg-black/80">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="bg-black hover:bg-black/80"
+                      onClick={() => handleOpenChart(pool)}
+                    >
                       <BarChart className="h-4 w-4" />
                     </Button>
                   </div>
@@ -154,6 +167,14 @@ export function LendingPools() {
           </tbody>
         </table>
       </div>
+      
+      {selectedPool && (
+        <OmlpChart 
+          open={graphOpen} 
+          onOpenChange={setGraphOpen} 
+          poolData={selectedPool} 
+        />
+      )}
     </div>
   )
 } 
