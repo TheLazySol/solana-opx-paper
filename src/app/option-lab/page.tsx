@@ -1,4 +1,4 @@
-import { MintOptionForm } from "@/components/mint/MintOptionForm"
+import { OptionLabForm } from "@/components/mint/OptionLabForm"
 
 export default function MintOptionPage() {
   return (
@@ -9,7 +9,7 @@ export default function MintOptionPage() {
           Create a new option contract to list on the exchange.
         </p>
       </div>
-      <MintOptionForm />
+      <OptionLabForm />
     </div>
   )
 } 

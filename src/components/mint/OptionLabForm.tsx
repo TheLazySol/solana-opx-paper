@@ -85,7 +85,7 @@ const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
 const allowedDates = getBiWeeklyDates(startDate, endDate);
 
-export function MintOptionForm() {
+export function OptionLabForm() {
   const router = useRouter()
   const { publicKey } = useWallet()
   const [isSubmitting, setIsSubmitting] = useState(false)
