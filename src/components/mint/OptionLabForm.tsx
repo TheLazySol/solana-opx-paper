@@ -135,24 +135,13 @@ export function OptionLabForm() {
     setIsCalculatingPremium(true)
 
     const timeUntilExpiry = Math.floor(
-      (values.expirationDate.getTime() - Date.now()) / 1000
+      (values.expirationDate.getTime() - Date.now()) / 1000 // Convert to seconds
     )
 
     try {
       // These values should ideally be fetched from an API in a production environment
       const volatility = 0.35  // 35% volatility
       const riskFreeRate = 0.08  // 8% risk-free rate
-
-      console.log('Calculating option price with:', {
-        asset: values.asset,
-        optionType: values.optionType,
-        spotPrice: spotPrice.price,
-        strikePrice: Number(values.strikePrice),
-        timeUntilExpiry,
-        expirationDate: values.expirationDate.toISOString(),
-        volatility,
-        riskFreeRate
-      });
 
       const result = await calculateOption({
         isCall: values.optionType === 'call',
@@ -163,7 +152,7 @@ export function OptionLabForm() {
         riskFreeRate
       })
 
-      console.log('Option calculation result:', result);
+      console.log('Option calculation result:', result.price.toFixed(4));
       setCalculatedPrice(result.price)
       setLastUpdated(new Date())
     } catch (error) {
@@ -202,6 +191,30 @@ export function OptionLabForm() {
       }
     }
   }, [calculateOptionPrice, form])
+
+  // Watch for changes to strike price and expiration date to update premium
+  useEffect(() => {
+    // Clear any existing debounce timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    const values = form.getValues();
+    if (values.strikePrice && values.expirationDate && !isCalculatingPremium) {
+      // Set a new debounce timer
+      debounceTimer.current = setTimeout(() => {
+        console.log('Calculating premium...');
+        calculateOptionPrice(values);
+      }, EDIT_REFRESH_INTERVAL); // Use the 1 second constant
+    }
+
+    // Clean up the timer when component unmounts or dependencies change
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [form.watch('strikePrice'), form.watch('expirationDate'), calculateOptionPrice, isCalculatingPremium]);
 
   // Update the premium field when calculatedPrice changes
   useEffect(() => {

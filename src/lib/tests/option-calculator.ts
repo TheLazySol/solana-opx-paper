@@ -81,19 +81,20 @@ export function calculateOption(params: {
   volatility: number;
   riskFreeRate: number;
 }): OptionCalculation {
-  console.log('Input Parameters:', {
-    type: params.isCall ? 'CALL' : 'PUT',
-    strike: params.strikePrice.toFixed(2),
-    spot: params.spotPrice.toFixed(2),
-    timeToExpiryDays: (params.timeUntilExpirySeconds / (24 * 60 * 60)).toFixed(1),
-    volatility: (params.volatility * 100).toFixed(1) + '%',
-    riskFreeRate: (params.riskFreeRate * 100).toFixed(1) + '%'
-  });
+  // TODO: Uncomment this when we have a way to display the results
+  //console.log('Input Parameters:', {
+  //  type: params.isCall ? 'CALL' : 'PUT',
+  //  strike: params.strikePrice.toFixed(2),
+  //  spot: params.spotPrice.toFixed(2),
+  //  timeToExpiryDays: (params.timeUntilExpirySeconds / (24 * 60 * 60)).toFixed(1),
+  //  volatility: (params.volatility * 100).toFixed(1) + '%',
+  //  riskFreeRate: (params.riskFreeRate * 100).toFixed(1) + '%'
+  //});
 
   const timeToExpiry = convertTimeToYears(params.timeUntilExpirySeconds);
   
   if (timeToExpiry <= 0) {
-    console.log('Option Expired');
+    //console.log('Option Expired');
     return {
       price: 0,
       greeks: { delta: 0, gamma: 0, theta: 0, vega: 0, rho: 0 }
@@ -111,12 +112,13 @@ export function calculateOption(params: {
   const d1 = (Math.log(S / K) + (r + 0.5 * v * v) * T) / (v * sqrtT);
   const d2 = d1 - v * sqrtT;
 
-  console.log('Calculation Variables:', {
-    timeToExpiryYears: T.toFixed(3),
-    d1: d1.toFixed(4),
-    d2: d2.toFixed(4),
-    S, K, r, v
-  });
+  // TODO: Uncomment this when we have a way to display the results
+  //console.log('Calculation Variables:', {
+  //  timeToExpiryYears: T.toFixed(3),
+  //  d1: d1.toFixed(4),
+  //  d2: d2.toFixed(4),
+  //  S, K, r, v
+  //});
 
   const Nd1 = normalCDF(d1);
   const Nd2 = normalCDF(d2);
