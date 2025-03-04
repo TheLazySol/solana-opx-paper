@@ -263,264 +263,266 @@ export function MintOptionForm() {
   })
 
   return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="asset"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Asset</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select asset" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="SOL">Solana (SOL)</SelectItem>
-                  <SelectItem value="LABS">Epicentral Labs (LABS)</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="optionType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Option Type</FormLabel>
-              <FormControl>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={field.value === "call" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => field.onChange("call")}
-                  >
-                    Call
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={field.value === "put" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => field.onChange("put")}
-                  >
-                    Put
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="expirationDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Expiration Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
+    <div className="mx-auto max-w-2xl w-full">
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="asset"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Asset</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select asset" />
+                    </SelectTrigger>
                   </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => {
-                      // Disable dates before current UTC time
-                      const now = new Date();
-                      if (date < now) return true;
+                  <SelectContent>
+                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
+                    <SelectItem value="LABS">Epicentral Labs (LABS)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="optionType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Option Type</FormLabel>
+                <FormControl>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={field.value === "call" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => field.onChange("call")}
+                    >
+                      Call
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={field.value === "put" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => field.onChange("put")}
+                    >
+                      Put
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="expirationDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Expiration Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => {
+                        // Disable dates before current UTC time
+                        const now = new Date();
+                        if (date < now) return true;
+                        
+                        // Disable dates not in the allowed bi-weekly dates
+                        return !allowedDates.some(allowedDate => 
+                          allowedDate.getFullYear() === date.getFullYear() &&
+                          allowedDate.getMonth() === date.getMonth() &&
+                          allowedDate.getDate() === date.getDate()
+                        );
+                      }}
+                      initialFocus
+                      defaultMonth={startDate}
+                      fromDate={new Date()} // Current date as minimum
+                      toDate={endDate}      // January 1st, 2026 as maximum
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Select from available bi-weekly expiration dates
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="strikePrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Strike Price</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step={form.watch("asset") === "SOL" ? "1" : "0.000001"}
+                    min="0"
+                    placeholder="Enter strike price"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const asset = form.watch("asset");
                       
-                      // Disable dates not in the allowed bi-weekly dates
-                      return !allowedDates.some(allowedDate => 
-                        allowedDate.getFullYear() === date.getFullYear() &&
-                        allowedDate.getMonth() === date.getMonth() &&
-                        allowedDate.getDate() === date.getDate()
-                      );
+                      if (value === "") {
+                        field.onChange(value);
+                        return;
+                      }
+
+                      const num = Number(value);
+                      if (num < 0) return;
+
+                      if (asset === "SOL") {
+                        // For SOL, only allow whole numbers
+                        field.onChange(Math.floor(num).toString());
+                      } else {
+                        // For LABS, limit to 6 decimal places
+                        field.onChange(Number(num.toFixed(6)).toString());
+                      }
                     }}
-                    initialFocus
-                    defaultMonth={startDate}
-                    fromDate={new Date()} // Current date as minimum
-                    toDate={endDate}      // January 1st, 2026 as maximum
                   />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                Select from available bi-weekly expiration dates
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+                </FormControl>
+                <FormDescription>
+                  The price at which the option can be exercised
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="premium"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Premium</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    placeholder={calculatedPrice 
+                      ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
+                      : "Enter premium"}
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  The price to purchase this option
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quantity</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Enter quantity"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        field.onChange(value);
+                        return;
+                      }
+                      
+                      const num = parseInt(value);
+                      if (num < 1) return;
+                      field.onChange(Math.floor(num));
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Each option contract represents 100 tokens of the underlying asset
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {form.formState.errors.root && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.root.message}
+            </p>
           )}
-        />
 
-        <FormField
-          control={form.control}
-          name="strikePrice"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Strike Price</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step={form.watch("asset") === "SOL" ? "1" : "0.000001"}
-                  min="0"
-                  placeholder="Enter strike price"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const asset = form.watch("asset");
-                    
-                    if (value === "") {
-                      field.onChange(value);
-                      return;
-                    }
+          <Button 
+            type="button" 
+            variant="secondary"
+            onClick={addOptionToSummary}
+            disabled={
+              !form.formState.isValid || 
+              !form.getValues("strikePrice") || 
+              !form.getValues("premium") ||
+              !form.getValues("expirationDate")
+            }
+          >
+            Add Option
+          </Button>
 
-                    const num = Number(value);
-                    if (num < 0) return;
+          <MakerSummary 
+            options={pendingOptions}
+            onRemoveOption={removeOptionFromSummary}
+          />
 
-                    if (asset === "SOL") {
-                      // For SOL, only allow whole numbers
-                      field.onChange(Math.floor(num).toString());
-                    } else {
-                      // For LABS, limit to 6 decimal places
-                      field.onChange(Number(num.toFixed(6)).toString());
-                    }
-                  }}
-                />
-              </FormControl>
-              <FormDescription>
-                The price at which the option can be exercised
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          {pendingOptions.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Please add at least 1 option contract to the summary before minting!
+            </p>
           )}
-        />
 
-        <FormField
-          control={form.control}
-          name="premium"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Premium</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.0001"
-                  placeholder={calculatedPrice 
-                    ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
-                    : "Enter premium"}
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                The price to purchase this option
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || pendingOptions.length === 0}
+            className="w-full"
+          >
+            {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
+          </Button>
+
+          {calculatedPrice !== null && (
+            <div className="text-sm text-muted-foreground">
+              Suggested premium: ${calculatedPrice.toFixed(2)}
+            </div>
           )}
-        />
-
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quantity</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Enter quantity"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "") {
-                      field.onChange(value);
-                      return;
-                    }
-                    
-                    const num = parseInt(value);
-                    if (num < 1) return;
-                    field.onChange(Math.floor(num));
-                  }}
-                />
-              </FormControl>
-              <FormDescription>
-                Each option contract represents 100 tokens of the underlying asset
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {form.formState.errors.root && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.root.message}
-          </p>
-        )}
-
-        <Button 
-          type="button" 
-          variant="secondary"
-          onClick={addOptionToSummary}
-          disabled={
-            !form.formState.isValid || 
-            !form.getValues("strikePrice") || 
-            !form.getValues("premium") ||
-            !form.getValues("expirationDate")
-          }
-        >
-          Add Option
-        </Button>
-
-        <MakerSummary 
-          options={pendingOptions}
-          onRemoveOption={removeOptionFromSummary}
-        />
-
-        {pendingOptions.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Please add at least 1 option contract to the summary before minting!
-          </p>
-        )}
-
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || pendingOptions.length === 0}
-          className="w-full"
-        >
-          {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
-        </Button>
-
-        {calculatedPrice !== null && (
-          <div className="text-sm text-muted-foreground">
-            Suggested premium: ${calculatedPrice.toFixed(2)}
-          </div>
-        )}
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </div>
   )
 } 
