@@ -110,6 +110,8 @@ export function OptionLabForm() {
 
   // Add state for calculated values
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
+  // Add state to track when premium is being calculated
+  const [isCalculatingPremium, setIsCalculatingPremium] = useState(false)
 
   // Add debounce timer ref
   const debounceTimer = useRef<NodeJS.Timeout>()
@@ -119,20 +121,24 @@ export function OptionLabForm() {
     const spotPrice = await getTokenPrice(values.asset)
     if (!spotPrice || !values.expirationDate) return
 
+    setIsCalculatingPremium(true)
+
     const timeUntilExpiry = Math.floor(
       (values.expirationDate.getTime() - Date.now()) / 1000
     )
 
     try {
-      // Convert volatility from percentage to decimal (35% -> 0.35) | These values will be imported via another API
-      const volatility = 0.35  // 35%
-      // Convert risk-free rate from percentage to decimal (8% -> 0.08) | The risk free value can actually be pulled from another API
-      const riskFreeRate = 0.08  // 8%
+      // These values should ideally be fetched from an API in a production environment
+      const volatility = 0.35  // 35% volatility
+      const riskFreeRate = 0.08  // 8% risk-free rate
 
-      console.log('Calculating with:', {
+      console.log('Calculating option price with:', {
+        asset: values.asset,
+        optionType: values.optionType,
         spotPrice: spotPrice.price,
         strikePrice: Number(values.strikePrice),
         timeUntilExpiry,
+        expirationDate: values.expirationDate.toISOString(),
         volatility,
         riskFreeRate
       });
@@ -146,23 +152,36 @@ export function OptionLabForm() {
         riskFreeRate
       })
 
+      console.log('Option calculation result:', result);
       setCalculatedPrice(result.price)
     } catch (error) {
       console.error('Error calculating option:', error)
+    } finally {
+      setIsCalculatingPremium(false)
     }
   }, [])
 
-  // Replace the existing useEffect with this debounced version
+  // Watch for changes to strike price and expiration date
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current)
     }
 
     const values = form.getValues()
-    if (values.strikePrice && values.expirationDate) {
+    const strikePrice = values.strikePrice
+    
+    // Only proceed if we have a strike price
+    if (strikePrice) {
       debounceTimer.current = setTimeout(() => {
-        calculateOptionPrice(values)
-      }, 5000)
+        // If no expiration date is set, use the first available date for calculation
+        if (!values.expirationDate) {
+          const tempValues = {...values};
+          tempValues.expirationDate = allowedDates[0];
+          calculateOptionPrice(tempValues);
+        } else {
+          calculateOptionPrice(values);
+        }
+      }, 1000)
     }
 
     return () => {
@@ -170,7 +189,14 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current)
       }
     }
-  }, [form, calculateOptionPrice])
+  }, [calculateOptionPrice, form])
+
+  // Add a new useEffect to update the premium field when calculatedPrice changes
+  useEffect(() => {
+    if (calculatedPrice !== null) {
+      form.setValue('premium', calculatedPrice.toFixed(4))
+    }
+  }, [calculatedPrice, form])
 
   const addOptionToSummary = () => {
     const values = form.getValues()
@@ -408,6 +434,24 @@ export function OptionLabForm() {
                         // For LABS, limit to 6 decimal places
                         field.onChange(Number(num.toFixed(6)).toString());
                       }
+                      
+                      // Trigger calculation after strike price changes
+                      if (value) {
+                        if (debounceTimer.current) {
+                          clearTimeout(debounceTimer.current);
+                        }
+                        debounceTimer.current = setTimeout(() => {
+                          const values = form.getValues();
+                          // If no expiration date is set, use the first available date for calculation
+                          if (!values.expirationDate) {
+                            const tempValues = {...values};
+                            tempValues.expirationDate = allowedDates[0];
+                            calculateOptionPrice(tempValues);
+                          } else {
+                            calculateOptionPrice(values);
+                          }
+                        }, 1000);
+                      }
                     }}
                   />
                 </FormControl>
@@ -429,14 +473,26 @@ export function OptionLabForm() {
                   <Input
                     type="number"
                     step="0.0001"
-                    placeholder={calculatedPrice 
-                      ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
-                      : "Enter premium"}
+                    placeholder={isCalculatingPremium 
+                      ? "Calculating premium..." 
+                      : (calculatedPrice 
+                        ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
+                        : "Enter premium")}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
                   The price to purchase this option
+                  {isCalculatingPremium && (
+                    <span className="ml-1 text-blue-600">
+                      (Calculating premium...)
+                    </span>
+                  )}
+                  {!isCalculatingPremium && calculatedPrice !== null && (
+                    <span className="ml-1 text-green-600">
+                      (Calculated using Black-Scholes model)
+                    </span>
+                  )}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
