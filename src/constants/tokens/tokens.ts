@@ -18,11 +18,6 @@ export const TOKENS = {
       symbol: 'LABS',
       name: 'Epicentral Labs'
     },
-    USDC: {
-      address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-      decimals: 6,
-      symbol: 'USDC',
-      name: 'USD Coin'
-    }
+    // Add more tokens here that we wish to list on the exchange.
   } as const
   
