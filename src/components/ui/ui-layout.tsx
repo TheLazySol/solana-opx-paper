@@ -14,7 +14,6 @@ import { useCluster } from '../cluster/cluster-data-access'
 import {AccountChecker} from '../account/account-ui'
 import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
 import {WalletButton} from '../solana/solana-provider'
-import {ThemeToggle} from '../theme-toggle'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()
@@ -26,7 +25,8 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
     setMounted(true)
   }, [])
 
-  const logoSrc = resolvedTheme === 'dark' ? '/epicentral-logo-light.png' : '/epicentral-logo-dark.png'
+  // Always use the dark theme logo
+  const logoSrc = '/epicentral-logo-light.png'
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +67,6 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
             </nav>
           </div>
           <div className="w-[200px] flex justify-end items-center space-x-4">
-            <ThemeToggle />
             <WalletButton />
             <ClusterUiSelect />
           </div>

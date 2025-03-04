@@ -4,11 +4,12 @@ import {SolanaProvider} from '@/components/solana/solana-provider'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
+import {Background} from '@/components/ui/background'
 import type { Metadata } from 'next'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Solana OPX | Epicentral Labs',
-  description: 'The first decentralized options exchange on Solana',
+  description: 'Decentralized Options Trading on Solana',
   icons: [
     { rel: 'icon', url: '/favicon.png' },
   ],
@@ -17,26 +18,18 @@ export const metadata = {
 const links = [
   { label: 'Trade', path: '/trade' },
   { label: 'Portfolio', path: '/account' },
-  { label: 'Mint Option', path: '/mint-option' },
+  { label: 'Option Lab', path: '/option-lab' },
   { label: 'OMLP', path: '/omlp' },
 ]
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body style={{
-        backgroundImage: "url('/WebPageBackground.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        minHeight: '100vh',
-        margin: 0,
-      }}>
+    <html lang="en">
+      <body>
+        <Background />
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
           disableTransitionOnChange
         >
           <ReactQueryProvider>

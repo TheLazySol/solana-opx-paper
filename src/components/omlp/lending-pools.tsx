@@ -1,9 +1,10 @@
 'use client'
 
 import { Button } from '../ui/button'
-import { RefreshCw, DollarSign, Coins } from 'lucide-react'
+import { RefreshCw, DollarSign, Coins, BarChart } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/misc/utils'
+import { OmlpChart } from './omlp-pool-chart'
 
 type Pool = {
   token: string
@@ -42,6 +43,8 @@ const mockPools: Pool[] = [
 export function LendingPools() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showUSD, setShowUSD] = useState(true)
+  const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
+  const [graphOpen, setGraphOpen] = useState(false)
   
   const tvl = mockPools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -64,8 +67,13 @@ export function LendingPools() {
     return `${Math.round(value).toLocaleString()} ${token}`
   }
 
+  const handleOpenChart = (pool: Pool) => {
+    setSelectedPool(pool)
+    setGraphOpen(true)
+  }
+
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow">
+    <div className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 rounded-lg shadow">
       <div className="flex items-center justify-between p-4">
         <h2 className="text-lg font-semibold">Option Margin Liquidity Pool</h2>
         <div className="flex items-center gap-4">
@@ -130,7 +138,7 @@ export function LendingPools() {
                 <td className="text-right p-4">
                   {formatValue(pool.supply, pool.tokenPrice, pool.token)}
                 </td>
-                <td className="text-right p-4">{pool.supplyApy}%</td>
+                <td className="text-right p-4 text-green-500">{pool.supplyApy}%</td>
                 <td className="text-right p-4">
                   {formatValue(pool.borrowed, pool.tokenPrice, pool.token)}
                 </td>
@@ -142,13 +150,31 @@ export function LendingPools() {
                   {formatValue(pool.supplyLimit, pool.tokenPrice, pool.token)}
                 </td>
                 <td className="p-4">
-                  <Button>Deposit</Button>
+                  <div className="flex items-center gap-2">
+                    <Button>Deposit</Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="bg-black hover:bg-black/80"
+                      onClick={() => handleOpenChart(pool)}
+                    >
+                      <BarChart className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      
+      {selectedPool && (
+        <OmlpChart 
+          open={graphOpen} 
+          onOpenChange={setGraphOpen} 
+          poolData={selectedPool} 
+        />
+      )}
     </div>
   )
 } 

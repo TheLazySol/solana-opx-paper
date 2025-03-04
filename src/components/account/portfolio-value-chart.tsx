@@ -53,7 +53,7 @@ export function PortfolioValueChart() {
   const data = timeRange === '30D' ? thirtyDayData : ytdData
 
   return (
-    <Card className="border border-gray-200 dark:border-0 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000] mb-8">
+    <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 mb-8">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-semibold">Portfolio Value</CardTitle>
         <div className="flex gap-2">

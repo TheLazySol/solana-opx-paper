@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from 'lucide-react'
 
@@ -69,13 +69,11 @@ export default function DashboardFeature() {
       scrollbar-hide-delay"
     >
       <div className="relative">
-        <div className="absolute inset-0 -z-10 
-          bg-[radial-gradient(circle_at_center,rgba(74,133,255,0.2)_0%,transparent_70%)] 
-          blur-xl scale-150">
+        <div className="absolute inset-0 -z-10">
         </div>
         <h1 className="text-8xl font-light tracking-wide text-center
-          [text-shadow:_0_0_30px_rgba(255,255,255,0.5),_0_0_60px_rgba(255,255,255,0.2)]
-          transition-all duration-300 hover:[text-shadow:_0_0_40px_rgba(255,255,255,0.6),_0_0_80px_rgba(255,255,255,0.3)]">
+          [text-shadow:_0_0_10px_rgba(255,255,255,0.2),_0_0_30px_rgba(255,255,255,0.2)]
+          transition-all duration-300 hover:[text-shadow:_0_0_20px_rgba(255,255,255,0.2),_0_0_40px_rgba(255,255,255,0.2)]">
           Solana OPX
         </h1>
       </div>
@@ -84,32 +82,33 @@ export default function DashboardFeature() {
       </p>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-        <div className="absolute inset-0 -z-10 
-          bg-[radial-gradient(circle_at_center,rgba(74,133,255,0.15)_0%,transparent_70%)] 
-          blur-lg scale-150">
+        <div className="absolute inset-0 -z-10">
         </div>
         {cards.map((card, index) => (
-          <div
+          <Card
             key={index}
-            className="p-6 rounded-xl backdrop-blur-sm
-              bg-white/5 dark:bg-gradient-to-b dark:from-[#101010] dark:to-[#000000]
+            className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
               transition-all duration-300
-              border border-[#e5e5e5] dark:border-background
-              hover:border-[#4a85ff]/40 dark:hover:border-[#4a85ff]/40
-              hover:bg-[#4a85ff]/5 dark:hover:bg-gradient-to-b dark:hover:from-[#101010]/95 dark:hover:to-[#000000]/95
-              hover:[box-shadow:_0_0_30px_rgba(74,133,255,0.2)]"
+              hover:bg-transparent
+              overflow-hidden"
           >
-            <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{card.description}</p>
-            <Button 
-              variant="outline"
-              className="w-full bg-transparent border border-[#e5e5e5] dark:border-[#2e2e2e]
-                hover:border-[#4a85ff] hover:text-[#4a85ff] hover:stroke-[#4a85ff] hover:bg-transparent
-                transition-all duration-300"
-            >
-              {card.buttonText}
-            </Button>
-          </div>
+            <CardHeader className="p-6 pb-2">
+              <CardTitle className="text-lg font-semibold">{card.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 pt-2 pb-4">
+              <CardDescription className="text-sm text-muted-foreground">{card.description}</CardDescription>
+            </CardContent>
+            <CardFooter className="p-6 pt-0">
+              <Button 
+                variant="outline"
+                className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
+                  hover:bg-gray-900 hover:scale-95
+                  transition-all duration-200"
+              >
+                {card.buttonText}
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
