@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -122,6 +123,9 @@ export function OptionLabForm() {
   // Add auto-refresh timer ref
   const autoRefreshTimer = useRef<NodeJS.Timeout>()
 
+  // Add state for asset price
+  const [assetPrice, setAssetPrice] = useState<number | null>(null)
+
   // Update the calculateOptionPrice function
   const calculateOptionPrice = useCallback(async (values: z.infer<typeof formSchema>) => {
     const spotPrice = await getTokenPrice(values.asset)
@@ -238,6 +242,23 @@ export function OptionLabForm() {
       }
     }
   }, [form, calculateOptionPrice, isCalculatingPremium])
+
+  useEffect(() => {
+    const fetchAssetPrice = async () => {
+      const values = form.getValues();
+      const priceData = await getTokenPrice(values.asset);
+      if (priceData) {
+        setAssetPrice(priceData.price);
+      } else {
+        setAssetPrice(null);
+      }
+    };
+
+    fetchAssetPrice();
+    const priceInterval = setInterval(fetchAssetPrice, AUTO_REFRESH_INTERVAL);
+
+    return () => clearInterval(priceInterval);
+  }, [form, form.watch('asset')]);
 
   const addOptionToSummary = () => {
     const values = form.getValues()
@@ -501,7 +522,7 @@ export function OptionLabForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  The price at which the option can be exercised (Current Price:)
+                  The price at which the option can be exercised <span className="text-[#4a85ff]">(Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'})</span>
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -13,7 +13,7 @@ export const TOKENS: { [key: string]: Token } = {
     name: "Solana"
   },
   LABS: {
-    address: "LABSv1wQBPjF3urhHweumwmRYbf2VYkSdcKcz7vJz4T",
+    address: "LABSh5DTebUcUbEoLzXKCiXFJLecDFiDWiBGUU1GpxR",
     decimals: 9,
     symbol: "LABS",
     name: "Epicentral Labs"
