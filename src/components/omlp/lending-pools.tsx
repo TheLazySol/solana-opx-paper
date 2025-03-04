@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '../ui/button'
-import { RefreshCw, DollarSign, Coins } from 'lucide-react'
+import { RefreshCw, DollarSign, Coins, BarChart } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/misc/utils'
 
@@ -142,7 +142,12 @@ export function LendingPools() {
                   {formatValue(pool.supplyLimit, pool.tokenPrice, pool.token)}
                 </td>
                 <td className="p-4">
-                  <Button>Deposit</Button>
+                  <div className="flex items-center gap-2">
+                    <Button>Deposit</Button>
+                    <Button variant="outline" size="icon" className="bg-black hover:bg-black/80">
+                      <BarChart className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
