@@ -158,17 +158,17 @@ export function calculateOption(params: {
       rho
     }
   };
-
-  console.log('Option Calculation Result:', {
-    price: result.price.toFixed(4),
-    greeks: {
-      delta: result.greeks.delta.toFixed(4),
-      gamma: result.greeks.gamma.toFixed(6),
-      theta: result.greeks.theta.toFixed(4),
-      vega: result.greeks.vega.toFixed(4),
-      rho: result.greeks.rho.toFixed(4)
-    }
-  });
+  // TODO: Uncomment this when we have a way to display the results
+  //console.log('Option Calculation Result:', {
+  //  price: result.price.toFixed(4),
+  //  greeks: {
+  //    delta: result.greeks.delta.toFixed(4),
+  //    gamma: result.greeks.gamma.toFixed(6),
+  //    theta: result.greeks.theta.toFixed(4),
+  //    vega: result.greeks.vega.toFixed(4),
+  //    rho: result.greeks.rho.toFixed(4)
+  //  }
+  //});
 
   return result;
 }

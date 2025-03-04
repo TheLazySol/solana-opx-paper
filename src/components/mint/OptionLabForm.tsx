@@ -110,9 +110,6 @@ export function OptionLabForm() {
     },
   })
 
-  // Watch form values for MakerSummary
-  const formValues = form.watch()
-
   // Add state for calculated values
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
   // Add state to track when premium is being calculated
