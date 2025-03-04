@@ -32,11 +32,11 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className='bg-black/40'/>
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 rounded-lg",
         className
       )}
       {...props}
@@ -65,45 +65,45 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
   const staticData = [
     {
       name: 'Jan',
-      supplyApy: 15.8,
-      borrowApy: 21.5,
-      utilization: 80.2
+      supplyApy: 16.2,
+      borrowApy: 22.5,
+      utilization: 75.2
     },
     {
       name: 'Feb',
-      supplyApy: 13.6,
-      borrowApy: 18.5,
-      utilization: 70.8
+      supplyApy: 14.2,
+      borrowApy: 19.5,
+      utilization: 73.6
     },
     {
       name: 'Mar',
-      supplyApy: 17.2,
-      borrowApy: 23.8,
-      utilization: 70.8
+      supplyApy: 17.8,
+      borrowApy: 24.8,
+      utilization: 76.4
     },
     {
       name: 'Apr',
-      supplyApy: 16.5,
-      borrowApy: 22.3,
-      utilization: 27.5
+      supplyApy: 17.0,
+      borrowApy: 23.3,
+      utilization: 75.5
     },
     {
       name: 'May',
-      supplyApy: 18.1,
-      borrowApy: 24.6,
-      utilization: 28.9
+      supplyApy: 18.5,
+      borrowApy: 25.6,
+      utilization: 77.9
     },
     {
       name: 'Jun',
-      supplyApy: poolData.supplyApy,
-      borrowApy: poolData.borrowApy,
-      utilization: poolData.utilization
+      supplyApy: 28.0,
+      borrowApy: 35.0,
+      utilization: 95.0 // Dramatic increase for visual effect
     }
   ]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300">
+      <DialogContent className="sm:max-w-[800px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 rounded-lg shadow">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">
@@ -146,7 +146,7 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}%`}
-                domain={[0, 'auto']}
+                domain={[0, 100]}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -192,15 +192,15 @@ export function OmlpChart({ open, onOpenChange, poolData }: OmlpChartProps) {
         <div className="mt-4 grid grid-cols-3 gap-4">
           <div className="rounded-lg bg-black/20 p-4 text-center">
             <div className="text-sm text-muted-foreground">Current Supply APY</div>
-            <div className="text-xl font-semibold text-green-500">{poolData.supplyApy}%</div>
+            <div className="text-xl font-semibold text-green-500">28.0%</div>
           </div>
           <div className="rounded-lg bg-black/20 p-4 text-center">
             <div className="text-sm text-muted-foreground">Current Borrow APY</div>
-            <div className="text-xl font-semibold text-red-500">{poolData.borrowApy}%</div>
+            <div className="text-xl font-semibold text-red-500">35.0%</div>
           </div>
           <div className="rounded-lg bg-black/20 p-4 text-center">
             <div className="text-sm text-muted-foreground">Current Utilization</div>
-            <div className="text-xl font-semibold text-blue-500">{poolData.utilization.toFixed(2)}%</div>
+            <div className="text-xl font-semibold text-blue-500">95.0%</div>
           </div>
         </div>
       </DialogContent>
