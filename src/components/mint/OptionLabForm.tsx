@@ -88,6 +88,9 @@ const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
 const allowedDates = getBiWeeklyDates(startDate, endDate);
 
+const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce
+const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
+
 export function OptionLabForm() {
   const router = useRouter()
   const { publicKey } = useWallet()
@@ -188,7 +191,7 @@ export function OptionLabForm() {
         } else {
           calculateOptionPrice(values);
         }
-      }, 5000) // 5 second debounce
+      }, EDIT_REFRESH_INTERVAL); // 1 second debounce
     }
 
     return () => {
@@ -228,7 +231,7 @@ export function OptionLabForm() {
     // Set up the interval to recalculate every 5 seconds if we have valid values
     const values = form.getValues()
     if (values.strikePrice && values.expirationDate) {
-      autoRefreshTimer.current = setInterval(checkAndCalculate, 10000) // 10 seconds
+      autoRefreshTimer.current = setInterval(checkAndCalculate, AUTO_REFRESH_INTERVAL); // 5 seconds
     }
 
     // Clean up the interval when component unmounts or dependencies change
@@ -495,7 +498,7 @@ export function OptionLabForm() {
                           } else {
                             calculateOptionPrice(values);
                           }
-                        }, 15000); // 15 second debounce
+                        }, EDIT_REFRESH_INTERVAL); // 1 second debounce
                       }
                     }}
                   />
