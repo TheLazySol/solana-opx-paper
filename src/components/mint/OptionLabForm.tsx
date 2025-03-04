@@ -188,7 +188,7 @@ export function OptionLabForm() {
         } else {
           calculateOptionPrice(values);
         }
-      }, 10000) // 10 second debounce
+      }, 5000) // 5 second debounce
     }
 
     return () => {
@@ -332,13 +332,6 @@ export function OptionLabForm() {
       setIsSubmitting(false)
     }
   }
-
-  console.log('Form State:', {
-    values: formValues,
-    errors: form.formState.errors,
-    isValid: form.formState.isValid,
-    isDirty: form.formState.isDirty,
-  })
 
   return (
     <div className="mx-auto max-w-2xl w-full">
@@ -508,7 +501,7 @@ export function OptionLabForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  The price at which the option can be exercised
+                  The price at which the option can be exercised (Current Price:)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -537,12 +530,12 @@ export function OptionLabForm() {
                 <FormDescription>
                   Premium is automatically calculated using the Black-Scholes model
                   {isCalculatingPremium && (
-                    <span className="ml-1 text-blue-600">
+                    <span className="ml-1 text-[#4a85ff]">
                       (Calculating...)
                     </span>
                   )}
-                  {!isCalculatingPremium && lastUpdated && (
-                    <span className="ml-1 text-green-600">
+                  {!isCalculatingPremium && (
+                    <span className="ml-1 text-[#4a85ff]">
                       (Auto-updates every 5s)
                     </span>
                   )}
