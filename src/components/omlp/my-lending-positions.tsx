@@ -30,7 +30,7 @@ export function MyLendingPositions() {
   }
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow">
+    <div className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 rounded-lg shadow">
       <div className="flex items-center justify-between p-4">
         <h2 className="text-lg font-semibold">My Lendings / Collateral</h2>
         <div className="flex items-center gap-4">
