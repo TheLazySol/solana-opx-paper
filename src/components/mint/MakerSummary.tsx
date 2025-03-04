@@ -6,7 +6,7 @@ import { MakerSummaryProps } from "@/types/mint/optionTypes"
 
 export function MakerSummary({ options, onRemoveOption }: MakerSummaryProps) {
   return (
-    <Card className="mt-6">
+    <Card className="mt-6 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300">
       <CardHeader>
         <CardTitle className="text-sm font-medium">Maker Summary</CardTitle>
       </CardHeader>
