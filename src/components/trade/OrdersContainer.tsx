@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { SummaryContainer } from "./SummaryContainer"
+import { SummaryContainer } from "./SetOrderContainer"
 import { OptionOrder } from "@/types/options/orderTypes"
 import { X, Plus, Minus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
