@@ -57,10 +57,12 @@ const formSchema = z.object({
   ),
   premium: z.string().refine(
     (val) => {
+      // Allow empty string since the field will be filled automatically (for now)
+      if (val === '') return true;
       const num = Number(val);
-      return !isNaN(num) && num > 0;
+      return !isNaN(num) && num >= 0;
     },
-    { message: "Premium must be a positive number" }
+    { message: "Premium must be a valid number" }
   ),
   quantity: z.coerce
     .number()
@@ -68,6 +70,7 @@ const formSchema = z.object({
     .min(1, { message: "Quantity must be at least 1" })
 })
 
+// Get all bi-weekly expiration dates between two dates for the calendar
 function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];
   let currentDate = new Date(startDate);
@@ -91,7 +94,6 @@ export function OptionLabForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const addOption = useOptionsStore((state) => state.addOption)
   const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([])
-  const maxLegs = 4
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -112,9 +114,13 @@ export function OptionLabForm() {
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
   // Add state to track when premium is being calculated
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false)
+  // Add state to track when premium was last updated
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   // Add debounce timer ref
   const debounceTimer = useRef<NodeJS.Timeout>()
+  // Add auto-refresh timer ref
+  const autoRefreshTimer = useRef<NodeJS.Timeout>()
 
   // Update the calculateOptionPrice function
   const calculateOptionPrice = useCallback(async (values: z.infer<typeof formSchema>) => {
@@ -154,6 +160,7 @@ export function OptionLabForm() {
 
       console.log('Option calculation result:', result);
       setCalculatedPrice(result.price)
+      setLastUpdated(new Date())
     } catch (error) {
       console.error('Error calculating option:', error)
     } finally {
@@ -181,7 +188,7 @@ export function OptionLabForm() {
         } else {
           calculateOptionPrice(values);
         }
-      }, 1000)
+      }, 10000) // 10 second debounce
     }
 
     return () => {
@@ -191,20 +198,62 @@ export function OptionLabForm() {
     }
   }, [calculateOptionPrice, form])
 
-  // Add a new useEffect to update the premium field when calculatedPrice changes
+  // Update the premium field when calculatedPrice changes
   useEffect(() => {
     if (calculatedPrice !== null) {
-      form.setValue('premium', calculatedPrice.toFixed(4))
+      form.setValue('premium', calculatedPrice.toFixed(4), { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      })
     }
   }, [calculatedPrice, form])
+
+  // Auto-refresh premium calculation every 5 seconds
+  useEffect(() => {
+    // Clear any existing timer when component unmounts or dependencies change
+    if (autoRefreshTimer.current) {
+      clearInterval(autoRefreshTimer.current)
+    }
+
+    // Only set up auto-refresh if we have the necessary values
+    const checkAndCalculate = () => {
+      const currentValues = form.getValues()
+      if (currentValues.strikePrice && currentValues.expirationDate && !isCalculatingPremium) {
+        console.log('Auto-refreshing premium calculation...')
+        calculateOptionPrice(currentValues)
+      }
+    }
+
+    // Set up the interval to recalculate every 5 seconds if we have valid values
+    const values = form.getValues()
+    if (values.strikePrice && values.expirationDate) {
+      autoRefreshTimer.current = setInterval(checkAndCalculate, 10000) // 10 seconds
+    }
+
+    // Clean up the interval when component unmounts or dependencies change
+    return () => {
+      if (autoRefreshTimer.current) {
+        clearInterval(autoRefreshTimer.current)
+      }
+    }
+  }, [form, calculateOptionPrice, isCalculatingPremium])
 
   const addOptionToSummary = () => {
     const values = form.getValues()
     
     // Validate all fields are present
-    if (!values.strikePrice || !values.premium || !values.expirationDate) {
+    if (!values.strikePrice || !values.expirationDate) {
       form.setError('root', { 
         message: 'Please fill in all required fields' 
+      })
+      return
+    }
+    
+    // Ensure premium is calculated
+    if (isCalculatingPremium || calculatedPrice === null) {
+      form.setError('root', { 
+        message: 'Please wait for premium calculation to complete' 
       })
       return
     }
@@ -232,6 +281,9 @@ export function OptionLabForm() {
     
     // Add the option if it passes the checks
     setPendingOptions(prev => [...prev, values])
+    
+    // Reset form but keep the calculated premium state
+    setCalculatedPrice(null)
     form.reset({
       asset: "SOL",
       optionType: "call",
@@ -450,7 +502,7 @@ export function OptionLabForm() {
                           } else {
                             calculateOptionPrice(values);
                           }
-                        }, 1000);
+                        }, 15000); // 15 second debounce
                       }
                     }}
                   />
@@ -473,24 +525,25 @@ export function OptionLabForm() {
                   <Input
                     type="number"
                     step="0.0001"
+                    disabled={true}
                     placeholder={isCalculatingPremium 
                       ? "Calculating premium..." 
                       : (calculatedPrice 
-                        ? `Fair Premium Value: $${calculatedPrice.toFixed(4)}` 
-                        : "Enter premium")}
+                        ? `$${calculatedPrice.toFixed(4)}` 
+                        : "Waiting for strike price...")}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  The price to purchase this option
+                  Premium is automatically calculated using the Black-Scholes model
                   {isCalculatingPremium && (
                     <span className="ml-1 text-blue-600">
-                      (Calculating premium...)
+                      (Calculating...)
                     </span>
                   )}
-                  {!isCalculatingPremium && calculatedPrice !== null && (
+                  {!isCalculatingPremium && lastUpdated && (
                     <span className="ml-1 text-green-600">
-                      (Calculated using Black-Scholes model)
+                      (Auto-updates every 5s)
                     </span>
                   )}
                 </FormDescription>
@@ -571,12 +624,6 @@ export function OptionLabForm() {
           >
             {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
           </Button>
-
-          {calculatedPrice !== null && (
-            <div className="text-sm text-muted-foreground">
-              Suggested premium: ${calculatedPrice.toFixed(2)}
-            </div>
-          )}
         </form>
       </Form>
     </div>
