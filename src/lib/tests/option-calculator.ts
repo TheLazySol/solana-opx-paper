@@ -184,12 +184,12 @@ export function calculateOption(params: {
 function testCalculation() {
   // Using the same values as in Rust test
   const testParams = {
-    isCall: true,
-    strikePrice: 250,
-    spotPrice: 218.54,
+    isCall: true, // Set by the user
+    strikePrice: 110, // Set by the user
+    spotPrice: 100, // Number fetched from an API
     timeUntilExpirySeconds: 716747, // 8.3 days in seconds
-    volatility: 0.35,
-    riskFreeRate: 0.08
+    volatility: 0.35, // Number fetched from an API
+    riskFreeRate: 0.08 // Number fetched from an API
   };
 
   return calculateOption(testParams);
