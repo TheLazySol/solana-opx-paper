@@ -85,7 +85,7 @@ const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
 const allowedDates = getBiWeeklyDates(startDate, endDate);
 
-const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce
+const EDIT_REFRESH_INTERVAL = 2000; // 2 second debounce
 const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
 
 // Function to determine step value based on asset price
@@ -153,6 +153,12 @@ export function OptionLabForm() {
   // Add state for asset price
   const [assetPrice, setAssetPrice] = useState<number | null>(null)
 
+  // Add state to track debouncing
+  const [isDebouncing, setIsDebouncing] = useState(false)
+
+  // Add state for last updated time
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
   // Update the calculateOptionPrice function
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
     console.log('Calculating option price for values:', values);
@@ -192,6 +198,7 @@ export function OptionLabForm() {
       const premium = result.price;
       setCalculatedPrice(premium);
       form.setValue('premium', premium.toString());
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Error calculating option:', error)
     } finally {
@@ -219,7 +226,7 @@ export function OptionLabForm() {
         } else {
           calculateOptionPrice(values);
         }
-      }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+      }, EDIT_REFRESH_INTERVAL); // 2 second debounce
     }
 
     return () => {
@@ -352,12 +359,23 @@ export function OptionLabForm() {
     }
   }
 
-  // Add a function to manually refresh the premium
+  // Update the manual refresh function
   const manualRefresh = () => {
     console.log('Manual refresh triggered');
     const values = form.getValues();
     if (values.strikePrice && values.expirationDate) {
-      calculateOptionPrice(values);
+      // Clear any existing debounce timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      
+      setIsDebouncing(true); // Set debouncing state to true
+      
+      // Add a 2-second debounce for manual refresh
+      debounceTimer.current = setTimeout(() => {
+        calculateOptionPrice(values);
+        setIsDebouncing(false); // Set debouncing state to false after calculation
+      }, EDIT_REFRESH_INTERVAL);
     }
   };
 
@@ -412,9 +430,12 @@ export function OptionLabForm() {
                             clearTimeout(debounceTimer.current);
                           }
                           
+                          setIsDebouncing(true); // Set debouncing state to true
+                          
                           debounceTimer.current = setTimeout(() => {
                             calculateOptionPrice({...values, optionType: "call"});
-                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                            setIsDebouncing(false); // Set debouncing state to false after calculation
+                          }, EDIT_REFRESH_INTERVAL); // 2 second debounce
                         }
                       }}
                     >
@@ -434,9 +455,12 @@ export function OptionLabForm() {
                             clearTimeout(debounceTimer.current);
                           }
                           
+                          setIsDebouncing(true); // Set debouncing state to true
+                          
                           debounceTimer.current = setTimeout(() => {
                             calculateOptionPrice({...values, optionType: "put"});
-                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                            setIsDebouncing(false); // Set debouncing state to false after calculation
+                          }, EDIT_REFRESH_INTERVAL); // 2 second debounce
                         }
                       }}
                     >
@@ -487,12 +511,15 @@ export function OptionLabForm() {
                             clearTimeout(debounceTimer.current);
                           }
                           
+                          setIsDebouncing(true); // Set debouncing state to true
+                          
                           debounceTimer.current = setTimeout(() => {
                             const values = form.getValues();
                             if (values.strikePrice) {
                               calculateOptionPrice(values);
                             }
-                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                            setIsDebouncing(false); // Set debouncing state to false after calculation
+                          }, EDIT_REFRESH_INTERVAL); // 2 second debounce
                         }
                       }}
                       disabled={(date) => {
@@ -537,7 +564,6 @@ export function OptionLabForm() {
                     {...field}
                     onChange={(e) => {
                       const value = e.target.value;
-                      const asset = form.watch("asset");
                       
                       if (value === "") {
                         field.onChange(value);
@@ -573,6 +599,8 @@ export function OptionLabForm() {
                           clearTimeout(debounceTimer.current);
                         }
                         
+                        setIsDebouncing(true); // Set debouncing state to true
+                        
                         debounceTimer.current = setTimeout(() => {
                           const values = form.getValues();
                           // If no expiration date is set, use the first available date for calculation
@@ -583,7 +611,8 @@ export function OptionLabForm() {
                           } else {
                             calculateOptionPrice(values);
                           }
-                        }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                          setIsDebouncing(false); // Set debouncing state to false after calculation
+                        }, EDIT_REFRESH_INTERVAL); // 2 second debounce
                       }
                     }}
                   />
@@ -621,8 +650,9 @@ export function OptionLabForm() {
                   </Button>
                 </div>
                 <FormDescription>
-                  {isCalculatingPremium && ' (Calculating...)'}
-                  {!isCalculatingPremium && ' (Click refresh button to update)'}
+                  {lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : 'Not calculated yet'}
+                  {(isCalculatingPremium || isDebouncing) && ' (Calculating...)'}
+                  {!isCalculatingPremium && !isDebouncing && ' (Click refresh button to update)'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
