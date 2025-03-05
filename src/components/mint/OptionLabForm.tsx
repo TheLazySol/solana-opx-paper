@@ -21,7 +21,8 @@ import { PremiumDisplay } from './PremiumDisplay';
 import { QuantityInput } from './QuantityInput';
 import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/mint/constants';
 import { Button } from "@/components/ui/button";
-import { MakerSummary } from "./MakerSummary";
+import { MakerSummary, MakerSummaryState } from "./MakerSummary";
+import { cn } from "@/lib/misc/utils";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -263,11 +264,6 @@ export function OptionLabForm() {
           <StrikePriceInput assetPrice={assetPrice} />
           <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
           <QuantityInput />
-          {methods.formState.errors.root && (
-            <p className="text-sm text-destructive">
-              {methods.formState.errors.root.message}
-            </p>
-          )}
           <div className="flex justify-end">
             <Button 
               type="button" 
@@ -293,6 +289,16 @@ export function OptionLabForm() {
           <MakerSummary 
             options={pendingOptions}
             onRemoveOption={removeOptionFromSummary}
+            onStateChange={useCallback((state: MakerSummaryState) => {
+              const hasEnoughCollateral = state.hasEnoughCollateral;
+              if (!hasEnoughCollateral && !methods.formState.errors.root) {
+                methods.setError('root', {
+                  message: 'Not enough collateral provided'
+                });
+              } else if (hasEnoughCollateral && methods.formState.errors.root) {
+                methods.clearErrors('root');
+              }
+            }, [methods])}
           />
           {pendingOptions.length === 0 && (
             <p className="text-sm text-muted-foreground">
@@ -301,10 +307,18 @@ export function OptionLabForm() {
           )}
           <Button 
             type="submit" 
-            disabled={isSubmitting || pendingOptions.length === 0}
-            className="w-full"
+            disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
+            className={cn(
+              "w-full bg-white/95 hover:bg-white/100 text-black border border-white/20",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+            )}
           >
-            {isSubmitting ? "Minting..." : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`}
+            {isSubmitting 
+              ? "Minting..." 
+              : methods.formState.errors.root 
+                ? "Not Enough Collateral Provided"
+                : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`
+            }
           </Button>
         </form>
       </FormProvider>

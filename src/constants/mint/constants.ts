@@ -1,6 +1,11 @@
 export const EDIT_REFRESH_INTERVAL = 2000; // 2 second debounce
 export const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
 
+export const COLLATERAL_TYPES = [
+  { value: "USDC", label: "USDC", default: true },
+  { value: "SOL", label: "SOL", default: false }
+] as const;
+
 // Get all bi-weekly expiration dates between two dates for the calendar
 export function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];

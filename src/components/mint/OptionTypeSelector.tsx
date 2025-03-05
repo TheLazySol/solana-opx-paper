@@ -3,6 +3,7 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Button } from "@/components/ui/button";
 import { useFormContext } from 'react-hook-form';
 import type { FormData } from '@/types/mint/form';
+import { cn } from "@/lib/misc/utils";
 
 export const OptionTypeSelector = () => {
   const methods = useFormContext<FormData>();
@@ -29,17 +30,27 @@ export const OptionTypeSelector = () => {
         <div className="flex gap-2">
           <Button
             type="button"
-            variant={methods.getValues('optionType') === "call" ? "default" : "outline"}
-            className="flex-1"
+            variant="outline"
             onClick={() => handleOptionTypeChange('call')}
+            className={cn(
+              "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
+              "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
+              "transition-all duration-200",
+              methods.getValues('optionType') === "call" && "bg-[#4a85ff]/10 border-[#4a85ff]/60"
+            )}
           >
             Call
           </Button>
           <Button
             type="button"
-            variant={methods.getValues('optionType') === "put" ? "default" : "outline"}
-            className="flex-1"
+            variant="outline"
             onClick={() => handleOptionTypeChange('put')}
+            className={cn(
+              "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
+              "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
+              "transition-all duration-200",
+              methods.getValues('optionType') === "put" && "bg-[#4a85ff]/10 border-[#4a85ff]/60"
+            )}
           >
             Put
           </Button>
