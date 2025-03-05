@@ -36,7 +36,7 @@ export const OptionTypeSelector = () => {
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
               "transition-all duration-200",
-              methods.getValues('optionType') === "call" && "bg-[#4a85ff]/10 border-[#4a85ff]/60"
+              methods.getValues('optionType') === "call" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
           >
             Call
@@ -49,7 +49,7 @@ export const OptionTypeSelector = () => {
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
               "transition-all duration-200",
-              methods.getValues('optionType') === "put" && "bg-[#4a85ff]/10 border-[#4a85ff]/60"
+              methods.getValues('optionType') === "put" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
           >
             Put
