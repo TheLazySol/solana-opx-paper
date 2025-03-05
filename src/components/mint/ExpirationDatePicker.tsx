@@ -42,15 +42,17 @@ export const ExpirationDatePicker = () => {
   };
 
   return (
-    <FormItem className="flex flex-col">
-      <FormLabel>Expiration Date</FormLabel>
+    <FormItem>
+      <FormLabel className="mb-2">Expiration Date</FormLabel>
       <Popover>
         <PopoverTrigger asChild>
           <FormControl>
             <Button
               variant={"outline"}
               className={cn(
-                "w-full pl-3 text-left font-normal",
+                "w-full pl-3 text-left font-normal h-10",
+                "bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]",
+                "focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40",
                 !getValues('expirationDate') && "text-muted-foreground"
               )}
             >
@@ -84,7 +86,7 @@ export const ExpirationDatePicker = () => {
           />
         </PopoverContent>
       </Popover>
-      <FormDescription>
+      <FormDescription className="mt-2">
         Select a date for when this option contract should expire.
       </FormDescription>
       <FormMessage />

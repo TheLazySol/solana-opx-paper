@@ -18,13 +18,14 @@ export const PremiumDisplay = ({
 
   return (
     <FormItem>
-      <FormLabel>Option Premium</FormLabel>
+      <FormLabel className="mb-2">Option Premium</FormLabel>
       <div className="flex items-center gap-2">
         <FormControl>
           <Input
             disabled
             placeholder="Calculated premium"
             value={getValues('premium')}
+            className="h-10"
           />
         </FormControl>
         <Button 
@@ -34,11 +35,12 @@ export const PremiumDisplay = ({
           onClick={manualRefresh}
           disabled={isDebouncing}
           title={isDebouncing ? "Calculating..." : "Refresh premium calculation"}
+          className="h-10 w-10"
         >
           <RefreshCcw className={`h-4 w-4 ${isDebouncing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
-      <FormDescription>
+      <FormDescription className="mt-2">
         {lastUpdated ? (
           <>
             {getValues('premium') && <span className="text-[#4a85ff]">{` $${(Number(getValues('premium')) * 100).toFixed(2)} USD`}</span>}

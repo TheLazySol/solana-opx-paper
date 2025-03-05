@@ -137,7 +137,11 @@ export function MakerSummary({
                   <span className="text-muted-foreground">Collateral Needed:</span>
                   <span className={cn(
                     "font-medium",
-                    isEnoughCollateral ? "text-green-500" : "text-red-500"
+                    positionSize > 0 && positionSize < baseCollateralNeeded 
+                      ? "text-yellow-500" 
+                      : isEnoughCollateral 
+                        ? "text-green-500" 
+                        : "text-red-500"
                   )}>${collateralNeeded.toFixed(2)}</span>
                 </div>
                 

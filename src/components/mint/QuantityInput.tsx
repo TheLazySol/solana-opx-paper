@@ -24,7 +24,7 @@ export const QuantityInput = () => {
 
   return (
     <FormItem>
-      <FormLabel>Quantity</FormLabel>
+      <FormLabel className="mb-2">Quantity</FormLabel>
       <FormControl>
         <Input
           type="number"
@@ -34,9 +34,10 @@ export const QuantityInput = () => {
           placeholder="Enter quantity (1-10,000)"
           value={getValues('quantity')}
           onChange={(e) => handleQuantityChange(e.target.value)}
+          className="h-10"
         />
       </FormControl>
-      <FormDescription>
+      <FormDescription className="mt-2">
         Each option contract represents 100 tokens of the underlying asset
       </FormDescription>
       <FormMessage />

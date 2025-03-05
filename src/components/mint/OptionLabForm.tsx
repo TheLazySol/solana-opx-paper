@@ -260,10 +260,22 @@ export function OptionLabForm() {
         <form onSubmit={onSubmit} className="space-y-8">
           <AssetSelector assetPrice={assetPrice} />
           <OptionTypeSelector />
-          <ExpirationDatePicker />
-          <StrikePriceInput assetPrice={assetPrice} />
-          <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
-          <QuantityInput />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <ExpirationDatePicker />
+            </div>
+            <div className="flex-1">
+              <StrikePriceInput assetPrice={assetPrice} />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
+            </div>
+            <div className="flex-1">
+              <QuantityInput />
+            </div>
+          </div>
           <div className="flex justify-end">
             <Button 
               type="button" 

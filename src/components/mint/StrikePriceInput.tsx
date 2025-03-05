@@ -64,7 +64,7 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
 
   return (
     <FormItem>
-      <FormLabel>Strike Price</FormLabel>
+      <FormLabel className="mb-2">Strike Price</FormLabel>
       <FormControl>
         <Input
           type="number"
@@ -73,9 +73,10 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
           placeholder="Enter strike price"
           value={getValues('strikePrice')}
           onChange={(e) => handleStrikePriceChange(e.target.value)}
+          className="h-10"
         />
       </FormControl>
-      <FormDescription>
+      <FormDescription className="mt-2">
         The market price at which the option can be bought or sold by the buyer. 
       </FormDescription>
       <FormMessage />
