@@ -268,19 +268,28 @@ export function OptionLabForm() {
               {methods.formState.errors.root.message}
             </p>
           )}
-          <Button 
-            type="button" 
-            variant="secondary"
-            onClick={addOptionToSummary}
-            disabled={
-              !methods.formState.isValid || 
-              !methods.getValues("strikePrice") || 
-              !methods.getValues("premium") ||
-              !methods.getValues("expirationDate")
-            }
-          >
-            Add Option
-          </Button>
+          <div className="flex justify-end">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={addOptionToSummary}
+              className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
+                hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
+                backdrop-blur-sm
+                transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
+                disabled:hover:scale-100"
+              disabled={
+                !methods.formState.isValid || 
+                !methods.getValues("strikePrice") || 
+                !methods.getValues("premium") ||
+                !methods.getValues("expirationDate")
+              }
+            >
+              Add Option
+            </Button>
+          </div>
           <MakerSummary 
             options={pendingOptions}
             onRemoveOption={removeOptionFromSummary}

@@ -2,45 +2,64 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MakerSummaryProps } from "@/types/mint/optionTypes"
-
+import { cn } from "@/lib/misc/utils"
 
 export function MakerSummary({ options, onRemoveOption }: MakerSummaryProps) {
   return (
-    <Card className="mt-6 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Maker Summary</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {options.length === 0 ? (
-          <span className="text-sm text-muted-foreground">
-            Add options to see them summarized here
-          </span>
-        ) : (
-          <div className="space-y-2">
-            {options.map((option, index) => (
-              <div key={index} className="flex items-center justify-between py-1.5 px-2 border rounded-lg">
-                <div className="flex items-center gap-1">
-                  <span className="text-red-500">SHORT</span>
-                  <span>
-                    {option.asset} {option.optionType.toUpperCase()} ${Number(option.strikePrice).toFixed(2)} Strike @ {Number(option.premium).toFixed(2)}
-                    <span className="text-muted-foreground ml-2">
-                      ({option.quantity} contract{option.quantity > 1 ? 's' : ''})
-                    </span>
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onRemoveOption(index)}
-                  className="h-6 w-6 p-0 hover:bg-destructive/90 hover:text-destructive-foreground"
+    <Card className="mt-6 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
+      transition-all duration-300 hover:bg-transparent overflow-hidden">
+      <div className="relative z-10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold">
+            Maker Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {options.length === 0 ? (
+            <div className="flex items-center justify-center h-24 text-sm text-muted-foreground 
+              border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
+              Add options to see them summarized here
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {options.map((option, index) => (
+                <div 
+                  key={index} 
+                  className={cn(
+                    "group flex items-center justify-between py-2.5 px-3",
+                    "backdrop-blur-sm bg-white/5 dark:bg-black/20",
+                    "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
+                    "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
+                    "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+                  )}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-base font-semibold tracking-tight">{option.quantity}</span>
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded">SHORT</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">{option.asset} {option.optionType.toUpperCase()}</span>
+                      <span className="text-muted-foreground font-normal">
+                        ${Number(option.strikePrice).toFixed(2)} Strike @ {Number(option.premium).toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveOption(index)}
+                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
+                      hover:bg-destructive/20 hover:text-destructive-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </div>
     </Card>
   )
 } 
