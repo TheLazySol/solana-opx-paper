@@ -380,7 +380,7 @@ export function OptionLabForm() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl w-full">
+    <div className="mx-auto max-w-xl w-full">
       <Form {...form}>
         <form onSubmit={onSubmit} className="space-y-8">
           <FormField
