@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useFormContext } from 'react-hook-form';
 
-export const PremiumDisplay = ({ lastUpdated, manualRefresh }: { lastUpdated: Date | null, manualRefresh: () => void }) => {
+export const PremiumDisplay = ({ 
+  lastUpdated, 
+  manualRefresh, 
+  isDebouncing 
+}: { 
+  lastUpdated: Date | null, 
+  manualRefresh: () => void,
+  isDebouncing: boolean 
+}) => {
   const { getValues } = useFormContext();
 
   return (
@@ -24,9 +32,10 @@ export const PremiumDisplay = ({ lastUpdated, manualRefresh }: { lastUpdated: Da
           variant="outline" 
           size="icon"
           onClick={manualRefresh}
-          title="Refresh premium calculation"
+          disabled={isDebouncing}
+          title={isDebouncing ? "Calculating..." : "Refresh premium calculation"}
         >
-          <RefreshCcw className="h-4 w-4" />
+          <RefreshCcw className={`h-4 w-4 ${isDebouncing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
       <FormDescription>

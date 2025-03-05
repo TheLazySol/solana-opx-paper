@@ -261,7 +261,7 @@ export function OptionLabForm() {
           <OptionTypeSelector />
           <ExpirationDatePicker />
           <StrikePriceInput assetPrice={assetPrice} />
-          <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} />
+          <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
           <QuantityInput />
           {methods.formState.errors.root && (
             <p className="text-sm text-destructive">
