@@ -650,9 +650,11 @@ export function OptionLabForm() {
                   </Button>
                 </div>
                 <FormDescription>
-                  {lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : 'Not calculated yet'}
-                  {(isCalculatingPremium || isDebouncing) && ' (Calculating...)'}
-                  {!isCalculatingPremium && !isDebouncing && ' (Click refresh button to update)'}
+                  {lastUpdated ? (
+                    <>
+                      {field.value && <span className="text-[#4a85ff]">{` ($${(Number(field.value) * 100).toFixed(2)} USD)`}</span>}
+                    </>
+                  ) : 'Not calculated yet'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
