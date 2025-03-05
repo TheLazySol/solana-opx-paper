@@ -1,16 +1,31 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TOKENS } from '@/lib/api/tokens';
 import { useFormContext } from 'react-hook-form';
 
-export const AssetSelector = () => {
-  const { getValues } = useFormContext();
+export const AssetSelector = ({ assetPrice }: { assetPrice: number | null }) => {
+  const { setValue, getValues } = useFormContext();
+
+  const handleAssetChange = (value: string) => {
+    setValue('asset', value, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+    // Reset premium when asset changes
+    setValue('premium', '', {
+      shouldValidate: true
+    });
+  };
 
   return (
     <FormItem>
       <FormLabel>Asset</FormLabel>
-      <Select onValueChange={getValues('asset')} defaultValue={getValues('asset')}>
+      <Select 
+        onValueChange={handleAssetChange}
+        defaultValue={getValues('asset')}
+      >
         <FormControl>
           <SelectTrigger>
             <SelectValue placeholder="Select asset" />
@@ -24,6 +39,9 @@ export const AssetSelector = () => {
           ))}
         </SelectContent>
       </Select>
+      <FormDescription>
+        <span className="text-[#4a85ff]">Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'}</span>
+      </FormDescription>
       <FormMessage />
     </FormItem>
   );

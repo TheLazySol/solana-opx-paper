@@ -85,7 +85,7 @@ export const ExpirationDatePicker = () => {
         </PopoverContent>
       </Popover>
       <FormDescription>
-        Select from available bi-weekly expiration dates
+        Select a date for when this option contract should expire.
       </FormDescription>
       <FormMessage />
     </FormItem>

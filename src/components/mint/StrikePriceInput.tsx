@@ -30,7 +30,6 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       return;
     }
     if (!validateStrikePrice(value, assetPrice)) {
-      const stepValue = getStepValue(assetPrice);
       let errorMessage = "";
       if (assetPrice && assetPrice >= 100) {
         errorMessage = "For assets worth $100+, no decimal places are allowed";
@@ -77,7 +76,7 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
         />
       </FormControl>
       <FormDescription>
-        The price at which the option can be exercised by the buyer <span className="text-[#4a85ff]">(Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'})</span>
+        The market price at which the option can be bought or sold by the buyer. 
       </FormDescription>
       <FormMessage />
     </FormItem>

@@ -257,7 +257,7 @@ export function OptionLabForm() {
     <div className="mx-auto max-w-xl w-full">
       <FormProvider {...methods}>
         <form onSubmit={onSubmit} className="space-y-8">
-          <AssetSelector />
+          <AssetSelector assetPrice={assetPrice} />
           <OptionTypeSelector />
           <ExpirationDatePicker />
           <StrikePriceInput assetPrice={assetPrice} />

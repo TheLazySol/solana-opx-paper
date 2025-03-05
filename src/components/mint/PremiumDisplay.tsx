@@ -41,7 +41,7 @@ export const PremiumDisplay = ({
       <FormDescription>
         {lastUpdated ? (
           <>
-            {getValues('premium') && <span className="text-[#4a85ff]">{` ($${(Number(getValues('premium')) * 100).toFixed(2)} USD)`}</span>}
+            {getValues('premium') && <span className="text-[#4a85ff]">{` $${(Number(getValues('premium')) * 100).toFixed(2)} USD`}</span>}
           </>
         ) : 'Not calculated yet'}
       </FormDescription>
