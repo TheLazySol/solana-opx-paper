@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, RefreshCcw } from "lucide-react"
 import { cn } from "@/lib/misc/utils"
 import { format } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -39,7 +39,6 @@ import { PublicKey, Keypair } from "@solana/web3.js"
 import { OptionOrder } from "@/types/options/orderTypes"
 import { MakerSummary } from "./MakerSummary"
 import { calculateOption } from '@/lib/tests/option-calculator'
-import { AssetPrice } from '../price/asset-price'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { TOKENS } from '@/lib/api/tokens'
 
@@ -49,14 +48,9 @@ const formSchema = z.object({
   expirationDate: z.date({
     required_error: "Expiration date is required",
   }),
-  strikePrice: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      if (isNaN(num) || num <= 0) return false;
-      return true;
-    },
-    { message: "Strike price must be a positive number" }
-  ),
+  strikePrice: z.string().refine(val => val !== '', {
+    message: "Strike price is required",
+  }),
   premium: z.string().refine(
     (val) => {
       // Allow empty string since the field will be filled automatically (for now)
@@ -70,6 +64,7 @@ const formSchema = z.object({
     .number()
     .int({ message: "Quantity must be a whole number" })
     .min(1, { message: "Quantity must be at least 1" })
+    .max(100, { message: "Quantity must be at most 100" })
 })
 
 // Get all bi-weekly expiration dates between two dates for the calendar
@@ -91,7 +86,42 @@ const endDate = new Date(2026, 0, 1);   // January 1st, 2026
 const allowedDates = getBiWeeklyDates(startDate, endDate);
 
 const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce
-const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
+const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+
+// Function to determine step value based on asset price
+const getStepValue = (price: number | null): string => {
+  if (!price) return "0.0001"; // Default to smallest step if price is unknown
+  
+  if (price >= 100) return "1"; // No decimals for assets worth $100+
+  if (price >= 1) return "0.5"; // $0.50 step for assets between $1-$100
+  if (price >= 0.01) return "0.005"; // $0.005 step for assets between $0.01-$1
+  return "0.0001"; // $0.0001 step for assets worth less than $0.01
+};
+
+// Function to validate strike price based on asset price
+const validateStrikePrice = (value: string, assetPrice: number | null): boolean => {
+  if (!value || !assetPrice) return true;
+  
+  const numValue = parseFloat(value);
+  
+  if (assetPrice >= 100) {
+    // No decimal places allowed for assets worth $100+
+    return Number.isInteger(numValue);
+  }
+  
+  if (assetPrice >= 1) {
+    // Only $0.50 steps allowed for assets between $1-$100
+    return (numValue * 2) % 1 === 0;
+  }
+  
+  if (assetPrice >= 0.01) {
+    // Only $0.005 steps allowed for assets between $0.01-$1
+    return (numValue * 200) % 1 === 0;
+  }
+  
+  // For assets worth less than $0.01, $0.0001 minimum step
+  return (numValue * 10000) % 1 === 0;
+};
 
 export function OptionLabForm() {
   const router = useRouter()
@@ -116,21 +146,28 @@ export function OptionLabForm() {
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
   // Add state to track when premium is being calculated
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false)
-  // Add state to track when premium was last updated
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   // Add debounce timer ref
   const debounceTimer = useRef<NodeJS.Timeout>()
-  // Add auto-refresh timer ref
-  const autoRefreshTimer = useRef<NodeJS.Timeout>()
 
   // Add state for asset price
   const [assetPrice, setAssetPrice] = useState<number | null>(null)
 
   // Update the calculateOptionPrice function
-  const calculateOptionPrice = useCallback(async (values: z.infer<typeof formSchema>) => {
+  const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
+    console.log('Calculating option price for values:', values);
+    
+    // Don't recalculate if already in progress
+    if (isCalculatingPremium) {
+      console.log('Calculation already in progress, skipping');
+      return;
+    }
+    
     const spotPrice = await getTokenPrice(values.asset)
-    if (!spotPrice || !values.expirationDate) return
+    if (!spotPrice || !values.expirationDate) {
+      console.log('Missing spot price or expiration date, cannot calculate');
+      return;
+    }
 
     setIsCalculatingPremium(true)
 
@@ -152,15 +189,15 @@ export function OptionLabForm() {
         riskFreeRate
       })
 
-      console.log('Option calculation result:', result.price.toFixed(4));
-      setCalculatedPrice(result.price)
-      setLastUpdated(new Date())
+      const premium = result.price;
+      setCalculatedPrice(premium);
+      form.setValue('premium', premium.toString());
     } catch (error) {
       console.error('Error calculating option:', error)
     } finally {
       setIsCalculatingPremium(false)
     }
-  }, [])
+  };
 
   // Watch for changes to strike price and expiration date
   useEffect(() => {
@@ -190,31 +227,7 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current)
       }
     }
-  }, [calculateOptionPrice, form])
-
-  // Watch for changes to strike price and expiration date to update premium
-  useEffect(() => {
-    // Clear any existing debounce timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    const values = form.getValues();
-    if (values.strikePrice && values.expirationDate && !isCalculatingPremium) {
-      // Set a new debounce timer
-      debounceTimer.current = setTimeout(() => {
-        console.log('Calculating premium...');
-        calculateOptionPrice(values);
-      }, EDIT_REFRESH_INTERVAL); // Use the 1 second constant
-    }
-
-    // Clean up the timer when component unmounts or dependencies change
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [form.watch('strikePrice'), form.watch('expirationDate'), calculateOptionPrice, isCalculatingPremium]);
+  }, [form.watch('strikePrice'), form.watch('expirationDate')]);
 
   // Update the premium field when calculatedPrice changes
   useEffect(() => {
@@ -223,43 +236,14 @@ export function OptionLabForm() {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
-      })
+      });
     }
-  }, [calculatedPrice, form])
-
-  // Auto-refresh premium calculation every 5 seconds
-  useEffect(() => {
-    // Clear any existing timer when component unmounts or dependencies change
-    if (autoRefreshTimer.current) {
-      clearInterval(autoRefreshTimer.current)
-    }
-
-    // Only set up auto-refresh if we have the necessary values
-    const checkAndCalculate = () => {
-      const currentValues = form.getValues()
-      if (currentValues.strikePrice && currentValues.expirationDate && !isCalculatingPremium) {
-        console.log('Auto-refreshing premium calculation...')
-        calculateOptionPrice(currentValues)
-      }
-    }
-
-    // Set up the interval to recalculate every 5 seconds if we have valid values
-    const values = form.getValues()
-    if (values.strikePrice && values.expirationDate) {
-      autoRefreshTimer.current = setInterval(checkAndCalculate, AUTO_REFRESH_INTERVAL); // 5 seconds
-    }
-
-    // Clean up the interval when component unmounts or dependencies change
-    return () => {
-      if (autoRefreshTimer.current) {
-        clearInterval(autoRefreshTimer.current)
-      }
-    }
-  }, [form, calculateOptionPrice, isCalculatingPremium])
+  }, [calculatedPrice, form]);
 
   useEffect(() => {
     const fetchAssetPrice = async () => {
       const values = form.getValues();
+      console.log('Fetching asset price for:', values.asset);
       const priceData = await getTokenPrice(values.asset);
       if (priceData) {
         setAssetPrice(priceData.price);
@@ -272,7 +256,7 @@ export function OptionLabForm() {
     const priceInterval = setInterval(fetchAssetPrice, AUTO_REFRESH_INTERVAL);
 
     return () => clearInterval(priceInterval);
-  }, [form, form.watch('asset')]);
+  }, [form.watch('asset')]);
 
   const addOptionToSummary = () => {
     const values = form.getValues()
@@ -368,6 +352,15 @@ export function OptionLabForm() {
     }
   }
 
+  // Add a function to manually refresh the premium
+  const manualRefresh = () => {
+    console.log('Manual refresh triggered');
+    const values = form.getValues();
+    if (values.strikePrice && values.expirationDate) {
+      calculateOptionPrice(values);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-2xl w-full">
       <Form {...form}>
@@ -409,7 +402,21 @@ export function OptionLabForm() {
                       type="button"
                       variant={field.value === "call" ? "default" : "outline"}
                       className="flex-1"
-                      onClick={() => field.onChange("call")}
+                      onClick={() => {
+                        field.onChange("call");
+                        
+                        // Trigger calculation after option type changes
+                        const values = form.getValues();
+                        if (values.strikePrice && values.expirationDate) {
+                          if (debounceTimer.current) {
+                            clearTimeout(debounceTimer.current);
+                          }
+                          
+                          debounceTimer.current = setTimeout(() => {
+                            calculateOptionPrice({...values, optionType: "call"});
+                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                        }
+                      }}
                     >
                       Call
                     </Button>
@@ -417,7 +424,21 @@ export function OptionLabForm() {
                       type="button"
                       variant={field.value === "put" ? "default" : "outline"}
                       className="flex-1"
-                      onClick={() => field.onChange("put")}
+                      onClick={() => {
+                        field.onChange("put");
+                        
+                        // Trigger calculation after option type changes
+                        const values = form.getValues();
+                        if (values.strikePrice && values.expirationDate) {
+                          if (debounceTimer.current) {
+                            clearTimeout(debounceTimer.current);
+                          }
+                          
+                          debounceTimer.current = setTimeout(() => {
+                            calculateOptionPrice({...values, optionType: "put"});
+                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                        }
+                      }}
                     >
                       Put
                     </Button>
@@ -457,7 +478,23 @@ export function OptionLabForm() {
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                        field.onChange(date);
+                        
+                        // Trigger calculation after expiration date changes
+                        if (date) {
+                          if (debounceTimer.current) {
+                            clearTimeout(debounceTimer.current);
+                          }
+                          
+                          debounceTimer.current = setTimeout(() => {
+                            const values = form.getValues();
+                            if (values.strikePrice) {
+                              calculateOptionPrice(values);
+                            }
+                          }, EDIT_REFRESH_INTERVAL); // 1 second debounce
+                        }
+                      }}
                       disabled={(date) => {
                         // Disable dates before current UTC time
                         const now = new Date();
@@ -494,7 +531,7 @@ export function OptionLabForm() {
                 <FormControl>
                   <Input
                     type="number"
-                    step={form.watch("asset") === "SOL" ? "1" : "0.000001"}
+                    step={getStepValue(assetPrice)}
                     min="0"
                     placeholder="Enter strike price"
                     {...field}
@@ -507,22 +544,35 @@ export function OptionLabForm() {
                         return;
                       }
 
-                      const num = Number(value);
-                      if (num < 0) return;
-
-                      if (asset === "SOL") {
-                        // For SOL, only allow whole numbers
-                        field.onChange(Math.floor(num).toString());
+                      // Validate the input based on asset price rules
+                      if (!validateStrikePrice(value, assetPrice)) {
+                        // If validation fails, show an error message
+                        const stepValue = getStepValue(assetPrice);
+                        let errorMessage = "";
+                        
+                        if (assetPrice && assetPrice >= 100) {
+                          errorMessage = "For assets worth $100+, no decimal places are allowed";
+                        } else if (assetPrice && assetPrice >= 1) {
+                          errorMessage = "For assets between $1-$100, only $0.50 steps are allowed";
+                        } else if (assetPrice && assetPrice >= 0.01) {
+                          errorMessage = "For assets between $0.01-$1, only $0.005 steps are allowed";
+                        } else {
+                          errorMessage = "For assets worth less than $0.01, only $0.0001 steps are allowed";
+                        }
+                        
+                        form.setError("strikePrice", { message: errorMessage });
                       } else {
-                        // For LABS, limit to 6 decimal places
-                        field.onChange(Number(num.toFixed(6)).toString());
+                        form.clearErrors("strikePrice");
                       }
+                      
+                      field.onChange(value);
                       
                       // Trigger calculation after strike price changes
                       if (value) {
                         if (debounceTimer.current) {
                           clearTimeout(debounceTimer.current);
                         }
+                        
                         debounceTimer.current = setTimeout(() => {
                           const values = form.getValues();
                           // If no expiration date is set, use the first available date for calculation
@@ -539,7 +589,7 @@ export function OptionLabForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  The price at which the option can be exercised <span className="text-[#4a85ff]">(Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'})</span>
+                  The price at which the option can be exercised by the buyer <span className="text-[#4a85ff]">(Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'})</span>
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -551,32 +601,28 @@ export function OptionLabForm() {
             name="premium"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Premium</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.0001"
-                    disabled={true}
-                    placeholder={isCalculatingPremium 
-                      ? "Calculating premium..." 
-                      : (calculatedPrice 
-                        ? `$${calculatedPrice.toFixed(4)}` 
-                        : "Waiting for strike price...")}
-                    {...field}
-                  />
-                </FormControl>
+                <FormLabel>Option Premium</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <Input
+                      disabled
+                      placeholder="Calculated premium"
+                      {...field}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    onClick={manualRefresh}
+                    title="Refresh premium calculation"
+                  >
+                    <RefreshCcw className="h-4 w-4" />
+                  </Button>
+                </div>
                 <FormDescription>
-                  Premium is automatically calculated using the Black-Scholes model
-                  {isCalculatingPremium && (
-                    <span className="ml-1 text-[#4a85ff]">
-                      (Calculating...)
-                    </span>
-                  )}
-                  {!isCalculatingPremium && (
-                    <span className="ml-1 text-[#4a85ff]">
-                      (Auto-updates every 5s)
-                    </span>
-                  )}
+                  {isCalculatingPremium && ' (Calculating...)'}
+                  {!isCalculatingPremium && ' (Click refresh button to update)'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
