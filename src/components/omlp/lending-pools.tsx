@@ -4,7 +4,7 @@ import { Button } from '../ui/button'
 import { RefreshCw, DollarSign, Coins, BarChart } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/misc/utils'
-import { OmlpChart } from './omlp-pool-chart'
+import { OmlpChart, type PoolHistoricalData } from './omlp-pool-chart'
 
 export type Pool = {
   token: string
@@ -21,12 +21,20 @@ interface LendingPoolsProps {
   pools: Pool[]
   isLoading?: boolean
   onRefresh?: () => Promise<void>
+  onFetchHistoricalData?: (token: string) => Promise<PoolHistoricalData[]>
 }
 
-export function LendingPools({ pools, isLoading = false, onRefresh }: LendingPoolsProps) {
+export function LendingPools({ 
+  pools, 
+  isLoading = false, 
+  onRefresh,
+  onFetchHistoricalData 
+}: LendingPoolsProps) {
   const [showUSD, setShowUSD] = useState(true)
   const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
   const [graphOpen, setGraphOpen] = useState(false)
+  const [historicalData, setHistoricalData] = useState<PoolHistoricalData[]>([])
+  const [isLoadingHistorical, setIsLoadingHistorical] = useState(false)
   
   const tvl = pools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -53,6 +61,21 @@ export function LendingPools({ pools, isLoading = false, onRefresh }: LendingPoo
   const handleOpenChart = (pool: Pool) => {
     setSelectedPool(pool)
     setGraphOpen(true)
+  }
+
+  const handleChartOpen = async () => {
+    if (selectedPool && onFetchHistoricalData) {
+      try {
+        setIsLoadingHistorical(true)
+        const data = await onFetchHistoricalData(selectedPool.token)
+        setHistoricalData(data)
+      } catch (error) {
+        console.error('Failed to fetch historical data:', error)
+        setHistoricalData([])
+      } finally {
+        setIsLoadingHistorical(false)
+      }
+    }
   }
 
   return (
@@ -170,7 +193,10 @@ export function LendingPools({ pools, isLoading = false, onRefresh }: LendingPoo
         <OmlpChart 
           open={graphOpen} 
           onOpenChange={setGraphOpen} 
-          poolData={selectedPool} 
+          poolData={selectedPool}
+          historicalData={historicalData}
+          isLoading={isLoadingHistorical}
+          onChartOpen={handleChartOpen}
         />
       )}
     </div>

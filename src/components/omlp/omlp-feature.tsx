@@ -4,6 +4,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from '../wallet/wallet-button'
 import { MyLendingPositions, type Position } from './my-lending-positions'
 import { LendingPools, type Pool } from './lending-pools'
+import { type PoolHistoricalData } from './omlp-pool-chart'
 import { useState, useEffect } from 'react'
 
 export function OMLPFeature() {
@@ -42,6 +43,16 @@ export function OMLPFeature() {
     } finally {
       setIsLoadingPositions(false)
     }
+  }
+
+  // TODO: Replace with actual historical data fetching
+  const fetchHistoricalData = async (token: string): Promise<PoolHistoricalData[]> => {
+    // Add your actual historical data fetching logic here
+    // This should fetch historical APY and utilization data for the specified token
+    // const response = await fetch(`/api/pools/${token}/history`)
+    // const data = await response.json()
+    // return data
+    return []
   }
 
   // Initial fetch
@@ -87,6 +98,7 @@ export function OMLPFeature() {
         pools={pools}
         isLoading={isLoadingPools}
         onRefresh={fetchPools}
+        onFetchHistoricalData={fetchHistoricalData}
       />
     </div>
   )
