@@ -188,6 +188,10 @@ export function OptionLabForm() {
     setCalculatedPrice(null);
     methods.clearErrors('root');
   
+    // Recalculate the premium after adding the option
+    setTimeout(() => {
+      manualRefresh();
+    }, 500);
   };
 
   const removeOptionFromSummary = (index: number) => {
