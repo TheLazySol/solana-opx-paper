@@ -161,7 +161,7 @@ export function OptionLabForm() {
     return () => clearInterval(priceInterval);
   }, [methods.watch('asset')]);
 
-  const addOptionToSummary = () => {
+  const addOptionToSummary = async () => {
     const values = methods.getValues();
     if (!values.strikePrice || !values.expirationDate) {
       methods.setError('root', { 
@@ -176,22 +176,24 @@ export function OptionLabForm() {
       return;
     }
     
-    // Limit to only one option at a time
+    // First update the pending options with current values
     if (pendingOptions.length >= 1) {
-      // Replace the existing option instead of adding a new one
       setPendingOptions([values]);
     } else {
       setPendingOptions([values]);
     }
     
-    // Don't reset the form values to allow for easy editing
-    setCalculatedPrice(null);
+    // Clear any form errors
     methods.clearErrors('root');
-  
-    // Recalculate the premium after adding the option
-    setTimeout(() => {
-      manualRefresh();
-    }, 500);
+
+    // Trigger premium recalculation with delay
+    try {
+      setIsDebouncing(true);
+      await new Promise(resolve => setTimeout(resolve, EDIT_REFRESH_INTERVAL)); // 1.5 second delay
+      await calculateOptionPrice(values);
+    } finally {
+      setIsDebouncing(false);
+    }
   };
 
   const removeOptionFromSummary = (index: number) => {
@@ -240,10 +242,13 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current);
       }
       setIsDebouncing(true);
-      debounceTimer.current = setTimeout(() => {
-        calculateOptionPrice(values);
-        setIsDebouncing(false);
-      }, EDIT_REFRESH_INTERVAL);
+      setTimeout(async () => {
+        try {
+          await calculateOptionPrice(values);
+        } finally {
+          setIsDebouncing(false);
+        }
+      }, EDIT_REFRESH_INTERVAL); // 1.5 second delay
     }
   };
 

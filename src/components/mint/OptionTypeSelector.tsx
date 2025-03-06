@@ -6,21 +6,11 @@ import type { FormData } from '@/types/mint/form';
 import { cn } from "@/lib/misc/utils";
 
 export const OptionTypeSelector = () => {
-  const methods = useFormContext<FormData>();
-  const debounceTimer = React.useRef<NodeJS.Timeout>();
+  const { setValue, watch } = useFormContext<FormData>();
+  const optionType = watch('optionType');
 
   const handleOptionTypeChange = (type: 'call' | 'put') => {
-    methods.setValue('optionType', type);
-    const values = methods.getValues();
-    if (values.strikePrice && values.expirationDate) {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        // Trigger calculation after option type changes
-        // calculateOptionPrice({...values, optionType: type});
-      }, 2000);
-    }
+    setValue('optionType', type, { shouldValidate: true });
   };
 
   return (
@@ -36,7 +26,7 @@ export const OptionTypeSelector = () => {
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
               "transition-all duration-200",
-              methods.getValues('optionType') === "call" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
+              optionType === "call" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
           >
             Call
@@ -49,7 +39,7 @@ export const OptionTypeSelector = () => {
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
               "transition-all duration-200",
-              methods.getValues('optionType') === "put" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
+              optionType === "put" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
           >
             Put
