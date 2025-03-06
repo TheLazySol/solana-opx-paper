@@ -89,9 +89,9 @@ export function MakerSummary({
               Add options to see them summarized here
             </div>
           ) : (
-            <div className="grid grid-cols-12 gap-8">
-              {/* Left side - PnL Chart */}
-              <div className="col-span-8">
+            <div className="grid grid-cols-12 gap-6">
+              {/* Left side - PnL Chart and Options List */}
+              <div className="col-span-9 space-y-6">
                 <div className="rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50 p-4">
                   <h3 className="text-lg font-semibold mb-4">Profit & Loss Projection</h3>
                   <MakerPnlChart 
@@ -100,16 +100,15 @@ export function MakerSummary({
                     leverage={leverage[0]}
                   />
                 </div>
-              </div>
-              
-              {/* Right side - Summary Content */}
-              <div className="col-span-4 space-y-5">
+
+                {/* Options List moved below chart */}
                 <div className="space-y-2.5">
+                  <h3 className="text-lg font-semibold mb-4">Option Contracts</h3>
                   {options.map((option, index) => (
                     <div 
                       key={index} 
                       className={cn(
-                        "group flex items-center justify-between py-3 px-4",
+                        "group flex items-center justify-between py-2.5 px-4",
                         "backdrop-blur-sm bg-white/5 dark:bg-black/20",
                         "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
                         "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
@@ -140,16 +139,23 @@ export function MakerSummary({
                     </div>
                   ))}
                 </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex flex-col p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-                    <span className="text-xs text-muted-foreground mb-1">Max Potential Profit</span>
-                    <span className="font-semibold text-lg text-green-500">${totalPremium.toFixed(2)}</span>
+              </div>
+              
+              {/* Right side - Summary Content */}
+              <div className="col-span-3 space-y-4">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+                    <span className="text-xs text-muted-foreground">Max Profit Potential</span>
+                    <span className="font-semibold text-base text-green-500">${totalPremium.toFixed(2)}</span>
                   </div>
-                  <div className="flex flex-col p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-                    <span className="text-xs text-muted-foreground mb-1">Collateral Needed to Open Position</span>
+                  <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+                    <span className="text-xs text-muted-foreground">Max Loss Potential</span>
+                    <span className="font-semibold text-base text-red-500">${(Number(options[0]?.strikePrice || 0) * 100).toFixed(2)}</span>
+                  </div>
+                  <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+                    <span className="text-xs text-muted-foreground">Collateral Needed</span>
                     <span className={cn(
-                      "font-semibold text-lg",
+                      "font-semibold text-base",
                       positionSize > 0 && positionSize < baseCollateralNeeded 
                         ? "text-yellow-500" 
                         : isEnoughCollateral 
@@ -164,14 +170,14 @@ export function MakerSummary({
                 <div className="space-y-5">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Provide Collateral (Max Loss)</span>
+                      <span className="text-sm font-medium">Provide Collateral</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Select
                         value={collateralType}
                         onValueChange={(value: typeof COLLATERAL_TYPES[number]['value']) => setCollateralType(value)}
                       >
-                        <SelectTrigger className="h-10 w-24 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40">
+                        <SelectTrigger className="h-9 w-20 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -190,17 +196,14 @@ export function MakerSummary({
                         type="number"
                         value={collateralProvided}
                         onChange={(e) => {
-                          // Get the raw input value
                           const value = e.target.value;
-                          
-                          // Only allow positive numbers with up to 2 decimal places
                           if (value === '' || /^\d+(\.\d{0,2})?$/.test(value)) {
                             setCollateralProvided(value);
                           }
                         }}
                         min="1"
                         step="0.01"
-                        className="h-10 flex-1 px-3 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
+                        className="h-9 flex-1 px-3 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
                           focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
                           text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
@@ -222,7 +225,7 @@ export function MakerSummary({
                           );
                           setLeverage([optimalLeverage]);
                         }}
-                        className="h-8 px-3 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
+                        className="h-7 px-3 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
                           hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
                           transition-all duration-200"
                       >
@@ -230,7 +233,7 @@ export function MakerSummary({
                       </Button>
                     </div>
                     
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3">
                       <Slider
                         min={1}
                         max={maxLeverage}
@@ -239,7 +242,7 @@ export function MakerSummary({
                         onValueChange={(value) => setLeverage([Number(value[0].toFixed(2))])}
                         className="flex-1"
                       />
-                      <div className="flex items-center gap-1 min-w-[80px]">
+                      <div className="flex items-center gap-1">
                         <Input
                           type="number"
                           min={1}
@@ -247,36 +250,51 @@ export function MakerSummary({
                           step={0.01}
                           value={leverage[0]}
                           onChange={(e) => {
-                            // Get the raw input value
                             const rawValue = e.target.value;
-                            
-                            // Only allow positive numbers with up to 2 decimal places
                             if (rawValue === '' || /^\d+(\.\d{0,2})?$/.test(rawValue)) {
                               const value = Number(rawValue);
                               if (!isNaN(value)) {
-                                // Ensure value is between 1 and maxLeverage
                                 const clampedValue = Math.min(Math.max(value || 1, 1), maxLeverage);
                                 setLeverage([clampedValue]);
                               }
                             }
                           }}
-                          className="h-10 w-16 px-2 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
+                          className="h-9 w-14 px-2 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
                             focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
-                            text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
-                        <span className="font-medium text-[#4a85ff] text-lg">×</span>
+                        <span className="font-medium text-[#4a85ff] text-base">×</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 mt-4 rounded-lg bg-[#4a85ff]/10 border border-[#4a85ff]/30">
-                    <span className="text-sm font-medium">Position Size</span>
-                    <span className={cn(
-                      "font-bold text-xl",
-                      isEnoughCollateral ? "text-[#4a85ff]" : "text-yellow-500",
-                    )}>
-                      ${positionSize.toFixed(2)}
-                    </span>
+                  <div className="flex flex-col rounded-lg bg-[#4a85ff]/5 border border-[#4a85ff]/30">
+                    <div className="flex items-center justify-between p-2.5 border-b border-[#4a85ff]/20">
+                      <span className="text-sm font-medium text-[#4a85ff]">Position Size</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const optimalLeverage = calculateOptimalLeverage(
+                            baseCollateralNeeded,
+                            Number(collateralProvided || 0)
+                          );
+                          setLeverage([optimalLeverage]);
+                        }}
+                        className="h-7 px-2 py-0 text-xs hover:bg-[#4a85ff]/10"
+                      >
+                        Auto-Size
+                      </Button>
+                    </div>
+                    <div className="p-2.5">
+                      <span className={cn(
+                        "font-bold text-xl",
+                        isEnoughCollateral ? "text-[#4a85ff]" : "text-yellow-500"
+                      )}>
+                        ${positionSize.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
