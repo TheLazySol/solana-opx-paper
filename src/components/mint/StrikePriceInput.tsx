@@ -66,15 +66,18 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
     <FormItem>
       <FormLabel className="mb-2">Strike Price</FormLabel>
       <FormControl>
-        <Input
-          type="number"
-          step={getStepValue(assetPrice)}
-          min="0"
-          placeholder="Enter strike price"
-          value={getValues('strikePrice')}
-          onChange={(e) => handleStrikePriceChange(e.target.value)}
-          className="h-10"
-        />
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500">$</span>
+          <Input
+            type="text"
+            step={getStepValue(assetPrice)}
+            min="0"
+            placeholder="Enter strike price"
+            value={getValues('strikePrice')}
+            onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
+            className="h-10 pl-7"
+          />
+        </div>
       </FormControl>
       <FormDescription className="mt-2">
         The market price at which the option can be bought or sold by the buyer. 

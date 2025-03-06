@@ -175,33 +175,19 @@ export function OptionLabForm() {
       });
       return;
     }
-    const uniqueStrikes = new Set(pendingOptions.map(opt => opt.strikePrice));
-    const uniqueOptionTypes = new Set(pendingOptions.map(opt => opt.optionType));
-    if (!uniqueStrikes.has(values.strikePrice)) {
-      if (uniqueStrikes.size >= 4) {
-        methods.setError('root', { 
-          message: 'Maximum of 4 different strike prices allowed' 
-        });
-        return;
-      }
+    
+    // Limit to only one option at a time
+    if (pendingOptions.length >= 1) {
+      // Replace the existing option instead of adding a new one
+      setPendingOptions([values]);
+    } else {
+      setPendingOptions([values]);
     }
-    if (!uniqueOptionTypes.has(values.optionType) && uniqueOptionTypes.size >= 2) {
-      methods.setError('root', { 
-        message: 'Only calls and puts are allowed' 
-      });
-      return;
-    }
-    setPendingOptions(prev => [...prev, values]);
+    
+    // Don't reset the form values to allow for easy editing
     setCalculatedPrice(null);
-    methods.reset({
-      asset: "SOL",
-      optionType: "call",
-      strikePrice: '',
-      premium: '',
-      quantity: 1,
-      expirationDate: values.expirationDate
-    });
     methods.clearErrors('root');
+  
   };
 
   const removeOptionFromSummary = (index: number) => {
@@ -230,7 +216,10 @@ export function OptionLabForm() {
         };
         addOption(newOption);
       });
+      
+      // Clear pending options but keep the form values
       setPendingOptions([]);
+      
       router.push("/trade");
     } catch (error) {
       console.error('Error minting options:', error);
@@ -295,7 +284,7 @@ export function OptionLabForm() {
                 !methods.getValues("expirationDate")
               }
             >
-              Add Option
+              {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
             </Button>
           </div>
           <MakerSummary 
