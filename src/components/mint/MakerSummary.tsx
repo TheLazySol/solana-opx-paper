@@ -77,11 +77,6 @@ export function MakerSummary({
     <Card className="mt-6 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
       <div className="relative z-10">
-        <CardHeader className="pb-2 pt-2 border-b border-[#e5e5e5]/20 dark:border-[#393939]/50">
-          <CardTitle className="text-lg font-semibold text-center">
-            Maker Summary
-          </CardTitle>
-        </CardHeader>
         <CardContent className="pt-4">
           {options.length === 0 ? (
             <div className="flex items-center justify-center h-24 text-sm text-muted-foreground 

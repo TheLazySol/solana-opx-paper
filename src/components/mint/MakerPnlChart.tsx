@@ -48,6 +48,9 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     const steps = 50
     const priceStep = (maxPrice - minPrice) / steps
 
+    // Calculate position size with leverage
+    const positionSize = collateralProvided * leverage
+
     return Array.from({ length: steps + 1 }, (_, i) => {
       const price = minPrice + (i * priceStep)
       let pnl = totalPremium
@@ -55,15 +58,27 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
       options.forEach(option => {
         const quantity = Number(option.quantity)
         const strike = Number(option.strikePrice)
+        const contractSize = 100 // Each contract represents 100 units
 
         if (option.optionType.toLowerCase() === 'call') {
           if (price > strike) {
-            pnl = totalPremium - (quantity * (price - strike) * 100)
+            // For calls, loss increases as price goes above strike
+            const loss = quantity * (price - strike) * contractSize
+            // Apply leverage to the loss calculation
+            pnl = totalPremium - (loss * (positionSize / collateralProvided))
           }
         } else {
           if (price < strike) {
-            pnl = totalPremium - (quantity * (strike - price) * 100)
+            // For puts, loss increases as price goes below strike
+            const loss = quantity * (strike - price) * contractSize
+            // Apply leverage to the loss calculation
+            pnl = totalPremium - (loss * (positionSize / collateralProvided))
           }
+        }
+
+        // Limit losses to collateral provided
+        if (pnl < -collateralProvided) {
+          pnl = -collateralProvided
         }
       })
 
@@ -72,7 +87,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
         value: Number(pnl.toFixed(2))
       }
     })
-  }, [options])
+  }, [options, collateralProvided, leverage])
 
   const maxProfit = useMemo(() => {
     return options.reduce((acc, opt) => 
@@ -81,33 +96,38 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
 
   // Calculate min PnL for better Y-axis scaling
   const minPnL = useMemo(() => {
-    if (calculatePnLPoints.length === 0) return 0
-    return Math.min(...calculatePnLPoints.map(point => point.value))
-  }, [calculatePnLPoints])
+    // Min PnL is now limited to the negative of collateral provided
+    return -collateralProvided;
+  }, [collateralProvided])
 
-  // Generate Y-axis ticks for better readability
+  // Generate Y-axis ticks for better readability with more headroom
   const yAxisTicks = useMemo(() => {
     if (maxProfit <= 0) return []
-    const interval = Math.ceil(maxProfit / 4) // Divide the range into 4 parts
-    const minValue = Math.floor(minPnL)
-    const maxValue = Math.ceil(maxProfit)
+    
+    // Add 20% padding to the max value for headroom
+    const maxPadded = maxProfit * 1.2
+    // Use collateral provided as the minimum value
+    const minValue = -collateralProvided
+    const maxValue = Math.ceil(maxPadded)
+    
+    // Calculate interval based on the range from -collateral to maxProfit
+    const totalRange = maxValue - minValue
+    const interval = Math.ceil(totalRange / 4) // Divide the range into 4 parts
     const ticks = []
     
-    // Add negative ticks
-    for (let i = 0; i >= minValue; i -= interval) {
-      ticks.unshift(i)
-    }
-    // Add positive ticks
-    for (let i = interval; i <= maxValue; i += interval) {
+    // Add ticks from min (negative collateral) up to max profit
+    for (let i = minValue; i <= maxValue; i += interval) {
       ticks.push(i)
     }
+    
     // Always include 0 if it's not already included
     if (!ticks.includes(0)) {
       ticks.push(0)
       ticks.sort((a, b) => a - b)
     }
+    
     return ticks
-  }, [maxProfit, minPnL])
+  }, [maxProfit, collateralProvided])
 
   return (
     <div className="h-full w-full">
@@ -122,8 +142,8 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
             <LineChart
               data={calculatePnLPoints}
               margin={{
-                top: 10,
-                right: 10,
+                top: 20,
+                right: 30,
                 left: 10,
                 bottom: 5,
               }}
@@ -142,7 +162,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                 fontSize={11}
                 tickFormatter={(value) => `$${value}`}
                 ticks={yAxisTicks}
-                domain={[minPnL, maxProfit]}
+                domain={[minPnL, maxProfit * 1.2]}
                 width={60}
               />
               <Tooltip
@@ -160,8 +180,19 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                 stroke="#22c55e"
                 strokeDasharray="3 3"
                 label={{ 
-                  value: `Max: $${maxProfit.toFixed(2)}`,
+                  value: `Max Profit: $${maxProfit.toFixed(2)}`,
                   fill: '#22c55e',
+                  fontSize: 11,
+                  position: 'right'
+                }}
+              />
+              <ReferenceLine 
+                y={-collateralProvided} 
+                stroke="#ef4444"
+                strokeDasharray="3 3"
+                label={{ 
+                  value: `Liquidation: -$${collateralProvided.toFixed(2)}`,
+                  fill: '#ef4444',
                   fontSize: 11,
                   position: 'right'
                 }}

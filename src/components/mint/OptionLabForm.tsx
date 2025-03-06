@@ -101,11 +101,20 @@ export function OptionLabForm() {
         riskFreeRate
       });
       const premium = result.price;
+      
+      // Update the form values synchronously
+      methods.setValue('premium', premium.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
       setCalculatedPrice(premium);
-      methods.setValue('premium', premium.toString());
       setLastUpdated(new Date());
+      
+      return premium;
     } catch (error) {
       console.error('Error calculating option:', error);
+      throw error;
     } finally {
       setIsCalculatingPremium(false);
     }
@@ -175,22 +184,25 @@ export function OptionLabForm() {
       });
       return;
     }
-    
-    // First update the pending options with current values
-    if (pendingOptions.length >= 1) {
-      setPendingOptions([values]);
-    } else {
-      setPendingOptions([values]);
-    }
-    
-    // Clear any form errors
-    methods.clearErrors('root');
 
-    // Trigger premium recalculation with delay
     try {
       setIsDebouncing(true);
-      await new Promise(resolve => setTimeout(resolve, EDIT_REFRESH_INTERVAL)); // 1.5 second delay
+      // Calculate new premium first
       await calculateOptionPrice(values);
+      
+      // Get the updated values with new premium
+      const updatedValues = methods.getValues();
+      
+      // Update pending options with the latest values
+      setPendingOptions([updatedValues]);
+      
+      // Clear any form errors
+      methods.clearErrors('root');
+    } catch (error) {
+      console.error('Error updating option:', error);
+      methods.setError('root', { 
+        message: 'Error updating option premium' 
+      });
     } finally {
       setIsDebouncing(false);
     }
