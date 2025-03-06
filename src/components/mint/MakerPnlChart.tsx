@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {
   Line,
   LineChart,
@@ -111,86 +110,79 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
   }, [maxProfit, minPnL])
 
   return (
-    <Card className="mt-6 card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 
-      dark:border-white/5 transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardHeader className="pb-3 border-b border-[#e5e5e5]/20 dark:border-[#393939]/50">
-        <CardTitle className="text-lg font-semibold text-center">
-          Profit & Loss Projection
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        {options.length === 0 ? (
-          <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground 
-            border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
-            Add options to see PnL projection
-          </div>
-        ) : (
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={calculatePnLPoints}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
+    <div className="h-full w-full">
+      {options.length === 0 ? (
+        <div className="flex items-center justify-center h-[400px] text-sm text-muted-foreground 
+          border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
+          Add options to see PnL projection
+        </div>
+      ) : (
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={calculatePnLPoints}
+              margin={{
+                top: 10,
+                right: 10,
+                left: 10,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#393939" opacity={0.2} />
+              <XAxis 
+                dataKey="name"
+                stroke="#666"
+                fontSize={11}
+                tickFormatter={(value) => value.replace('$', '')}
+                interval="preserveStartEnd"
+                minTickGap={40}
+              />
+              <YAxis
+                stroke="#666"
+                fontSize={11}
+                tickFormatter={(value) => `$${value}`}
+                ticks={yAxisTicks}
+                domain={[minPnL, maxProfit]}
+                width={60}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
                 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#393939" opacity={0.2} />
-                <XAxis 
-                  dataKey="name"
-                  stroke="#666"
-                  fontSize={12}
-                  tickFormatter={(value) => value.replace('$', '')}
-                  interval="preserveStartEnd"
-                  minTickGap={50}
-                />
-                <YAxis
-                  stroke="#666"
-                  fontSize={12}
-                  tickFormatter={(value) => `$${value}`}
-                  ticks={yAxisTicks}
-                  domain={[minPnL, maxProfit]}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
-                  }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'PnL']}
-                  labelFormatter={(label) => `Price: ${label}`}
-                />
-                <ReferenceLine 
-                  y={maxProfit} 
-                  stroke="#22c55e"
-                  strokeDasharray="3 3"
-                  label={{ 
-                    value: `Max: $${maxProfit.toFixed(2)}`,
-                    fill: '#22c55e',
-                    fontSize: 12,
-                    position: 'right'
-                  }}
-                />
-                <ReferenceLine 
-                  y={0} 
-                  stroke="#666"
-                  strokeDasharray="3 3"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#4a85ff"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                formatter={(value: number) => [`$${value.toFixed(2)}`, 'PnL']}
+                labelFormatter={(label) => `Price: ${label}`}
+              />
+              <ReferenceLine 
+                y={maxProfit} 
+                stroke="#22c55e"
+                strokeDasharray="3 3"
+                label={{ 
+                  value: `Max: $${maxProfit.toFixed(2)}`,
+                  fill: '#22c55e',
+                  fontSize: 11,
+                  position: 'right'
+                }}
+              />
+              <ReferenceLine 
+                y={0} 
+                stroke="#666"
+                strokeDasharray="3 3"
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#4a85ff"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
   )
 } 

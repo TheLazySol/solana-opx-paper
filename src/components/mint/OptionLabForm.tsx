@@ -253,68 +253,78 @@ export function OptionLabForm() {
   };
 
   return (
-    <div className="mx-auto max-w-xl w-full">
+    <div className="mx-auto max-w-[1400px] w-full px-6">
       <FormProvider {...methods}>
         <form onSubmit={onSubmit} className="space-y-8">
-          <AssetSelector assetPrice={assetPrice} />
-          <OptionTypeSelector />
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <ExpirationDatePicker />
+          <div className="grid grid-cols-12 gap-12">
+            {/* Left side - Option Form */}
+            <div className="col-span-3 space-y-8">
+              <AssetSelector assetPrice={assetPrice} />
+              <OptionTypeSelector />
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <ExpirationDatePicker />
+                </div>
+                <div className="flex-1">
+                  <StrikePriceInput assetPrice={assetPrice} />
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
+                </div>
+                <div className="flex-1">
+                  <QuantityInput />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={addOptionToSummary}
+                  className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
+                    hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
+                    backdrop-blur-sm
+                    transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
+                    disabled:hover:scale-100"
+                  disabled={
+                    !methods.formState.isValid || 
+                    !methods.getValues("strikePrice") || 
+                    !methods.getValues("premium") ||
+                    !methods.getValues("expirationDate")
+                  }
+                >
+                  {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <StrikePriceInput assetPrice={assetPrice} />
+
+            {/* Right side - Maker Summary */}
+            <div className="col-span-9">
+              <MakerSummary 
+                options={pendingOptions}
+                onRemoveOption={removeOptionFromSummary}
+                onStateChange={useCallback((state: MakerSummaryState) => {
+                  const hasEnoughCollateral = state.hasEnoughCollateral;
+                  if (!hasEnoughCollateral && !methods.formState.errors.root) {
+                    methods.setError('root', {
+                      message: 'Not enough collateral provided'
+                    });
+                  } else if (hasEnoughCollateral && methods.formState.errors.root) {
+                    methods.clearErrors('root');
+                  }
+                }, [methods])}
+              />
+              {pendingOptions.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Please add at least 1 option contract to the summary before minting!
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
-            </div>
-            <div className="flex-1">
-              <QuantityInput />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={addOptionToSummary}
-              className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
-                hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
-                backdrop-blur-sm
-                transition-all duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
-                disabled:hover:scale-100"
-              disabled={
-                !methods.formState.isValid || 
-                !methods.getValues("strikePrice") || 
-                !methods.getValues("premium") ||
-                !methods.getValues("expirationDate")
-              }
-            >
-              {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
-            </Button>
-          </div>
-          <MakerSummary 
-            options={pendingOptions}
-            onRemoveOption={removeOptionFromSummary}
-            onStateChange={useCallback((state: MakerSummaryState) => {
-              const hasEnoughCollateral = state.hasEnoughCollateral;
-              if (!hasEnoughCollateral && !methods.formState.errors.root) {
-                methods.setError('root', {
-                  message: 'Not enough collateral provided'
-                });
-              } else if (hasEnoughCollateral && methods.formState.errors.root) {
-                methods.clearErrors('root');
-              }
-            }, [methods])}
-          />
-          {pendingOptions.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Please add at least 1 option contract to the summary before minting!
-            </p>
-          )}
+
           <Button 
             type="submit" 
             disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
