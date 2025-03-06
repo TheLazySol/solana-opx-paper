@@ -129,10 +129,10 @@ export function MakerSummary({
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div className="flex flex-col p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
                   <span className="text-xs text-muted-foreground mb-1">Max Potential Profit</span>
-                  <span className="font-semibold text-lg text-green-500">${totalPremium.toFixed(4)}</span>
+                  <span className="font-semibold text-lg text-green-500">${totalPremium.toFixed(2)}</span>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-                  <span className="text-xs text-muted-foreground mb-1">Collateral Needed</span>
+                  <span className="text-xs text-muted-foreground mb-1">Collateral Needed to Open Position</span>
                   <span className={cn(
                     "font-semibold text-lg",
                     positionSize > 0 && positionSize < baseCollateralNeeded 
