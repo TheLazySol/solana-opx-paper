@@ -11,6 +11,7 @@ import { useState, useEffect } from "react"
 import React from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { COLLATERAL_TYPES } from "@/constants/mint/constants"
+import { MakerPnlChart } from "./MakerPnlChart"
 
 export interface MakerSummaryState {
   hasEnoughCollateral: boolean;
@@ -264,6 +265,12 @@ export function MakerSummary({
                   </span>
                 </div>
               </div>
+
+              <MakerPnlChart 
+                options={options}
+                collateralProvided={Number(collateralProvided) || 0}
+                leverage={leverage[0]}
+              />
             </>
           )}
         </CardContent>
