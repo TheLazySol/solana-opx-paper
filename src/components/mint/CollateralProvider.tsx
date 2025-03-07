@@ -7,8 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/misc/utils";
-import { COLLATERAL_TYPES } from "@/constants/mint/constants";
-import { calculateCollateralNeeded, calculateRequiredCollateral, hasEnoughCollateral, calculateOptimalLeverage } from "@/constants/mint/calculations";
+import { 
+  COLLATERAL_TYPES, 
+  BASE_ANNUAL_INTEREST_RATE, 
+  OPTION_CREATION_FEE_RATE, 
+  BORROW_FEE_RATE, 
+  TRANSACTION_COST_SOL 
+} from "@/constants/mint/constants";
+import { 
+  calculateCollateralNeeded, 
+  calculateRequiredCollateral, 
+  hasEnoughCollateral, 
+  calculateOptimalLeverage,
+  calculateTotalPremium,
+  calculateHourlyInterestRate,
+  calculateBorrowCost,
+  calculateOptionCreationFee,
+  calculateBorrowFee,
+  calculateMaxProfitPotential
+} from "@/constants/mint/calculations";
 
 export interface OptionPosition {
   quantity: number;
@@ -16,6 +33,7 @@ export interface OptionPosition {
   premium: string | number;
   optionType: string;
   asset: string;
+  expiryTimestamp?: number;
 }
 
 export interface CollateralState {
@@ -23,6 +41,11 @@ export interface CollateralState {
   collateralProvided: string;
   leverage: number;
   collateralType: string;
+  borrowCost: number;
+  optionCreationFee: number;
+  borrowFee: number;
+  transactionCost: number;
+  maxProfitPotential: number;
 }
 
 interface CollateralProviderProps {
@@ -32,15 +55,59 @@ interface CollateralProviderProps {
 
 export function CollateralProvider({ options, onStateChange }: CollateralProviderProps) {
   const baseCollateralNeeded = calculateCollateralNeeded(options);
+  const totalPremium = calculateTotalPremium(options);
   const [collateralProvided, setCollateralProvided] = useState<string>("");
   const [leverage, setLeverage] = useState<number[]>([1]);
   const [collateralType, setCollateralType] = useState<typeof COLLATERAL_TYPES[number]['value']>(
     COLLATERAL_TYPES.find(type => type.default)?.value || "USDC"
   );
   const maxLeverage = 5;
-
+  
+  // Convert annual to hourly interest rate
+  const hourlyInterestRate = calculateHourlyInterestRate(BASE_ANNUAL_INTEREST_RATE);
+  
   // Calculate position size (total available capital with leverage)
   const positionSize = Number(collateralProvided || 0) * leverage[0];
+  
+  // Calculate amount borrowed (collateral * (leverage - 1))
+  const amountBorrowed = Number(collateralProvided || 0) * (leverage[0] - 1);
+  
+  // Calculate time until expiration (in hours)
+  const getTimeUntilExpiration = () => {
+    // Find the latest expiry from all options
+    const now = Math.floor(Date.now() / 1000); // Convert to seconds
+    let latestExpiry = 0;
+    
+    options.forEach(option => {
+      if (option.expiryTimestamp && option.expiryTimestamp > latestExpiry) {
+        latestExpiry = option.expiryTimestamp;
+      }
+    });
+    
+    // If no expiry found, use 7 days as default
+    if (latestExpiry === 0) {
+      latestExpiry = now + (7 * 24 * 60 * 60); // 7 days in seconds
+    }
+    
+    // Calculate hours until expiry
+    return Math.max(0, Math.ceil((latestExpiry - now) / 3600));
+  };
+  
+  const hoursUntilExpiry = getTimeUntilExpiration();
+  
+  // Calculate all fees
+  const borrowCost = calculateBorrowCost(amountBorrowed, hourlyInterestRate, hoursUntilExpiry);
+  const optionCreationFee = calculateOptionCreationFee(positionSize);
+  const borrowFee = calculateBorrowFee(positionSize);
+  const transactionCost = TRANSACTION_COST_SOL;
+  
+  // Calculate maximum profit potential
+  const maxProfitPotential = calculateMaxProfitPotential(
+    totalPremium,
+    borrowCost,
+    optionCreationFee,
+    transactionCost
+  );
   
   // Calculate required collateral based on position size
   const collateralNeeded = calculateRequiredCollateral(baseCollateralNeeded, positionSize);
@@ -57,8 +124,23 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
     hasEnoughCollateral: isEnoughCollateral,
     collateralProvided,
     leverage: leverage[0],
-    collateralType
-  }), [isEnoughCollateral, collateralProvided, leverage, collateralType]);
+    collateralType,
+    borrowCost,
+    optionCreationFee,
+    borrowFee,
+    transactionCost,
+    maxProfitPotential
+  }), [
+    isEnoughCollateral, 
+    collateralProvided, 
+    leverage, 
+    collateralType, 
+    borrowCost, 
+    optionCreationFee, 
+    borrowFee, 
+    transactionCost, 
+    maxProfitPotential
+  ]);
 
   // Store previous state to compare
   const prevStateRef = React.useRef(currentState);
@@ -69,7 +151,12 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
       prevStateRef.current.hasEnoughCollateral !== currentState.hasEnoughCollateral ||
       prevStateRef.current.collateralProvided !== currentState.collateralProvided ||
       prevStateRef.current.leverage !== currentState.leverage ||
-      prevStateRef.current.collateralType !== currentState.collateralType
+      prevStateRef.current.collateralType !== currentState.collateralType ||
+      prevStateRef.current.borrowCost !== currentState.borrowCost ||
+      prevStateRef.current.optionCreationFee !== currentState.optionCreationFee ||
+      prevStateRef.current.borrowFee !== currentState.borrowFee ||
+      prevStateRef.current.transactionCost !== currentState.transactionCost ||
+      prevStateRef.current.maxProfitPotential !== currentState.maxProfitPotential
     ) {
       prevStateRef.current = currentState;
       onStateChange?.(currentState);
@@ -169,55 +256,71 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
               <Slider
                 min={1}
                 max={maxLeverage}
-                step={0.01}
+                step={0.1}
                 value={leverage}
-                onValueChange={(value) => setLeverage([Number(value[0].toFixed(2))])}
+                onValueChange={setLeverage}
                 className="flex-1"
               />
-              <div className="flex items-center gap-1">
-                <Input
-                  type="number"
-                  min={1}
-                  max={maxLeverage}
-                  step={0.01}
-                  value={leverage[0]}
-                  onChange={(e) => {
-                    const rawValue = e.target.value;
-                    if (rawValue === '' || /^\d+(\.\d{0,2})?$/.test(rawValue)) {
-                      const value = Number(rawValue);
-                      if (!isNaN(value)) {
-                        const clampedValue = Math.min(Math.max(value || 1, 1), maxLeverage);
-                        setLeverage([clampedValue]);
-                      }
-                    }
-                  }}
-                  className="h-9 w-14 px-2 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
-                    focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
-                    text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <span className="font-medium text-[#4a85ff] text-base">×</span>
-              </div>
+              <span className="font-medium w-12">{leverage[0].toFixed(1)}x</span>
             </div>
           </div>
+          
+          {leverage[0] > 1 && Number(collateralProvided) > 0 && (
+            <div className="flex flex-col rounded-lg bg-amber-500/5 border border-amber-500/30">
+              <div className="flex items-center justify-between p-2 border-b border-amber-500/20">
+                <span className="text-sm font-medium text-amber-500">Borrowing Cost</span>
+                <span className="text-xs text-muted-foreground">
+                  {(hourlyInterestRate * 10000).toFixed(4)}% per hour
+                </span>
+              </div>
+              <div className="p-2">
+                <div className="flex flex-col">
+                  <div className="flex justify-between text-sm">
+                    <span>Amount Borrowed:</span>
+                    <span className="font-medium">${amountBorrowed.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>New Max Profit Potential:</span>
+                    <span className="font-medium">${maxProfitPotential.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-1 pt-1 border-t border-amber-500/20">
+                    <span>Total Cost:</span>
+                    <span className="font-bold text-amber-500">${borrowCost.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {Number(collateralProvided) > 0 && (
+            <div className="flex flex-col rounded-lg bg-amber-500/5 border border-amber-500/30">
+              <div className="flex items-center justify-between p-2 border-b border-amber-500/20">
+                <span className="text-sm font-medium text-amber-500">Fees</span>
+              </div>
+              <div className="p-2">
+                <div className="flex flex-col">
+                  <div className="flex justify-between text-sm">
+                    <span>Option Creation Fee (0.02%):</span>
+                    <span className="font-medium">${optionCreationFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Borrow Fee (0.10%):</span>
+                    <span className="font-medium">${borrowFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Transaction Cost:</span>
+                    <span className="font-medium">{transactionCost} SOL</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="flex flex-col rounded-lg bg-[#4a85ff]/5 border border-[#4a85ff]/30">
             <div className="flex items-center justify-between p-2 border-b border-[#4a85ff]/20">
               <span className="text-sm font-medium text-[#4a85ff]">Position Size</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const optimalLeverage = calculateOptimalLeverage(
-                    baseCollateralNeeded,
-                    Number(collateralProvided || 0)
-                  );
-                  setLeverage([optimalLeverage]);
-                }}
-                className="h-7 px-2 py-0 text-xs hover:bg-[#4a85ff]/10"
-              >
-                Auto-Size
-              </Button>
+              <div className="flex justify-end px-2 py-1">
+              </div>
             </div>
             <div className="p-2">
               <span className={cn(

@@ -48,4 +48,40 @@ export const calculateOptimalLeverage = (
   
   // Round to 2 decimal places and ensure the leverage is within bounds
   return Number(Math.min(Math.max(1, requiredLeverage), maxLeverage).toFixed(2));
+}
+
+// Calculate hourly interest rate from annual rate
+export const calculateHourlyInterestRate = (annualRate: number): number => {
+  return annualRate / (365 * 24);
+}
+
+// Calculate borrowing cost
+export const calculateBorrowCost = (
+  amountBorrowed: number,
+  hourlyRate: number,
+  hours: number
+): number => {
+  return amountBorrowed * hourlyRate * hours;
+}
+
+// Calculate option creation fee (0.02% of position size)
+export const calculateOptionCreationFee = (positionSize: number): number => {
+  return positionSize * 0.0002; // 0.02%
+}
+
+// Calculate borrow fee (0.10% of position size)
+export const calculateBorrowFee = (positionSize: number): number => {
+  return positionSize * 0.001; // 0.10%
+}
+
+// Calculate maximum profit potential
+export const calculateMaxProfitPotential = (
+  totalPremium: number,
+  borrowCost: number,
+  optionCreationFee: number,
+  transactionCost: number,
+  solPrice: number = 1 // Default SOL price in USD if not provided
+): number => {
+  const transactionCostInUSD = transactionCost * solPrice;
+  return totalPremium - borrowCost - optionCreationFee - transactionCostInUSD;
 } 

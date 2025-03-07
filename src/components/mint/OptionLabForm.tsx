@@ -81,7 +81,12 @@ export function OptionLabForm() {
     hasEnoughCollateral: false,
     collateralProvided: "0",
     leverage: 1,
-    collateralType: "SOL"
+    collateralType: methods.getValues('asset'), // Use the selected asset from the form
+    borrowCost: 0, // Will be calculated properly by CollateralProvider
+    optionCreationFee: 0,
+    borrowFee: 0,
+    transactionCost: 0,
+    maxProfitPotential: 0
   });
 
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {

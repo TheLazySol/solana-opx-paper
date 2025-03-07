@@ -6,6 +6,12 @@ export const COLLATERAL_TYPES = [
   { value: "SOL", label: "SOL", default: false }
 ] as const;
 
+// Financial constants
+export const BASE_ANNUAL_INTEREST_RATE = 0.1456; // 14.56% annual interest rate
+export const OPTION_CREATION_FEE_RATE = 0.0002; // 0.02% of position size
+export const BORROW_FEE_RATE = 0.001; // 0.10% of position size
+export const TRANSACTION_COST_SOL = 0.02; // 0.02 SOL
+
 // Get all bi-weekly expiration dates between two dates for the calendar
 export function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];
