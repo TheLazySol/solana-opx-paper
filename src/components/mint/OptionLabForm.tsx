@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./MakerSummary";
 import { CollateralProvider, CollateralState } from "./CollateralProvider";
 import { cn } from "@/lib/misc/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -292,54 +293,62 @@ export function OptionLabForm() {
     <div className="mx-auto max-w-[1400px] w-full px-6">
       <FormProvider {...methods}>
         <form onSubmit={onSubmit} className="space-y-8">
-          <div className="grid grid-cols-12 gap-8">
+          <div className="grid grid-cols-12 gap-4">
             {/* Left side - Option Form */}
-            <div className="col-span-3 space-y-8">
-              <AssetSelector assetPrice={assetPrice} />
-              <OptionTypeSelector />
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <ExpirationDatePicker />
-                </div>
-                <div className="flex-1">
-                  <StrikePriceInput assetPrice={assetPrice} />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
-                </div>
-                <div className="flex-1">
-                  <QuantityInput />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={addOptionToSummary}
-                  className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
-                    hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
-                    backdrop-blur-sm
-                    transition-all duration-200
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
-                    disabled:hover:scale-100"
-                  disabled={
-                    !methods.formState.isValid || 
-                    !methods.getValues("strikePrice") || 
-                    !methods.getValues("premium") ||
-                    !methods.getValues("expirationDate")
-                  }
-                >
-                  {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
-                </Button>
-              </div>
+            <div className="col-span-3">
+              <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
+                transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
+                <CardHeader className="pb-2">
+                  <CardTitle>Create Option</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <AssetSelector assetPrice={assetPrice} />
+                  <OptionTypeSelector />
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <ExpirationDatePicker />
+                    </div>
+                    <div className="flex-1">
+                      <StrikePriceInput assetPrice={assetPrice} />
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
+                    </div>
+                    <div className="flex-1">
+                      <QuantityInput />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={addOptionToSummary}
+                      className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
+                        hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
+                        backdrop-blur-sm
+                        transition-all duration-200
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
+                        disabled:hover:scale-100"
+                      disabled={
+                        !methods.formState.isValid || 
+                        !methods.getValues("strikePrice") || 
+                        !methods.getValues("premium") ||
+                        !methods.getValues("expirationDate")
+                      }
+                    >
+                      {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Right side - Maker Summary & Collateral Provider */}
             <div className="col-span-9">
-              <div className="flex flex-row gap-6">
+              <div className="flex flex-row gap-4">
                 {/* Maker Summary */}
                 <div className="flex-1">
                   <MakerSummary 

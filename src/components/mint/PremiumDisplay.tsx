@@ -1,9 +1,10 @@
 import React from 'react';
-import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useFormContext } from 'react-hook-form';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const PremiumDisplay = ({ 
   lastUpdated, 
@@ -18,7 +19,19 @@ export const PremiumDisplay = ({
 
   return (
     <FormItem>
-      <FormLabel className="mb-2">Option Premium</FormLabel>
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Option Premium</FormLabel>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>The price paid by the buyer to the option seller.</p>
+            {lastUpdated && getValues('premium') && (
+              <p className="text-[#4a85ff] mt-1">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div className="flex items-center gap-2">
         <FormControl>
           <Input
@@ -40,13 +53,6 @@ export const PremiumDisplay = ({
           <RefreshCcw className={`h-4 w-4 ${isDebouncing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
-      <FormDescription className="mt-2">
-        {lastUpdated ? (
-          <>
-            {getValues('premium') && <span className="text-[#4a85ff]">{` $${(Number(getValues('premium')) * 100).toFixed(2)} USD`}</span>}
-          </>
-        ) : 'Not calculated yet'}
-      </FormDescription>
       <FormMessage />
     </FormItem>
   );

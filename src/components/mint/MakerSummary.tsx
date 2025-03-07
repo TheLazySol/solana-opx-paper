@@ -31,17 +31,17 @@ export function MakerSummary({
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardContent className="pt-6">
+      <CardContent className="px-4 py-4">
         {options.length === 0 ? (
           <div className="flex items-center justify-center h-24 text-sm text-muted-foreground 
             border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
             Add options to see PnL projection at expiration
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* PnL Chart */}
             <div className="rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50 p-4">
-              <h3 className="text-lg font-semibold mb-4">Profit & Loss Projection</h3>
+              <h3 className="text-lg font-semibold mb-3">Profit & Loss Projection</h3>
               <MakerPnlChart 
                 options={options}
                 collateralProvided={collateralProvided}
@@ -50,7 +50,7 @@ export function MakerSummary({
             </div>
 
             {/* Options List */}
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Option Contracts</h3>
                 <div className="flex items-center gap-1.5">
@@ -66,14 +66,14 @@ export function MakerSummary({
                   <div 
                     key={index} 
                     className={cn(
-                      "group flex items-center justify-between py-2.5 px-4",
+                      "group flex items-center justify-between py-2 px-3",
                       "backdrop-blur-sm bg-white/5 dark:bg-black/20",
                       "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
                       "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
                       "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
                     )}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base font-semibold tracking-tight">{option.quantity}</span>
                         <span className="px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md">SHORT</span>

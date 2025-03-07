@@ -1,7 +1,8 @@
 import React from 'react';
-import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useFormContext } from 'react-hook-form';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const getStepValue = (price: number | null): string => {
   if (!price) return "0.0001";
@@ -64,7 +65,16 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
 
   return (
     <FormItem>
-      <FormLabel className="mb-2">Strike Price</FormLabel>
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Strike Price</FormLabel>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>The market price at which the option can be bought or sold by the buyer.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <FormControl>
         <div className="relative">
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500">$</span>
@@ -79,9 +89,6 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
           />
         </div>
       </FormControl>
-      <FormDescription className="mt-2">
-        The market price at which the option can be bought or sold by the buyer. 
-      </FormDescription>
       <FormMessage />
     </FormItem>
   );

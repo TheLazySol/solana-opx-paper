@@ -79,11 +79,11 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardHeader className="pb-2">
-        <CardTitle>Provide Collateral</CardTitle>
+      <CardHeader className="px-4 py-3 pb-0">
+        <CardTitle className="text-lg">Provide Collateral</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 gap-3">
+      <CardContent className="px-4 pt-3 space-y-4">
+        <div className="grid grid-cols-1 gap-2">
           <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <span className="text-xs text-muted-foreground">Collateral Needed</span>
             <span className={cn(
@@ -99,12 +99,12 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
         
         <Separator className="bg-[#e5e5e5]/20 dark:bg-[#393939]/50" />
         
-        <div className="space-y-5">
-          <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Collateral Amount</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Select
                 value={collateralType}
                 onValueChange={(value: typeof COLLATERAL_TYPES[number]['value']) => setCollateralType(value)}
@@ -143,7 +143,7 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
             </div>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Leverage</span>
               <Button
@@ -165,7 +165,7 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
               </Button>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Slider
                 min={1}
                 max={maxLeverage}
@@ -201,7 +201,7 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
           </div>
           
           <div className="flex flex-col rounded-lg bg-[#4a85ff]/5 border border-[#4a85ff]/30">
-            <div className="flex items-center justify-between p-2.5 border-b border-[#4a85ff]/20">
+            <div className="flex items-center justify-between p-2 border-b border-[#4a85ff]/20">
               <span className="text-sm font-medium text-[#4a85ff]">Position Size</span>
               <Button
                 type="button"
@@ -219,7 +219,7 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
                 Auto-Size
               </Button>
             </div>
-            <div className="p-2.5">
+            <div className="p-2">
               <span className={cn(
                 "font-bold text-xl",
                 isEnoughCollateral ? "text-[#4a85ff]" : "text-yellow-500"

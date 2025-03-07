@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,6 +7,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/misc/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
@@ -43,7 +44,16 @@ export const ExpirationDatePicker = () => {
 
   return (
     <FormItem>
-      <FormLabel className="mb-2">Expiration Date</FormLabel>
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Expiration Date</FormLabel>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Select a date for when this option contract should expire.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <Popover>
         <PopoverTrigger asChild>
           <FormControl>
@@ -86,9 +96,6 @@ export const ExpirationDatePicker = () => {
           />
         </PopoverContent>
       </Popover>
-      <FormDescription className="mt-2">
-        Select a date for when this option contract should expire.
-      </FormDescription>
       <FormMessage />
     </FormItem>
   );

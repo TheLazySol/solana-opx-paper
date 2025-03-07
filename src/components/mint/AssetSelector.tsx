@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TOKENS } from '@/lib/api/tokens';
 import { useFormContext } from 'react-hook-form';
@@ -19,9 +19,21 @@ export const AssetSelector = ({ assetPrice }: { assetPrice: number | null }) => 
     });
   };
 
+  const currentAsset = getValues('asset');
+  const labelText = assetPrice 
+    ? `${currentAsset} • $${assetPrice.toFixed(4)}`
+    : 'Asset';
+
   return (
     <FormItem>
-      <FormLabel>Asset</FormLabel>
+      <FormLabel className="mb-2 flex items-center">
+        <span>Current Price:</span>
+        {assetPrice && (
+          <span className="ml-2 text-[#4a85ff] text-sm font-normal">
+            ${assetPrice.toFixed(4)}
+          </span>
+        )}
+      </FormLabel>
       <Select 
         onValueChange={handleAssetChange}
         defaultValue={getValues('asset')}
@@ -39,9 +51,6 @@ export const AssetSelector = ({ assetPrice }: { assetPrice: number | null }) => 
           ))}
         </SelectContent>
       </Select>
-      <FormDescription>
-        <span className="text-[#4a85ff]">Current Price: {assetPrice ? `$${assetPrice.toFixed(4)}` : 'Loading...'}</span>
-      </FormDescription>
       <FormMessage />
     </FormItem>
   );
