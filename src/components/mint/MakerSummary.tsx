@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/misc/utils"
@@ -31,10 +31,7 @@ export function MakerSummary({
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardHeader className="pb-2">
-        <CardTitle>Position Summary</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {options.length === 0 ? (
           <div className="flex items-center justify-center h-24 text-sm text-muted-foreground 
             border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
