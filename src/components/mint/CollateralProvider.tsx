@@ -286,7 +286,9 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
               onValueChange={setLeverage}
               className="flex-1"
             />
-            <span className="font-medium w-12 text-right">{leverage[0].toFixed(2)}x</span>
+            <span className={`font-medium w-12 text-right ${(borrowCost + optionCreationFee + borrowFee) > maxProfitPotential ? 'text-red-500' : ''}`}>
+              {leverage[0].toFixed(2)}x
+            </span>
           </div>
         </div>
 
