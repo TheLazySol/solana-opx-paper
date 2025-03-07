@@ -26,7 +26,7 @@ export const AssetSelector = ({ assetPrice }: { assetPrice: number | null }) => 
 
   return (
     <FormItem>
-      <FormLabel className="mb-2 flex items-center">
+      <FormLabel className="pt-3 mb-2 flex items-center">
         <span>Current Price:</span>
         {assetPrice && (
           <span className="ml-2 text-[#4a85ff] text-sm font-normal">

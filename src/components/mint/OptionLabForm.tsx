@@ -298,9 +298,6 @@ export function OptionLabForm() {
             <div className="col-span-3">
               <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
                 transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-                <CardHeader className="pb-2">
-                  <CardTitle>Create Option</CardTitle>
-                </CardHeader>
                 <CardContent className="space-y-6">
                   <AssetSelector assetPrice={assetPrice} />
                   <OptionTypeSelector />

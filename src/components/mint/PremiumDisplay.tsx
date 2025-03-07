@@ -25,7 +25,7 @@ export const PremiumDisplay = ({
             <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Option Premium</FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The price paid by the buyer to the option seller.</p>
+            <p>The price paid by the buyer, this is the max profit for the option seller at expiration.</p>
             {lastUpdated && getValues('premium') && (
               <p className="text-[#4a85ff] mt-1">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</p>
             )}

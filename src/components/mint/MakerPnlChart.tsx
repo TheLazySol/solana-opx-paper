@@ -49,7 +49,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     ) / totalQuantity
 
     // Create a wider price range for better visualization
-    const priceRange = avgStrike * 0.5 // 50% range for better visualization
+    const priceRange = avgStrike * 0.2 // 20% range for better visualization
     const minPrice = Math.max(avgStrike - priceRange, 0)
     const maxPrice = avgStrike + priceRange
     const steps = 100 // Increased resolution for smoother curve
@@ -144,15 +144,15 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     ) / totalQuantity
   }, [options])
 
-  const priceRange = currentMarketPrice * 0.15 // 15% range
+  const priceRange = currentMarketPrice * 0.20 // 20% range
   const minPrice = Math.max(currentMarketPrice - priceRange, 0)
   const maxPrice = currentMarketPrice + priceRange
 
   // Calculate chart domains for centering zero and adding headroom
   const chartDomains = useMemo(() => {
     const absMax = Math.max(Math.abs(maxLoss), maxProfit)
-    // Add 20% headroom to both sides
-    const yDomain = [-absMax * 1.2, absMax * 1.2]
+    // Add 10% headroom to both sides
+    const yDomain = [-absMax * 1.1, absMax * 1.1]
     
     // For X domain, use the market price +/- range
     const defaultXDomain = [minPrice, maxPrice]
@@ -220,7 +220,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                     value: 'Underlying Price at Expiration', 
                     position: 'bottom',
                     offset: 10,
-                    fontSize: 12,
+                    fontSize: 11,
                     fill: '#666'
                   }}
                 />
@@ -235,7 +235,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                     angle: -90, 
                     position: 'insideLeft',
                     style: { textAnchor: 'middle' },
-                    fontSize: 12,
+                    fontSize: 11,
                     fill: '#666'
                   }}
                 />

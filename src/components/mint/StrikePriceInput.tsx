@@ -71,7 +71,7 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
             <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Strike Price</FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The market price at which the option can be bought or sold by the buyer.</p>
+            <p>The market price at which the option can be exercised by the buyer.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
