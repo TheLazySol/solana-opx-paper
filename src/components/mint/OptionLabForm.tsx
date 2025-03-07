@@ -346,13 +346,14 @@ export function OptionLabForm() {
             {/* Right side - Maker Summary & Collateral Provider */}
             <div className="col-span-9">
               <div className="flex flex-row gap-4">
-                {/* Maker Summary */}
+                {/* Maker Summary - PnL Chart */}
                 <div className="flex-1">
                   <MakerSummary 
                     options={pendingOptions}
                     onRemoveOption={removeOptionFromSummary}
                     collateralProvided={Number(collateralState.collateralProvided) || 0}
                     leverage={collateralState.leverage}
+                    assetPrice={assetPrice}
                   />
                   {pendingOptions.length === 0 && (
                     <p className="text-sm text-muted-foreground mt-4">

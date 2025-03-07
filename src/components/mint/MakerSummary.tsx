@@ -18,13 +18,15 @@ export interface MakerSummaryProps {
   onRemoveOption: (index: number) => void;
   collateralProvided: number;
   leverage: number;
+  assetPrice?: number | null;
 }
 
 export function MakerSummary({ 
   options, 
   onRemoveOption,
   collateralProvided,
-  leverage
+  leverage,
+  assetPrice = null
 }: MakerSummaryProps) {
   const totalPremium = calculateTotalPremium(options);
 
@@ -46,6 +48,7 @@ export function MakerSummary({
                 options={options}
                 collateralProvided={collateralProvided}
                 leverage={leverage}
+                assetPrice={assetPrice}
               />
             </div>
 

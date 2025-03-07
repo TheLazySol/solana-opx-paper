@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Label,
 } from "recharts"
 import { cn } from "@/lib/misc/utils"
 
@@ -17,12 +18,16 @@ interface OptionPosition {
   premium: string | number
   optionType: string
   asset: string
+  expiryTimestamp?: number  // Optional expiry timestamp in seconds
+  impliedVolatility?: number // Optional IV
 }
 
 interface MakerPnlChartProps {
   options: OptionPosition[]
   collateralProvided: number
   leverage: number
+  riskFreeRate?: number // Optional risk-free rate for option calculations
+  assetPrice?: number | null // Current asset price from AssetSelector
 }
 
 interface PnLDataPoint {
@@ -30,9 +35,43 @@ interface PnLDataPoint {
   value: number
 }
 
-export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPnlChartProps) {
-  // Since we're removing all zoom functionality, we don't need this state anymore
+// Add a custom tooltip component before the main component
+const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
+  if (active && payload && payload.length) {
+    const value = payload[0].value;
+    const color = value >= 0 ? '#22c55e' : '#ef4444';
+    
+    return (
+      <div 
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '6px',
+          padding: '8px 12px',
+          color: 'white',
+        }}
+      >
+        <p style={{ margin: '0 0 5px' }}>Price: ${parseFloat(label).toFixed(2)}</p>
+        <p style={{ margin: '0', color }}>
+          PnL at Expiration: ${value.toFixed(2)}
+        </p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export function MakerPnlChart({ 
+  options, 
+  collateralProvided, 
+  leverage,
+  riskFreeRate = 0.05, // Default to 5% if not provided
+  assetPrice = null // Default to null if not provided
+}: MakerPnlChartProps) {
   const chartRef = useRef<HTMLDivElement>(null)
+  // Always use expiration view - no toggle needed
+  const showExpiration = true
   
   const calculatePnLPoints = useMemo(() => {
     if (options.length === 0) return []
@@ -49,12 +88,15 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     ) / totalQuantity
 
     // Create a wider price range for better visualization
-    const priceRange = avgStrike * 0.2 // 20% range for better visualization
+    const priceRange = avgStrike * 0.3 // 30% range for better visualization
     const minPrice = Math.max(avgStrike - priceRange, 0)
     const maxPrice = avgStrike + priceRange
     const steps = 100 // Increased resolution for smoother curve
     const priceStep = (maxPrice - minPrice) / steps
 
+    // Get current timestamp in seconds
+    const now = Math.floor(Date.now() / 1000)
+    
     // Create points array
     const points = Array.from({ length: steps + 1 }, (_, i) => {
       const price = minPrice + (i * priceStep)
@@ -69,17 +111,17 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
         const strike = Number(option.strikePrice)
         const premium = Number(option.premium)
         const contractSize = 100 // Each contract represents 100 units
-
-        // At expiration, calculate intrinsic value
-        if (option.optionType.toLowerCase() === 'call') {
-          // For call options at expiration
-          const intrinsicValue = Math.max(0, price - strike)
-          pnl -= quantity * intrinsicValue * contractSize
-        } else {
-          // For put options at expiration
-          const intrinsicValue = Math.max(0, strike - price)
-          pnl -= quantity * intrinsicValue * contractSize
-        }
+        const isCall = option.optionType.toLowerCase() === 'call'
+        
+        // At expiration, calculate intrinsic value directly for accurate slope representation
+        // For calls: intrinsic value = max(0, spot - strike)
+        // For puts: intrinsic value = max(0, strike - spot)
+        const intrinsicValue = isCall 
+          ? Math.max(0, price - strike)
+          : Math.max(0, strike - price)
+          
+        // For maker/seller, we lose money as option goes ITM
+        pnl -= quantity * intrinsicValue * contractSize
       })
 
       // Apply leverage effect on losses (but not on profits)
@@ -117,13 +159,17 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
       const strike = Number(option.strikePrice)
       const contractSize = 100
       
-      // For call options, theoretical max loss is infinite, but limited by collateral
+      // For call options, theoretical max loss is infinite, but we'll use a more realistic value
       // For put options, max loss is strike price * quantity * contract size
       if (option.optionType.toLowerCase() === 'put') {
+        // For puts, max loss is when underlying goes to zero
         totalRisk += strike * quantity * contractSize
       } else {
-        // For calls, use a high multiple of strike as theoretical max
-        totalRisk += strike * quantity * contractSize * 2 // Arbitrary multiplier
+        // For calls, max loss depends on how far the underlying could realistically go up
+        // Use 2x the strike price as a conservative estimate for max upside move
+        // This shows a clearer slope for the loss potential
+        const maxUpside = strike * 2
+        totalRisk += (maxUpside - strike) * quantity * contractSize
       }
     })
     
@@ -144,6 +190,26 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     ) / totalQuantity
   }, [options])
 
+  // Create a more accurate current market price calculation
+  // In a real app, you'd fetch this from an API
+  const currentPrice = useMemo(() => {
+    // If assetPrice is provided, use it
+    if (assetPrice !== null && assetPrice > 0) {
+      return assetPrice;
+    }
+    
+    // Otherwise fall back to calculated price
+    if (options.length === 0) return 0;
+    
+    // For demo purposes, we'll use a weighted average based on strikes
+    const basePrice = options.reduce(
+      (acc, opt) => acc + (Number(opt.strikePrice) * Number(opt.quantity)), 0
+    ) / options.reduce((acc, opt) => acc + Number(opt.quantity), 0);
+    
+    // Adjust by a small random amount so it's not exactly at the strike
+    return basePrice * (1 + (Math.random() * 0.1 - 0.05)); // +/- 5%
+  }, [options, assetPrice]);
+
   const priceRange = currentMarketPrice * 0.20 // 20% range
   const minPrice = Math.max(currentMarketPrice - priceRange, 0)
   const maxPrice = currentMarketPrice + priceRange
@@ -154,11 +220,23 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
     // Add 10% headroom to both sides
     const yDomain = [-absMax * 1.1, absMax * 1.1]
     
-    // For X domain, use the market price +/- range
-    const defaultXDomain = [minPrice, maxPrice]
+    // For X domain, use the current price as center point and ensure all key prices are visible
+    const allPrices = [
+      currentPrice,
+      ...options.map(opt => Number(opt.strikePrice))
+    ]
+    const lowestPrice = Math.min(...allPrices) * 0.9 // 10% below lowest
+    const highestPrice = Math.max(...allPrices) * 1.1 // 10% above highest
     
-    return { xDomain: defaultXDomain, yDomain }
-  }, [maxLoss, maxProfit, minPrice, maxPrice])
+    // Ensure the domain is at least 30% around the current price
+    const minDomain = Math.min(lowestPrice, currentPrice * 0.7)
+    const maxDomain = Math.max(highestPrice, currentPrice * 1.3)
+    
+    return { 
+      xDomain: [Math.max(0, minDomain), maxDomain], 
+      yDomain 
+    }
+  }, [maxLoss, maxProfit, currentPrice, options])
 
   // Add the LineChart props for the Recharts component
   const lineChartProps = {
@@ -217,7 +295,7 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                   domain={chartDomains.xDomain}
                   type="number"
                   label={{ 
-                    value: 'Underlying Price at Expiration', 
+                    value: 'Underlying Price', 
                     position: 'bottom',
                     offset: 10,
                     fontSize: 11,
@@ -240,55 +318,97 @@ export function MakerPnlChart({ options, collateralProvided, leverage }: MakerPn
                   }}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
+                  content={<CustomTooltip showExpiration={showExpiration} />}
+                  cursor={{
+                    stroke: '#666',
+                    strokeDasharray: '3 3',
+                    strokeWidth: 1
                   }}
-                  formatter={(value: number) => {
-                    const color = value >= 0 ? '#22c55e' : '#ef4444'; // Green for positive, red for negative
-                    return [<span key="pnl-value" style={{ color }}>{`$${value.toFixed(2)}`}</span>, 'PnL at Expiration'];
-                  }}
-                  labelFormatter={(label) => `Price: $${label}`}
+                  active={true}
                 />
                 <ReferenceLine 
                   y={maxProfit} 
                   stroke="#22c55e"
                   strokeDasharray="3 3"
-                  label={{ 
-                    value: `Max Profit: $${maxProfit.toFixed(2)}`,
-                    fill: '#22c55e',
-                    fontSize: 11,
-                    position: 'top'
-                  }}
-                />
+                >
+                  <Label
+                    value={`Max Profit: $${maxProfit.toFixed(2)}`}
+                    fill="#22c55e"
+                    fontSize={11}
+                    position="insideTopRight"
+                    dx={10}
+                  />
+                </ReferenceLine>
                 <ReferenceLine 
                   y={-maxLoss} 
                   stroke="#ef4444"
                   strokeDasharray="3 3"
-                  label={{ 
-                    value: `Max Loss: -$${maxLoss.toFixed(2)}`,
-                    fill: '#ef4444',
-                    fontSize: 11,
-                    position: 'top'
-                  }}
-                />
+                >
+                  <Label
+                    value={`Max Loss: -$${maxLoss.toFixed(2)}`}
+                    fill="#ef4444"
+                    fontSize={11}
+                    position="insideBottomRight"
+                    dx={10}
+                  />
+                </ReferenceLine>
                 <ReferenceLine 
                   y={0} 
                   stroke="#666"
                   strokeDasharray="3 3"
                 />
+                
+                {/* Add reference lines for each strike price */}
+                {options.map((option, index) => {
+                  const strike = Number(option.strikePrice)
+                  const isCall = option.optionType.toLowerCase() === 'call'
+                  return (
+                    <ReferenceLine 
+                      key={`strike-${index}`}
+                      x={strike}
+                      stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
+                      strokeDasharray="2 2"
+                      label={{ 
+                        value: `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
+                        position: 'insideBottomRight',
+                        fontSize: 9,
+                        fill: isCall ? "#f97316" : "#06b6d4"
+                      }}
+                    />
+                  )
+                })}
+                
+                {/* Add current price marker */}
+                <ReferenceLine 
+                  x={currentPrice}
+                  stroke="#10b981" // Green color
+                  strokeWidth={2}
+                  label={{ 
+                    value: `Current Price: $${currentPrice.toFixed(2)}`,
+                    position: 'insideTopRight',
+                    fontSize: 10,
+                    fill: "#10b981",
+                    fontWeight: 'bold'
+                  }}
+                />
+                
                 <Line
                   type="monotone"
                   dataKey="value"
                   stroke="#4a85ff"
                   strokeWidth={2}
                   dot={false}
-                  activeDot={{ r: 5 }}
+                  activeDot={{ 
+                    r: 6, 
+                    stroke: '#fff',
+                    strokeWidth: 2,
+                    fill: '#4a85ff'
+                  }}
+                  name="PnL at Expiration"
                 />
               </LineChart>
             </ResponsiveContainer>
+            
           </div>
         </div>
       )}
