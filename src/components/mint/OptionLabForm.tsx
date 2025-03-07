@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +21,8 @@ import { PremiumDisplay } from './PremiumDisplay';
 import { QuantityInput } from './QuantityInput';
 import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/mint/constants';
 import { Button } from "@/components/ui/button";
-import { MakerSummary, MakerSummaryState } from "./MakerSummary";
+import { MakerSummary } from "./MakerSummary";
+import { CollateralProvider, CollateralState } from "./CollateralProvider";
 import { cn } from "@/lib/misc/utils";
 
 const formSchema = z.object({
@@ -73,6 +74,14 @@ export function OptionLabForm() {
   const [assetPrice, setAssetPrice] = useState<number | null>(null);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // State for collateral information
+  const [collateralState, setCollateralState] = useState<CollateralState>({
+    hasEnoughCollateral: false,
+    collateralProvided: "0",
+    leverage: 1,
+    collateralType: "SOL"
+  });
 
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
     console.log('Calculating option price for values:', values);
@@ -264,11 +273,26 @@ export function OptionLabForm() {
     }
   };
 
+  // Handle collateral state changes
+  const handleCollateralStateChange = (state: CollateralState) => {
+    setCollateralState(state);
+    
+    // Update form validation based on collateral state
+    const hasEnoughCollateral = state.hasEnoughCollateral;
+    if (!hasEnoughCollateral && !methods.formState.errors.root) {
+      methods.setError('root', {
+        message: 'Not enough collateral provided'
+      });
+    } else if (hasEnoughCollateral && methods.formState.errors.root) {
+      methods.clearErrors('root');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[1400px] w-full px-6">
       <FormProvider {...methods}>
         <form onSubmit={onSubmit} className="space-y-8">
-          <div className="grid grid-cols-12 gap-12">
+          <div className="grid grid-cols-12 gap-8">
             {/* Left side - Option Form */}
             <div className="col-span-3 space-y-8">
               <AssetSelector assetPrice={assetPrice} />
@@ -313,27 +337,32 @@ export function OptionLabForm() {
               </div>
             </div>
 
-            {/* Right side - Maker Summary */}
+            {/* Right side - Maker Summary & Collateral Provider */}
             <div className="col-span-9">
-              <MakerSummary 
-                options={pendingOptions}
-                onRemoveOption={removeOptionFromSummary}
-                onStateChange={useCallback((state: MakerSummaryState) => {
-                  const hasEnoughCollateral = state.hasEnoughCollateral;
-                  if (!hasEnoughCollateral && !methods.formState.errors.root) {
-                    methods.setError('root', {
-                      message: 'Not enough collateral provided'
-                    });
-                  } else if (hasEnoughCollateral && methods.formState.errors.root) {
-                    methods.clearErrors('root');
-                  }
-                }, [methods])}
-              />
-              {pendingOptions.length === 0 && (
-                <p className="text-sm text-muted-foreground mt-4">
-                  Please add at least 1 option contract to the summary before minting!
-                </p>
-              )}
+              <div className="flex flex-row gap-6">
+                {/* Maker Summary */}
+                <div className="flex-1">
+                  <MakerSummary 
+                    options={pendingOptions}
+                    onRemoveOption={removeOptionFromSummary}
+                    collateralProvided={Number(collateralState.collateralProvided) || 0}
+                    leverage={collateralState.leverage}
+                  />
+                  {pendingOptions.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Please add at least 1 option contract to the summary before minting!
+                    </p>
+                  )}
+                </div>
+                
+                {/* Collateral Provider */}
+                <div className="w-[320px]">
+                  <CollateralProvider 
+                    options={pendingOptions}
+                    onStateChange={handleCollateralStateChange}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -356,4 +385,4 @@ export function OptionLabForm() {
       </FormProvider>
     </div>
   );
-}
+} 
