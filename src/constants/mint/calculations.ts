@@ -1,3 +1,11 @@
+import { 
+  BASE_ANNUAL_INTEREST_RATE,
+  OPTION_CREATION_FEE_RATE,
+  BORROW_FEE_RATE,
+  TRANSACTION_COST_SOL,
+  MAX_LEVERAGE
+} from "@/constants/mint/constants";
+
 export const calculateTotalPremium = (options: any[]) => {
   return options.reduce((total, option) => {
     return total + (Number(option.premium) * option.quantity * 100)
@@ -39,7 +47,7 @@ export const hasEnoughCollateral = (
 export const calculateOptimalLeverage = (
   collateralNeeded: number,
   collateralProvided: number,
-  maxLeverage: number = 5
+  maxLeverage: number = MAX_LEVERAGE
 ): number => {
   if (collateralProvided <= 0) return 1;
   
@@ -51,7 +59,7 @@ export const calculateOptimalLeverage = (
 }
 
 // Calculate hourly interest rate from annual rate
-export const calculateHourlyInterestRate = (annualRate: number): number => {
+export const calculateHourlyInterestRate = (annualRate: number = BASE_ANNUAL_INTEREST_RATE): number => {
   return annualRate / (365 * 24);
 }
 
@@ -64,14 +72,14 @@ export const calculateBorrowCost = (
   return amountBorrowed * hourlyRate * hours;
 }
 
-// Calculate option creation fee (0.02% of position size)
-export const calculateOptionCreationFee = (positionSize: number): number => {
-  return positionSize * 0.0002; // 0.02%
+// Calculate option creation fee (uses OPTION_CREATION_FEE_RATE from constants)
+export const calculateOptionCreationFee = (): number => {
+  return OPTION_CREATION_FEE_RATE;
 }
 
-// Calculate borrow fee (0.10% of position size)
-export const calculateBorrowFee = (positionSize: number): number => {
-  return positionSize * 0.001; // 0.10%
+// Calculate borrow fee (uses BORROW_FEE_RATE from constants)
+export const calculateBorrowFee = (amountBorrowed: number): number => {
+  return amountBorrowed * BORROW_FEE_RATE;
 }
 
 // Calculate maximum profit potential
@@ -79,7 +87,7 @@ export const calculateMaxProfitPotential = (
   totalPremium: number,
   borrowCost: number,
   optionCreationFee: number,
-  transactionCost: number,
+  transactionCost: number = TRANSACTION_COST_SOL,
   solPrice: number = 1 // Default SOL price in USD if not provided
 ): number => {
   const transactionCostInUSD = transactionCost * solPrice;

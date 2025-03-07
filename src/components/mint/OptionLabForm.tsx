@@ -349,10 +349,10 @@ export function OptionLabForm() {
             </div>
 
             {/* Right side - Maker Summary & Collateral Provider */}
-            <div className="col-span-9">
-              <div className="flex flex-row gap-4">
+            <div className="col-span-9"> 
+              <div className="grid grid-cols-9 gap-4">
                 {/* Maker Summary - PnL Chart */}
-                <div className="flex-1">
+                <div className="col-span-6">
                   <MakerSummary 
                     options={pendingOptions}
                     onRemoveOption={removeOptionFromSummary}
@@ -368,7 +368,7 @@ export function OptionLabForm() {
                 </div>
                 
                 {/* Collateral Provider */}
-                <div className="w-[320px]">
+                <div className="col-span-3">
                   <CollateralProvider 
                     options={pendingOptions}
                     onStateChange={handleCollateralStateChange}
