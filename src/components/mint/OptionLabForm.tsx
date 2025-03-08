@@ -322,7 +322,7 @@ export function OptionLabForm() {
                       <QuantityInput />
                     </div>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex flex-col justify-center gap-2">
                     <Button 
                       type="button" 
                       variant="outline"
@@ -342,6 +342,22 @@ export function OptionLabForm() {
                       }
                     >
                       {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
+                    </Button>
+                    
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
+                      className={cn(
+                        "bg-white/95 hover:bg-white/100 text-black border border-white/20",
+                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                      )}
+                    >
+                      {isSubmitting 
+                        ? "Minting..." 
+                        : methods.formState.errors.root 
+                          ? "Need Collateral"
+                          : "Mint Option"
+                      }
                     </Button>
                   </div>
                 </CardContent>
@@ -377,22 +393,6 @@ export function OptionLabForm() {
               </div>
             </div>
           </div>
-
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
-            className={cn(
-              "w-full bg-white/95 hover:bg-white/100 text-black border border-white/20",
-              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10"
-            )}
-          >
-            {isSubmitting 
-              ? "Minting..." 
-              : methods.formState.errors.root 
-                ? "Not Enough Collateral Provided"
-                : `Mint ${pendingOptions.length} Option${pendingOptions.length !== 1 ? 's' : ''}`
-            }
-          </Button>
         </form>
       </FormProvider>
     </div>
