@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import {
   Line,
   LineChart,
@@ -46,12 +46,14 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '6px',
-          padding: '8px 12px',
+          borderRadius: '4px', // Smaller border radius
+          padding: '6px 8px', // Reduced padding
           color: 'white',
+          fontSize: '0.8rem', // Smaller font size
+          maxWidth: '180px', // Limit maximum width
         }}
       >
-        <p style={{ margin: '0 0 5px' }}>Price: ${parseFloat(label).toFixed(2)}</p>
+        <p style={{ margin: '0 0 3px' }}>Price: ${parseFloat(label).toFixed(2)}</p>
         <p style={{ margin: '0', color }}>
           PnL at Expiration: ${value.toFixed(2)}
         </p>
@@ -73,6 +75,19 @@ export function MakerPnlChart({
   // Always use expiration view - no toggle needed
   const showExpiration = true
   
+  // State to control tooltip display with delay
+  const [tooltipDelay, setTooltipDelay] = useState<NodeJS.Timeout | null>(null)
+  const [showTooltip, setShowTooltip] = useState(false)
+  
+  // Clean up timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (tooltipDelay) {
+        clearTimeout(tooltipDelay)
+      }
+    }
+  }, [tooltipDelay])
+
   const calculatePnLPoints = useMemo(() => {
     if (options.length === 0) return []
 
@@ -279,6 +294,30 @@ export function MakerPnlChart({
           <div 
             className="h-[400px] w-full relative" 
             ref={chartRef}
+            onMouseMove={() => {
+              // Clear any existing timeout when mouse moves
+              if (tooltipDelay) {
+                clearTimeout(tooltipDelay)
+              }
+              
+              // Hide tooltip immediately on move
+              setShowTooltip(false)
+              
+              // Set a new timeout to show tooltip after 1.5s
+              const timeout = setTimeout(() => {
+                setShowTooltip(true)
+              }, 500) // 0.5 seconds
+              
+              setTooltipDelay(timeout)
+            }}
+            onMouseLeave={() => {
+              // Clear timeout when mouse leaves chart area
+              if (tooltipDelay) {
+                clearTimeout(tooltipDelay)
+                setTooltipDelay(null)
+              }
+              setShowTooltip(false)
+            }}
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -324,7 +363,7 @@ export function MakerPnlChart({
                     strokeDasharray: '3 3',
                     strokeWidth: 1
                   }}
-                  active={true}
+                  active={showTooltip}
                 />
                 <ReferenceLine 
                   y={maxProfit} 

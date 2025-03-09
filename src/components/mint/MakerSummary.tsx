@@ -58,7 +58,7 @@ export function MakerSummary({
                 <h3 className="text-lg font-semibold">Option Contracts</h3>
                 <div className="flex items-center gap-1.5">
                   <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Max Profit</span>
+                    <span className="text-xs text-muted-foreground">Max Potential Profit</span>
                     <span className="font-semibold text-green-500">${totalPremium.toFixed(2)}</span>
                   </div>
                 </div>
