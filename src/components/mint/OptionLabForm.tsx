@@ -21,10 +21,11 @@ import { PremiumDisplay } from './PremiumDisplay';
 import { QuantityInput } from './QuantityInput';
 import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/mint/constants';
 import { Button } from "@/components/ui/button";
-import { MakerSummary } from "./MakerSummary";
+import { MakerSummary, OptionPosition } from "./MakerSummary";
 import { CollateralProvider, CollateralState } from "./CollateralProvider";
 import { cn } from "@/lib/misc/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { X } from "lucide-react";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -345,6 +346,45 @@ export function OptionLabForm() {
                     >
                       {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
                     </Button>
+
+                    {/* Option Contract Display */}
+                    {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
+                      <div 
+                        className={cn(
+                          "group flex items-center justify-between py-1 px-2 mt-1",
+                          "backdrop-blur-sm bg-white/5 dark:bg-black/20",
+                          "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
+                          "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
+                          "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+                        )}
+                      >
+                        <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-semibold tracking-tight">
+                              {pendingOptions[pendingOptions.length - 1].quantity}
+                            </span>
+                            <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md text-[10px]">SHORT</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-medium">
+                              {pendingOptions[pendingOptions.length - 1].asset} {pendingOptions[pendingOptions.length - 1].optionType.toUpperCase()}
+                            </span>
+                            <span className="text-xs text-muted-foreground font-normal">
+                              ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)} Strike @ {Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
+                          className="h-6 w-6 p-0 transition-colors duration-200 
+                            hover:bg-destructive/20 hover:text-destructive-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

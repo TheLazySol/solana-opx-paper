@@ -70,100 +70,60 @@ export function MakerSummary({
             {/* Options List */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Option Contracts</h3>
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Max Potential Profit</span>
                     <span className="font-semibold text-green-500">${totalPremium.toFixed(2)}</span>
                   </div>
                 </div>
-              </div>
-              
-              {/* Liquidation Price Indicators */}
-              {(liquidationPrices.upward || liquidationPrices.downward) && (
-                <div className="p-3 bg-[#4a85ff]/10 border border-[#4a85ff]/40 rounded-lg">
-                  <div className="mb-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger className="inline-flex items-center">
-                          <h4 className="text-sm font-medium border-b border-dotted border-muted-foreground">Liquidation Thresholds</h4>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">
-                            If the asset price reaches these levels, your position may be liquidated based on your current leverage ({leverage}x).
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {liquidationPrices.upward && (
-                      <div className="flex items-center">
-                        <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
-                        <span className="text-xs text-muted-foreground mr-1">Upward:</span>
-                        <span className="text-sm font-medium text-orange-500">
-                          ${liquidationPrices.upward.toFixed(2)}
-                        </span>
-                        {assetPrice && (
-                          <span className="text-xs ml-1 opacity-75">
-                            ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}% from current)
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {liquidationPrices.downward && (
-                      <div className="flex items-center">
-                        <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
-                        <span className="text-xs text-muted-foreground mr-1">Downward:</span>
-                        <span className="text-sm font-medium text-orange-500">
-                          ${liquidationPrices.downward.toFixed(2)}
-                        </span>
-                        {assetPrice && (
-                          <span className="text-xs ml-1 opacity-75">
-                            ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}% from current)
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                {options.map((option, index) => (
-                  <div 
-                    key={index} 
-                    className={cn(
-                      "group flex items-center justify-between py-2 px-3",
-                      "backdrop-blur-sm bg-white/5 dark:bg-black/20",
-                      "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
-                      "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
-                      "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base font-semibold tracking-tight">{option.quantity}</span>
-                        <span className="px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md">SHORT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{option.asset} {option.optionType.toUpperCase()}</span>
-                        <span className="text-muted-foreground font-normal">
-                          ${Number(option.strikePrice).toFixed(2)} Strike @ {Number(option.premium).toFixed(4)}
-                        </span>
-                      </div>
+                
+                {/* Liquidation Price Indicators moved to right side with same styling */}
+                {(liquidationPrices.upward || liquidationPrices.downward) && (
+                  <div className="flex flex-col">
+                    <div className="mb-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="inline-flex items-center">
+                            <span className="text-xs text-muted-foreground">Liquidation Thresholds</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">
+                              If the asset price reaches these levels, your position may be liquidated based on your current leverage ({leverage}x).
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onRemoveOption(index)}
-                      className="h-7 w-7 p-0 transition-colors duration-200 
-                        hover:bg-destructive/20 hover:text-destructive-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      {liquidationPrices.upward && (
+                        <div className="flex items-center">
+                          <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
+                          <span className="text-sm font-medium text-orange-500">
+                            ${liquidationPrices.upward.toFixed(2)}
+                          </span>
+                          {assetPrice && (
+                            <span className="text-xs ml-1 opacity-75">
+                              ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}%)
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {liquidationPrices.downward && (
+                        <div className="flex items-center">
+                          <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
+                          <span className="text-sm font-medium text-orange-500">
+                            ${liquidationPrices.downward.toFixed(2)}
+                          </span>
+                          {assetPrice && (
+                            <span className="text-xs ml-1 opacity-75">
+                              ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}%)
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
