@@ -1,9 +1,11 @@
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/misc/utils"
-import { calculateTotalPremium } from "@/constants/mint/calculations"
+import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/mint/calculations"
 import { MakerPnlChart } from "./MakerPnlChart"
+import { useMemo } from "react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export interface OptionPosition {
   quantity: number;
@@ -29,6 +31,19 @@ export function MakerSummary({
   assetPrice = null
 }: MakerSummaryProps) {
   const totalPremium = calculateTotalPremium(options);
+  
+  // Calculate liquidation prices
+  const liquidationPrices = useMemo(() => {
+    if (!assetPrice || assetPrice <= 0 || options.length === 0) {
+      return { upward: null, downward: null };
+    }
+    return calculateLiquidationPrice(
+      options,
+      collateralProvided,
+      leverage,
+      assetPrice
+    );
+  }, [options, collateralProvided, leverage, assetPrice]);
 
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
@@ -56,13 +71,63 @@ export function MakerSummary({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Option Contracts</h3>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-3">
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Max Potential Profit</span>
                     <span className="font-semibold text-green-500">${totalPremium.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
+              
+              {/* Liquidation Price Indicators */}
+              {(liquidationPrices.upward || liquidationPrices.downward) && (
+                <div className="p-3 bg-[#4a85ff]/10 border border-[#4a85ff]/40 rounded-lg">
+                  <div className="mb-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="inline-flex items-center">
+                          <h4 className="text-sm font-medium border-b border-dotted border-muted-foreground">Liquidation Thresholds</h4>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">
+                            If the asset price reaches these levels, your position may be liquidated based on your current leverage ({leverage}x).
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {liquidationPrices.upward && (
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
+                        <span className="text-xs text-muted-foreground mr-1">Upward:</span>
+                        <span className="text-sm font-medium text-orange-500">
+                          ${liquidationPrices.upward.toFixed(2)}
+                        </span>
+                        {assetPrice && (
+                          <span className="text-xs ml-1 opacity-75">
+                            ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}% from current)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {liquidationPrices.downward && (
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
+                        <span className="text-xs text-muted-foreground mr-1">Downward:</span>
+                        <span className="text-sm font-medium text-orange-500">
+                          ${liquidationPrices.downward.toFixed(2)}
+                        </span>
+                        {assetPrice && (
+                          <span className="text-xs ml-1 opacity-75">
+                            ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}% from current)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <div className="space-y-2">
                 {options.map((option, index) => (

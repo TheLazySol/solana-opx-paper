@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react'
 import {
-  Line,
-  LineChart,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -9,8 +7,11 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Label,
+  AreaChart,
+  Area,
+  Line
 } from "recharts"
-import { cn } from "@/lib/misc/utils"
+import { calculateLiquidationPrice } from '@/constants/mint/calculations'
 
 interface OptionPosition {
   quantity: number
@@ -33,36 +34,46 @@ interface MakerPnlChartProps {
 interface PnLDataPoint {
   name: string
   value: number
+  price: number
 }
 
 // Add a custom tooltip component before the main component
 const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
-  if (active && payload && payload.length) {
-    const value = payload[0].value;
-    const color = value >= 0 ? '#22c55e' : '#ef4444';
-    
-    return (
-      <div 
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '4px', // Smaller border radius
-          padding: '6px 8px', // Reduced padding
-          color: 'white',
-          fontSize: '0.8rem', // Smaller font size
-          maxWidth: '180px', // Limit maximum width
-        }}
-      >
-        <p style={{ margin: '0 0 3px' }}>Price: ${parseFloat(label).toFixed(2)}</p>
-        <p style={{ margin: '0', color }}>
-          PnL at Expiration: ${value.toFixed(2)}
-        </p>
-      </div>
-    );
+  if (!active || !payload || !payload.length) {
+    return null
   }
 
-  return null;
-};
+  const data = payload[0].payload
+  const value = payload[0].value
+  
+  // Format value for better readability
+  const formattedValue = value >= 0
+    ? `+$${value.toFixed(2)}`
+    : `-$${Math.abs(value).toFixed(2)}`
+  
+  // Determine color based on value
+  const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500'
+
+  return (
+    <div className="w-fit p-3 rounded-lg 
+      bg-opacity-80 backdrop-blur-sm bg-black/70 dark:bg-black/90 
+      shadow-lg border border-white/10 dark:border-white/5">
+      <div className="text-xs text-gray-300 mb-1.5">
+        {showExpiration ? 'Profit/Loss at Expiration' : 'Current Profit/Loss'}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-6">
+          <span className="text-xs text-gray-300 min-w-[85px]">Asset Price:</span>
+          <span className="text-xs text-white font-medium">${data.price.toFixed(2)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-6">
+          <span className="text-xs text-gray-300 min-w-[85px]">PnL:</span>
+          <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function MakerPnlChart({ 
   options, 
@@ -75,19 +86,18 @@ export function MakerPnlChart({
   // Always use expiration view - no toggle needed
   const showExpiration = true
   
-  // State to control tooltip display with delay
-  const [tooltipDelay, setTooltipDelay] = useState<NodeJS.Timeout | null>(null)
-  const [showTooltip, setShowTooltip] = useState(false)
-  const [tooltipOpacity, setTooltipOpacity] = useState(0)
-  
-  // Clean up timeout when component unmounts
-  useEffect(() => {
-    return () => {
-      if (tooltipDelay) {
-        clearTimeout(tooltipDelay)
-      }
+  // Calculate liquidation prices but don't display them on chart
+  const liquidationPrices = useMemo(() => {
+    if (!assetPrice || assetPrice <= 0 || options.length === 0) {
+      return { upward: null, downward: null };
     }
-  }, [tooltipDelay])
+    return calculateLiquidationPrice(
+      options,
+      collateralProvided,
+      leverage,
+      assetPrice
+    );
+  }, [options, collateralProvided, leverage, assetPrice]);
 
   const calculatePnLPoints = useMemo(() => {
     if (options.length === 0) return []
@@ -110,9 +120,6 @@ export function MakerPnlChart({
     const steps = 100 // Increased resolution for smoother curve
     const priceStep = (maxPrice - minPrice) / steps
 
-    // Get current timestamp in seconds
-    const now = Math.floor(Date.now() / 1000)
-    
     // Create points array
     const points = Array.from({ length: steps + 1 }, (_, i) => {
       const price = minPrice + (i * priceStep)
@@ -198,267 +205,248 @@ export function MakerPnlChart({
 
   // Get market price from the first option (could be improved with a weighted average)
   const currentMarketPrice = useMemo(() => {
-    if (options.length === 0) return 0
-    
-    const totalQuantity = options.reduce((acc, opt) => acc + Number(opt.quantity), 0)
-    return options.reduce(
-      (acc, opt) => acc + (Number(opt.strikePrice) * Number(opt.quantity)), 0
-    ) / totalQuantity
-  }, [options])
+    if (assetPrice && assetPrice > 0) {
+      return assetPrice
+    }
+    if (options.length > 0) {
+      // Fallback to the strike price if assetPrice is not available
+      return Number(options[0].strikePrice)
+    }
+    return null
+  }, [options, assetPrice])
 
-  // Create a more accurate current market price calculation
-  // In a real app, you'd fetch this from an API
-  const currentPrice = useMemo(() => {
-    // If assetPrice is provided, use it
-    if (assetPrice !== null && assetPrice > 0) {
-      return assetPrice;
+  // Format X axis ticks for price
+  const formatXTick = (value: any) => {
+    const num = parseFloat(value)
+    if (isNaN(num)) return ''
+    
+    // Format with K suffix for thousands
+    if (num >= 1000) {
+      return `$${(num / 1000).toFixed(1)}K`
     }
     
-    // Otherwise fall back to calculated price
-    if (options.length === 0) return 0;
-    
-    // For demo purposes, we'll use a weighted average based on strikes
-    const basePrice = options.reduce(
-      (acc, opt) => acc + (Number(opt.strikePrice) * Number(opt.quantity)), 0
-    ) / options.reduce((acc, opt) => acc + Number(opt.quantity), 0);
-    
-    // Adjust by a small random amount so it's not exactly at the strike
-    return basePrice * (1 + (Math.random() * 0.1 - 0.05)); // +/- 5%
-  }, [options, assetPrice]);
+    // Don't show the $ for intermediate ticks to reduce clutter
+    return `$${num.toFixed(0)}`
+  }
 
-  const priceRange = currentMarketPrice * 0.20 // 20% range
-  const minPrice = Math.max(currentMarketPrice - priceRange, 0)
-  const maxPrice = currentMarketPrice + priceRange
-
-  // Calculate chart domains for centering zero and adding headroom
-  const chartDomains = useMemo(() => {
-    const absMax = Math.max(Math.abs(maxLoss), maxProfit)
-    // Add 10% headroom to both sides
-    const yDomain = [-absMax * 1.1, absMax * 1.1]
+  // Format Y axis ticks for profit/loss
+  const formatYTick = (value: any) => {
+    const num = parseFloat(value)
+    if (isNaN(num)) return ''
     
-    // For X domain, use the current price as center point and ensure all key prices are visible
-    const allPrices = [
-      currentPrice,
-      ...options.map(opt => Number(opt.strikePrice))
-    ]
-    const lowestPrice = Math.min(...allPrices) * 0.9 // 10% below lowest
-    const highestPrice = Math.max(...allPrices) * 1.1 // 10% above highest
-    
-    // Ensure the domain is at least 30% around the current price
-    const minDomain = Math.min(lowestPrice, currentPrice * 0.7)
-    const maxDomain = Math.max(highestPrice, currentPrice * 1.3)
-    
-    return { 
-      xDomain: [Math.max(0, minDomain), maxDomain], 
-      yDomain 
+    // Format with +/- sign and K suffix for thousands
+    if (Math.abs(num) >= 1000) {
+      return num >= 0 
+        ? `+$${(num / 1000).toFixed(1)}K` 
+        : `-$${(Math.abs(num) / 1000).toFixed(1)}K`
     }
-  }, [maxLoss, maxProfit, currentPrice, options])
+    
+    return num >= 0 ? `+$${num.toFixed(0)}` : `-$${Math.abs(num).toFixed(0)}`
+  }
 
+  // Calculate the domain for Y axis to ensure $0 is in the middle
+  const yAxisDomain = useMemo(() => {
+    const absMax = Math.max(maxProfit, maxLoss);
+    // Make the domain symmetric around zero to center the $0 point
+    return [-absMax, absMax];
+  }, [maxProfit, maxLoss]);
 
-  // Add the LineChart props for the Recharts component
-  const lineChartProps = {
-    data: calculatePnLPoints,
-    margin: {
-      top: 20,
-      right: 30,
-      left: 10,
-      bottom: 25,
-    },
-  };
+  // Early return if no data yet
+  if (calculatePnLPoints.length === 0) {
+    return <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+      No option data available for chart
+    </div>
+  }
 
   return (
     <div 
-      className="h-full w-full" 
-      onClick={(e) => e.stopPropagation()}
-      onSubmit={(e) => e.preventDefault()}
+      className="w-full h-[300px]" 
+      ref={chartRef}
     >
-      {options.length === 0 ? (
-        <div className="flex items-center justify-center h-[400px] text-sm text-muted-foreground 
-          border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
-          Add options to see PnL projection at expiration
-        </div>
-      ) : (
-        // Form protection wrapper to prevent chart from triggering form submission
-        <div 
-          className="space-y-2" 
-          onClick={(e) => {
-            // Stop propagation to prevent reaching any parent form elements
-            e.stopPropagation()
-          }}
-          onKeyDown={(e) => {
-            // Prevent Enter key from submitting parent forms
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              e.stopPropagation()
-            }
-          }}
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={calculatePnLPoints}
+          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
         >
-          <div 
-            className="h-[400px] w-full relative" 
-            ref={chartRef}
-            onMouseMove={() => {
-              // Clear any existing timeout when mouse moves
-              if (tooltipDelay) {
-                clearTimeout(tooltipDelay)
-              }
-              
-              // Fade in tooltip immediately
-              setTooltipOpacity(1)
-              setShowTooltip(true)
-              
-              // Set a new timeout to hide tooltip after 1 second of no movement
-              const timeout = setTimeout(() => {
-                // Keep tooltip visible after mouse stops moving
-                setShowTooltip(true)
-              }, 1000) // 1 second as requested
-              
-              setTooltipDelay(timeout)
-            }}
-            onMouseLeave={() => {
-              // Clear timeout when mouse leaves chart area
-              if (tooltipDelay) {
-                clearTimeout(tooltipDelay)
-                setTooltipDelay(null)
-              }
-              setTooltipOpacity(0)
-              setShowTooltip(false)
-            }}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                {...lineChartProps}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#393939" opacity={0.2} />
-                <XAxis 
-                  dataKey="price"
-                  stroke="#666"
-                  fontSize={11}
-                  tickFormatter={(value: number) => value.toFixed(2)}
-                  interval="preserveStartEnd"
-                  minTickGap={40}
-                  domain={chartDomains.xDomain}
-                  type="number"
-                  label={{ 
-                    value: 'Underlying Price', 
-                    position: 'bottom',
-                    offset: 10,
-                    fontSize: 11,
-                    fill: '#666'
-                  }}
-                />
-                <YAxis
-                  stroke="#666"
-                  fontSize={11}
-                  tickFormatter={(value) => `$${value.toFixed(2)}`}
-                  domain={chartDomains.yDomain}
-                  width={60}
-                  label={{ 
-                    value: 'Profit / Loss ($)', 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    style: { textAnchor: 'middle' },
-                    fontSize: 11,
-                    fill: '#666'
-                  }}
-                />
-                <Tooltip
-                  content={<CustomTooltip showExpiration={showExpiration} />}
-                  cursor={{
-                    stroke: '#666',
-                    strokeDasharray: '3 3',
-                    strokeWidth: 1
-                  }}
-                  active={showTooltip}
-                  wrapperStyle={{ 
-                    opacity: tooltipOpacity,
-                    transition: 'opacity 0.3s ease-in-out'
-                  }}
-                />
-                <ReferenceLine 
-                  y={maxProfit} 
-                  stroke="#22c55e"
-                  strokeDasharray="3 3"
-                >
-                  <Label
-                    value={`Max Profit: $${maxProfit.toFixed(2)}`}
-                    fill="#22c55e"
-                    fontSize={11}
-                    position="insideTopRight"
-                    dx={10}
-                  />
-                </ReferenceLine>
-                <ReferenceLine 
-                  y={-maxLoss} 
-                  stroke="#ef4444"
-                  strokeDasharray="3 3"
-                >
-                  <Label
-                    value={`Max Loss: -$${maxLoss.toFixed(2)}`}
-                    fill="#ef4444"
-                    fontSize={11}
-                    position="insideBottomRight"
-                    dx={10}
-                  />
-                </ReferenceLine>
-                <ReferenceLine 
-                  y={0} 
-                  stroke="#666"
-                  strokeDasharray="3 3"
-                />
-                
-                {/* Add reference lines for each strike price */}
-                {options.map((option, index) => {
-                  const strike = Number(option.strikePrice)
-                  const isCall = option.optionType.toLowerCase() === 'call'
-                  return (
-                    <ReferenceLine 
-                      key={`strike-${index}`}
-                      x={strike}
-                      stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
-                      strokeDasharray="2 2"
-                      label={{ 
-                        value: `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
-                        position: 'insideBottomRight',
-                        fontSize: 9,
-                        fill: isCall ? "#f97316" : "#06b6d4"
-                      }}
-                    />
-                  )
-                })}
-                
-                {/* Add current price marker */}
-                <ReferenceLine 
-                  x={currentPrice}
-                  stroke="#10b981" // Green color
-                  strokeWidth={2}
-                  label={{ 
-                    value: `Current Price: $${currentPrice.toFixed(2)}`,
-                    position: 'insideTopRight',
-                    fontSize: 10,
-                    fill: "#10b981",
-                    fontWeight: 'bold'
-                  }}
-                />
-                
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#4a85ff"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{
-                    r: 6,
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    fill: '#4a85ff'
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <defs>
+            {/* Green gradient for profit region */}
+            <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.4} />
+            </linearGradient>
             
-          </div>
-        </div>
-      )}
+            {/* Red gradient for loss region */}
+            <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.9} />
+            </linearGradient>
+          </defs>
+          
+          <XAxis
+            dataKey="price"
+            tickFormatter={formatXTick}
+            tick={{ fontSize: 11, fill: '#666' }}
+            tickLine={{ stroke: '#666' }}
+            axisLine={{ stroke: '#666' }}
+            domain={['dataMin', 'dataMax']}
+            type="number"
+          />
+          
+          <YAxis
+            tickFormatter={formatYTick}
+            tick={{ fontSize: 11, fill: '#666' }}
+            tickLine={{ stroke: '#666' }}
+            axisLine={{ stroke: '#666' }}
+            domain={yAxisDomain}
+            label={{
+              value: 'Profit/Loss ($)', 
+              angle: -90, 
+              position: 'insideLeft',
+              style: { textAnchor: 'middle' },
+              fontSize: 11,
+              fill: '#666'
+            }}
+          />
+          <Tooltip
+            content={<CustomTooltip showExpiration={showExpiration} />}
+            cursor={{
+              stroke: '#666',
+              strokeDasharray: '3 3',
+              strokeWidth: 1
+            }}
+          />
+          <ReferenceLine 
+            y={maxProfit} 
+            stroke="#22c55e"
+            strokeDasharray="3 3"
+          >
+            <Label
+              value={`Max Profit: $${maxProfit.toFixed(2)}`}
+              fill="#22c55e"
+              fontSize={11}
+              position="insideBottomRight"
+              dx={10}
+            />
+          </ReferenceLine>
+          <ReferenceLine 
+            y={-maxLoss} 
+            stroke="#ef4444"
+            strokeDasharray="3 3"
+          >
+            <Label
+              value={`Max Loss: -$${maxLoss.toFixed(2)}`}
+              fill="#ef4444"
+              fontSize={11}
+              position="insideBottomRight"
+              dx={10}
+            />
+          </ReferenceLine>
+          
+          {/* Add a reference line at $0 PnL */}
+          <ReferenceLine 
+            y={0} 
+            stroke="#666"
+            strokeDasharray="3 3"
+          />
+          
+          {/* Current Price Reference Line - with label at top */}
+          {currentMarketPrice && (
+            <ReferenceLine
+              x={currentMarketPrice}
+              stroke="#4a85ff"
+              strokeWidth={1.5}
+              label={{
+                value: `Current: $${currentMarketPrice.toFixed(2)}`,
+                fill: '#4a85ff',
+                fontSize: 11,
+                position: 'insideTopLeft',
+                dy: 5,
+                dx: 5
+              }}
+              isFront={false}
+            />
+          )}
+          
+          {/* Add reference lines for each strike price */}
+          {options.map((option, index) => {
+            const strike = Number(option.strikePrice)
+            const isCall = option.optionType.toLowerCase() === 'call'
+            return (
+              <ReferenceLine 
+                key={`strike-${index}`}
+                x={strike}
+                stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
+                strokeDasharray="2 2"
+                label={{ 
+                  value: `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
+                  position: 'insideBottomRight',
+                  fontSize: 11,
+                  fill: isCall ? "#f97316" : "#06b6d4"
+                }}
+                isFront={false}
+              />
+            )
+          })}
+          
+          <CartesianGrid strokeDasharray="2 2" opacity={0.1} />
+          
+          {/* Positive value line */}
+          <Line
+            type="monotone"
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : null)}
+            dot={false}
+            activeDot={{ 
+              r: 4, 
+              fill: "#22c55e", 
+              stroke: "white", 
+              strokeWidth: 2 
+            }}
+            strokeWidth={1.5}
+            stroke="#22c55e"
+            isAnimationActive={false}
+            connectNulls
+          />
+          
+          {/* Negative value line */}
+          <Line
+            type="monotone"
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : null)}
+            dot={false}
+            activeDot={{ 
+              r: 4, 
+              fill: "#ef4444", 
+              stroke: "white", 
+              strokeWidth: 2 
+            }}
+            strokeWidth={1.5}
+            stroke="#ef4444"
+            isAnimationActive={false}
+            connectNulls
+          />
+          
+          {/* Profit Area (green, only shows above 0) */}
+          <Area
+            type="monotone"
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : 0)}
+            stroke="none"
+            fillOpacity={0.2}
+            fill="url(#profitGradient)"
+            isAnimationActive={false}
+            activeDot={false}
+          />
+          
+          {/* Loss Area (red, only shows below 0) */}
+          <Area
+            type="monotone"
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : 0)}
+            stroke="none"
+            fillOpacity={0.2}
+            fill="url(#lossGradient)"
+            isAnimationActive={false}
+            activeDot={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   )
 }
