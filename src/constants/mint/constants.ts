@@ -2,8 +2,7 @@ export const EDIT_REFRESH_INTERVAL = 1500; // 1.5 second debounce
 export const AUTO_REFRESH_INTERVAL = 3000; // 3 seconds
 
 export const COLLATERAL_TYPES = [
-  { value: "USDC", label: "USDC", default: true },
-  { value: "SOL", label: "SOL", default: false }
+  { value: "USDC", label: "USDC", default: true }
 ] as const;
 
 // Financial constants

@@ -92,7 +92,7 @@ export function MakerSummary({
                       variant="ghost"
                       size="sm"
                       onClick={() => onRemoveOption(index)}
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
+                      className="h-7 w-7 p-0 transition-colors duration-200 
                         hover:bg-destructive/20 hover:text-destructive-foreground"
                     >
                       <X className="h-4 w-4" />
