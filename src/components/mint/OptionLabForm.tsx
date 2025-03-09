@@ -322,7 +322,9 @@ export function OptionLabForm() {
                       <QuantityInput />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-center gap-2">
+                  
+                  {/* Moved buttons to the bottom of the card with added margin-top for spacing */}
+                  <div className="flex flex-col justify-center gap-2 mt-auto pt-6">
                     <Button 
                       type="button" 
                       variant="outline"
@@ -349,7 +351,8 @@ export function OptionLabForm() {
                       disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
                       className={cn(
                         "bg-white/95 hover:bg-white/100 text-black border border-white/20",
-                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10",
+                        "hover:scale-[0.98] transition-all duration-200"
                       )}
                     >
                       {isSubmitting 

@@ -24,6 +24,7 @@ import {
   calculateBorrowFee,
   calculateMaxProfitPotential
 } from "@/constants/mint/calculations";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface OptionPosition {
   quantity: number;
@@ -296,41 +297,127 @@ export function CollateralProvider({ options, onStateChange }: CollateralProvide
         {Number(collateralProvided) > 0 && (
           <div className="flex flex-col rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <div className="flex items-center justify-between p-2 border-b border-[#e5e5e5]/20 dark:border-[#393939]/50">
-              <span className="text-sm font-medium">Borrow Rate</span>
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm font-medium cursor-help border-b border-dotted border-slate-500">Borrow Rate</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">The interest rate charged for borrowing funds to leverage your position.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <span className="text-xs text-muted-foreground">
                 {(hourlyInterestRate * 10000).toFixed(4)}% per hour
               </span>
             </div>
             <div className="p-2 space-y-2">
               <div className="grid grid-cols-2 gap-y-1 text-sm">
-                <span>Amount Borrowed:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">Amount Borrowed</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">The total amount of capital borrowed to fund your position.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className="text-right font-normal">${amountBorrowed.toFixed(2)}</span>
 
                 {leverage[0] > 1 && (
                   <>
-                    <span>Est. Borrow Cost:</span>
+                    <span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help border-b border-dotted border-slate-500">Est. Borrow Cost</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Estimated interest cost for borrowing the funds until option expiration.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>:
+                    </span>
                     <span className="text-right font-normal">${borrowCost.toFixed(2)}</span>
                   </>
                 )}
-                <span>Borrow Fee:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">Borrow Fee</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">One-time fee charged for initiating the borrow position.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className="text-right font-normal">${borrowFee.toFixed(2)}</span>
 
                 <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-1 pt-1"></div>
 
-                <span>Creation Fee:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">Creation Fee</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Network fee for creating the option contract on Solana.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className="text-right font-normal">{optionCreationFee} SOL</span>
 
-                <span>Transaction Cost:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">Transaction Cost</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Solana blockchain transaction fees for processing this option.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className="text-right font-normal">{transactionCost} SOL</span>
 
                 <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-1 pt-1"></div>
 
-                <span>Total Cost:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">Total Cost</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">The sum of all fees and costs associated with creating this option position.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className="text-right font-normal text-red-500">
                   ${(borrowCost + optionCreationFee + borrowFee).toFixed(2)}
                 </span>
 
-                <span>New Max Profit:</span>
+                <span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help border-b border-dotted border-slate-500">New Max Profit</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Your maximum potential profit from this position after accounting for all costs.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>:
+                </span>
                 <span className={`text-right font-bold ${maxProfitPotential >= 0 ? 'text-green-500' : 'text-red-500'}`}>${maxProfitPotential.toFixed(2)}</span>
               </div>
             </div>
