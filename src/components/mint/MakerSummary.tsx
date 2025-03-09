@@ -6,7 +6,7 @@ import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/mi
 import { MakerPnlChart } from "./MakerPnlChart"
 import { useMemo } from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
+import { STANDARD_CONTRACT_SIZE } from "@/constants/mint/constants"
 export interface OptionPosition {
   quantity: number;
   strikePrice: string | number;
@@ -45,6 +45,40 @@ export function MakerSummary({
     );
   }, [options, collateralProvided, leverage, assetPrice]);
 
+  // Calculate position size (total notional value based on strike prices)
+  const positionSize = useMemo(() => {
+    return options.reduce((total, option) => {
+      const strikePrice = Number(option.strikePrice);
+      const quantity = Number(option.quantity);
+      const contractSize = STANDARD_CONTRACT_SIZE; // Each option represents 100 units of the underlying
+      
+      return total + (strikePrice * quantity * contractSize);
+    }, 0);
+  }, [options]);
+
+  // Calculate max loss - using similar logic to MakerPnlChart.tsx
+  const maxLoss = useMemo(() => {
+    let totalRisk = 0;
+    
+    options.forEach(option => {
+      const quantity = Number(option.quantity);
+      const strike = Number(option.strikePrice);
+      const contractSize = 100;
+      
+      if (option.optionType.toLowerCase() === 'put') {
+        // For puts, max loss is when underlying goes to zero
+        totalRisk += strike * quantity * contractSize;
+      } else {
+        // For calls, max loss depends on how far the underlying could realistically go up
+        // Use 2x the strike price as a conservative estimate for max upside move
+        const maxUpside = strike * 2;
+        totalRisk += (maxUpside - strike) * quantity * contractSize;
+      }
+    });
+    
+    return totalRisk;
+  }, [options]);
+
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
@@ -71,9 +105,55 @@ export function MakerSummary({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  {/* Position Size - Added to the left of Max Potential Profit */}
                   <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Max Potential Profit</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-xs text-muted-foreground cursor-help">
+                            <span className="border-b border-dotted border-muted-foreground">Position Size</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Total notional value of all options (Strike Price × Quantity × 100)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="font-semibold text-[#4a85ff]">${positionSize.toFixed(2)}</span>
+                  </div>
+
+                  {/* Max Potential Profit */}
+                  <div className="flex flex-col">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-xs text-muted-foreground cursor-help">
+                            <span className="border-b border-dotted border-muted-foreground">Max Potential Profit</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Maximum profit potential before any transaction costs or fees</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <span className="font-semibold text-green-500">${totalPremium.toFixed(2)}</span>
+                  </div>
+
+                  {/* Max Loss - Added next to Max Potential Profit */}
+                  <div className="flex flex-col">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-xs text-muted-foreground cursor-help">
+                            <span className="border-b border-dotted border-muted-foreground">Max Potential Loss</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Maximum amount you can lose on this position</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="font-semibold text-red-500">-${maxLoss.toFixed(2)}</span>
                   </div>
                 </div>
                 
@@ -84,7 +164,7 @@ export function MakerSummary({
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger className="inline-flex items-center">
-                            <span className="text-xs text-muted-foreground">Liquidation Thresholds</span>
+                            <span className="text-xs text-muted-foreground border-b border-dotted border-muted-foreground">Liquidation Threshold</span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
                             <p className="text-xs">
@@ -97,8 +177,7 @@ export function MakerSummary({
                     <div className="flex gap-2">
                       {liquidationPrices.upward && (
                         <div className="flex items-center">
-                          <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
-                          <span className="text-sm font-medium text-orange-500">
+                          <span className="text-sm font-semibold text-orange-500">
                             ${liquidationPrices.upward.toFixed(2)}
                           </span>
                           {assetPrice && (
@@ -111,7 +190,7 @@ export function MakerSummary({
                       {liquidationPrices.downward && (
                         <div className="flex items-center">
                           <div className="h-2 w-2 bg-orange-500 rounded-full mr-1.5"></div>
-                          <span className="text-sm font-medium text-orange-500">
+                          <span className="text-sm font-semibold text-orange-500">
                             ${liquidationPrices.downward.toFixed(2)}
                           </span>
                           {assetPrice && (

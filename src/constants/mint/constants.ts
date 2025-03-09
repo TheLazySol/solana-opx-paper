@@ -11,6 +11,7 @@ export const OPTION_CREATION_FEE_RATE = 0.01; // 0.01 SOL
 export const BORROW_FEE_RATE = 0.00035; // 0.035% of the amount borrowed
 export const TRANSACTION_COST_SOL = 0.02; // 0.02 SOL
 export const MAX_LEVERAGE = 10; // 10x leverage
+export const STANDARD_CONTRACT_SIZE = 100; // 100 units of the underlying 
 
 // Get all bi-weekly expiration dates between two dates for the calendar
 export function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {

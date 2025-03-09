@@ -180,14 +180,6 @@ export function CollateralProvider({
         <CardTitle className="text-xl font-bold">Open Position</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pt-2 space-y-2">
-        {/* Position Size Panel - Moved to top */}
-        <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-          <span className="text-xs text-muted-foreground">Position Size</span>
-          <span className="font-bold text-lg text-[#4a85ff]">
-            ${positionSize.toFixed(2)}
-          </span>
-        </div>
-        
         {/* Collateral Needed */}
         <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
           <span className="text-xs text-muted-foreground">Collateral Needed to Open Position:</span>
@@ -204,7 +196,7 @@ export function CollateralProvider({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>This is the amount of collateral you want to provide for this position, also know as your Max Loss.</p>
+                <p>This is the amount of collateral you want to provide for this position.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
