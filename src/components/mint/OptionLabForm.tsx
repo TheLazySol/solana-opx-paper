@@ -324,7 +324,7 @@ export function OptionLabForm() {
                   </div>
                   
                   {/* Moved buttons to the bottom of the card with added margin-top for spacing */}
-                  <div className="flex flex-col justify-center gap-2 mt-auto pt-6">
+                  <div className="flex flex-col justify-center gap-2 mt-auto">
                     <Button 
                       type="button" 
                       variant="outline"
@@ -344,23 +344,6 @@ export function OptionLabForm() {
                       }
                     >
                       {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
-                    </Button>
-                    
-                    <Button 
-                      type="submit" 
-                      disabled={isSubmitting || pendingOptions.length === 0 || !!methods.formState.errors.root}
-                      className={cn(
-                        "bg-white/95 hover:bg-white/100 text-black border border-white/20",
-                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10",
-                        "hover:scale-[0.98] transition-all duration-200"
-                      )}
-                    >
-                      {isSubmitting 
-                        ? "Minting..." 
-                        : methods.formState.errors.root 
-                          ? "Need Collateral"
-                          : "Mint Option"
-                      }
                     </Button>
                   </div>
                 </CardContent>
@@ -391,6 +374,10 @@ export function OptionLabForm() {
                   <CollateralProvider 
                     options={pendingOptions}
                     onStateChange={handleCollateralStateChange}
+                    onMint={onSubmit}
+                    isSubmitting={isSubmitting}
+                    hasValidationError={!!methods.formState.errors.root}
+                    hasPendingOptions={pendingOptions.length > 0}
                   />
                 </div>
               </div>
