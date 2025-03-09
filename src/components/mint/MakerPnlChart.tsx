@@ -78,6 +78,7 @@ export function MakerPnlChart({
   // State to control tooltip display with delay
   const [tooltipDelay, setTooltipDelay] = useState<NodeJS.Timeout | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [tooltipOpacity, setTooltipOpacity] = useState(0)
   
   // Clean up timeout when component unmounts
   useEffect(() => {
@@ -253,6 +254,7 @@ export function MakerPnlChart({
     }
   }, [maxLoss, maxProfit, currentPrice, options])
 
+
   // Add the LineChart props for the Recharts component
   const lineChartProps = {
     data: calculatePnLPoints,
@@ -300,13 +302,15 @@ export function MakerPnlChart({
                 clearTimeout(tooltipDelay)
               }
               
-              // Hide tooltip immediately on move
-              setShowTooltip(false)
+              // Fade in tooltip immediately
+              setTooltipOpacity(1)
+              setShowTooltip(true)
               
-              // Set a new timeout to show tooltip after 1.5s
+              // Set a new timeout to hide tooltip after 1 second of no movement
               const timeout = setTimeout(() => {
+                // Keep tooltip visible after mouse stops moving
                 setShowTooltip(true)
-              }, 500) // 0.5 seconds
+              }, 1000) // 1 second as requested
               
               setTooltipDelay(timeout)
             }}
@@ -316,6 +320,7 @@ export function MakerPnlChart({
                 clearTimeout(tooltipDelay)
                 setTooltipDelay(null)
               }
+              setTooltipOpacity(0)
               setShowTooltip(false)
             }}
           >
@@ -364,6 +369,10 @@ export function MakerPnlChart({
                     strokeWidth: 1
                   }}
                   active={showTooltip}
+                  wrapperStyle={{ 
+                    opacity: tooltipOpacity,
+                    transition: 'opacity 0.3s ease-in-out'
+                  }}
                 />
                 <ReferenceLine 
                   y={maxProfit} 
@@ -437,13 +446,12 @@ export function MakerPnlChart({
                   stroke="#4a85ff"
                   strokeWidth={2}
                   dot={false}
-                  activeDot={{ 
-                    r: 6, 
+                  activeDot={{
+                    r: 6,
                     stroke: '#fff',
                     strokeWidth: 2,
                     fill: '#4a85ff'
                   }}
-                  name="PnL at Expiration"
                 />
               </LineChart>
             </ResponsiveContainer>
