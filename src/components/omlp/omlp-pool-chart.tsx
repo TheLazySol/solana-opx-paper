@@ -23,7 +23,7 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts'
-import { cn } from '@/lib/misc/utils'
+import { cn } from '@/lib/utils'
 import React from 'react'
 
 // Custom DialogContent without the default close button

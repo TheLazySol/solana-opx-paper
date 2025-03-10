@@ -3,7 +3,7 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Button } from "@/components/ui/button";
 import { useFormContext } from 'react-hook-form';
 import type { FormData } from '@/types/mint/form';
-import { cn } from "@/lib/misc/utils";
+import { cn } from "@/lib/utils";
 
 export const OptionTypeSelector = () => {
   const { setValue, watch } = useFormContext<FormData>();

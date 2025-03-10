@@ -23,7 +23,7 @@ import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/option
 import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./MakerSummary";
 import { CollateralProvider, CollateralState } from "./CollateralProvider";
-import { cn } from "@/lib/misc/utils";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 

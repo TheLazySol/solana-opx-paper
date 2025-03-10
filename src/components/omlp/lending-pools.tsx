@@ -3,7 +3,7 @@
 import { Button } from '../ui/button'
 import { RefreshCw, DollarSign, Coins, BarChart } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/lib/misc/utils'
+import { cn } from '@/lib/utils'
 import { OmlpChart, type PoolHistoricalData } from './omlp-pool-chart'
 
 export type Pool = {
