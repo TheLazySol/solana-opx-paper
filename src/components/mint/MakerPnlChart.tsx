@@ -40,39 +40,39 @@ interface PnLDataPoint {
 // Add a custom tooltip component before the main component
 const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
   if (!active || !payload || !payload.length) {
-    return null
+    return null;
   }
 
-  const data = payload[0].payload
-  const value = payload[0].value
-  
+  const data = payload[0].payload;
+  const value = data.value; // Ensure this is the correct field from your data points
+
   // Format value for better readability
   const formattedValue = value >= 0
     ? `+$${value.toFixed(2)}`
-    : `-$${Math.abs(value).toFixed(2)}`
-  
+    : `-$${Math.abs(value).toFixed(2)}`;
+
   // Determine color based on value
-  const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500'
+  const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
 
   return (
-    <div className="w-fit p-3 rounded-lg 
+    <div className="w-fit p-2 rounded-lg 
       bg-opacity-80 backdrop-blur-sm bg-black/70 dark:bg-black/90 
       shadow-lg border border-white/10 dark:border-white/5">
-      <div className="text-xs text-gray-300 mb-1.5">
+      <div className="text-xs text-gray-300 mb-1">
         {showExpiration ? 'Profit/Loss at Expiration' : 'Current Profit/Loss'}
       </div>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-xs text-gray-300 min-w-[85px]">Asset Price:</span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-gray-300 min-w-[70px]">Asset Price:</span>
           <span className="text-xs text-white font-medium">${data.price.toFixed(2)}</span>
         </div>
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-xs text-gray-300 min-w-[85px]">PnL:</span>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
           <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function MakerPnlChart({ 
@@ -164,6 +164,7 @@ export function MakerPnlChart({
       }
     })
 
+    console.log(points); // Log to see the data structure and values
     return points
   }, [options, collateralProvided, leverage])
 
