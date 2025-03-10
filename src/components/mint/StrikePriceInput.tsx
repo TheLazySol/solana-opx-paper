@@ -3,6 +3,7 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Input } from "@/components/ui/input";
 import { useFormContext } from 'react-hook-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipIndicator } from "./TooltipIndicator";
 
 const getStepValue = (price: number | null): string => {
   if (!price) return "0.0001";
@@ -68,7 +69,10 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Strike Price</FormLabel>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+              Strike Price
+              <TooltipIndicator />
+            </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
             <p>The market price at which the option can be exercised by the buyer.</p>

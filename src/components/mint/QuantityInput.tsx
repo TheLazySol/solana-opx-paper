@@ -3,6 +3,7 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Input } from "@/components/ui/input";
 import { useFormContext } from 'react-hook-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipIndicator } from "./TooltipIndicator";
 
 export const QuantityInput = () => {
   const { getValues, setValue, setError, clearErrors } = useFormContext();
@@ -28,10 +29,13 @@ export const QuantityInput = () => {
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Quantity</FormLabel>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+              Quantity
+              <TooltipIndicator />
+            </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Each option contract represents 100 tokens of the underlying asset.</p>
+            <p>The number of option contracts to sell. Each contract represents 100 units of the underlying asset.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

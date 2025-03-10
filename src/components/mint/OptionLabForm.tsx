@@ -283,16 +283,7 @@ export function OptionLabForm() {
   // Handle collateral state changes
   const handleCollateralStateChange = (state: CollateralState) => {
     setCollateralState(state);
-    
-    // Update form validation based on collateral state
-    const hasEnoughCollateral = state.hasEnoughCollateral;
-    if (!hasEnoughCollateral && !methods.formState.errors.root) {
-      methods.setError('root', {
-        message: 'Not enough collateral provided'
-      });
-    } else if (hasEnoughCollateral && methods.formState.errors.root) {
-      methods.clearErrors('root');
-    }
+    // We're no longer setting form validation errors to prevent disabling the Add/Update Option button
   };
 
   return (
@@ -338,7 +329,6 @@ export function OptionLabForm() {
                         disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
                         disabled:hover:scale-100"
                       disabled={
-                        !methods.formState.isValid || 
                         !methods.getValues("strikePrice") || 
                         !methods.getValues("premium") ||
                         !methods.getValues("expirationDate")
@@ -346,6 +336,9 @@ export function OptionLabForm() {
                     >
                       {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
                     </Button>
+
+                    {/* Horizontal divider */}
+                    <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
 
                     {/* Option Contract Display */}
                     {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (

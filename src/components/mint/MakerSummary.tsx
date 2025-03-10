@@ -97,7 +97,7 @@ export function MakerSummary({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className="font-bold text-lg text-[#4a85ff]">
+                  <span className="font-bold text-lg">
                     ${positionSize.toFixed(2)}
                   </span>
                 </div>
@@ -159,7 +159,7 @@ export function MakerSummary({
                   {(liquidationPrices.upward || liquidationPrices.downward) ? (
                     <div className="flex flex-col">
                       {liquidationPrices.upward && (
-                        <span className="font-bold text-lg text-orange-500">
+                        <span className="font-bold text-lg">
                           ${liquidationPrices.upward.toFixed(2)}
                           {assetPrice && (
                             <span className="text-xs ml-1 font-normal opacity-75">
@@ -169,7 +169,7 @@ export function MakerSummary({
                         </span>
                       )}
                       {!liquidationPrices.upward && liquidationPrices.downward && (
-                        <span className="font-bold text-lg text-orange-500">
+                        <span className="font-bold text-lg">
                           ${liquidationPrices.downward.toFixed(2)}
                           {assetPrice && (
                             <span className="text-xs ml-1 font-normal opacity-75">

@@ -8,6 +8,7 @@ import { cn } from "@/lib/misc/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipIndicator } from "./TooltipIndicator";
 
 const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
@@ -47,10 +48,13 @@ export const ExpirationDatePicker = () => {
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Expiration Date</FormLabel>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+              Expiration Date
+              <TooltipIndicator />
+            </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Select a date for when this option contract should expire.</p>
+            <p>The date when the option expires. The option can only be exercised on or before this date.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useFormContext } from 'react-hook-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipIndicator } from "./TooltipIndicator";
 
 export const PremiumDisplay = ({ 
   lastUpdated, 
@@ -22,7 +23,10 @@ export const PremiumDisplay = ({
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500">Option Premium</FormLabel>
+            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+              Option Premium
+              <TooltipIndicator />
+            </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
             <p>The price paid by the buyer, this is the max profit for the option seller at expiration.</p>
@@ -33,25 +37,14 @@ export const PremiumDisplay = ({
         </Tooltip>
       </TooltipProvider>
       <div className="flex items-center gap-2">
-        <FormControl>
+        <FormControl className="w-full">
           <Input
             disabled
             placeholder="Calculated premium"
-            value={getValues('premium')}
-            className="h-10"
+            value={`$${getValues('premium')}`}
+            className="h-10 w-full text-[#4a85ff]"
           />
         </FormControl>
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="icon"
-          onClick={manualRefresh}
-          disabled={isDebouncing}
-          title={isDebouncing ? "Calculating..." : "Refresh premium calculation"}
-          className="h-10 w-10"
-        >
-          <RefreshCcw className={`h-4 w-4 ${isDebouncing ? 'animate-spin' : ''}`} />
-        </Button>
       </div>
       <FormMessage />
     </FormItem>
