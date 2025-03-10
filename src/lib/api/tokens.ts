@@ -1,4 +1,4 @@
-import { TOKENS as CONST_TOKENS } from '@/constants/tokens/tokens'
+import { TOKENS as CONST_TOKENS } from '@/constants/token-list/tokens'
 
 export interface Token {
   address: string;

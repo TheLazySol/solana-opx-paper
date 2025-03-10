@@ -11,7 +11,7 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import { format } from "date-fns";
 import { useOptionsStore } from "@/stores/options/optionsStore";
 import { OptionOrder } from "@/types/options/orderTypes";
-import { calculateOption } from '@/lib/tests/option-calculator';
+import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
 import { getTokenPrice } from '@/lib/api/getTokenPrice';
 import { AssetSelector } from './AssetSelector';
 import { OptionTypeSelector } from './OptionTypeSelector';

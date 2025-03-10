@@ -31,6 +31,7 @@ Example:
     - ```1.2.3-beta```
     - ```4.5.6-latest```
 
+**Please be sure to update the `package.json` version when updating a version to maintain codebase consistency. 
 ## Commenting Style
 
 Write clear, concise comments above functions, classes, and complex logic to explain what and why the code does what it does.

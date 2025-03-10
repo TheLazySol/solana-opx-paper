@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { TOKENS } from "@/constants/tokens/tokens";
+import { TOKENS } from "@/constants/token-list/tokens";
 
 export const formSchema = z.object({
 
