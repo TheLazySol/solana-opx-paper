@@ -1,8 +1,6 @@
 import React from 'react';
 import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
 import { useFormContext } from 'react-hook-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipIndicator } from "./TooltipIndicator";

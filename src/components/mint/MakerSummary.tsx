@@ -1,12 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/misc/utils"
-import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/mint/calculations"
+import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
 import { MakerPnlChart } from "./MakerPnlChart"
 import { useMemo } from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { STANDARD_CONTRACT_SIZE } from "@/constants/mint/constants"
 export interface OptionPosition {
   quantity: number;
   strikePrice: string | number;

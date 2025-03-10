@@ -19,12 +19,12 @@ import { ExpirationDatePicker } from './ExpirationDatePicker';
 import { StrikePriceInput } from './StrikePriceInput';
 import { PremiumDisplay } from './PremiumDisplay';
 import { QuantityInput } from './QuantityInput';
-import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/mint/constants';
+import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/option-lab/constants';
 import { Button } from "@/components/ui/button";
-import { MakerSummary, OptionPosition } from "./MakerSummary";
+import { MakerSummary } from "./MakerSummary";
 import { CollateralProvider, CollateralState } from "./CollateralProvider";
 import { cn } from "@/lib/misc/utils";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 
 const formSchema = z.object({

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react'
+import React, { useMemo, useRef } from 'react'
 import {
   CartesianGrid,
   XAxis,
@@ -11,7 +11,7 @@ import {
   Area,
   Line
 } from "recharts"
-import { calculateLiquidationPrice } from '@/constants/mint/calculations'
+import { calculateLiquidationPrice } from '@/constants/option-lab/calculations'
 
 interface OptionPosition {
   quantity: number

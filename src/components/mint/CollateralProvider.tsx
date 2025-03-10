@@ -5,13 +5,12 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/misc/utils";
 import { 
   COLLATERAL_TYPES, 
   BASE_ANNUAL_INTEREST_RATE,
   TRANSACTION_COST_SOL,
   MAX_LEVERAGE
-} from "@/constants/mint/constants";
+} from "@/constants/option-lab/constants";
 import { 
   calculateCollateralNeeded, 
   calculateRequiredCollateral, 
@@ -23,7 +22,7 @@ import {
   calculateOptionCreationFee,
   calculateBorrowFee,
   calculateMaxProfitPotential
-} from "@/constants/mint/calculations";
+} from "@/constants/option-lab/calculations";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface OptionPosition {

@@ -3,6 +3,7 @@ export const AUTO_REFRESH_INTERVAL = 3000; // 3 seconds
 
 export const COLLATERAL_TYPES = [
   { value: "USDC", label: "USDC", default: true }
+  // Add more here that we wish to have as a collateral type
 ] as const;
 
 // Financial constants

@@ -4,7 +4,7 @@ import {
   BORROW_FEE_RATE,
   TRANSACTION_COST_SOL,
   MAX_LEVERAGE
-} from "@/constants/mint/constants";
+} from "@/constants/option-lab/constants";
 
 export const calculateTotalPremium = (options: any[]) => {
   return options.reduce((total, option) => {
