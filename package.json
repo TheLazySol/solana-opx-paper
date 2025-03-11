@@ -1,6 +1,6 @@
 {
   "name": "solana-option-exchange",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "anchor": "cd anchor && anchor",
@@ -11,7 +11,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "check-deps": "pnpm outdated || true",
+    "update-deps-patch": "ncu -u --target patch && pnpm install",
+    "update-deps-minor": "ncu -u --target minor && pnpm install",
+    "update-deps-major": "ncu -u --target major && pnpm install"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
