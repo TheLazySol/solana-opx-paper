@@ -12,10 +12,12 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+
     "check-deps": "pnpm outdated || true",
     "update-deps-patch": "ncu -u --target patch && pnpm install",
     "update-deps-minor": "ncu -u --target minor && pnpm install",
-    "update-deps-major": "ncu -u --target major && pnpm install"
+    "dedupe": "pnpm dedupe",
+    "depcheck": "exec depcheck"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
@@ -69,6 +71,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
+    "depcheck": "^1.4.7",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5",
     "jest": "^29.7.0",
