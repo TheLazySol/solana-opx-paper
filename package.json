@@ -13,11 +13,11 @@
     "lint": "next lint",
     "test": "jest",
 
-    "check-deps": "pnpm outdated || true",
+    "check-outdated": "pnpm outdated || true",
     "update-deps-patch": "ncu -u --target patch && pnpm install",
     "update-deps-minor": "ncu -u --target minor && pnpm install",
-    "dedupe": "pnpm dedupe",
-    "depcheck": "exec depcheck"
+    "depcheck": "pnpm exec depcheck",
+    "dedupe": "pnpm dedupe"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
