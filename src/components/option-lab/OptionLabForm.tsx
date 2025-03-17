@@ -33,8 +33,8 @@ const formSchema = z.object({
   expirationDate: z.date({
     required_error: "Expiration date is required",
   }),
-  strikePrice: z.string().refine(val => val !== '', {
-    message: "Strike price is required",
+  strikePrice: z.coerce.number().min(0, {
+    message: "Strike price must be a positive number",
   }),
   premium: z.string().refine(
     (val) => {
