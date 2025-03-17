@@ -63,7 +63,7 @@ export function OptionLabForm() {
     defaultValues: {
       asset: "SOL",
       optionType: "call",
-      strikePrice: '',
+      strikePrice: 0,
       premium: '',
       quantity: 1,
       expirationDate: undefined,
