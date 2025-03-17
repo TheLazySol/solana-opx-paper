@@ -39,7 +39,7 @@ export const PremiumDisplay = ({
           <Input
             disabled
             placeholder="Calculated premium"
-            value={`$${getValues('premium')}`}
+            value={getValues('premium') ? `$${getValues('premium')}` : 'Calculating...'}
             className="h-10 w-full text-[#4a85ff]"
           />
         </FormControl>
