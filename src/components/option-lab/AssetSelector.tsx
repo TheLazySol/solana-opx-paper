@@ -19,11 +19,6 @@ export const AssetSelector = ({ assetPrice }: { assetPrice: number | null }) => 
     });
   };
 
-  const currentAsset = getValues('asset');
-  const labelText = assetPrice 
-    ? `${currentAsset} • $${assetPrice.toFixed(4)}`
-    : 'Asset';
-
   return (
     <FormItem>
       <FormLabel className="pt-3 mb-2 flex items-center">
