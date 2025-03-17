@@ -26,6 +26,7 @@ import { CollateralProvider, CollateralState } from "./CollateralProvider";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
+import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -106,8 +107,8 @@ export function OptionLabForm() {
       (values.expirationDate.getTime() - Date.now()) / 1000
     );
     try {
-      const volatility = 0.35;
-      const riskFreeRate = 0.08;
+      const volatility = SOL_PH_VOLATILITY;
+      const riskFreeRate = SOL_PH_RISK_FREE_RATE;
       const result = await calculateOption({
         isCall: values.optionType === 'call',
         strikePrice: Number(values.strikePrice),

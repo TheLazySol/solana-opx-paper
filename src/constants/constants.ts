@@ -43,3 +43,6 @@ export type ExpirationDate = {
   label: string
   isMonthly: boolean
 }
+
+export const SOL_PH_VOLATILITY = 0.35;
+export const SOL_PH_RISK_FREE_RATE = 0.08;
