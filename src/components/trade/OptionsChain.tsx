@@ -1,5 +1,6 @@
 "use client"
 
+// Import necessary React hooks and components
 import { useState, useEffect, useReducer } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { OrdersContainer } from "./OrdersContainer"
+
+// Import types and interfaces
 import { OptionOrder, OptionParameter } from "@/types/options/orderTypes"
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Keypair, PublicKey } from '@solana/web3.js'
@@ -41,8 +44,7 @@ import { defaultParameters } from "@/types/options/optionParameters"
 import { convertOrderToOption } from "@/lib/options/convertOrderToOption"
 
 
-
-
+// Reducer to manage price state updates
 const priceReducer = (state: PriceState, action: any) => {
   switch (action.type) {
     case 'UPDATE_PRICE':
@@ -60,11 +62,16 @@ const priceReducer = (state: PriceState, action: any) => {
 };
 
 export function OptionsChain() {
+  // State management for options parameters and UI controls
   const [parameters, setParameters] = useState<OptionParameter[]>(defaultParameters)
   const [selectedAsset, setSelectedAsset] = useState("SOL")
   const [selectedExpiry, setSelectedExpiry] = useState<string>("")
   const [expirationDates, setExpirationDates] = useState<Array<{ value: string; label: string }>>([])
+  
+  // Wallet and blockchain related state
   const { publicKey } = useWallet()
+  
+  // Market and price related state
   const [limitPrices, setLimitPrices] = useState<Record<string, number>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [marketPrices, setMarketPrices] = useState<MarketPrices>({})
@@ -75,24 +82,29 @@ export function OptionsChain() {
     isLoading: true,
     initialLoad: true
   })
+  
+  // UI state
   const [isTableRefreshing, setIsTableRefreshing] = useState(false)
   const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null)
   const isPageVisible = usePageVisibility()
+  
+  // Options store state and actions
   const options = useOptionsStore((state) => state.options)
   const addOption = useOptionsStore((state) => state.addOption)
   const removeOption = useOptionsStore((state) => state.removeOption)
   const updateOption = useOptionsStore((state) => state.updateOption)
   
-  // Get current price data based on selected asset
+  // Current price data object for display
   const currentPriceData = {
     price: priceState.currentPrice ?? 0,
     change: priceState.priceChange24h,
     direction: priceState.priceChange24h >= 0 ? 'up' as const : 'down' as const
   }
 
-  // Calculate height based on number of strikes
+  // Calculate dynamic table height based on number of strikes
   const tableHeight = Math.min(600, 10 * 42 + 50); // 10 strikes * 42px per row + 50px buffer
 
+  // Toggle visibility of optional parameters in the table
   const toggleParameter = (id: string) => {
     const parameter = parameters.find(p => p.id === id)
     if (parameter?.required) return // Don't toggle if required
@@ -104,6 +116,7 @@ export function OptionsChain() {
     )
   }
 
+  // Handler for creating new option orders
   const handleOrderCreate = (orderData: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => {
     if (!publicKey) return
 
@@ -120,6 +133,7 @@ export function OptionsChain() {
     addOption(newOrder)
   }
 
+  // Handlers for order management
   const handleUpdateQuantity = (publicKey: string, newSize: number) => {
     updateOption(publicKey, { size: newSize })
   }
@@ -135,14 +149,15 @@ export function OptionsChain() {
     }))
   }
 
+  // Handler for refreshing market data
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
       // Fetch latest market prices
-      const latestPrices = await fetchLatestMarketPrices() // You'll need to implement this
+      const latestPrices = await fetchLatestMarketPrices()
       setMarketPrices(latestPrices)
       
-      // Update orders with new prices
+      // Update orders with new prices if wallet is connected
       if (publicKey) {
         options.forEach(order => {
           const orderKey = `${order.optionSide}-${order.strike}`
@@ -172,6 +187,7 @@ export function OptionsChain() {
     }
   }
 
+  // Mock function to simulate fetching market prices
   const fetchLatestMarketPrices = async (): Promise<MarketPrices> => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -179,7 +195,7 @@ export function OptionsChain() {
     // Generate mock updated prices
     const mockPrices: MarketPrices = {}
     
-    // For each existing order, generate new prices
+    // For each existing order, generate new prices with random fluctuation
     options.forEach(order => {
       const key = `${order.optionSide}-${order.strike}`
       const randomChange = (Math.random() - 0.5) * 0.5 // -0.25 to +0.25 change
@@ -193,7 +209,7 @@ export function OptionsChain() {
     return mockPrices
   }
 
-  // Initialize with stored data if available
+  // Effect to initialize price data from storage
   useEffect(() => {
     const storedData = getPriceFromStorage(selectedAsset)
     if (storedData) {
@@ -205,6 +221,7 @@ export function OptionsChain() {
     }
   }, [selectedAsset])
 
+  // Effect to handle periodic price updates
   useEffect(() => {
     let intervalId: NodeJS.Timeout
     let isSubscribed = true
@@ -245,7 +262,7 @@ export function OptionsChain() {
     }
   }, [selectedAsset, isPageVisible])
 
-  // Add this effect to update available expiration dates when options change
+  // Effect to update expiration dates when options change
   useEffect(() => {
     if (options.length > 0) {
       const uniqueDates = Array.from(new Set(options.map(order => order.expirationDate)))
@@ -271,6 +288,7 @@ export function OptionsChain() {
     }
   }, [options, selectedExpiry])
 
+  // Component for displaying individual price digits with animation
   const PriceDigit = ({ 
     currentDigit, 
     previousDigit, 
@@ -295,6 +313,7 @@ export function OptionsChain() {
     )
   }
 
+  // Helper function to format price display with animation
   const formatPriceWithAnimation = (currentPrice: number | null, previousPrice: number | null, symbol: string) => {
     if (!currentPrice) return '--.--'
     
@@ -307,7 +326,6 @@ export function OptionsChain() {
 
     const current = formatNumber(currentPrice)
 
-    // Always create a new span element with a unique key to force re-render
     return (
       <span 
         key={`price-${currentPrice}-${Date.now()}`} 
@@ -318,6 +336,7 @@ export function OptionsChain() {
     )
   }
 
+  // Handler for manual table refresh
   const handleTableRefresh = async () => {
     setIsTableRefreshing(true)
     try {
@@ -459,7 +478,7 @@ export function OptionsChain() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Refresh Button - now after the filter dropdown */}
+            {/* Refresh Button */}
             <button
               onClick={handleTableRefresh}
               disabled={isTableRefreshing}
@@ -489,7 +508,7 @@ export function OptionsChain() {
         </ScrollArea>
       </div>
 
-      {/* Orders Section */}
+      {/* Orders Container */}
       <OrdersContainer 
         orders={options}
         onRemoveOrder={handleRemoveOrder}

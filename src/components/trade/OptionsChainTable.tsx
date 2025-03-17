@@ -9,20 +9,21 @@ import {
 } from "@/components/ui/tooltip"
 import { OptionOrder, OptionSide, OrderType } from "@/types/options/orderTypes"
 
+// Interface representing a single option with call and put data
 interface Option {
   strike: number
   call: {
-    iv: number
-    volume: number
-    oi: number
-    theta: number
-    delta: number
-    bid: number
-    ask: number
+    iv: number // Implied volatility
+    volume: number // Trading volume
+    oi: number // Open interest
+    theta: number // Time decay
+    delta: number // Price sensitivity to underlying
+    bid: number // Highest buy price
+    ask: number // Lowest sell price
   }
   put: {
     iv: number
-    volume: number
+    volume: number 
     oi: number
     theta: number
     delta: number
@@ -31,13 +32,14 @@ interface Option {
   }
 }
 
+// Props for the OptionsChainTable component
 interface OptionsChainTableProps {
-  parameters: { id: string; name: string; visible: boolean }[]
-  onOrderCreate: (order: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => void
-  marketPrice: number
-  options: Option[]
-  assetType: 'SOL' | 'LABS'
-  selectedExpiry: string
+  parameters: { id: string; name: string; visible: boolean }[] // Column configuration
+  onOrderCreate: (order: Omit<OptionOrder, 'publicKey' | 'timestamp' | 'owner' | 'status'>) => void // Callback when order created
+  marketPrice: number // Current market price of underlying asset
+  options: Option[] // Array of option data
+  assetType: 'SOL' | 'LABS' // Type of underlying asset
+  selectedExpiry: string // Selected expiration date
 }
 
 export function OptionsChainTable({ 
@@ -48,7 +50,7 @@ export function OptionsChainTable({
   assetType = 'SOL',
   selectedExpiry
 }: OptionsChainTableProps) {
-  // Add the helper function first
+  // Determines if a market price line should be shown between strike prices
   const shouldShowMarketPriceLine = (strike: number, marketPrice: number, options: Option[]) => {
     const allStrikes = options.map(o => o.strike).sort((a, b) => a - b)
     
@@ -58,7 +60,7 @@ export function OptionsChainTable({
     return strike === Math.max(...allStrikes.filter(s => s < marketPrice))
   }
 
-  // Then use it in the strikes mapping
+  // Sort strikes and add market price line flag
   const strikes = [...options]
     .sort((a, b) => a.strike - b.strike)
     .map(option => ({
@@ -66,7 +68,7 @@ export function OptionsChainTable({
       isMarketPrice: shouldShowMarketPriceLine(option.strike, marketPrice, options)
     }))
 
-  // If no strikes, show empty message or return null
+  // Show empty state if no options available
   if (strikes.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center p-8 text-muted-foreground">
@@ -75,10 +77,11 @@ export function OptionsChainTable({
     )
   }
 
+  // Helper functions to determine if options are in-the-money
   const isCallITM = (strike: number) => strike < marketPrice;
   const isPutITM = (strike: number) => strike > marketPrice;
 
-  // Function to reorder Call side parameters
+  // Function to reorder Call side parameters in specific order
   const getCallParameters = (params: typeof parameters) => {
     const orderMap = {
       'iv': 0,
@@ -99,7 +102,7 @@ export function OptionsChainTable({
     );
   };
 
-  // Function to get Put side parameters
+  // Function to reorder Put side parameters in specific order
   const getPutParameters = (params: typeof parameters) => {
     const orderMap = {
       'bid': 0,
@@ -120,6 +123,7 @@ export function OptionsChainTable({
     );
   };
 
+  // Returns tooltip content for each column header
   const getColumnHeader = (param: { id: string; name: string }) => {
     switch (param.id) {
       case 'iv':
@@ -197,6 +201,51 @@ export function OptionsChainTable({
             </Tooltip>
           </TooltipProvider>
         );
+      case 'rho':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Interest Rate Sensitivity: How much the option&apos;s price changes for a 1% change in interest rates.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'vega':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Volatility Sensitivity: How much the option&apos;s price changes for a 1% change in implied volatility.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'gamma':
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger className="text-sm border-b border-dotted border-muted-foreground hover:border-primary cursor-help">
+                {param.name}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Delta Sensitivity: How much the option&apos;s delta changes for a $1 change in the underlying asset.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       case 'bid':
         return (
           <TooltipProvider delayDuration={100}>
@@ -232,6 +281,7 @@ export function OptionsChainTable({
     }
   };
 
+  // Handles click on bid/ask prices to create orders
   const handlePriceClick = (
     price: number,
     strike: number,
@@ -244,13 +294,13 @@ export function OptionsChainTable({
       type: orderType,
       optionSide,
       size: 1,
-      bidPrice: price * 0.95,
-      askPrice: price * 1.05,
+      bidPrice: price * 0.95, // Set bid 5% below price
+      askPrice: price * 1.05, // Set ask 5% above price
       expirationDate: selectedExpiry
     })
   }
 
-  // Add this helper function
+  // Formats numeric values for display
   const formatValue = (value: number | undefined, isVolume = false) => {
     if (typeof value !== 'number' || value === 0) return "-"
     // Format volume as whole number, other values with 2 decimal places
@@ -368,6 +418,7 @@ export function OptionsChainTable({
                 </td>
               ))}
             </tr>
+            {/* Market Price Line */}
             {row.isMarketPrice && (
               <tr className="market-price-row">
                 <td colSpan={parameters.length * 2 + 1} className="p-0">

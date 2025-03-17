@@ -43,26 +43,3 @@ export type ExpirationDate = {
   label: string
   isMonthly: boolean
 }
-
-/**
- * An array of predefined expiration dates for options.
- *
- * Each object in the array contains the raw expiration date value,
- * a formatted label for display purposes, and a flag indicating if the
- * expiration date is considered monthly.
- *
- * @constant {ExpirationDate[]}
- */
-export const EXPIRATION_DATES: ExpirationDate[] = [
-  { value: '2025-01-31', label: formatExpirationDate('2025-01-31'), isMonthly: true },
-  { value: '2025-02-14', label: formatExpirationDate('2025-02-14'), isMonthly: false },
-  { value: '2025-02-28', label: formatExpirationDate('2025-02-28'), isMonthly: true },
-  { value: '2025-03-03', label: formatExpirationDate('2025-03-03'), isMonthly: false },
-  { value: '2025-03-14', label: formatExpirationDate('2025-03-14'), isMonthly: true },
-  { value: '2025-03-28', label: formatExpirationDate('2025-03-28'), isMonthly: false },
-  { value: '2025-03-31', label: formatExpirationDate('2025-03-31'), isMonthly: true },
-  { value: '2025-04-11', label: formatExpirationDate('2025-04-11'), isMonthly: false },
-  { value: '2025-04-25', label: formatExpirationDate('2025-04-25'), isMonthly: true },
-  { value: '2025-05-01', label: formatExpirationDate('2025-05-01'), isMonthly: false },
-  { value: '2025-05-09', label: formatExpirationDate('2025-05-09'), isMonthly: true }
-]
