@@ -26,7 +26,6 @@ function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
 
 export const ExpirationDatePicker = () => {
   const { getValues, setValue } = useFormContext();
-  const { getValues, setValue } = useFormContext();
   const debounceTimer = React.useRef<NodeJS.Timeout>();
 
   React.useEffect(() => {
