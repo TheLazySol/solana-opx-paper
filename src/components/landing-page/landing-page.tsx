@@ -2,26 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ExternalLink } from 'lucide-react'
-
-const resources = [
-  {
-    title: "Trade More for Less",
-    description: "One contract represents 100 of the underlying asset, without borrowing.",
-  },
-  {
-    title: "Hedging Strategies",
-    description: "Allow for more strategic hedging opportunities to help mitigate risks.",
-  },
-  {
-    title: "Market Making",
-    description: "Short sell options and earn premiums every 400ms.",
-  },
-  {
-    title: "Lending",
-    description: "Provide liquidity to the Option Margin Liquidity Pool (OMLP), earn yield.",
-  },
-]
 
 const additionalResources = [
   {
@@ -46,7 +26,7 @@ export default function DashboardFeature() {
       buttonText: "Trade Now"
     },
     {
-      title: "Hedging Strategies",
+      title: "Hedging Strategies", 
       description: "Allow for more strategic hedging opportunities to help mitigate risks.",
       buttonText: "Learn Options"
     },
