@@ -44,5 +44,8 @@ export type ExpirationDate = {
   isMonthly: boolean
 }
 
+// SOL PH Volatility
 export const SOL_PH_VOLATILITY = 0.35;
+
+// SOL PH Risk Free Rate
 export const SOL_PH_RISK_FREE_RATE = 0.08;
