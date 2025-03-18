@@ -1,4 +1,4 @@
-import { FC, useEffect, useState, useRef } from 'react'
+import { FC, useState, useCallback, memo, useRef, useEffect } from 'react'
 import { TOKENS } from '@/constants/token-list/tokens'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,14 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { getTokenPrice } from '@/lib/api/getTokenPrice'
+import { useAssetPriceUpdate } from './asset-price-update'
 
 interface AssetTypeProps {
   selectedAsset: string
   onAssetChange: (asset: string) => void
 }
 
-export const AssetType: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }) => {
+const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }) => {
   const assets = Object.entries(TOKENS).map(([id, token]) => ({
     id,
     name: token.symbol,
@@ -25,39 +25,46 @@ export const AssetType: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }) 
   const selectedToken = TOKENS[selectedAsset as keyof typeof TOKENS]
   const [price, setPrice] = useState<number | null>(null)
   const [priceChange, setPriceChange] = useState<'up' | 'down' | null>(null)
-  const prevPriceRef = useRef<number | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout>()
 
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const priceData = await getTokenPrice(selectedAsset)
-        if (priceData) {
-          // Determine price change direction
-          if (prevPriceRef.current !== null) {
-            if (priceData.price > prevPriceRef.current) {
-              setPriceChange('up')
-              setTimeout(() => setPriceChange(null), 500) // Reset after 500ms
-            } else if (priceData.price < prevPriceRef.current) {
-              setPriceChange('down')
-              setTimeout(() => setPriceChange(null), 500) // Reset after 500ms
-            }
-          }
-          prevPriceRef.current = priceData.price
-          setPrice(priceData.price)
-        }
-      } catch (error) {
-        console.error('Error fetching price:', error)
-      }
+  // Cleanup function for the highlight effect
+  const clearPriceChangeEffect = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    setPriceChange(null)
+  }, [])
+
+  // Memoize the price update callback
+  const handlePriceUpdate = useCallback((newPrice: number, change: 'up' | 'down' | null) => {
+    setPrice(newPrice)
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
     }
 
-    // Initial fetch
-    fetchPrice()
+    if (change) {
+      setPriceChange(change)
+      // Faster highlight flicker (100ms instead of 750ms)
+      timeoutRef.current = setTimeout(clearPriceChangeEffect, 100)
+    }
+  }, [clearPriceChangeEffect])
 
-    // Set up interval to fetch price every second
-    const interval = setInterval(fetchPrice, 1000)
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
-    return () => clearInterval(interval)
-  }, [selectedAsset])
+  // Use the price update hook
+  useAssetPriceUpdate({
+    selectedAsset,
+    onPriceUpdate: handlePriceUpdate
+  })
 
   return (
     <div className="flex flex-col items-start space-y-2 mb-4">
@@ -65,11 +72,12 @@ export const AssetType: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }) 
       <div className="flex items-center space-x-2">
         {price !== null && (
           <div className="flex items-center space-x-2">
-            <span className={`text-2xl font-bold transition-colors duration-200 ${
-              priceChange === 'up' ? 'text-green-500' : 
-              priceChange === 'down' ? 'text-red-500' : 
-              'text-foreground'
-            }`}>
+            <span className={`text-2xl font-bold transition-all duration-75 ${
+              priceChange === 'up' ? 'bg-green-500 text-white' : 
+              priceChange === 'down' ? 'bg-red-500 text-white' : 
+              'bg-transparent'
+            } px-1`}
+            >
               ${price.toFixed(2)}
             </span>
           </div>
@@ -97,4 +105,7 @@ export const AssetType: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }) 
       </DropdownMenu>
     </div>
   )
-} 
+}
+
+export const AssetType = memo(AssetTypeComponent)
+AssetType.displayName = 'AssetType'

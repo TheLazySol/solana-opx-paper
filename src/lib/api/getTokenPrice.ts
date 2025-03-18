@@ -1,5 +1,5 @@
 import { BirdeyePriceResponse } from '@/types/birdeye'
-import { TOKENS } from './tokens'
+import { TOKENS } from '@/constants/token-list/tokens'
 
 const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
 /**
@@ -20,8 +20,29 @@ const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
  * console.log(tokenPrice); // { price, priceChange24h, timestamp, humanTime }
  */
 export async function getTokenPrice(tokenSymbol: string) {
+  // Validate token symbol
+  if (!tokenSymbol) {
+    console.error('Token symbol is required')
+    return null
+  }
+
   const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
-  if (!token) return null
+  if (!token) {
+    console.error(`Token ${tokenSymbol} not found in TOKENS list`)
+    return null
+  }
+
+  // Validate token address
+  if (!token.address) {
+    console.error(`Token ${tokenSymbol} has no address configured`)
+    return null
+  }
+
+  const apiKey = process.env.NEXT_PUBLIC_BIRDEYE_API_KEY
+  if (!apiKey) {
+    console.error('NEXT_PUBLIC_BIRDEYE_API_KEY is not configured')
+    return null
+  }
 
   try {
     const options = {
@@ -29,23 +50,28 @@ export async function getTokenPrice(tokenSymbol: string) {
       headers: {
         accept: 'application/json',
         'x-chain': 'solana',
-        'X-API-KEY': process.env.NEXT_PUBLIC_BIRDEYE_API_KEY || ''
+        'X-API-KEY': apiKey
       }
     }
 
-    if (!options.headers['X-API-KEY'] && !BIRDEYE_API_URL) {
-      throw new Error('BIRDEYE_API_KEY or BIRDEYE_API_URL is not configured')
-    }
-
     const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token.address}`, options)
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      const errorText = await response.text()
+      console.error(`HTTP error! status: ${response.status}, message: ${errorText}`)
+      return null
     }
     
     const data = await response.json() as BirdeyePriceResponse
     
     if (!data.success) {
-      throw new Error(data.message || 'Failed to fetch price')
+      console.error(`API error: ${data.message || 'Failed to fetch price'}`)
+      return null
+    }
+
+    if (!data.data?.value) {
+      console.error('No price data returned from API')
+      return null
     }
     
     return {

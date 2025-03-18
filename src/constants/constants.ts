@@ -45,8 +45,9 @@ export type ExpirationDate = {
 }
 
 // Asset Price Refresh Interval
-export const ASSET_PRICE_REFRESH_INTERVAL = 1000; // 1 second
-
+export const ASSET_PRICE_REFRESH_INTERVAL = 750; // 750ms between updates
+export const CACHE_VALIDITY_MS = 750; // 750ms cache validity
+export const DELAY_BETWEEN_API_CALLS = 500; // 500ms between API calls
 // SOL PH Volatility
 export const SOL_PH_VOLATILITY = 0.35;
 
