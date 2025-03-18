@@ -9,32 +9,33 @@ interface AssetPriceUpdateProps {
 
 export const useAssetPriceUpdate = ({ selectedAsset, onPriceUpdate }: AssetPriceUpdateProps) => {
   const prevPriceRef = useRef<number | null>(null)
-  const lastUpdateTimeRef = useRef<number>(0)
   const intervalRef = useRef<NodeJS.Timeout>()
+  const isUpdatingRef = useRef(false)
 
   const fetchAndUpdatePrice = useCallback(async () => {
+    // Prevent concurrent updates
+    if (isUpdatingRef.current) return;
+    
     try {
+      isUpdatingRef.current = true;
       const priceData = await getTokenPrice(selectedAsset)
       
       if (priceData) {
         const newPrice = priceData.price
         const currentPrice = prevPriceRef.current
-        const now = Date.now()
 
-        // Only update if we have a new price and enough time has passed
-        if (now - lastUpdateTimeRef.current >= ASSET_PRICE_REFRESH_INTERVAL) {
-          if (currentPrice !== null && newPrice !== currentPrice) {
-            onPriceUpdate(newPrice, newPrice > currentPrice ? 'up' : 'down')
-          } else if (currentPrice === null) {
-            onPriceUpdate(newPrice, null)
-          }
-          
-          prevPriceRef.current = newPrice
-          lastUpdateTimeRef.current = now
+        if (currentPrice !== null && newPrice !== currentPrice) {
+          onPriceUpdate(newPrice, newPrice > currentPrice ? 'up' : 'down')
+        } else if (currentPrice === null) {
+          onPriceUpdate(newPrice, null)
         }
+        
+        prevPriceRef.current = newPrice
       }
     } catch (error) {
       console.error('Error in price update:', error)
+    } finally {
+      isUpdatingRef.current = false
     }
   }, [selectedAsset, onPriceUpdate])
 
@@ -46,7 +47,7 @@ export const useAssetPriceUpdate = ({ selectedAsset, onPriceUpdate }: AssetPrice
 
     // Reset state when asset changes
     prevPriceRef.current = null
-    lastUpdateTimeRef.current = 0
+    isUpdatingRef.current = false
     
     // Initial fetch
     fetchAndUpdatePrice()
@@ -58,6 +59,7 @@ export const useAssetPriceUpdate = ({ selectedAsset, onPriceUpdate }: AssetPrice
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
+      isUpdatingRef.current = false
     }
   }, [selectedAsset, fetchAndUpdatePrice])
 

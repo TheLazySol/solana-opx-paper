@@ -1,7 +1,11 @@
 import { BirdeyePriceResponse } from '@/types/birdeye'
 import { TOKENS } from '@/constants/token-list/tokens'
+import { MIN_API_CALL_INTERVAL } from '@/constants/constants'
 
 const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
+
+let lastFetchTime = 0;
+
 /**
  * Fetches the price of a token from the Birdeye API.
  * 
@@ -20,6 +24,17 @@ const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
  * console.log(tokenPrice); // { price, priceChange24h, timestamp, humanTime }
  */
 export async function getTokenPrice(tokenSymbol: string) {
+  // Rate limiting with backoff
+  const now = Date.now();
+  const timeSinceLastFetch = now - lastFetchTime;
+  
+  if (timeSinceLastFetch < MIN_API_CALL_INTERVAL) {
+    const waitTime = MIN_API_CALL_INTERVAL - timeSinceLastFetch;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastFetchTime = Date.now();
+
   // Validate token symbol
   if (!tokenSymbol) {
     console.error('Token symbol is required')
@@ -64,13 +79,7 @@ export async function getTokenPrice(tokenSymbol: string) {
     
     const data = await response.json() as BirdeyePriceResponse
     
-    if (!data.success) {
-      console.error(`API error: ${data.message || 'Failed to fetch price'}`)
-      return null
-    }
-
-    if (!data.data?.value) {
-      console.error('No price data returned from API')
+    if (!data.success || !data.data?.value) {
       return null
     }
     

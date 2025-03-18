@@ -45,9 +45,9 @@ export type ExpirationDate = {
 }
 
 // Asset Price Refresh Interval
-export const ASSET_PRICE_REFRESH_INTERVAL = 750; // 750ms between updates
-export const CACHE_VALIDITY_MS = 750; // 750ms cache validity
-export const DELAY_BETWEEN_API_CALLS = 500; // 500ms between API calls
+export const ASSET_PRICE_REFRESH_INTERVAL = 1100; // Slightly more than 1 second to ensure we don't hit rate limits
+export const CACHE_VALIDITY_MS = 1000; // 1 second cache validity
+export const MIN_API_CALL_INTERVAL = 1000; // Minimum time between API calls
 // SOL PH Volatility
 export const SOL_PH_VOLATILITY = 0.35;
 
