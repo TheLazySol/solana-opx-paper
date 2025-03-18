@@ -10,7 +10,6 @@ export default function TradePage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Trade Options</h1>
       <div className="grid grid-cols-1 gap-4">
         <div className="rounded-lg shadow-lg p-4">
           <AssetType 

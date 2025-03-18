@@ -44,6 +44,9 @@ export type ExpirationDate = {
   isMonthly: boolean
 }
 
+// Asset Price Refresh Interval
+export const ASSET_PRICE_REFRESH_INTERVAL = 1000; // 1 second
+
 // SOL PH Volatility
 export const SOL_PH_VOLATILITY = 0.35;
 
