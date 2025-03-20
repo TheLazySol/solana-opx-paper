@@ -1,5 +1,5 @@
 import { FC, useState, useCallback, memo, useRef, useEffect } from 'react'
-import { TOKENS } from '@/constants/token-list/tokens'
+import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -46,7 +46,6 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
 
     if (change) {
       setPriceChange(change)
-      // Faster highlight flicker (100ms instead of 750ms)
       timeoutRef.current = setTimeout(clearPriceChangeEffect, 100)
     }
   }, [clearPriceChangeEffect])
@@ -78,7 +77,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
               'bg-transparent'
             } px-1`}
             >
-              ${price.toFixed(2)}
+              ${price.toFixed(getTokenDisplayDecimals(selectedToken.symbol))}
             </span>
           </div>
         )}

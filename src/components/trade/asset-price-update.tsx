@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { ASSET_PRICE_REFRESH_INTERVAL } from '@/constants/constants'
+import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
 
 /**
  * Props for the useAssetPriceUpdate hook
@@ -41,19 +42,25 @@ export const useAssetPriceUpdate = ({ selectedAsset, onPriceUpdate }: AssetPrice
       const priceData = await getTokenPrice(selectedAsset)
       
       if (priceData) {
-        const newPrice = priceData.price
-        const currentPrice = prevPriceRef.current
+        const token = TOKENS[selectedAsset as keyof typeof TOKENS]
+        const decimals = getTokenDisplayDecimals(token.symbol)
+        
+        // Round to appropriate decimal places for comparison
+        const newPrice = Number(priceData.price.toFixed(decimals))
+        const currentPrice = prevPriceRef.current !== null 
+          ? Number(prevPriceRef.current.toFixed(decimals))
+          : null
 
         // If we have a previous price and the new price is different, trigger update with direction
         if (currentPrice !== null && newPrice !== currentPrice) {
-          onPriceUpdate(newPrice, newPrice > currentPrice ? 'up' : 'down')
+          onPriceUpdate(priceData.price, newPrice > currentPrice ? 'up' : 'down')
         } 
         // If this is the first price update (no previous price), trigger update with no direction
         else if (currentPrice === null) {
-          onPriceUpdate(newPrice, null)
+          onPriceUpdate(priceData.price, null)
         }
         
-        prevPriceRef.current = newPrice
+        prevPriceRef.current = priceData.price
       }
     } catch (error) {
       console.error('Error in price update:', error)
