@@ -265,7 +265,8 @@ export function OptionLabForm() {
       // Clear pending options but keep the form values
       setPendingOptions([]);
       
-      router.push("/trade");
+      // Remove navigation to trade page
+      // router.push("/trade");
     } catch (error) {
       console.error('Error minting options:', error);
     } finally {
