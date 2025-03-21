@@ -3,7 +3,7 @@ import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/f
 import { Input } from "@/components/ui/input";
 import { useFormContext } from 'react-hook-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./TooltipIndicator";
+import { TooltipIndicator } from "./tooltip-icon";
 
 export const PremiumDisplay = ({ 
   lastUpdated, 

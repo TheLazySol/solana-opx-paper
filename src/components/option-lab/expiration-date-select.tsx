@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./TooltipIndicator";
+import { TooltipIndicator } from "./tooltip-icon";
 
 const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026

@@ -1,4 +1,4 @@
-import { OptionLabForm } from "@/components/option-lab/OptionLabForm"
+import { OptionLabForm } from "@/components/option-lab/option-lab-form"
 
 export default function MintOptionPage() {
   return (

@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
-import { MakerPnlChart } from "./MakerPnlChart"
+import { MakerPnlChart } from "./maker-pnl-chart"
 import { useMemo } from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 export interface OptionPosition {
