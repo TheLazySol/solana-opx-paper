@@ -9,8 +9,7 @@ import * as z from "zod";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { format } from "date-fns";
-import { useOptionsStore } from "@/stores/options/optionsStore";
-import { OptionOrder } from "@/types/options/orderTypes";
+import { OptionOrder } from "@/types/order";
 import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
 import { getTokenPrice } from '@/lib/api/getTokenPrice';
 import { AssetSelector } from './AssetSelector';
@@ -19,7 +18,7 @@ import { ExpirationDatePicker } from './ExpirationDatePicker';
 import { StrikePriceInput } from './StrikePriceInput';
 import { PremiumDisplay } from './PremiumDisplay';
 import { QuantityInput } from './QuantityInput';
-import { EDIT_REFRESH_INTERVAL, AUTO_REFRESH_INTERVAL } from '@/constants/option-lab/constants';
+import { EDIT_REFRESH_INTERVAL } from '@/constants/option-lab/constants';
 import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./MakerSummary";
 import { CollateralProvider, CollateralState } from "./CollateralProvider";
@@ -27,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
+import { useAssetPriceUpdate } from "@/components/trade/asset-price-update";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -56,7 +56,6 @@ export function OptionLabForm() {
   const router = useRouter();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const addOption = useOptionsStore((state) => state.addOption);
   const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([]);
 
   const methods = useForm<z.infer<typeof formSchema>>({
@@ -77,6 +76,7 @@ export function OptionLabForm() {
   const [assetPrice, setAssetPrice] = useState<number | null>(null);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null);
 
   // State for collateral information
   const [collateralState, setCollateralState] = useState<CollateralState>({
@@ -89,6 +89,28 @@ export function OptionLabForm() {
     borrowFee: 0,
     transactionCost: 0,
     maxProfitPotential: 0
+  });
+
+  // Handle asset price updates using the hook
+  const handlePriceUpdate = (price: number, priceChange: 'up' | 'down' | null) => {
+    setAssetPrice(price);
+    setPriceChangeDirection(priceChange);
+    // Recalculate option price when asset price changes
+    const values = methods.getValues();
+    if (values.strikePrice && values.expirationDate) {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+        calculateOptionPrice(values);
+      }, EDIT_REFRESH_INTERVAL);
+    }
+  };
+
+  // Use the asset price update hook
+  useAssetPriceUpdate({
+    selectedAsset: methods.watch('asset'),
+    onPriceUpdate: handlePriceUpdate
   });
 
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
@@ -171,22 +193,6 @@ export function OptionLabForm() {
     }
   }, [calculatedPrice, methods]);
 
-  useEffect(() => {
-    const fetchAssetPrice = async () => {
-      const values = methods.getValues();
-      console.log('Fetching asset price for:', values.asset);
-      const priceData = await getTokenPrice(values.asset);
-      if (priceData) {
-        setAssetPrice(priceData.price);
-      } else {
-        setAssetPrice(null);
-      }
-    };
-    fetchAssetPrice();
-    const priceInterval = setInterval(fetchAssetPrice, AUTO_REFRESH_INTERVAL);
-    return () => clearInterval(priceInterval);
-  }, [methods.watch('asset')]);
-
   const addOptionToSummary = async () => {
     const values = methods.getValues();
     if (!values.strikePrice || !values.expirationDate) {
@@ -234,7 +240,8 @@ export function OptionLabForm() {
     if (!publicKey || pendingOptions.length === 0) return;
     setIsSubmitting(true);
     try {
-      pendingOptions.forEach(values => {
+      // Create options but don't add them to a store
+      const createdOptions = pendingOptions.map(values => {
         const newOption: OptionOrder = {
           publicKey: new PublicKey(Keypair.generate().publicKey),
           strike: Number(values.strikePrice),
@@ -249,8 +256,11 @@ export function OptionLabForm() {
           size: values.quantity,
           expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
         };
-        addOption(newOption);
+        return newOption;
       });
+      
+      // Log created options instead of adding to store (as requested, don't send data anywhere yet)
+      console.log('Options created:', createdOptions);
       
       // Clear pending options but keep the form values
       setPendingOptions([]);
