@@ -11,7 +11,6 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import { format } from "date-fns";
 import { OptionOrder } from "@/types/order";
 import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
-import { getTokenPrice } from '@/lib/api/getTokenPrice';
 import { AssetSelector } from './asset-selector';
 import { OptionTypeSelector } from './option-type-select';
 import { ExpirationDatePicker } from './expiration-date-select';
@@ -26,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
-import { useAssetPriceUpdate } from "@/components/trade/asset-price-update";
+import { useAssetPrice, useAssetPriceInfo } from "@/context/asset-price-provider";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -73,10 +72,14 @@ export function OptionLabForm() {
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
-  const [assetPrice, setAssetPrice] = useState<number | null>(null);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [priceChangeDirection, setPriceChangeDirection] = useState<'up' | 'down' | null>(null);
+
+  // Get the selected asset from form
+  const selectedAsset = methods.watch('asset');
+  
+  // Get asset price from context
+  const { price: assetPrice, priceChange: priceChangeDirection } = useAssetPriceInfo(selectedAsset);
 
   // State for collateral information
   const [collateralState, setCollateralState] = useState<CollateralState>({
@@ -91,39 +94,18 @@ export function OptionLabForm() {
     maxProfitPotential: 0
   });
 
-  // Handle asset price updates using the hook
-  const handlePriceUpdate = (price: number, priceChange: 'up' | 'down' | null) => {
-    setAssetPrice(price);
-    setPriceChangeDirection(priceChange);
-    // Recalculate option price when asset price changes
-    const values = methods.getValues();
-    if (values.strikePrice && values.expirationDate) {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        calculateOptionPrice(values);
-      }, EDIT_REFRESH_INTERVAL);
-    }
-  };
-
-  // Use the asset price update hook
-  useAssetPriceUpdate({
-    selectedAsset: methods.watch('asset'),
-    onPriceUpdate: handlePriceUpdate
-  });
-
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
     console.log('Calculating option price for values:', values);
     if (isCalculatingPremium) {
       console.log('Calculation already in progress, skipping');
       return;
     }
-    const spotPrice = await getTokenPrice(values.asset);
-    if (!spotPrice || !values.expirationDate) {
+    
+    if (!assetPrice || !values.expirationDate) {
       console.log('Missing spot price or expiration date, cannot calculate');
       return;
     }
+    
     setIsCalculatingPremium(true);
     const timeUntilExpiry = Math.floor(
       (values.expirationDate.getTime() - Date.now()) / 1000
@@ -134,7 +116,7 @@ export function OptionLabForm() {
       const result = await calculateOption({
         isCall: values.optionType === 'call',
         strikePrice: Number(values.strikePrice),
-        spotPrice: spotPrice.price,
+        spotPrice: assetPrice,
         timeUntilExpirySeconds: timeUntilExpiry,
         volatility,
         riskFreeRate
@@ -181,7 +163,7 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [methods.watch('strikePrice'), methods.watch('expirationDate')]);
+  }, [methods.watch('strikePrice'), methods.watch('expirationDate'), assetPrice]);
 
   useEffect(() => {
     if (calculatedPrice !== null) {

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAssetPriceUpdate } from './asset-price-update'
+import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 
 interface AssetTypeProps {
   selectedAsset: string
@@ -23,47 +23,43 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
   }))
 
   const selectedToken = TOKENS[selectedAsset as keyof typeof TOKENS]
-  const [price, setPrice] = useState<number | null>(null)
-  const [priceChange, setPriceChange] = useState<'up' | 'down' | null>(null)
+  
+  // Use the price context instead of local state
+  const { setSelectedAsset } = useAssetPrice()
+  const { price, priceChange } = useAssetPriceInfo(selectedAsset)
+  const [highlightEffect, setHighlightEffect] = useState<'up' | 'down' | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout>()
 
-  // Cleanup function for the highlight effect
-  const clearPriceChangeEffect = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    setPriceChange(null)
-  }, [])
-
-  // Memoize the price update callback
-  const handlePriceUpdate = useCallback((newPrice: number, change: 'up' | 'down' | null) => {
-    setPrice(newPrice)
-    
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-
-    if (change) {
-      setPriceChange(change)
-      timeoutRef.current = setTimeout(clearPriceChangeEffect, 100)
-    }
-  }, [clearPriceChangeEffect])
-
-  // Cleanup on unmount
+  // Update highlight effect when price changes
   useEffect(() => {
+    if (priceChange) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      
+      // Set the highlight effect
+      setHighlightEffect(priceChange)
+      
+      // Clear the effect after a brief moment
+      timeoutRef.current = setTimeout(() => {
+        setHighlightEffect(null)
+      }, 100)
+    }
+    
+    // Cleanup on unmount
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [])
+  }, [priceChange])
 
-  // Use the price update hook
-  useAssetPriceUpdate({
-    selectedAsset,
-    onPriceUpdate: handlePriceUpdate
-  })
+  // Handle asset selection change
+  const handleAssetChange = useCallback((asset: string) => {
+    onAssetChange(asset)
+    setSelectedAsset(asset)
+  }, [onAssetChange, setSelectedAsset])
 
   return (
     <div className="flex flex-col items-start space-y-2 mb-4">
@@ -72,8 +68,8 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
         {price !== null && (
           <div className="flex items-center space-x-2">
             <span className={`text-2xl font-bold transition-all duration-75 ${
-              priceChange === 'up' ? 'bg-green-500 text-white' : 
-              priceChange === 'down' ? 'bg-red-500 text-white' : 
+              highlightEffect === 'up' ? 'bg-green-500 text-white' : 
+              highlightEffect === 'down' ? 'bg-red-500 text-white' : 
               'bg-transparent'
             } px-1`}
             >
@@ -94,7 +90,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
           {assets.map((asset) => (
             <DropdownMenuItem
               key={asset.id}
-              onClick={() => onAssetChange(asset.id)}
+              onClick={() => handleAssetChange(asset.id)}
               className="cursor-pointer"
             >
               {asset.name}

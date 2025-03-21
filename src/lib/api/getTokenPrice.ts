@@ -6,6 +6,23 @@ const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'
 
 // Timestamp of the last API call for rate limiting
 let lastFetchTime = 0;
+// Minimum time between API calls in milliseconds (to respect rate limits)
+const MIN_API_CALL_INTERVAL = 1000; // 1 second
+
+// Cache for token prices to avoid redundant API calls
+interface PriceCache {
+  [tokenSymbol: string]: {
+    price: number;
+    priceChange24h: number;
+    timestamp: number;
+    humanTime: string;
+    fetchedAt: number;
+  }
+}
+
+const priceCache: PriceCache = {};
+// Cache expiration time in milliseconds
+const CACHE_EXPIRATION = 5000; // 5 seconds
 
 /**
  * Fetches the price of a token from the Birdeye API.
@@ -28,6 +45,26 @@ let lastFetchTime = 0;
  * console.log(tokenPrice); // { price, priceChange24h, timestamp, humanTime }
  */
 export async function getTokenPrice(tokenSymbol: string) {
+  // Check if we have a recent cached price
+  const now = Date.now();
+  const cachedData = priceCache[tokenSymbol];
+  
+  if (cachedData && (now - cachedData.fetchedAt) < CACHE_EXPIRATION) {
+    // Return cached data if it's still fresh
+    return {
+      price: cachedData.price,
+      priceChange24h: cachedData.priceChange24h,
+      timestamp: cachedData.timestamp,
+      humanTime: cachedData.humanTime
+    };
+  }
+
+  // Rate limiting - ensure minimum time between API calls
+  const timeSinceLastFetch = now - lastFetchTime;
+  if (timeSinceLastFetch < MIN_API_CALL_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_API_CALL_INTERVAL - timeSinceLastFetch));
+  }
+  
   const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
   const apiKey = process.env.NEXT_PUBLIC_BIRDEYE_API_KEY
 
@@ -40,13 +77,43 @@ export async function getTokenPrice(tokenSymbol: string) {
     }
   }
 
-  const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token?.address}`, options)
-  const data = await response.json() as BirdeyePriceResponse
+  lastFetchTime = Date.now();
+  
+  try {
+    const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token?.address}`, options)
+    const data = await response.json() as BirdeyePriceResponse
     
-  return {
-    price: data.data?.value ?? 0,
-    priceChange24h: data.data?.priceChange24H ?? 0,
-    timestamp: data.data?.updateUnixTime ?? Date.now(),
-    humanTime: data.data?.updateHumanTime ?? new Date().toISOString()
+    const priceData = {
+      price: data.data?.value ?? 0,
+      priceChange24h: data.data?.priceChange24H ?? 0,
+      timestamp: data.data?.updateUnixTime ?? Date.now(),
+      humanTime: data.data?.updateHumanTime ?? new Date().toISOString()
+    };
+    
+    // Update cache
+    priceCache[tokenSymbol] = {
+      ...priceData,
+      fetchedAt: Date.now()
+    };
+    
+    return priceData;
+  } catch (error) {
+    console.error(`Error fetching price for ${tokenSymbol}:`, error);
+    // Return cached data if available, even if expired
+    if (cachedData) {
+      return {
+        price: cachedData.price,
+        priceChange24h: cachedData.priceChange24h,
+        timestamp: cachedData.timestamp,
+        humanTime: cachedData.humanTime
+      };
+    }
+    // Otherwise return zeros
+    return {
+      price: 0,
+      priceChange24h: 0,
+      timestamp: Date.now(),
+      humanTime: new Date().toISOString()
+    };
   }
 }

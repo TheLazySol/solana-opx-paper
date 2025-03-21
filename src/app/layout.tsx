@@ -5,6 +5,7 @@ import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
 import {Background} from '@/components/ui/background'
+import { AssetPriceProvider } from '@/context/asset-price-provider'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ReactQueryProvider>
             <ClusterProvider>
               <SolanaProvider>
-                <UiLayout links={links}>{children}</UiLayout>
+                <AssetPriceProvider>
+                  <UiLayout links={links}>{children}</UiLayout>
+                </AssetPriceProvider>
               </SolanaProvider>
             </ClusterProvider>
           </ReactQueryProvider>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { ASSET_PRICE_REFRESH_INTERVAL } from '@/constants/constants'
 import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
+import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 
 /**
  * Props for the useAssetPriceUpdate hook
@@ -15,6 +16,9 @@ interface AssetPriceUpdateProps {
 }
 
 /**
+ * DEPRECATED: Please use useAssetPriceInfo from context/asset-price-provider instead.
+ * This hook is kept for backward compatibility.
+ * 
  * Custom hook to handle real-time price updates for a selected asset
  * Fetches prices at regular intervals and tracks price movement direction
  * 
@@ -22,26 +26,21 @@ interface AssetPriceUpdateProps {
  * @returns {null} - This hook doesn't return any value, it only handles side effects
  */
 export const useAssetPriceUpdate = ({ selectedAsset, onPriceUpdate }: AssetPriceUpdateProps) => {
-  const prevPriceRef = useRef<number>(0)
-
-  const fetchAndUpdatePrice = useCallback(async () => {
-    const priceData = await getTokenPrice(selectedAsset)
-    const token = TOKENS[selectedAsset as keyof typeof TOKENS]
-    const decimals = getTokenDisplayDecimals(token.symbol)
-    
-    const newPrice = Number(priceData?.price.toFixed(decimals) ?? 0)
-    const currentPrice = Number(prevPriceRef.current.toFixed(decimals))
-    
-    const direction = newPrice > currentPrice ? 'up' : newPrice < currentPrice ? 'down' : null
-    onPriceUpdate(priceData?.price ?? 0, direction)
-    prevPriceRef.current = priceData?.price ?? 0
-  }, [selectedAsset, onPriceUpdate])
-
+  // Get the centralized asset price context
+  const { setSelectedAsset } = useAssetPrice()
+  const { price, priceChange, lastUpdate } = useAssetPriceInfo(selectedAsset)
+  
+  // Update the selected asset in the context when it changes
   useEffect(() => {
-    fetchAndUpdatePrice()
-    const interval = setInterval(fetchAndUpdatePrice, ASSET_PRICE_REFRESH_INTERVAL)
-    return () => clearInterval(interval)
-  }, [selectedAsset, fetchAndUpdatePrice])
-
+    setSelectedAsset(selectedAsset)
+  }, [selectedAsset, setSelectedAsset])
+  
+  // Call the onPriceUpdate callback when the price changes
+  useEffect(() => {
+    if (price > 0) {
+      onPriceUpdate(price, priceChange)
+    }
+  }, [price, priceChange, onPriceUpdate])
+  
   return null
 }
