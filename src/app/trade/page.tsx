@@ -2,6 +2,7 @@
 
 import { OptionChainTable } from '@/components/trade/option-chain-table'
 import { AssetType } from '@/components/trade/asset-type'
+import { AssetChart } from '@/components/trade/asset-chart'
 import { TOKENS } from '@/constants/token-list/tokens'
 import { useState } from 'react'
 
@@ -16,6 +17,9 @@ export default function TradePage() {
             selectedAsset={selectedAsset} 
             onAssetChange={setSelectedAsset} 
           />
+          <div className="mb-4">
+            <AssetChart selectedAsset={selectedAsset} />
+          </div>
           <OptionChainTable />
         </div>
       </div>
