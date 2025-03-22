@@ -14,9 +14,11 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   const [greekFilters, setGreekFilters] = useState<GreekFilters>({
     delta: true,
     theta: true,
-    gamma: true,
-    vega: true,
-    rho: true
+    gamma: false,
+    vega: false,
+    rho: false,
+    oi: false,
+    volume: true
   })
 
   // Handle expiration date selection change

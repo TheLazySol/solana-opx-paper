@@ -16,6 +16,8 @@ export interface GreekFilters {
   gamma: boolean
   vega: boolean
   rho: boolean
+  oi: boolean
+  volume: boolean
 }
 
 interface FilterGreeksProps {
@@ -24,7 +26,15 @@ interface FilterGreeksProps {
 }
 
 export const FilterGreeks: FC<FilterGreeksProps> = ({
-  filters,
+  filters = {
+    delta: true,
+    theta: true,
+    gamma: false,
+    vega: false,
+    rho: false,
+    oi: false,
+    volume: true
+  },
   onFiltersChange
 }) => {
   const [open, setOpen] = useState(false)
@@ -45,7 +55,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuLabel>Toggle Greeks</DropdownMenuLabel>
+        <DropdownMenuLabel>Toggle Greeks & Stats</DropdownMenuLabel>
         <DropdownMenuSeparator />
         
         <DropdownMenuItem 
@@ -91,6 +101,26 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
         >
           <span>Rho (ρ)</span>
           {filters.rho && <Check className="h-4 w-4" />}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem 
+          onClick={(e) => toggleFilter('volume', e)} 
+          className="flex items-center justify-between cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <span>Volume</span>
+          {filters.volume && <Check className="h-4 w-4" />}
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem 
+          onClick={(e) => toggleFilter('oi', e)} 
+          className="flex items-center justify-between cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <span>Open Interest</span>
+          {filters.oi && <Check className="h-4 w-4" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
