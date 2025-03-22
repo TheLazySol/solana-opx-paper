@@ -1,6 +1,7 @@
 import { FC, useState, useCallback } from 'react'
-import { ExpirationDateSelector } from './expiration-date-selector'
 import { OptionChainTable } from './option-chain-table'
+import { OptionChainUtils } from './option-chain-utils'
+import { GreekFilters } from './filter-greeks'
 
 interface OptionChainControlsProps {
   assetId: string
@@ -10,23 +11,36 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   assetId
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
+  const [greekFilters, setGreekFilters] = useState<GreekFilters>({
+    delta: true,
+    theta: true,
+    gamma: true,
+    vega: true,
+    rho: true
+  })
 
   // Handle expiration date selection change
   const handleExpirationChange = useCallback((expiration: string) => {
     setSelectedExpiration(expiration)
   }, [])
 
+  // Handle greek filters change
+  const handleGreekFiltersChange = useCallback((filters: GreekFilters) => {
+    setGreekFilters(filters)
+  }, [])
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-2">
-        <ExpirationDateSelector
-          selectedExpiration={selectedExpiration}
-          onExpirationChange={handleExpirationChange}
-        />
-      </div>
+      <OptionChainUtils
+        selectedExpiration={selectedExpiration}
+        onExpirationChange={handleExpirationChange}
+        greekFilters={greekFilters}
+        onGreekFiltersChange={handleGreekFiltersChange}
+      />
       <OptionChainTable 
         assetId={assetId}
         expirationDate={selectedExpiration}
+        greekFilters={greekFilters}
       />
     </div>
   )
