@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -27,24 +27,36 @@ interface OptionContract {
   strike: number
   expiry: string
   // Call side
-  callPrice: number
+  callBid: number
+  callAsk: number
   callVolume: number
   callOpenInterest: number
   callGreeks: OptionGreeks
   // Put side
-  putPrice: number
+  putBid: number
+  putAsk: number
   putVolume: number
   putOpenInterest: number
   putGreeks: OptionGreeks
 }
 
+interface SelectedOption {
+  index: number
+  side: 'call' | 'put'
+  type: 'bid' | 'ask'
+}
+
 export const OptionChainTable: FC = () => {
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
+  const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
+
   // This will be populated with real data later
   const mockData: OptionContract[] = [
     {
       strike: 0,
       expiry: "2024-12-31",
-      callPrice: 0,
+      callBid: 0,
+      callAsk: 0,
       callVolume: 0,
       callOpenInterest: 0,
       callGreeks: {
@@ -54,7 +66,8 @@ export const OptionChainTable: FC = () => {
         vega: 0,
         rho: 0
       },
-      putPrice: 0,
+      putBid: 0,
+      putAsk: 0,
       putVolume: 0,
       putOpenInterest: 0,
       putGreeks: {
@@ -66,6 +79,36 @@ export const OptionChainTable: FC = () => {
       }
     }
   ]
+
+  const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
+    const newOption = { index, side, type }
+    
+    setSelectedOptions(prev => {
+      // Check if this option is already selected
+      const existingIndex = prev.findIndex(
+        opt => opt.index === index && opt.side === side && opt.type === type
+      )
+      
+      if (existingIndex >= 0) {
+        // Remove if already selected (toggle off)
+        return prev.filter((_, i) => i !== existingIndex)
+      } else {
+        // First remove any other selection for the same index and side (different type)
+        const filteredOptions = prev.filter(
+          opt => !(opt.index === index && opt.side === side && opt.type !== type)
+        )
+        
+        // Then add the new selection
+        return [...filteredOptions, newOption]
+      }
+    })
+  }
+
+  const isOptionSelected = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
+    return selectedOptions.some(
+      opt => opt.index === index && opt.side === side && opt.type === type
+    )
+  }
 
   return (
     <div className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
@@ -144,13 +187,37 @@ export const OptionChainTable: FC = () => {
                 </Tooltip>
               </TooltipProvider>
             </TableHead>
-            <TableHead className="text-center w-[85px]">Price</TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Price</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    <div className="text-center">
+                      <div className="text-green-500">Bid</div>
+                      <div className="text-red-500">Ask</div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
             
             {/* Strike price (center) */}
             <TableHead className="text-center font-bold bg-muted/20 w-[100px]">Strike</TableHead>
             
             {/* Put side */}
-            <TableHead className="text-center w-[85px]">Price</TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Price</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    <div className="text-center">
+                      <div className="text-green-500">Bid</div>
+                      <div className="text-red-500">Ask</div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
             <TableHead className="text-center w-[85px]">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -233,15 +300,58 @@ export const OptionChainTable: FC = () => {
               )}
             >
               {/* Call side */}
-              <TableCell className="text-center">{option.callGreeks.rho.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.callGreeks.vega.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.callGreeks.gamma.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.callGreeks.theta.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.callGreeks.delta.toFixed(2)}</TableCell>
-              <TableCell className="text-center">{option.callOpenInterest}</TableCell>
-              <TableCell className="text-center">{option.callVolume}</TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.rho.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.vega.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.gamma.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.theta.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.delta.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callOpenInterest}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callVolume}
+              </TableCell>
               <TableCell className="text-center font-medium">
-                ${option.callPrice.toFixed(2)}
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => handlePriceClick(index, 'call', 'bid')}
+                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
+                    onMouseLeave={() => setHoveredPrice(null)}
+                    className={cn(
+                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                      (hoveredPrice?.index === index && 
+                       hoveredPrice?.side === 'call' && 
+                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
+                    )}
+                  >
+                    {option.callBid.toFixed(2)}
+                  </button>
+                  <button
+                    onClick={() => handlePriceClick(index, 'call', 'ask')}
+                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
+                    onMouseLeave={() => setHoveredPrice(null)}
+                    className={cn(
+                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                      (hoveredPrice?.index === index && 
+                       hoveredPrice?.side === 'call' && 
+                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
+                    )}
+                  >
+                    {option.callAsk.toFixed(2)}
+                  </button>
+                </div>
               </TableCell>
               
               {/* Strike price (center) */}
@@ -251,15 +361,58 @@ export const OptionChainTable: FC = () => {
               
               {/* Put side */}
               <TableCell className="text-center font-medium">
-                ${option.putPrice.toFixed(2)}
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => handlePriceClick(index, 'put', 'bid')}
+                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
+                    onMouseLeave={() => setHoveredPrice(null)}
+                    className={cn(
+                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                      (hoveredPrice?.index === index && 
+                       hoveredPrice?.side === 'put' && 
+                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
+                    )}
+                  >
+                    {option.putBid.toFixed(2)}
+                  </button>
+                  <button
+                    onClick={() => handlePriceClick(index, 'put', 'ask')}
+                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
+                    onMouseLeave={() => setHoveredPrice(null)}
+                    className={cn(
+                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                      (hoveredPrice?.index === index && 
+                       hoveredPrice?.side === 'put' && 
+                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
+                    )}
+                  >
+                    {option.putAsk.toFixed(2)}
+                  </button>
+                </div>
               </TableCell>
-              <TableCell className="text-center">{option.putVolume}</TableCell>
-              <TableCell className="text-center">{option.putOpenInterest}</TableCell>
-              <TableCell className="text-center">{option.putGreeks.delta.toFixed(2)}</TableCell>
-              <TableCell className="text-center">{option.putGreeks.theta.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.putGreeks.gamma.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.putGreeks.vega.toFixed(3)}</TableCell>
-              <TableCell className="text-center">{option.putGreeks.rho.toFixed(3)}</TableCell>
+              <TableCell className="text-center">
+                {option.putVolume}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putOpenInterest}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.delta.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.theta.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.gamma.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.vega.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.rho.toFixed(3)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
