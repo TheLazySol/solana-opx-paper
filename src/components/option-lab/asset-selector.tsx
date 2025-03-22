@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TOKENS } from '@/lib/api/tokens';
 import { useFormContext } from 'react-hook-form';
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider';
-import { getTokenDisplayDecimals } from '@/constants/token-list/tokens';
+import { getTokenDisplayDecimals } from '@/constants/token-list/token-list';
 
 export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: number | null }) => {
   const { setValue, getValues, watch } = useFormContext();

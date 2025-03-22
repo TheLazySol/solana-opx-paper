@@ -1,5 +1,5 @@
 import { BirdeyePriceResponse } from '@/types/birdeye'
-import { TOKENS } from '@/constants/token-list/tokens'
+import { TOKENS } from '@/constants/token-list/token-list'
 
 // Base URL for the Birdeye API endpoints
 const BIRDEYE_API_URL = 'https://public-api.birdeye.so/defi'

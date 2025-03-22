@@ -1,5 +1,5 @@
 import { FC, useState, useCallback, memo, useRef, useEffect } from 'react'
-import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
+import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {

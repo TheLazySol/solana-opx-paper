@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { ASSET_PRICE_REFRESH_INTERVAL } from '@/constants/constants'
-import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
+import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 
 /**

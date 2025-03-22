@@ -4,7 +4,7 @@ import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { AssetChart } from '@/components/trade/asset-chart'
 import { AssetType } from '@/components/trade/asset-type'
-import { TOKENS } from '@/constants/token-list/tokens'
+import { TOKENS } from '@/constants/token-list/token-list'
 import { useState } from 'react'
 
 export default function TradePage() {

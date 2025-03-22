@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { ASSET_PRICE_REFRESH_INTERVAL } from '@/constants/constants'
-import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/tokens'
+import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 
 // Define the shape of our context
 interface AssetPriceContextType {
