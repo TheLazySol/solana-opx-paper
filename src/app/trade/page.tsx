@@ -1,6 +1,7 @@
 'use client'
 
 import { OptionChainTable } from '@/components/trade/option-chain-table'
+import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { AssetType } from '@/components/trade/asset-type'
 import { AssetChart } from '@/components/trade/asset-chart'
 import { TOKENS } from '@/constants/token-list/tokens'
@@ -20,7 +21,10 @@ export default function TradePage() {
           <div className="mb-4">
             <AssetChart selectedAsset={selectedAsset} />
           </div>
-          <OptionChainTable />
+          <div className="space-y-4">
+            <OptionChainTable />
+            <TradeViewContainer />
+          </div>
         </div>
       </div>
     </div>
