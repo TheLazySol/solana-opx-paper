@@ -31,6 +31,20 @@ const formatExpirationDate = (dateStr: string) => {
 }
 
 /**
+ * Formats a given date string into a compact format for option expiration dates.
+ *
+ * This function creates a Date object from the provided date string and then
+ * formats it using the "MMM-dd-yyyy" pattern (e.g., "Jan-01-2025").
+ *
+ * @param {string} dateStr - The date string to format.
+ * @returns {string} The formatted date string.
+ */
+export const formatOptionExpirationDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return format(date, "MMM-dd-yyyy")
+}
+
+/**
  * Represents an expiration date option.
  *
  * @typedef {Object} ExpirationDate
@@ -52,3 +66,6 @@ export const SOL_PH_VOLATILITY = 0.45;
 
 // SOL PH Risk Free Rate
 export const SOL_PH_RISK_FREE_RATE = 0.08;
+
+// Empty expiration dates array (placeholder)
+export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [];

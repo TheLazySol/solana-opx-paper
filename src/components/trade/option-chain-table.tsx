@@ -46,15 +46,24 @@ interface SelectedOption {
   type: 'bid' | 'ask'
 }
 
-export const OptionChainTable: FC = () => {
+interface OptionChainTableProps {
+  assetId?: string
+  expirationDate?: string | null
+}
+
+export const OptionChainTable: FC<OptionChainTableProps> = ({ 
+  assetId,
+  expirationDate 
+}) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
 
   // This will be populated with real data later
+  // In a real implementation, we would filter this data based on assetId and expirationDate
   const mockData: OptionContract[] = [
     {
       strike: 0,
-      expiry: "2024-12-31",
+      expiry: expirationDate || "2024-12-31",
       callBid: 0,
       callAsk: 0,
       callVolume: 0,
