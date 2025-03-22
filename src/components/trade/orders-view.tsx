@@ -1,5 +1,10 @@
+'use client'
+
 import { FC, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { OrdersViewOpen } from './orders-view-open'
+import { OrdersViewClosed } from './orders-view-closed'
+import { OrdersViewHistory } from './orders-view-history'
 
 export const OrdersView: FC = () => {
   const [activeOrderTab, setActiveOrderTab] = useState('open')
@@ -42,9 +47,7 @@ export const OrdersView: FC = () => {
           className="min-h-[200px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
             transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-4"
         >
-          <div className="flex items-center justify-center text-muted-foreground">
-            Open orders will appear here
-          </div>
+          <OrdersViewOpen />
         </TabsContent>
 
         <TabsContent 
@@ -52,9 +55,7 @@ export const OrdersView: FC = () => {
           className="min-h-[200px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
             transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-4"
         >
-          <div className="flex items-center justify-center text-muted-foreground">
-            Closed orders will appear here
-          </div>
+          <OrdersViewClosed />
         </TabsContent>
 
         <TabsContent 
@@ -62,9 +63,7 @@ export const OrdersView: FC = () => {
           className="min-h-[200px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
             transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-4"
         >
-          <div className="flex items-center justify-center text-muted-foreground">
-            Order history will appear here
-          </div>
+          <OrdersViewHistory />
         </TabsContent>
       </Tabs>
     </div>
