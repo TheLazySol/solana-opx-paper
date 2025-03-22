@@ -67,7 +67,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
       <div className="flex items-center space-x-2">
         {price !== null && (
           <div className="flex items-center space-x-2">
-            <span className={`text-2xl font-bold transition-all duration-75 ${
+            <span className={`text-xl sm:text-2xl font-bold transition-all duration-75 ${
               highlightEffect === 'up' ? 'bg-green-500 text-white' : 
               highlightEffect === 'down' ? 'bg-red-500 text-white' : 
               'bg-transparent'
@@ -81,17 +81,17 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-[180px] justify-between">
+          <Button variant="outline" className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base">
             {selectedToken.symbol}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[180px]">
+        <DropdownMenuContent className="w-[140px] sm:w-[180px]">
           {assets.map((asset) => (
             <DropdownMenuItem
               key={asset.id}
               onClick={() => handleAssetChange(asset.id)}
-              className="cursor-pointer"
+              className="cursor-pointer text-sm sm:text-base"
             >
               {asset.name}
             </DropdownMenuItem>

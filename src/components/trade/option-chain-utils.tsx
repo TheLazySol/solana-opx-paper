@@ -19,7 +19,7 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
   onGreekFiltersChange
 }) => {
   return (
-    <div className="flex justify-end items-center space-x-2 mb-4">
+    <div className="flex flex-col sm:flex-row justify-start sm:justify-end items-start sm:items-center gap-2 mb-4">
       <ExpirationDateSelector
         selectedExpiration={selectedExpiration}
         onExpirationChange={onExpirationChange}

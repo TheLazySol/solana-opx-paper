@@ -8,14 +8,14 @@ const AssetChartComponent: FC<AssetChartProps> = ({ selectedAsset }) => {
   // Only render the chart if SOL is selected
   if (selectedAsset !== 'SOL') {
     return (
-      <div className="w-full h-[600px] flex items-center justify-center text-neutral-400">
+      <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] flex items-center justify-center text-neutral-400">
         Chart not available for this asset
       </div>
     )
   }
 
   return (
-    <div className="w-full h-[600px] relative card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
+    <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 overflow-hidden shadow-lg rounded-lg">
       <iframe 
         className="w-full h-full absolute inset-0"

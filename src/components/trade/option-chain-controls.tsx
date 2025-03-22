@@ -32,18 +32,24 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   }, [])
 
   return (
-    <div className="space-y-4">
-      <OptionChainUtils
-        selectedExpiration={selectedExpiration}
-        onExpirationChange={handleExpirationChange}
-        greekFilters={greekFilters}
-        onGreekFiltersChange={handleGreekFiltersChange}
-      />
-      <OptionChainTable 
-        assetId={assetId}
-        expirationDate={selectedExpiration}
-        greekFilters={greekFilters}
-      />
+    <div className="space-y-2 sm:space-y-4">
+      <div className="w-full">
+        <OptionChainUtils
+          selectedExpiration={selectedExpiration}
+          onExpirationChange={handleExpirationChange}
+          greekFilters={greekFilters}
+          onGreekFiltersChange={handleGreekFiltersChange}
+        />
+      </div>
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[800px]">
+          <OptionChainTable 
+            assetId={assetId}
+            expirationDate={selectedExpiration}
+            greekFilters={greekFilters}
+          />
+        </div>
+      </div>
     </div>
   )
 } 

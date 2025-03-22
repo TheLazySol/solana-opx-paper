@@ -11,11 +11,11 @@ export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="grid grid-cols-1 gap-4">
-        <div className="rounded-lg shadow-lg p-4">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4">
+        <div className="rounded-lg shadow-lg p-2 sm:p-4">
           {/* Asset Type Selector */}
-          <div className="mb-4">
+          <div className="mb-2 sm:mb-4">
             <AssetType 
               selectedAsset={selectedAsset} 
               onAssetChange={setSelectedAsset} 
@@ -23,14 +23,18 @@ export default function TradePage() {
           </div>
           
           {/* Asset Chart */}
-          <div className="mb-4">
+          <div className="mb-2 sm:mb-4 overflow-x-auto">
             <AssetChart selectedAsset={selectedAsset} />
           </div>
           
           {/* Option Chain with Expiration Selector and Trade View */}
-          <div className="space-y-4">
-            <OptionChainControls assetId={selectedAsset} />
-            <TradeViewContainer />
+          <div className="space-y-2 sm:space-y-4">
+            <div className="overflow-x-auto -mx-2 px-2">
+              <OptionChainControls assetId={selectedAsset} />
+            </div>
+            <div className="overflow-x-auto -mx-2 px-2">
+              <TradeViewContainer />
+            </div>
           </div>
         </div>
       </div>
