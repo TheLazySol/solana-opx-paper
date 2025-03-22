@@ -143,66 +143,16 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {/* Call side */}
-            {visibleGreeks.rho && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Rho - Sensitivity to interest rate changes
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.vega && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Vega - Sensitivity to volatility changes
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.gamma && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Gamma - Rate of change in Delta
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.theta && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Theta - Time decay rate
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.delta && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Delta - Price change sensitivity
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Volume - Contracts traded today
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
             <TableHead className="text-center w-[85px]">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -216,9 +166,49 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             <TableHead className="text-center w-[85px]">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
-                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
                   <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                    Volume - Contracts traded today
+                    Rho - Sensitivity to interest rate changes
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Vega - Sensitivity to volatility changes
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Gamma - Rate of change in Delta
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Theta - Time decay rate
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Delta - Price change sensitivity
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -257,9 +247,49 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             <TableHead className="text-center w-[85px]">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
-                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
                   <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                    Volume - Contracts traded today
+                    Delta - Price change sensitivity
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Theta - Time decay rate
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Gamma - Rate of change in Delta
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Vega - Sensitivity to volatility changes
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Rho - Sensitivity to interest rate changes
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -274,66 +304,16 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 </Tooltip>
               </TooltipProvider>
             </TableHead>
-            {visibleGreeks.delta && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Delta - Price change sensitivity
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.theta && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Theta - Time decay rate
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.gamma && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Gamma - Rate of change in Delta
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.vega && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Vega - Sensitivity to volatility changes
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
-            {visibleGreeks.rho && (
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      Rho - Sensitivity to interest rate changes
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-            )}
+            <TableHead className="text-center w-[85px]">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
+                  <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                    Volume - Contracts traded today
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -346,36 +326,26 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               )}
             >
               {/* Call side */}
-              {visibleGreeks.rho && (
-                <TableCell className="text-center">
-                  {option.callGreeks.rho.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.vega && (
-                <TableCell className="text-center">
-                  {option.callGreeks.vega.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.gamma && (
-                <TableCell className="text-center">
-                  {option.callGreeks.gamma.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.theta && (
-                <TableCell className="text-center">
-                  {option.callGreeks.theta.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.delta && (
-                <TableCell className="text-center">
-                  {option.callGreeks.delta.toFixed(2)}
-                </TableCell>
-              )}
+              <TableCell className="text-center">
+                {option.callVolume}
+              </TableCell>
               <TableCell className="text-center">
                 {option.callOpenInterest}
               </TableCell>
               <TableCell className="text-center">
-                {option.callVolume}
+                {option.callGreeks.rho.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.vega.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.gamma.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.theta.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.callGreeks.delta.toFixed(2)}
               </TableCell>
               <TableCell className="text-center font-medium">
                 <div className="flex flex-col">
@@ -449,36 +419,26 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 </div>
               </TableCell>
               <TableCell className="text-center">
-                {option.putVolume}
+                {option.putGreeks.delta.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.theta.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.gamma.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.vega.toFixed(3)}
+              </TableCell>
+              <TableCell className="text-center">
+                {option.putGreeks.rho.toFixed(3)}
               </TableCell>
               <TableCell className="text-center">
                 {option.putOpenInterest}
               </TableCell>
-              {visibleGreeks.delta && (
-                <TableCell className="text-center">
-                  {option.putGreeks.delta.toFixed(2)}
-                </TableCell>
-              )}
-              {visibleGreeks.theta && (
-                <TableCell className="text-center">
-                  {option.putGreeks.theta.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.gamma && (
-                <TableCell className="text-center">
-                  {option.putGreeks.gamma.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.vega && (
-                <TableCell className="text-center">
-                  {option.putGreeks.vega.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.rho && (
-                <TableCell className="text-center">
-                  {option.putGreeks.rho.toFixed(3)}
-                </TableCell>
-              )}
+              <TableCell className="text-center">
+                {option.putVolume}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
