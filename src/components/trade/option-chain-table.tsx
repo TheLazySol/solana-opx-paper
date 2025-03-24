@@ -143,6 +143,44 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg rounded-lg p-4">
       <Table>
         <TableHeader>
+          {/* Category Labels Row */}
+          <TableRow className="hover:bg-transparent border-b-0">
+            {/* Calculate colspan for CALLS section */}
+            <TableHead 
+              colSpan={
+                (visibleGreeks.volume ? 1 : 0) +
+                (visibleGreeks.oi ? 1 : 0) +
+                (visibleGreeks.rho ? 1 : 0) +
+                (visibleGreeks.vega ? 1 : 0) +
+                (visibleGreeks.gamma ? 1 : 0) +
+                (visibleGreeks.theta ? 1 : 0) +
+                (visibleGreeks.delta ? 1 : 0) +
+                1 // Price column
+              }
+              className="text-center font-bold text-lg text-[#4a85ff]"
+            >
+              CALLS
+            </TableHead>
+            {/* Strike Price Column */}
+            <TableHead className="text-center font-bold bg-muted/20 w-[100px]" />
+            {/* Calculate colspan for PUTS section */}
+            <TableHead 
+              colSpan={
+                1 + // Price column
+                (visibleGreeks.delta ? 1 : 0) +
+                (visibleGreeks.theta ? 1 : 0) +
+                (visibleGreeks.gamma ? 1 : 0) +
+                (visibleGreeks.vega ? 1 : 0) +
+                (visibleGreeks.rho ? 1 : 0) +
+                (visibleGreeks.oi ? 1 : 0) +
+                (visibleGreeks.volume ? 1 : 0)
+              }
+              className="text-center font-bold text-lg text-[#4a85ff]"
+            >
+              PUTS
+            </TableHead>
+          </TableRow>
+          {/* Existing Header Row */}
           <TableRow className="hover:bg-transparent">
             {/* Call side */}
             {visibleGreeks.volume && (
