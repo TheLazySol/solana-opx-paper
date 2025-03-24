@@ -24,38 +24,98 @@ export interface OptionContract {
   putGreeks: OptionGreeks
 }
 
+// Import Black-Scholes model and constants
+import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
+import { 
+  SOL_PH_VOLATILITY, 
+  SOL_PH_RISK_FREE_RATE,
+  OPTION_SPREAD_PERCENTAGE,
+  DEFAULT_OPTION_VOLUME,
+  DEFAULT_OPTION_OPEN_INTEREST,
+  OPTION_STRIKE_PRICES
+} from '@/constants/constants'
+
+// Helper function to calculate time until expiry in seconds
+/**
+ * Calculates the time remaining until option expiry in seconds.
+ * 
+ * @param expiryDate - The expiration date string for the option
+ * @returns The number of seconds until expiry, with a minimum of 0 seconds
+ * 
+ * This function:
+ * 1. Converts the expiry date string to a Date object
+ * 2. Gets the current time
+ * 3. Calculates difference in milliseconds and converts to seconds
+ * 4. Returns max of 0 or the calculated time to prevent negative values
+ */
+function calculateTimeUntilExpiry(expiryDate: string): number {
+  const expiry = new Date(expiryDate)
+  const now = new Date()
+  return Math.max(0, Math.floor((expiry.getTime() - now.getTime()) / 1000))
+}
+
+// Helper function to calculate option data for a given strike
+function calculateOptionData(strike: number, expiryDate: string, spotPrice: number): OptionContract {
+  const timeUntilExpiry = calculateTimeUntilExpiry(expiryDate)
+  
+  // Calculate call option
+  const callOption = calculateOption({
+    isCall: true,
+    strikePrice: strike,
+    spotPrice: spotPrice,
+    timeUntilExpirySeconds: timeUntilExpiry,
+    volatility: SOL_PH_VOLATILITY,
+    riskFreeRate: SOL_PH_RISK_FREE_RATE
+  })
+
+  // Calculate put option
+  const putOption = calculateOption({
+    isCall: false,
+    strikePrice: strike,
+    spotPrice: spotPrice,
+    timeUntilExpirySeconds: timeUntilExpiry,
+    volatility: SOL_PH_VOLATILITY,
+    riskFreeRate: SOL_PH_RISK_FREE_RATE
+  })
+
+  // Calculate bid-ask spread (1% spread)
+  const callMidPrice = callOption.price
+  const putMidPrice = putOption.price
+  
+  const callBid = callMidPrice * (1 - OPTION_SPREAD_PERCENTAGE / 2)
+  const callAsk = callMidPrice * (1 + OPTION_SPREAD_PERCENTAGE / 2)
+  const putBid = putMidPrice * (1 - OPTION_SPREAD_PERCENTAGE / 2)
+  const putAsk = putMidPrice * (1 + OPTION_SPREAD_PERCENTAGE / 2)
+
+  return {
+    strike,
+    expiry: expiryDate,
+    // Call side
+    callBid,
+    callAsk,
+    callVolume: DEFAULT_OPTION_VOLUME,
+    callOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
+    callGreeks: callOption.greeks,
+    // Put side
+    putBid,
+    putAsk,
+    putVolume: DEFAULT_OPTION_VOLUME,
+    putOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
+    putGreeks: putOption.greeks
+  }
+}
+
 // Mock data generator function
-export const generateMockOptionData = (expirationDate: string | null): OptionContract[] => {
-  // For now, return a single mock contract
-  // In the future, we can expand this to generate more realistic data
-  return [
-    {
-      strike: 0,
-      expiry: expirationDate || "2024-12-31",
-      callBid: 0,
-      callAsk: 0,
-      callVolume: 0,
-      callOpenInterest: 0,
-      callGreeks: {
-        delta: 0,
-        theta: 0,
-        gamma: 0,
-        vega: 0,
-        rho: 0
-      },
-      putBid: 0,
-      putAsk: 0,
-      putVolume: 0,
-      putOpenInterest: 0,
-      putGreeks: {
-        delta: 0,
-        theta: 0,
-        gamma: 0,
-        vega: 0,
-        rho: 0
-      }
-    }
-  ]
+export const generateMockOptionData = (expirationDate: string | null, spotPrice: number): OptionContract[] => {
+  // If no spot price is available, return empty array
+  if (!spotPrice) {
+    return []
+  }
+
+  const expiry = expirationDate || "2024-12-31"
+
+  // Generate option data for each strike
+  return OPTION_STRIKE_PRICES.map(strike => calculateOptionData(strike, expiry, spotPrice))
 }
 
 // Selected option type

@@ -1,5 +1,5 @@
 import { FC, useState } from 'react'
-import { ExpirationDateSelector } from './expiration-date-selector'
+import { ExpirationDateSelector } from './expiration-date'
 import { FilterGreeks, GreekFilters } from './filter-greeks'
 import { ExpirationDate } from '@/constants/constants'
 

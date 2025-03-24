@@ -67,5 +67,17 @@ export const SOL_PH_VOLATILITY = 0.45;
 // SOL PH Risk Free Rate
 export const SOL_PH_RISK_FREE_RATE = 0.08;
 
-// Empty expiration dates array (placeholder)
-export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [];
+// Option Chain Constants
+export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
+export const DEFAULT_OPTION_VOLUME = 0;
+export const DEFAULT_OPTION_OPEN_INTEREST = 0;
+export const OPTION_STRIKE_PRICES = [120, 140, 160, 175, 180];
+
+// Test expiration dates array for development
+export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
+  {
+    value: "2025-04-02",
+    label: "April 2nd, 2025",
+    isMonthly: true
+  }
+];

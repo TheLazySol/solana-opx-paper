@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/tooltip"
 import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 
 interface OptionChainTableProps {
   assetId?: string
@@ -40,6 +42,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
 
+  // Get the current spot price from the asset price context
+  const { price: spotPrice } = useAssetPriceInfo(assetId || '')
+
   // Update visible greeks when the greekFilters prop changes
   useEffect(() => {
     if (greekFilters) {
@@ -47,8 +52,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [greekFilters])
 
-  // Get mock data using the generator function
-  const mockData: OptionContract[] = generateMockOptionData(expirationDate || null)
+  // Get mock data using the generator function with the current spot price
+  const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
 
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
     const newOption = { index, side, type }
