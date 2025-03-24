@@ -15,37 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { GreekFilters } from './filter-greeks'
-
-interface OptionGreeks {
-  delta: number
-  theta: number
-  gamma: number
-  vega: number
-  rho: number
-}
-
-interface OptionContract {
-  strike: number
-  expiry: string
-  // Call side
-  callBid: number
-  callAsk: number
-  callVolume: number
-  callOpenInterest: number
-  callGreeks: OptionGreeks
-  // Put side
-  putBid: number
-  putAsk: number
-  putVolume: number
-  putOpenInterest: number
-  putGreeks: OptionGreeks
-}
-
-interface SelectedOption {
-  index: number
-  side: 'call' | 'put'
-  type: 'bid' | 'ask'
-}
+import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 
 interface OptionChainTableProps {
   assetId?: string
@@ -77,36 +47,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [greekFilters])
 
-  // This will be populated with real data later
-  // In a real implementation, we would filter this data based on assetId and expirationDate
-  const mockData: OptionContract[] = [
-    {
-      strike: 0,
-      expiry: expirationDate || "2024-12-31",
-      callBid: 0,
-      callAsk: 0,
-      callVolume: 0,
-      callOpenInterest: 0,
-      callGreeks: {
-        delta: 0,
-        theta: 0,
-        gamma: 0,
-        vega: 0,
-        rho: 0
-      },
-      putBid: 0,
-      putAsk: 0,
-      putVolume: 0,
-      putOpenInterest: 0,
-      putGreeks: {
-        delta: 0,
-        theta: 0,
-        gamma: 0,
-        vega: 0,
-        rho: 0
-      }
-    }
-  ]
+  // Get mock data using the generator function
+  const mockData: OptionContract[] = generateMockOptionData(expirationDate || null)
 
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
     const newOption = { index, side, type }
