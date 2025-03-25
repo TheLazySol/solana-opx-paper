@@ -19,6 +19,7 @@ import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
+import { toast } from "@/components/ui/use-toast"
 
 interface OptionChainTableProps {
   assetId?: string
@@ -27,6 +28,9 @@ interface OptionChainTableProps {
   onOptionsChange?: (options: SelectedOption[]) => void
   initialSelectedOptions?: SelectedOption[]
 }
+
+// Maximum number of option legs allowed
+const MAX_OPTION_LEGS = 4
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
   assetId = 'SOL',
@@ -128,8 +132,21 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       
       if (existingIndex >= 0) {
         // Remove if already selected (toggle off)
-        return prev.filter((_, i) => i !== existingIndex);
+        const updatedOptions = prev.filter((_, i) => i !== existingIndex);
+        return updatedOptions;
       } else {
+        // Check if adding this option would exceed the maximum limit
+        if (prev.length >= MAX_OPTION_LEGS) {
+          // Show a toast notification
+          toast({
+            title: "Maximum options reached",
+            description: `You can only select up to ${MAX_OPTION_LEGS} option legs at a time.`,
+            variant: "destructive",
+          });
+          // Return unchanged selection
+          return prev;
+        }
+
         // First remove any other selection for the same index and side (different type)
         const filteredOptions = prev.filter(
           opt => !(opt.index === index && opt.side === side && opt.type !== type)
@@ -184,6 +201,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [selectedOptions, onOptionsChange]);
 
+  // Determine if option buttons should be disabled due to reaching the limit
+  const shouldDisableOptionButtons = selectedOptions.length >= MAX_OPTION_LEGS;
+
   return (
     <div 
       className={cn(
@@ -193,6 +213,13 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         "overflow-hidden shadow-lg rounded-lg p-4"
       )}
     >
+      {/* Option legs counter */}
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-sm text-muted-foreground">
+          Selected: {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+        </div>
+      </div>
+
       <div className="relative">
         {/* Fixed Header */}
         <Table className="table-fixed w-full">
@@ -588,8 +615,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                       (hoveredPrice?.index === index && 
                                       hoveredPrice?.side === 'call' && 
                                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
+                                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20",
+                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid') && "opacity-50 cursor-not-allowed"
                                     )}
+                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid')}
                                   >
                                     {formatPrice(option.callBid)}
                                   </button>
@@ -602,8 +631,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                       (hoveredPrice?.index === index && 
                                       hoveredPrice?.side === 'call' && 
                                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
+                                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20",
+                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask') && "opacity-50 cursor-not-allowed"
                                     )}
+                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask')}
                                   >
                                     {formatPrice(option.callAsk)}
                                   </button>
@@ -646,8 +677,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                       (hoveredPrice?.index === index && 
                                       hoveredPrice?.side === 'put' && 
                                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
+                                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20",
+                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid') && "opacity-50 cursor-not-allowed"
                                     )}
+                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid')}
                                   >
                                     {formatPrice(option.putBid)}
                                   </button>
@@ -660,8 +693,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                       (hoveredPrice?.index === index && 
                                       hoveredPrice?.side === 'put' && 
                                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
+                                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20",
+                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask') && "opacity-50 cursor-not-allowed"
                                     )}
+                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask')}
                                   >
                                     {formatPrice(option.putAsk)}
                                   </button>

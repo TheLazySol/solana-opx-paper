@@ -7,6 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 
+// Maximum number of option legs allowed
+const MAX_OPTION_LEGS = 4
+
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
   onRemoveOption?: (index: number) => void
@@ -22,7 +25,12 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4">
       <div className="space-y-2 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-          <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-0">Create Order</h3>
+          <div className="flex items-center justify-between sm:justify-start gap-3 mb-2 sm:mb-0">
+            <h3 className="text-base sm:text-lg font-semibold">Create Order</h3>
+            <div className="text-sm text-muted-foreground">
+              {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+            </div>
+          </div>
           {selectedOptions.length > 0 && (
             <Button 
               variant="outline"

@@ -2,6 +2,10 @@ import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './create-order'
 import { SelectedOption } from './option-data'
+import { toast } from "@/components/ui/use-toast"
+
+// Maximum number of option legs allowed
+const MAX_OPTION_LEGS = 4
 
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
@@ -29,11 +33,31 @@ export const TradeView: FC<TradeViewProps> = ({
                opt.type === prevOpt.type
       })
 
+    // Ensure we don't exceed the maximum number of option legs
     if (optionsChanged) {
-      setSelectedOptions(initialSelectedOptions)
-      prevInitialOptionsRef.current = initialSelectedOptions
+      if (initialSelectedOptions.length > MAX_OPTION_LEGS) {
+        // If too many options are provided, take only the first MAX_OPTION_LEGS
+        const limitedOptions = initialSelectedOptions.slice(0, MAX_OPTION_LEGS)
+        setSelectedOptions(limitedOptions)
+        prevInitialOptionsRef.current = limitedOptions
+        
+        // Notify the user that some options were not added
+        toast({
+          title: "Maximum options reached",
+          description: `Only the first ${MAX_OPTION_LEGS} option legs were added.`,
+          variant: "destructive",
+        })
+        
+        // Notify parent about the limited selection if needed
+        if (onOptionsUpdate) {
+          onOptionsUpdate(limitedOptions)
+        }
+      } else {
+        setSelectedOptions(initialSelectedOptions)
+        prevInitialOptionsRef.current = initialSelectedOptions
+      }
     }
-  }, [initialSelectedOptions])
+  }, [initialSelectedOptions, onOptionsUpdate])
 
   // Notify parent when selected options change from INTERNAL updates only
   // (like clicking the remove button)
