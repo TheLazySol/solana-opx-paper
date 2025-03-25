@@ -42,9 +42,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
-  const [previousPrices, setPreviousPrices] = useState<{[key: string]: number}>({})
-  const [priceAnimations, setPriceAnimations] = useState<{[key: string]: 'up' | 'down' | null}>({})
-  const [mockData, setMockData] = useState<OptionContract[]>([])
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -65,50 +62,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [greekFilters])
 
-  // Generate mock data when dependencies change
-  useEffect(() => {
-    const newMockData = generateMockOptionData(expirationDate || null, spotPrice || 0)
-    setMockData(newMockData)
-  }, [expirationDate, spotPrice])
-
-  // Track price changes and trigger animations
-  useEffect(() => {
-    if (!mockData.length) return;
-
-    const newPriceAnimations: {[key: string]: 'up' | 'down' | null} = {}
-    const newPrices: {[key: string]: number} = {}
-    
-    mockData.forEach((option, index) => {
-      const prices = [
-        { key: `call-bid-${index}`, price: option.callBid },
-        { key: `call-ask-${index}`, price: option.callAsk },
-        { key: `put-bid-${index}`, price: option.putBid },
-        { key: `put-ask-${index}`, price: option.putAsk }
-      ]
-
-      prices.forEach(({ key, price }) => {
-        newPrices[key] = price
-        if (previousPrices[key] !== undefined && price !== previousPrices[key]) {
-          newPriceAnimations[key] = price > previousPrices[key] ? 'up' : 'down'
-        }
-      })
-    })
-
-    // Only update animations if there are changes
-    if (Object.keys(newPriceAnimations).length > 0) {
-      setPriceAnimations(newPriceAnimations)
-      
-      // Clear animations after they play
-      const timer = setTimeout(() => {
-        setPriceAnimations({})
-      }, 300) // Match animation duration in CSS
-
-      return () => clearTimeout(timer)
-    }
-
-    // Update previous prices
-    setPreviousPrices(newPrices)
-  }, [mockData, previousPrices])
+  // Get mock data using the generator function with the current spot price
+  const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
 
   // Calculate the position of the price indicator
   const getPriceIndicatorPosition = () => {
@@ -550,9 +505,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (hoveredPrice?.index === index && 
                               hoveredPrice?.side === 'call' && 
                               hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                              isOptionSelected(index, 'call', 'bid') && "bg-green-500/20",
-                              priceAnimations[`call-bid-${index}`] === 'up' && "price-flash-up",
-                              priceAnimations[`call-bid-${index}`] === 'down' && "price-flash-down"
+                              isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
                             )}
                           >
                             {formatPrice(option.callBid)}
@@ -566,9 +519,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (hoveredPrice?.index === index && 
                               hoveredPrice?.side === 'call' && 
                               hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                              isOptionSelected(index, 'call', 'ask') && "bg-red-500/20",
-                              priceAnimations[`call-ask-${index}`] === 'up' && "price-flash-up",
-                              priceAnimations[`call-ask-${index}`] === 'down' && "price-flash-down"
+                              isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
                             )}
                           >
                             {formatPrice(option.callAsk)}
@@ -612,9 +563,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (hoveredPrice?.index === index && 
                               hoveredPrice?.side === 'put' && 
                               hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                              isOptionSelected(index, 'put', 'bid') && "bg-green-500/20",
-                              priceAnimations[`put-bid-${index}`] === 'up' && "price-flash-up",
-                              priceAnimations[`put-bid-${index}`] === 'down' && "price-flash-down"
+                              isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
                             )}
                           >
                             {formatPrice(option.putBid)}
@@ -628,9 +577,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (hoveredPrice?.index === index && 
                               hoveredPrice?.side === 'put' && 
                               hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                              isOptionSelected(index, 'put', 'ask') && "bg-red-500/20",
-                              priceAnimations[`put-ask-${index}`] === 'up' && "price-flash-up",
-                              priceAnimations[`put-ask-${index}`] === 'down' && "price-flash-down"
+                              isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
                             )}
                           >
                             {formatPrice(option.putAsk)}
