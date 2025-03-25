@@ -6,9 +6,11 @@ import { AssetChart } from '@/components/trade/asset-chart'
 import { AssetType } from '@/components/trade/asset-underlying'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState } from 'react'
+import { SelectedOption } from '@/components/trade/option-data'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
@@ -30,10 +32,13 @@ export default function TradePage() {
           {/* Option Chain with Expiration Selector and Trade View */}
           <div className="space-y-2 sm:space-y-4">
             <div className="overflow-x-auto -mx-2 px-2">
-              <OptionChainControls assetId={selectedAsset} />
+              <OptionChainControls 
+                assetId={selectedAsset} 
+                onOptionsChange={setSelectedOptions}
+              />
             </div>
             <div className="overflow-x-auto -mx-2 px-2">
-              <TradeViewContainer />
+              <TradeViewContainer selectedOptions={selectedOptions} />
             </div>
           </div>
         </div>

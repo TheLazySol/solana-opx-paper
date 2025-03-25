@@ -123,4 +123,8 @@ export interface SelectedOption {
   index: number
   side: 'call' | 'put'
   type: 'bid' | 'ask'
+  strike: number
+  expiry: string
+  asset: string
+  price: number
 } 

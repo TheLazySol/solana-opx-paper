@@ -2,8 +2,15 @@ import { FC, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { TradeView } from './trade-view'
 import { OrdersView } from './orders-view'
+import { SelectedOption } from './option-data'
 
-export const TradeViewContainer: FC = () => {
+interface TradeViewContainerProps {
+  selectedOptions: SelectedOption[]
+}
+
+export const TradeViewContainer: FC<TradeViewContainerProps> = ({
+  selectedOptions
+}) => {
   const [activeView, setActiveView] = useState('trade')
 
   return (
@@ -37,7 +44,7 @@ export const TradeViewContainer: FC = () => {
           className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
             transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4"
         >
-          <TradeView />
+          <TradeView initialSelectedOptions={selectedOptions} />
         </TabsContent>
 
         <TabsContent 

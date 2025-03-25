@@ -24,10 +24,11 @@ interface OptionChainTableProps {
   assetId?: string
   expirationDate?: string | null
   greekFilters?: GreekFilters
+  onOptionsChange?: (options: SelectedOption[]) => void
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
-  assetId,
+  assetId = 'SOL',
   expirationDate,
   greekFilters = {
     delta: true,
@@ -37,7 +38,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     rho: false,
     oi: false,
     volume: true
-  }
+  },
+  onOptionsChange
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
@@ -82,7 +84,20 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   };
 
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
-    const newOption = { index, side, type }
+    const option = mockData[index]
+    const price = side === 'call' 
+      ? (type === 'bid' ? option.callBid : option.callAsk)
+      : (type === 'bid' ? option.putBid : option.putAsk)
+    
+    const newOption = { 
+      index, 
+      side, 
+      type,
+      strike: option.strike,
+      expiry: option.expiry,
+      asset: assetId,
+      price
+    }
     
     setSelectedOptions(prev => {
       // Check if this option is already selected
@@ -133,6 +148,13 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     if (value === null || value === undefined) return '0'
     return Math.round(value).toString()
   }
+
+  // Notify parent component when selected options change
+  useEffect(() => {
+    if (onOptionsChange) {
+      onOptionsChange(selectedOptions);
+    }
+  }, [selectedOptions, onOptionsChange]);
 
   return (
     <div 

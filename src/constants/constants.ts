@@ -81,3 +81,41 @@ export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
     isMonthly: true
   }
 ];
+
+// Option formatting constants
+export const OPTION_POSITION_TYPE = {
+  BID: 'Long',
+  ASK: 'Short'
+} as const;
+
+/**
+ * Formats a selected option into a standardized display format.
+ * 
+ * Format: {AssetType}-{Call/Put}-{StrikePrice}-{ExpirationDate}
+ * The Long/Short indicator is now handled by the Badge component.
+ * 
+ * @param {object} params - The parameters for formatting the option.
+ * @param {string} params.asset - The asset symbol (e.g., 'SOL').
+ * @param {string} params.side - The option side ('call' or 'put').
+ * @param {number} params.strike - The strike price.
+ * @param {string} params.expiry - The expiration date string.
+ * @returns {string} The formatted option string.
+ */
+export const formatSelectedOption = ({
+  asset,
+  side,
+  strike,
+  expiry
+}: {
+  type?: 'bid' | 'ask',
+  asset: string,
+  side: 'call' | 'put',
+  strike: number,
+  expiry: string
+}): string => {
+  const optionType = side.charAt(0).toUpperCase() + side.slice(1);
+  const formattedExpiry = formatOptionExpirationDate(expiry);
+  const formattedStrike = strike.toFixed(2);
+  
+  return `${asset} ${optionType} $${formattedStrike} ${formattedExpiry}`;
+}

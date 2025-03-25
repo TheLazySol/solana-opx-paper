@@ -2,13 +2,16 @@ import { FC, useState, useCallback } from 'react'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters } from './filter-greeks'
+import { SelectedOption } from './option-data'
 
 interface OptionChainControlsProps {
   assetId: string
+  onOptionsChange?: (options: SelectedOption[]) => void
 }
 
 export const OptionChainControls: FC<OptionChainControlsProps> = ({ 
-  assetId
+  assetId,
+  onOptionsChange
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
   const [greekFilters, setGreekFilters] = useState<GreekFilters>({
@@ -31,6 +34,13 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     setGreekFilters(filters)
   }, [])
 
+  // Handle selected options change
+  const handleOptionsChange = useCallback((options: SelectedOption[]) => {
+    if (onOptionsChange) {
+      onOptionsChange(options)
+    }
+  }, [onOptionsChange])
+
   return (
     <div className="space-y-2 sm:space-y-4">
       <div className="w-full">
@@ -47,6 +57,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             assetId={assetId}
             expirationDate={selectedExpiration}
             greekFilters={greekFilters}
+            onOptionsChange={handleOptionsChange}
           />
         </div>
       </div>
