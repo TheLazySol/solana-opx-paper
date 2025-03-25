@@ -455,7 +455,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     }
                     className={cn(
                       "p-0 transition-colors",
-                      callIsITM ? "bg-blue-400/10" : "bg-gray-500/1"
+                      callIsITM ? "bg-blue-300/5" : "bg-gray-500/1"
                     )}
                   >
                     <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
@@ -465,22 +465,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         </div>
                       )}
                       {visibleGreeks.oi && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatInteger(option.callOpenInterest)}
                         </div>
                       )}
                       {visibleGreeks.rho && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.callGreeks.rho)}
                         </div>
                       )}
                       {visibleGreeks.vega && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.callGreeks.vega)}
                         </div>
                       )}
                       {visibleGreeks.gamma && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.callGreeks.gamma)}
                         </div>
                       )}
@@ -548,7 +548,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     }
                     className={cn(
                       "p-0 transition-colors",
-                      putIsITM ? "bg-blue-400/10" : "bg-gray-500/1"
+                      putIsITM ? "bg-blue-300/5" : "bg-gray-500/1"
                     )}
                   >
                     <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
@@ -595,22 +595,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         </div>
                       )}
                       {visibleGreeks.gamma && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.putGreeks.gamma)}
                         </div>
                       )}
                       {visibleGreeks.vega && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.putGreeks.vega)}
                         </div>
                       )}
                       {visibleGreeks.rho && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatGreek(option.putGreeks.rho)}
                         </div>
                       )}
                       {visibleGreeks.oi && (
-                        <div className="text-center py-1">
+                        <div className="text-center py-1 opacity-70">
                           {formatInteger(option.putOpenInterest)}
                         </div>
                       )}

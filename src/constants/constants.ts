@@ -71,7 +71,7 @@ export const SOL_PH_RISK_FREE_RATE = 0.08;
 export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
-export const OPTION_STRIKE_PRICES = [130, 135, 140, 145, 150];
+export const OPTION_STRIKE_PRICES = [135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150];
 
 // Test expiration dates array for development
 export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
