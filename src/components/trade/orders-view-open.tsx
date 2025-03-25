@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../ui/button'
+import React from 'react'
 
 // Mock data structure
 type OptionLeg = {
@@ -126,9 +127,8 @@ export const OrdersViewOpen = () => {
         </thead>
         <tbody>
           {mockPositions.map((position) => (
-            <>
+            <React.Fragment key={position.asset}>
               <tr 
-                key={position.asset}
                 className="border-b border-gray-800 hover:bg-gray-900/50 group"
               >
                 <td 
@@ -221,7 +221,7 @@ export const OrdersViewOpen = () => {
                   </td>
                 </tr>
               ))}
-            </>
+            </React.Fragment>
           ))}
         </tbody>
       </table>
