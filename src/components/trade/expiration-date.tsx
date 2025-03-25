@@ -1,4 +1,4 @@
-import { FC, useState, useCallback, memo } from 'react'
+import { FC, useState, useCallback, memo, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,10 +20,30 @@ const ExpirationDateSelectorComponent: FC<ExpirationDateSelectorProps> = ({
   onExpirationChange,
   expirationDates = EMPTY_EXPIRATION_DATES
 }) => {
+  // Add a state to track if hydration is complete
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+  // Set hydration flag after component mounts (client-side only)
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+  
   // Handle expiration date selection change
   const handleExpirationChange = useCallback((expiration: string) => {
     onExpirationChange(expiration)
   }, [onExpirationChange])
+  
+  // Default to the first available date only after hydration is complete
+  useEffect(() => {
+    if (isHydrated && expirationDates.length > 0 && !selectedExpiration) {
+      // Use setTimeout to push this to the next event loop after hydration
+      const timer = setTimeout(() => {
+        handleExpirationChange(expirationDates[0].value)
+      }, 0)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [expirationDates, selectedExpiration, handleExpirationChange, isHydrated])
 
   return (
     <div className="flex items-center space-x-2">
