@@ -53,9 +53,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 expiry: option.expiry
               })
               
-              // Format the price with appropriate decimals
-              const displayDecimals = getTokenDisplayDecimals(option.asset)
-              const formattedPrice = option.price.toFixed(displayDecimals)
+              // Format the price with appropriate decimals (using 2 for USD)
+              const formattedPrice = option.price.toFixed(2)
               
               // Determine price color based on option type
               const priceColor = option.type === 'bid' 
@@ -73,7 +72,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         <span className="font-medium text-sm">{formattedOption}</span>
                       </div>
                       <span className={`text-sm font-semibold ${priceColor}`}>
-                        Price: {formattedPrice} {option.asset}
+                        Price: ${formattedPrice} USDC
                       </span>
                     </div>
                     
