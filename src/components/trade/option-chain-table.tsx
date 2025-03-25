@@ -1,4 +1,5 @@
 import { FC, useState, useEffect } from 'react'
+import React from 'react'
 import {
   Table,
   TableBody,
@@ -55,6 +56,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
 
+  // Calculate the position of the price indicator
+  const getPriceIndicatorPosition = () => {
+    if (!spotPrice || !mockData.length) return 0;
+    
+    // Find the closest strike price to the current spot price
+    const closestStrike = mockData.reduce((prev, curr) => {
+      return Math.abs(curr.strike - spotPrice) < Math.abs(prev.strike - spotPrice) ? curr : prev;
+    });
+    
+    // Find the index of the closest strike
+    const strikeIndex = mockData.findIndex(option => option.strike === closestStrike.strike);
+    
+    // Calculate the percentage position (0 to 100)
+    return (strikeIndex / (mockData.length - 1)) * 100;
+  };
+
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
     const newOption = { index, side, type }
     
@@ -85,9 +102,38 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     )
   }
 
+  // Format price consistently with exactly 2 decimal places
+  const formatPrice = (price: number | null | undefined) => {
+    if (price === null || price === undefined) return '0.00'
+    if (Math.abs(price) < 0.01) return '0.00'
+    return Number(Math.round(price * 100) / 100).toFixed(2)
+  }
+
+  // Format greek values consistently with appropriate decimal places
+  const formatGreek = (value: number | null | undefined, decimals: number = 3) => {
+    if (value === null || value === undefined) return '0.000'
+    if (Math.abs(value) < 0.001) return '0.000'
+    if (decimals === 2) {
+      return Number(Math.round(value * 100) / 100).toFixed(2)
+    }
+    return Number(Math.round(value * 1000) / 1000).toFixed(3)
+  }
+
+  // Format volume and open interest as whole numbers
+  const formatInteger = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '0'
+    return Math.round(value).toString()
+  }
+
   return (
-    <div className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-      transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg rounded-lg p-4">
+    <div 
+      className={cn(
+        "card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30",
+        "border-[#e5e5e5]/20 dark:border-white/5",
+        "transition-all duration-300 hover:bg-transparent",
+        "overflow-hidden shadow-lg rounded-lg p-4"
+      )}
+    >
       <Table>
         <TableHeader>
           {/* Category Labels Row */}
@@ -332,160 +378,275 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockData.map((option, index) => (
-            <TableRow 
-              key={index}
-              className={cn(
-                "hover:bg-muted/5 transition-colors",
-                index % 2 === 0 ? "bg-transparent" : "bg-muted/5"
-              )}
-            >
-              {/* Call side */}
-              {visibleGreeks.volume && (
-                <TableCell className="text-center">
-                  {option.callVolume}
-                </TableCell>
-              )}
-              {visibleGreeks.oi && (
-                <TableCell className="text-center">
-                  {option.callOpenInterest}
-                </TableCell>
-              )}
-              {visibleGreeks.rho && (
-                <TableCell className="text-center">
-                  {option.callGreeks.rho.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.vega && (
-                <TableCell className="text-center">
-                  {option.callGreeks.vega.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.gamma && (
-                <TableCell className="text-center">
-                  {option.callGreeks.gamma.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.theta && (
-                <TableCell className="text-center">
-                  {option.callGreeks.theta.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.delta && (
-                <TableCell className="text-center">
-                  {option.callGreeks.delta.toFixed(2)}
-                </TableCell>
-              )}
-              <TableCell className="text-center font-medium">
-                <div className="flex flex-col">
-                  <button
-                    onClick={() => handlePriceClick(index, 'call', 'bid')}
-                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
-                    onMouseLeave={() => setHoveredPrice(null)}
-                    className={cn(
-                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                      (hoveredPrice?.index === index && 
-                       hoveredPrice?.side === 'call' && 
-                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
-                    )}
-                  >
-                    {option.callBid.toFixed(2)}
-                  </button>
-                  <button
-                    onClick={() => handlePriceClick(index, 'call', 'ask')}
-                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
-                    onMouseLeave={() => setHoveredPrice(null)}
-                    className={cn(
-                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                      (hoveredPrice?.index === index && 
-                       hoveredPrice?.side === 'call' && 
-                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
-                    )}
-                  >
-                    {option.callAsk.toFixed(2)}
-                  </button>
+          {/* Show price indicator at top if price is below lowest strike */}
+          {spotPrice && mockData.length > 0 && spotPrice < mockData[0].strike && (
+            <TableRow key="price-indicator-top" className="h-0.5 relative">
+              <TableCell 
+                colSpan={
+                  (visibleGreeks.volume ? 1 : 0) +
+                  (visibleGreeks.oi ? 1 : 0) +
+                  (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.vega ? 1 : 0) +
+                  (visibleGreeks.gamma ? 1 : 0) +
+                  (visibleGreeks.theta ? 1 : 0) +
+                  (visibleGreeks.delta ? 1 : 0) +
+                  1 + // Price column
+                  1 + // Strike column
+                  1 + // Put price column
+                  (visibleGreeks.delta ? 1 : 0) +
+                  (visibleGreeks.theta ? 1 : 0) +
+                  (visibleGreeks.gamma ? 1 : 0) +
+                  (visibleGreeks.vega ? 1 : 0) +
+                  (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.oi ? 1 : 0) +
+                  (visibleGreeks.volume ? 1 : 0)
+                }
+                className="p-0"
+              >
+                <div className="relative w-full h-0.5">
+                  <div className="absolute inset-0 bg-[#4a85ff]" />
+                  <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
+                    bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                    ${formatPrice(spotPrice)}
+                  </div>
                 </div>
               </TableCell>
-              
-              {/* Strike price (center) */}
-              <TableCell className="text-center font-bold bg-muted/20">
-                ${option.strike}
-              </TableCell>
-              
-              {/* Put side */}
-              <TableCell className="text-center font-medium">
-                <div className="flex flex-col">
-                  <button
-                    onClick={() => handlePriceClick(index, 'put', 'bid')}
-                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
-                    onMouseLeave={() => setHoveredPrice(null)}
-                    className={cn(
-                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                      (hoveredPrice?.index === index && 
-                       hoveredPrice?.side === 'put' && 
-                       hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
-                    )}
-                  >
-                    {option.putBid.toFixed(2)}
-                  </button>
-                  <button
-                    onClick={() => handlePriceClick(index, 'put', 'ask')}
-                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
-                    onMouseLeave={() => setHoveredPrice(null)}
-                    className={cn(
-                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                      (hoveredPrice?.index === index && 
-                       hoveredPrice?.side === 'put' && 
-                       hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
-                    )}
-                  >
-                    {option.putAsk.toFixed(2)}
-                  </button>
-                </div>
-              </TableCell>
-              {visibleGreeks.delta && (
-                <TableCell className="text-center">
-                  {option.putGreeks.delta.toFixed(2)}
-                </TableCell>
-              )}
-              {visibleGreeks.theta && (
-                <TableCell className="text-center">
-                  {option.putGreeks.theta.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.gamma && (
-                <TableCell className="text-center">
-                  {option.putGreeks.gamma.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.vega && (
-                <TableCell className="text-center">
-                  {option.putGreeks.vega.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.rho && (
-                <TableCell className="text-center">
-                  {option.putGreeks.rho.toFixed(3)}
-                </TableCell>
-              )}
-              {visibleGreeks.oi && (
-                <TableCell className="text-center">
-                  {option.putOpenInterest}
-                </TableCell>
-              )}
-              {visibleGreeks.volume && (
-                <TableCell className="text-center">
-                  {option.putVolume}
-                </TableCell>
-              )}
             </TableRow>
-          ))}
+          )}
+
+          {mockData.map((option, index) => {
+            const shouldShowPriceIndicator = spotPrice && 
+              index < mockData.length - 1 && 
+              option.strike < spotPrice && 
+              mockData[index + 1].strike > spotPrice;
+
+            return (
+              <React.Fragment key={`option-group-${index}`}>
+                <TableRow 
+                  key={`option-${index}`}
+                  className={cn(
+                    "hover:bg-muted/5 transition-colors",
+                    index % 2 === 0 ? "bg-transparent" : "bg-muted/5"
+                  )}
+                >
+                  {/* Call side */}
+                  {visibleGreeks.volume && (
+                    <TableCell className="text-center">
+                      {formatInteger(option.callVolume)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.oi && (
+                    <TableCell className="text-center">
+                      {formatInteger(option.callOpenInterest)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.rho && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.callGreeks.rho)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.vega && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.callGreeks.vega)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.gamma && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.callGreeks.gamma)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.theta && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.callGreeks.theta)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.delta && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.callGreeks.delta, 2)}
+                    </TableCell>
+                  )}
+                  <TableCell className="text-center font-medium">
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() => handlePriceClick(index, 'call', 'bid')}
+                        onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
+                        onMouseLeave={() => setHoveredPrice(null)}
+                        className={cn(
+                          "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                          (hoveredPrice?.index === index && 
+                           hoveredPrice?.side === 'call' && 
+                           hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                          isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
+                        )}
+                      >
+                        {formatPrice(option.callBid)}
+                      </button>
+                      <button
+                        onClick={() => handlePriceClick(index, 'call', 'ask')}
+                        onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
+                        onMouseLeave={() => setHoveredPrice(null)}
+                        className={cn(
+                          "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                          (hoveredPrice?.index === index && 
+                           hoveredPrice?.side === 'call' && 
+                           hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                          isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
+                        )}
+                      >
+                        {formatPrice(option.callAsk)}
+                      </button>
+                    </div>
+                  </TableCell>
+                  
+                  {/* Strike price (center) */}
+                  <TableCell className="text-center font-bold bg-muted/20">
+                    ${formatPrice(option.strike)}
+                  </TableCell>
+                  
+                  {/* Put side */}
+                  <TableCell className="text-center font-medium">
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() => handlePriceClick(index, 'put', 'bid')}
+                        onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
+                        onMouseLeave={() => setHoveredPrice(null)}
+                        className={cn(
+                          "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                          (hoveredPrice?.index === index && 
+                           hoveredPrice?.side === 'put' && 
+                           hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                          isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
+                        )}
+                      >
+                        {formatPrice(option.putBid)}
+                      </button>
+                      <button
+                        onClick={() => handlePriceClick(index, 'put', 'ask')}
+                        onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
+                        onMouseLeave={() => setHoveredPrice(null)}
+                        className={cn(
+                          "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                          (hoveredPrice?.index === index && 
+                           hoveredPrice?.side === 'put' && 
+                           hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                          isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
+                        )}
+                      >
+                        {formatPrice(option.putAsk)}
+                      </button>
+                    </div>
+                  </TableCell>
+                  {visibleGreeks.delta && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.putGreeks.delta, 2)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.theta && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.putGreeks.theta)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.gamma && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.putGreeks.gamma)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.vega && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.putGreeks.vega)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.rho && (
+                    <TableCell className="text-center">
+                      {formatGreek(option.putGreeks.rho)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.oi && (
+                    <TableCell className="text-center">
+                      {formatInteger(option.putOpenInterest)}
+                    </TableCell>
+                  )}
+                  {visibleGreeks.volume && (
+                    <TableCell className="text-center">
+                      {formatInteger(option.putVolume)}
+                    </TableCell>
+                  )}
+                </TableRow>
+                {shouldShowPriceIndicator && (
+                  <TableRow key={`price-indicator-${index}`} className="h-0.5 relative">
+                    <TableCell 
+                      colSpan={
+                        (visibleGreeks.volume ? 1 : 0) +
+                        (visibleGreeks.oi ? 1 : 0) +
+                        (visibleGreeks.rho ? 1 : 0) +
+                        (visibleGreeks.vega ? 1 : 0) +
+                        (visibleGreeks.gamma ? 1 : 0) +
+                        (visibleGreeks.theta ? 1 : 0) +
+                        (visibleGreeks.delta ? 1 : 0) +
+                        1 + // Price column
+                        1 + // Strike column
+                        1 + // Put price column
+                        (visibleGreeks.delta ? 1 : 0) +
+                        (visibleGreeks.theta ? 1 : 0) +
+                        (visibleGreeks.gamma ? 1 : 0) +
+                        (visibleGreeks.vega ? 1 : 0) +
+                        (visibleGreeks.rho ? 1 : 0) +
+                        (visibleGreeks.oi ? 1 : 0) +
+                        (visibleGreeks.volume ? 1 : 0)
+                      }
+                      className="p-0"
+                    >
+                      <div className="relative w-full h-0.5">
+                        <div className="absolute inset-0 bg-[#4a85ff]" />
+                        <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
+                          bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                          ${formatPrice(spotPrice)}
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
+            );
+          })}
+
+          {/* Show price indicator at bottom if price is above highest strike */}
+          {spotPrice && mockData.length > 0 && spotPrice > mockData[mockData.length - 1].strike && (
+            <TableRow key="price-indicator-bottom" className="h-0.5 relative">
+              <TableCell 
+                colSpan={
+                  (visibleGreeks.volume ? 1 : 0) +
+                  (visibleGreeks.oi ? 1 : 0) +
+                  (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.vega ? 1 : 0) +
+                  (visibleGreeks.gamma ? 1 : 0) +
+                  (visibleGreeks.theta ? 1 : 0) +
+                  (visibleGreeks.delta ? 1 : 0) +
+                  1 + // Price column
+                  1 + // Strike column
+                  1 + // Put price column
+                  (visibleGreeks.delta ? 1 : 0) +
+                  (visibleGreeks.theta ? 1 : 0) +
+                  (visibleGreeks.gamma ? 1 : 0) +
+                  (visibleGreeks.vega ? 1 : 0) +
+                  (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.oi ? 1 : 0) +
+                  (visibleGreeks.volume ? 1 : 0)
+                }
+                className="p-0"
+              >
+                <div className="relative w-full h-0.5">
+                  <div className="absolute inset-0 bg-[#4a85ff]" />
+                  <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
+                    bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                    ${formatPrice(spotPrice)}
+                  </div>
+                </div>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
-  )
-} 
+  );
+};
