@@ -18,8 +18,8 @@ import {
 import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
-import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
-import { toast } from "@/components/ui/use-toast"
+import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, MAX_OPTION_LEGS } from '@/constants/constants'
+import { toast } from "@/hooks/use-toast"
 
 interface OptionChainTableProps {
   assetId?: string
@@ -28,9 +28,6 @@ interface OptionChainTableProps {
   onOptionsChange?: (options: SelectedOption[]) => void
   initialSelectedOptions?: SelectedOption[]
 }
-
-// Maximum number of option legs allowed
-const MAX_OPTION_LEGS = 4
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
   assetId = 'SOL',

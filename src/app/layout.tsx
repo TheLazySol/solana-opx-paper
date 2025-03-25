@@ -4,7 +4,7 @@ import {SolanaProvider} from '@/components/solana/solana-provider'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
-import {Background} from '@/components/ui/background'
+import { BackgroundWrapper } from '@/components/ui/background-wrapper'
 import { AssetPriceProvider } from '@/context/asset-price-provider'
 import type { Metadata } from 'next'
 
@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-background antialiased dark:bg-gray-950">
         <div id="wallet-extension-root" />
-        <Background />
+        <BackgroundWrapper />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

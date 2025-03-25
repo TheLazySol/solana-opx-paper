@@ -73,6 +73,9 @@ export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
 export const OPTION_STRIKE_PRICES = [135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150];
 
+// Maximum number of option legs allowed in an order
+export const MAX_OPTION_LEGS = 4;
+
 // Test expiration dates array for development
 export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
   {

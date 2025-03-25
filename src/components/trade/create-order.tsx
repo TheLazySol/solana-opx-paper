@@ -1,14 +1,11 @@
 import { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { SelectedOption } from './option-data'
-import { formatSelectedOption } from '@/constants/constants'
+import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
 import { X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
-
-// Maximum number of option legs allowed
-const MAX_OPTION_LEGS = 4
 
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]

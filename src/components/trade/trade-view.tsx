@@ -2,10 +2,8 @@ import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './create-order'
 import { SelectedOption } from './option-data'
-import { toast } from "@/components/ui/use-toast"
-
-// Maximum number of option legs allowed
-const MAX_OPTION_LEGS = 4
+import { toast } from "@/hooks/use-toast"
+import { MAX_OPTION_LEGS } from '@/constants/constants'
 
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
