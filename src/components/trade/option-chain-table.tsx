@@ -46,6 +46,15 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
 
+  // Helper functions to determine if options are ITM or OTM
+  const isCallITM = (strike: number): boolean => {
+    return spotPrice !== undefined && spotPrice > strike
+  }
+  
+  const isPutITM = (strike: number): boolean => {
+    return spotPrice !== undefined && spotPrice < strike
+  }
+
   // Update visible greeks when the greekFilters prop changes
   useEffect(() => {
     if (greekFilters) {
@@ -419,6 +428,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               index < mockData.length - 1 && 
               option.strike < spotPrice && 
               mockData[index + 1].strike > spotPrice;
+            
+            const callIsITM = isCallITM(option.strike);
+            const putIsITM = isPutITM(option.strike);
 
             return (
               <React.Fragment key={`option-group-${index}`}>
@@ -429,72 +441,91 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     index % 2 === 0 ? "bg-transparent" : "bg-muted/5"
                   )}
                 >
-                  {/* Call side */}
-                  {visibleGreeks.volume && (
-                    <TableCell className="text-center">
-                      {formatInteger(option.callVolume)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.oi && (
-                    <TableCell className="text-center">
-                      {formatInteger(option.callOpenInterest)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.rho && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.callGreeks.rho)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.vega && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.callGreeks.vega)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.gamma && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.callGreeks.gamma)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.theta && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.callGreeks.theta)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.delta && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.callGreeks.delta, 2)}
-                    </TableCell>
-                  )}
-                  <TableCell className="text-center font-medium">
-                    <div className="flex flex-col">
-                      <button
-                        onClick={() => handlePriceClick(index, 'call', 'bid')}
-                        onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
-                        onMouseLeave={() => setHoveredPrice(null)}
-                        className={cn(
-                          "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                          (hoveredPrice?.index === index && 
-                           hoveredPrice?.side === 'call' && 
-                           hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                          isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
-                        )}
-                      >
-                        {formatPrice(option.callBid)}
-                      </button>
-                      <button
-                        onClick={() => handlePriceClick(index, 'call', 'ask')}
-                        onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
-                        onMouseLeave={() => setHoveredPrice(null)}
-                        className={cn(
-                          "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                          (hoveredPrice?.index === index && 
-                           hoveredPrice?.side === 'call' && 
-                           hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                          isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
-                        )}
-                      >
-                        {formatPrice(option.callAsk)}
-                      </button>
+                  {/* Call side - Add ITM/OTM styling */}
+                  <TableCell 
+                    colSpan={
+                      (visibleGreeks.volume ? 1 : 0) +
+                      (visibleGreeks.oi ? 1 : 0) +
+                      (visibleGreeks.rho ? 1 : 0) +
+                      (visibleGreeks.vega ? 1 : 0) +
+                      (visibleGreeks.gamma ? 1 : 0) +
+                      (visibleGreeks.theta ? 1 : 0) +
+                      (visibleGreeks.delta ? 1 : 0) +
+                      1 // Price column
+                    }
+                    className={cn(
+                      "p-0 transition-colors",
+                      callIsITM ? "bg-blue-400/10" : "bg-gray-500/1"
+                    )}
+                  >
+                    <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
+                      {visibleGreeks.volume && (
+                        <div className="text-center py-2">
+                          {formatInteger(option.callVolume)}
+                        </div>
+                      )}
+                      {visibleGreeks.oi && (
+                        <div className="text-center py-2">
+                          {formatInteger(option.callOpenInterest)}
+                        </div>
+                      )}
+                      {visibleGreeks.rho && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.callGreeks.rho)}
+                        </div>
+                      )}
+                      {visibleGreeks.vega && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.callGreeks.vega)}
+                        </div>
+                      )}
+                      {visibleGreeks.gamma && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.callGreeks.gamma)}
+                        </div>
+                      )}
+                      {visibleGreeks.theta && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.callGreeks.theta)}
+                        </div>
+                      )}
+                      {visibleGreeks.delta && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.callGreeks.delta, 2)}
+                        </div>
+                      )}
+                      <div className="text-center font-medium py-2">
+                        <div className="flex flex-col">
+                          <button
+                            onClick={() => handlePriceClick(index, 'call', 'bid')}
+                            onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
+                            onMouseLeave={() => setHoveredPrice(null)}
+                            className={cn(
+                              "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                              (hoveredPrice?.index === index && 
+                              hoveredPrice?.side === 'call' && 
+                              hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                              isOptionSelected(index, 'call', 'bid') && "bg-green-500/20"
+                            )}
+                          >
+                            {formatPrice(option.callBid)}
+                          </button>
+                          <button
+                            onClick={() => handlePriceClick(index, 'call', 'ask')}
+                            onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
+                            onMouseLeave={() => setHoveredPrice(null)}
+                            className={cn(
+                              "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                              (hoveredPrice?.index === index && 
+                              hoveredPrice?.side === 'call' && 
+                              hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                              isOptionSelected(index, 'call', 'ask') && "bg-red-500/20"
+                            )}
+                          >
+                            {formatPrice(option.callAsk)}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                   
@@ -503,74 +534,93 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     ${formatPrice(option.strike)}
                   </TableCell>
                   
-                  {/* Put side */}
-                  <TableCell className="text-center font-medium">
-                    <div className="flex flex-col">
-                      <button
-                        onClick={() => handlePriceClick(index, 'put', 'bid')}
-                        onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
-                        onMouseLeave={() => setHoveredPrice(null)}
-                        className={cn(
-                          "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                          (hoveredPrice?.index === index && 
-                           hoveredPrice?.side === 'put' && 
-                           hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                          isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
-                        )}
-                      >
-                        {formatPrice(option.putBid)}
-                      </button>
-                      <button
-                        onClick={() => handlePriceClick(index, 'put', 'ask')}
-                        onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
-                        onMouseLeave={() => setHoveredPrice(null)}
-                        className={cn(
-                          "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                          (hoveredPrice?.index === index && 
-                           hoveredPrice?.side === 'put' && 
-                           hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                          isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
-                        )}
-                      >
-                        {formatPrice(option.putAsk)}
-                      </button>
+                  {/* Put side - Add ITM/OTM styling */}
+                  <TableCell 
+                    colSpan={
+                      1 + // Price column
+                      (visibleGreeks.delta ? 1 : 0) +
+                      (visibleGreeks.theta ? 1 : 0) +
+                      (visibleGreeks.gamma ? 1 : 0) +
+                      (visibleGreeks.vega ? 1 : 0) +
+                      (visibleGreeks.rho ? 1 : 0) +
+                      (visibleGreeks.oi ? 1 : 0) +
+                      (visibleGreeks.volume ? 1 : 0)
+                    }
+                    className={cn(
+                      "p-0 transition-colors",
+                      putIsITM ? "bg-blue-400/10" : "bg-gray-500/1"
+                    )}
+                  >
+                    <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
+                      <div className="text-center font-medium py-2">
+                        <div className="flex flex-col">
+                          <button
+                            onClick={() => handlePriceClick(index, 'put', 'bid')}
+                            onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
+                            onMouseLeave={() => setHoveredPrice(null)}
+                            className={cn(
+                              "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+                              (hoveredPrice?.index === index && 
+                              hoveredPrice?.side === 'put' && 
+                              hoveredPrice?.type === 'bid') && "bg-green-500/10",
+                              isOptionSelected(index, 'put', 'bid') && "bg-green-500/20"
+                            )}
+                          >
+                            {formatPrice(option.putBid)}
+                          </button>
+                          <button
+                            onClick={() => handlePriceClick(index, 'put', 'ask')}
+                            onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
+                            onMouseLeave={() => setHoveredPrice(null)}
+                            className={cn(
+                              "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+                              (hoveredPrice?.index === index && 
+                              hoveredPrice?.side === 'put' && 
+                              hoveredPrice?.type === 'ask') && "bg-red-500/10",
+                              isOptionSelected(index, 'put', 'ask') && "bg-red-500/20"
+                            )}
+                          >
+                            {formatPrice(option.putAsk)}
+                          </button>
+                        </div>
+                      </div>
+                      {visibleGreeks.delta && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.putGreeks.delta, 2)}
+                        </div>
+                      )}
+                      {visibleGreeks.theta && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.putGreeks.theta)}
+                        </div>
+                      )}
+                      {visibleGreeks.gamma && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.putGreeks.gamma)}
+                        </div>
+                      )}
+                      {visibleGreeks.vega && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.putGreeks.vega)}
+                        </div>
+                      )}
+                      {visibleGreeks.rho && (
+                        <div className="text-center py-2">
+                          {formatGreek(option.putGreeks.rho)}
+                        </div>
+                      )}
+                      {visibleGreeks.oi && (
+                        <div className="text-center py-2">
+                          {formatInteger(option.putOpenInterest)}
+                        </div>
+                      )}
+                      {visibleGreeks.volume && (
+                        <div className="text-center py-2">
+                          {formatInteger(option.putVolume)}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
-                  {visibleGreeks.delta && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.putGreeks.delta, 2)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.theta && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.putGreeks.theta)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.gamma && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.putGreeks.gamma)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.vega && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.putGreeks.vega)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.rho && (
-                    <TableCell className="text-center">
-                      {formatGreek(option.putGreeks.rho)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.oi && (
-                    <TableCell className="text-center">
-                      {formatInteger(option.putOpenInterest)}
-                    </TableCell>
-                  )}
-                  {visibleGreeks.volume && (
-                    <TableCell className="text-center">
-                      {formatInteger(option.putVolume)}
-                    </TableCell>
-                  )}
                 </TableRow>
                 {shouldShowPriceIndicator && (
                   <TableRow key={`price-indicator-${index}`} className="h-0.5 relative">
