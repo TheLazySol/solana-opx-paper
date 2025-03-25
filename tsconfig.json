@@ -1,7 +1,15 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["jest", "react", "react-dom"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "types": [
+      "jest",
+      "react",
+      "react-dom"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,12 +27,26 @@
       }
     ],
     "baseUrl": ".",
-   "paths": {
-      "@project/anchor": ["anchor/src"],
-      "@/*": ["./src/*"],
-      "@constants/*": ["src/constants/*"]
-    }
+    "paths": {
+      "@project/anchor": [
+        "anchor/src"
+      ],
+      "@/*": [
+        "./src/*"
+      ],
+      "@constants/*": [
+        "src/constants/*"
+      ]
+    },
+    "target": "ES2017"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

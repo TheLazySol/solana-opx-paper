@@ -25,13 +25,27 @@ const links = [
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            try {
+              if (localStorage.theme === 'light') {
+                localStorage.setItem('theme', 'dark');
+              }
+              document.documentElement.classList.add('dark');
+            } catch {}
+          `
+        }} />
+      </head>
+      <body className="min-h-screen bg-background antialiased dark:bg-gray-950">
         <div id="wallet-extension-root" />
         <Background />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
+          forcedTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <ReactQueryProvider>
