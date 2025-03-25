@@ -76,8 +76,8 @@ export const OPTION_STRIKE_PRICES = [130, 135, 140, 145, 150];
 // Test expiration dates array for development
 export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
   {
-    value: "2025-04-02",
-    label: "April 2nd, 2025",
+    value: "2025-03-28",
+    label: "March 28th, 2025",
     isMonthly: true
   }
 ];
