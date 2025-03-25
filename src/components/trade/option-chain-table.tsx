@@ -460,42 +460,42 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   >
                     <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
                       {visibleGreeks.volume && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatInteger(option.callVolume)}
                         </div>
                       )}
                       {visibleGreeks.oi && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatInteger(option.callOpenInterest)}
                         </div>
                       )}
                       {visibleGreeks.rho && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.callGreeks.rho)}
                         </div>
                       )}
                       {visibleGreeks.vega && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.callGreeks.vega)}
                         </div>
                       )}
                       {visibleGreeks.gamma && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.callGreeks.gamma)}
                         </div>
                       )}
                       {visibleGreeks.theta && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.callGreeks.theta)}
                         </div>
                       )}
                       {visibleGreeks.delta && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.callGreeks.delta, 2)}
                         </div>
                       )}
-                      <div className="text-center font-medium py-2">
-                        <div className="flex flex-col">
+                      <div className="text-center font-medium py-1">
+                        <div className="flex flex-col space-y-0.5">
                           <button
                             onClick={() => handlePriceClick(index, 'call', 'bid')}
                             onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
@@ -552,8 +552,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     )}
                   >
                     <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
-                      <div className="text-center font-medium py-2">
-                        <div className="flex flex-col">
+                      <div className="text-center font-medium py-1">
+                        <div className="flex flex-col space-y-0.5">
                           <button
                             onClick={() => handlePriceClick(index, 'put', 'bid')}
                             onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
@@ -585,37 +585,37 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         </div>
                       </div>
                       {visibleGreeks.delta && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.putGreeks.delta, 2)}
                         </div>
                       )}
                       {visibleGreeks.theta && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.putGreeks.theta)}
                         </div>
                       )}
                       {visibleGreeks.gamma && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.putGreeks.gamma)}
                         </div>
                       )}
                       {visibleGreeks.vega && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.putGreeks.vega)}
                         </div>
                       )}
                       {visibleGreeks.rho && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatGreek(option.putGreeks.rho)}
                         </div>
                       )}
                       {visibleGreeks.oi && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatInteger(option.putOpenInterest)}
                         </div>
                       )}
                       {visibleGreeks.volume && (
-                        <div className="text-center py-2">
+                        <div className="text-center py-1">
                           {formatInteger(option.putVolume)}
                         </div>
                       )}

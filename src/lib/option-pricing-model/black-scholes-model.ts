@@ -136,7 +136,7 @@ export function calculateOption(params: {
     price = S * Nd1 - K * Math.exp(-r * T) * Nd2;
     delta = Nd1;
     gamma = NNd1 / (S * v * sqrtT);
-    theta = -(S * v * NNd1) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2;
+    theta = (-(S * v * NNd1) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2) / 100;
     vega = S * sqrtT * NNd1;
     rho = K * T * Math.exp(-r * T) * Nd2;
   } else {
@@ -145,7 +145,7 @@ export function calculateOption(params: {
     price = K * Math.exp(-r * T) * NegNd2 - S * NegNd1;
     delta = -NegNd1;
     gamma = NNd1 / (S * v * sqrtT);
-    theta = -(S * v * NNd1) / (2 * sqrtT) + r * K * Math.exp(-r * T) * NegNd2;
+    theta = (-(S * v * NNd1) / (2 * sqrtT) + r * K * Math.exp(-r * T) * NegNd2) / 100;
     vega = S * sqrtT * NNd1;
     rho = -K * T * Math.exp(-r * T) * NegNd2;
   }
