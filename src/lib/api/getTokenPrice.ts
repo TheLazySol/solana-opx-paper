@@ -25,6 +25,18 @@ const priceCache: PriceCache = {};
 const CACHE_EXPIRATION = 5000; // 5 seconds
 
 /**
+ * Clears the price cache for all tokens or a specific token
+ * @param tokenSymbol - Optional. If provided, only clears cache for that token
+ */
+export function clearPriceCache(tokenSymbol?: string) {
+  if (tokenSymbol) {
+    delete priceCache[tokenSymbol];
+  } else {
+    Object.keys(priceCache).forEach(key => delete priceCache[key]);
+  }
+}
+
+/**
  * Fetches the price of a token from the Birdeye API.
  * 
  * This function makes a request to the Birdeye API to get the price of a token
