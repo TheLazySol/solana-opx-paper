@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useCallback } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { TradeView } from './trade-view'
 import { OrdersView } from './orders-view'
@@ -6,12 +6,20 @@ import { SelectedOption } from './option-data'
 
 interface TradeViewContainerProps {
   selectedOptions: SelectedOption[]
+  onOptionsChange?: (options: SelectedOption[]) => void
 }
 
 export const TradeViewContainer: FC<TradeViewContainerProps> = ({
-  selectedOptions
+  selectedOptions,
+  onOptionsChange
 }) => {
   const [activeView, setActiveView] = useState('trade')
+
+  const handleOptionsUpdate = useCallback((updatedOptions: SelectedOption[]) => {
+    if (onOptionsChange) {
+      onOptionsChange(updatedOptions)
+    }
+  }, [onOptionsChange])
 
   return (
     <div className="space-y-2 sm:space-y-4">
@@ -44,7 +52,10 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
           className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
             transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4"
         >
-          <TradeView initialSelectedOptions={selectedOptions} />
+          <TradeView 
+            initialSelectedOptions={selectedOptions} 
+            onOptionsUpdate={handleOptionsUpdate}
+          />
         </TabsContent>
 
         <TabsContent 

@@ -7,11 +7,13 @@ import { SelectedOption } from './option-data'
 interface OptionChainControlsProps {
   assetId: string
   onOptionsChange?: (options: SelectedOption[]) => void
+  selectedOptions?: SelectedOption[]
 }
 
 export const OptionChainControls: FC<OptionChainControlsProps> = ({ 
   assetId,
-  onOptionsChange
+  onOptionsChange,
+  selectedOptions = []
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
   const [greekFilters, setGreekFilters] = useState<GreekFilters>({
@@ -58,6 +60,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             expirationDate={selectedExpiration}
             greekFilters={greekFilters}
             onOptionsChange={handleOptionsChange}
+            initialSelectedOptions={selectedOptions}
           />
         </div>
       </div>

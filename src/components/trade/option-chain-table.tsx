@@ -25,6 +25,7 @@ interface OptionChainTableProps {
   expirationDate?: string | null
   greekFilters?: GreekFilters
   onOptionsChange?: (options: SelectedOption[]) => void
+  initialSelectedOptions?: SelectedOption[]
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -39,11 +40,13 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     oi: false,
     volume: true
   },
-  onOptionsChange
+  onOptionsChange,
+  initialSelectedOptions = []
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
+  const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -63,6 +66,24 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       setVisibleGreeks(greekFilters)
     }
   }, [greekFilters])
+
+  // Sync with initialSelectedOptions when they change from the parent
+  useEffect(() => {
+    // Check if initialSelectedOptions has actually changed
+    const prevOptions = prevInitialOptionsRef.current;
+    const optionsChanged = 
+      prevOptions.length !== initialSelectedOptions.length || 
+      !initialSelectedOptions.every((opt, idx) => 
+        opt.index === prevOptions[idx]?.index && 
+        opt.side === prevOptions[idx]?.side && 
+        opt.type === prevOptions[idx]?.type);
+        
+    if (optionsChanged) {
+      setSelectedOptions(initialSelectedOptions);
+      // Update ref with current initialSelectedOptions
+      prevInitialOptionsRef.current = initialSelectedOptions;
+    }
+  }, [initialSelectedOptions]); // Remove selectedOptions from dependencies
 
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
@@ -107,7 +128,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       
       if (existingIndex >= 0) {
         // Remove if already selected (toggle off)
-        return prev.filter((_, i) => i !== existingIndex)
+        return prev.filter((_, i) => i !== existingIndex);
       } else {
         // First remove any other selection for the same index and side (different type)
         const filteredOptions = prev.filter(
@@ -150,8 +171,15 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   }
 
   // Notify parent component when selected options change
+  // This should ONLY happen when selectedOptions change due to 
+  // user interaction with the option chain, not from initialSelectedOptions updates
   useEffect(() => {
-    if (onOptionsChange) {
+    // Skip the first render effect after initialSelectedOptions synchronization
+    // This prevents infinite loops when the parent component updates
+    const isInitialOptionsSync = 
+      JSON.stringify(selectedOptions) === JSON.stringify(prevInitialOptionsRef.current);
+    
+    if (onOptionsChange && !isInitialOptionsSync) {
       onOptionsChange(selectedOptions);
     }
   }, [selectedOptions, onOptionsChange]);
