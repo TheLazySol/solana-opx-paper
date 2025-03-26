@@ -21,21 +21,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
       hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4">
       <div className="space-y-2 sm:space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-          <div className="flex items-center justify-between sm:justify-start gap-3 mb-2 sm:mb-0">
-            <h3 className="text-base sm:text-lg font-semibold">Create Order</h3>
-            <div className="text-sm text-muted-foreground">
-              {selectedOptions.length}/{MAX_OPTION_LEGS} legs
-            </div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base sm:text-lg font-semibold">Create Order</h3>
+          <div className="text-sm text-muted-foreground">
+            {selectedOptions.length}/{MAX_OPTION_LEGS} legs
           </div>
-          {selectedOptions.length > 0 && (
-            <Button 
-              variant="outline"
-              className="text-xs sm:text-sm w-full sm:w-auto"
-            >
-              Place Order
-            </Button>
-          )}
         </div>
 
         {selectedOptions.length === 0 ? (
