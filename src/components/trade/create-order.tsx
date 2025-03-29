@@ -87,9 +87,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         <span className="font-medium text-sm">{formattedOption}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {option.priceType === 'LIMIT' ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Price:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Price:</span>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                             <Input
                               type="number"
                               value={(option.limitPrice || option.price).toFixed(2)}
@@ -99,18 +100,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                   handleLimitPriceChange(index, value)
                                 }
                               }}
-                              className={`h-6 w-24 text-sm ${priceColor}`}
+                              className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
                               placeholder="Enter price"
                               step="0.01"
                               min="0"
+                              disabled={option.priceType === 'MKT'}
                             />
-                            <span className="text-sm text-muted-foreground">USDC</span>
                           </div>
-                        ) : (
-                          <span className={`text-sm font-semibold ${priceColor}`}>
-                            Price: ${formattedPrice} USDC
-                          </span>
-                        )}
+                          <span className="text-sm text-muted-foreground">USDC</span>
+                        </div>
                         <div className="flex items-center gap-1">
                           <Button
                             variant={option.priceType === 'MKT' ? 'default' : 'outline'}
