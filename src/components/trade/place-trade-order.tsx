@@ -39,9 +39,40 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return total + (optionPrice * quantity * contractSize)
   }, 0)
 
+  // Calculate collateral needed based on option positions
+  const collateralNeeded = selectedOptions.reduce((total, option) => {
+    const quantity = option.quantity || 1
+    const contractSize = 100 // Each option contract represents 100 units
+    
+    // For short options (type === 'ask')
+    if (option.type === 'ask') {
+      // Find all long options
+      const longOptions = selectedOptions.filter(opt => opt.type === 'bid')
+
+      if (longOptions.length === 0) {
+        // If no long options, full collateral is needed
+        const collateralPerContract = option.side === 'put'
+          ? option.strike * contractSize
+          : underlyingPrice * contractSize
+        return total + (collateralPerContract * quantity)
+      } else {
+        // For any spread position, calculate additional collateral needed
+        const maxLongStrike = Math.max(...longOptions.map(opt => opt.strike))
+        if (option.strike > maxLongStrike) {
+          // Additional collateral needed for the difference in strikes
+          const additionalCollateral = (option.strike - maxLongStrike) * contractSize
+          return total + (additionalCollateral * quantity)
+        }
+      }
+    }
+
+    return total
+  }, 0)
+
   const isDebit = totalAmount < 0
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
   const formattedVolume = volume.toFixed(2)
+  const formattedCollateral = collateralNeeded.toFixed(2)
 
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
@@ -67,6 +98,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Volume</span>
               <span className="font-medium">${formattedVolume} USDC</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Collateral Needed</span>
+              <span className="font-medium">${formattedCollateral} USDC</span>
             </div>
             <Separator className="my-2 bg-white/10" />
             {/* Total Amount */}
