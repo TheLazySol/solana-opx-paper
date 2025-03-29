@@ -11,18 +11,23 @@ interface PlaceTradeOrderProps {
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedOptions = []
 }) => {
-  // Calculate total debit/credit (multiplied by 100 for contract size)
+  const hasSelectedOptions = selectedOptions.length > 0
+  
+  // Calculate total quantity across all legs
+  const totalQuantity = selectedOptions.reduce((total, option) => {
+    return total + (option.quantity || 1)
+  }, 0)
+
+  // Calculate total debit/credit (multiplied by quantity for each leg)
   const totalAmount = selectedOptions.reduce((total, option) => {
-    // For bids (long positions), we subtract the price (debit)
-    // For asks (short positions), we add the price (credit)
+    const quantity = option.quantity || 1
     return option.type === 'bid' 
-      ? total - (option.price * 100)
-      : total + (option.price * 100)
+      ? total - (option.price * quantity)
+      : total + (option.price * quantity)
   }, 0)
 
   const isDebit = totalAmount < 0
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
-  const hasSelectedOptions = selectedOptions.length > 0
 
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
@@ -38,8 +43,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           <div className="space-y-3">
             {/* Order Details */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Quantity</span>
-              <span className="font-medium">{selectedOptions.length}</span>
+              <span className="text-muted-foreground">Total Quantity</span>
+              <span className="font-medium">{totalQuantity}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Order Type</span>

@@ -15,7 +15,9 @@ export const TradeView: FC<TradeViewProps> = ({
   initialSelectedOptions = [],
   onOptionsUpdate
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(initialSelectedOptions)
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
+    initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
+  )
   const prevInitialOptionsRef = useRef<SelectedOption[]>(initialSelectedOptions)
 
   // Update selected options ONLY when initialSelectedOptions actually changes
@@ -27,7 +29,9 @@ export const TradeView: FC<TradeViewProps> = ({
       !initialSelectedOptions.every((opt, idx) => {
         const prevOpt = prevOptions[idx]
         return prevOpt && 
-               opt.index === prevOpt.index && 
+               opt.asset === prevOpt.asset && 
+               opt.strike === prevOpt.strike &&
+               opt.expiry === prevOpt.expiry &&
                opt.side === prevOpt.side && 
                opt.type === prevOpt.type
       })
@@ -36,7 +40,10 @@ export const TradeView: FC<TradeViewProps> = ({
     if (optionsChanged) {
       if (initialSelectedOptions.length > MAX_OPTION_LEGS) {
         // If too many options are provided, take only the first MAX_OPTION_LEGS
-        const limitedOptions = initialSelectedOptions.slice(0, MAX_OPTION_LEGS)
+        const limitedOptions = initialSelectedOptions.slice(0, MAX_OPTION_LEGS).map(opt => ({
+          ...opt,
+          quantity: 1
+        }))
         setSelectedOptions(limitedOptions)
         prevInitialOptionsRef.current = limitedOptions
         
@@ -52,16 +59,31 @@ export const TradeView: FC<TradeViewProps> = ({
           onOptionsUpdate(limitedOptions)
         }
       } else {
-        setSelectedOptions(initialSelectedOptions)
-        prevInitialOptionsRef.current = initialSelectedOptions
+        const newOptions = initialSelectedOptions.map(opt => ({
+          ...opt,
+          quantity: 1
+        }))
+        setSelectedOptions(newOptions)
+        prevInitialOptionsRef.current = newOptions
       }
     }
   }, [initialSelectedOptions, onOptionsUpdate])
 
   // Notify parent when selected options change from INTERNAL updates only
-  // (like clicking the remove button)
   const handleRemoveOption = (index: number) => {
     const updatedOptions = selectedOptions.filter((_, i) => i !== index)
+    setSelectedOptions(updatedOptions)
+    
+    if (onOptionsUpdate) {
+      onOptionsUpdate(updatedOptions)
+    }
+  }
+
+  // Handle quantity updates
+  const handleQuantityUpdate = (index: number, quantity: number) => {
+    const updatedOptions = selectedOptions.map((opt, i) => 
+      i === index ? { ...opt, quantity } : opt
+    )
     setSelectedOptions(updatedOptions)
     
     if (onOptionsUpdate) {
@@ -76,6 +98,7 @@ export const TradeView: FC<TradeViewProps> = ({
         <CreateOrder 
           selectedOptions={selectedOptions}
           onRemoveOption={handleRemoveOption}
+          onUpdateQuantity={handleQuantityUpdate}
         />
         <PlaceTradeOrder selectedOptions={selectedOptions} />
       </div>

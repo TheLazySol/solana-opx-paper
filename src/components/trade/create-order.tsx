@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
-import { X } from 'lucide-react'
+import { X, Plus, Minus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
@@ -10,12 +10,22 @@ import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
   onRemoveOption?: (index: number) => void
+  onUpdateQuantity?: (index: number, quantity: number) => void
 }
 
 export const CreateOrder: FC<CreateOrderProps> = ({ 
   selectedOptions = [],
-  onRemoveOption
+  onRemoveOption,
+  onUpdateQuantity
 }) => {
+  const handleQuantityChange = (index: number, delta: number) => {
+    if (!onUpdateQuantity) return
+    
+    const currentQuantity = selectedOptions[index].quantity || 1
+    const newQuantity = Math.max(1, currentQuantity + delta) // Ensure quantity doesn't go below 1
+    onUpdateQuantity(index, newQuantity)
+  }
+
   return (
     <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -64,6 +74,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                       <span className={`text-sm font-semibold ${priceColor}`}>
                         Price: ${formattedPrice} USDC
                       </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-muted-foreground">Quantity:</span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleQuantityChange(index, -1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-8 text-center">
+                            {option.quantity || 1}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleQuantityChange(index, 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     
                     {onRemoveOption && (
