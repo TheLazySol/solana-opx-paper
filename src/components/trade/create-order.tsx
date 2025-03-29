@@ -151,6 +151,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               onChange={(e) => handlePriceInputChange(e, index)}
                               className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
                               placeholder="Enter price"
+                              disabled
                             />
                           </div>
                           <span className="text-sm text-muted-foreground">USDC</span>
