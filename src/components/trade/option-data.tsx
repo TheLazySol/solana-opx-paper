@@ -120,6 +120,7 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
 
 // Selected option type
 export interface SelectedOption {
+  index: number
   asset: string
   strike: number
   expiry: string
@@ -127,4 +128,6 @@ export interface SelectedOption {
   side: 'call' | 'put'
   price: number
   quantity: number
+  priceType: 'MKT' | 'LIMIT'
+  limitPrice?: number
 } 

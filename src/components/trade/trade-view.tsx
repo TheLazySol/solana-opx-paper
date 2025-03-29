@@ -91,6 +91,30 @@ export const TradeView: FC<TradeViewProps> = ({
     }
   }
 
+  // Handle price type updates
+  const handlePriceTypeUpdate = (index: number, priceType: 'MKT' | 'LIMIT') => {
+    const updatedOptions = selectedOptions.map((opt, i) => 
+      i === index ? { ...opt, priceType } : opt
+    )
+    setSelectedOptions(updatedOptions)
+    
+    if (onOptionsUpdate) {
+      onOptionsUpdate(updatedOptions)
+    }
+  }
+
+  // Handle limit price updates
+  const handleLimitPriceUpdate = (index: number, limitPrice: number) => {
+    const updatedOptions = selectedOptions.map((opt, i) => 
+      i === index ? { ...opt, limitPrice } : opt
+    )
+    setSelectedOptions(updatedOptions)
+    
+    if (onOptionsUpdate) {
+      onOptionsUpdate(updatedOptions)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Create Order and Place Trade Order */}
@@ -99,6 +123,8 @@ export const TradeView: FC<TradeViewProps> = ({
           selectedOptions={selectedOptions}
           onRemoveOption={handleRemoveOption}
           onUpdateQuantity={handleQuantityUpdate}
+          onUpdatePriceType={handlePriceTypeUpdate}
+          onUpdateLimitPrice={handleLimitPriceUpdate}
         />
         <PlaceTradeOrder selectedOptions={selectedOptions} />
       </div>

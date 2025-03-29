@@ -111,14 +111,16 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       ? (type === 'bid' ? option.callBid : option.callAsk)
       : (type === 'bid' ? option.putBid : option.putAsk)
     
-    const newOption = { 
+    const newOption: SelectedOption = { 
       index, 
       side, 
       type,
       strike: option.strike,
       expiry: option.expiry,
       asset: assetId,
-      price
+      price,
+      quantity: 1, // Set initial quantity to 1
+      priceType: 'MKT' as const // Set initial price type to MKT
     }
     
     setSelectedOptions(prev => {
