@@ -18,12 +18,13 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return total + (option.quantity || 1)
   }, 0)
 
-  // Calculate total debit/credit (multiplied by quantity for each leg)
+  // Calculate total debit/credit (multiplied by quantity and contract size)
   const totalAmount = selectedOptions.reduce((total, option) => {
     const quantity = option.quantity || 1
+    const contractSize = 100 // Each option contract represents 100 units of underlying
     return option.type === 'bid' 
-      ? total - (option.price * quantity)
-      : total + (option.price * quantity)
+      ? total - (option.price * quantity * contractSize)
+      : total + (option.price * quantity * contractSize)
   }, 0)
 
   const isDebit = totalAmount < 0
