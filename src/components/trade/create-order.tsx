@@ -36,12 +36,9 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     onUpdatePriceType(index, priceType)
   }
 
-  const handleLimitPriceChange = (index: number, value: string) => {
+  const handleLimitPriceChange = (index: number, value: number) => {
     if (!onUpdateLimitPrice) return
-    const limitPrice = parseFloat(value)
-    if (!isNaN(limitPrice)) {
-      onUpdateLimitPrice(index, limitPrice)
-    }
+    onUpdateLimitPrice(index, value)
   }
 
   return (
@@ -90,9 +87,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         <span className="font-medium text-sm">{formattedOption}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-semibold ${priceColor}`}>
-                          Price: ${formattedPrice} USDC
-                        </span>
+                        {option.priceType === 'LIMIT' ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Price:</span>
+                            <Input
+                              type="number"
+                              value={(option.limitPrice || option.price).toFixed(2)}
+                              onChange={(e) => {
+                                const value = parseFloat(parseFloat(e.target.value).toFixed(2))
+                                if (!isNaN(value)) {
+                                  handleLimitPriceChange(index, value)
+                                }
+                              }}
+                              className={`h-6 w-24 text-sm ${priceColor}`}
+                              placeholder="Enter price"
+                              step="0.01"
+                              min="0"
+                            />
+                            <span className="text-sm text-muted-foreground">USDC</span>
+                          </div>
+                        ) : (
+                          <span className={`text-sm font-semibold ${priceColor}`}>
+                            Price: ${formattedPrice} USDC
+                          </span>
+                        )}
                         <div className="flex items-center gap-1">
                           <Button
                             variant={option.priceType === 'MKT' ? 'default' : 'outline'}
@@ -112,21 +130,6 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           </Button>
                         </div>
                       </div>
-                      {option.priceType === 'LIMIT' && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm text-muted-foreground">Limit Price:</span>
-                          <Input
-                            type="number"
-                            value={option.limitPrice || ''}
-                            onChange={(e) => handleLimitPriceChange(index, e.target.value)}
-                            className="h-6 w-24 text-sm"
-                            placeholder="Enter price"
-                            step="0.01"
-                            min="0"
-                          />
-                          <span className="text-sm text-muted-foreground">USDC</span>
-                        </div>
-                      )}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm text-muted-foreground">Quantity:</span>
                         <div className="flex items-center gap-1">
