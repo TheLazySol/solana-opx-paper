@@ -40,34 +40,40 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   }, 0)
 
   // Calculate collateral needed based on option positions
-  const collateralNeeded = selectedOptions.reduce((total, option) => {
-    const quantity = option.quantity || 1
+  const collateralNeeded = (() => {
     const contractSize = 100 // Each option contract represents 100 units
-    
-    // For short options (type === 'ask')
-    if (option.type === 'ask') {
-      // Find all long options
-      const longOptions = selectedOptions.filter(opt => opt.type === 'bid')
+    let totalCollateral = 0
 
-      if (longOptions.length === 0) {
-        // If no long options, full collateral is needed
-        const collateralPerContract = option.side === 'put'
-          ? option.strike * contractSize
-          : underlyingPrice * contractSize
-        return total + (collateralPerContract * quantity)
-      } else {
-        // For any spread position, calculate additional collateral needed
-        const maxLongStrike = Math.max(...longOptions.map(opt => opt.strike))
-        if (option.strike > maxLongStrike) {
-          // Additional collateral needed for the difference in strikes
-          const additionalCollateral = (option.strike - maxLongStrike) * contractSize
-          return total + (additionalCollateral * quantity)
-        }
+    // Separate options by type
+    const shortCalls = selectedOptions.filter(opt => opt.type === 'ask' && opt.side === 'call')
+    const shortPuts = selectedOptions.filter(opt => opt.type === 'ask' && opt.side === 'put')
+    const longCalls = selectedOptions.filter(opt => opt.type === 'bid' && opt.side === 'call')
+    const longPuts = selectedOptions.filter(opt => opt.type === 'bid' && opt.side === 'put')
+
+    // Handle short calls
+    shortCalls.forEach(shortCall => {
+      const quantity = shortCall.quantity || 1
+      // Short calls require full underlying price as collateral if not covered
+      const numUncovered = Math.max(0, quantity - longCalls.length)
+      if (numUncovered > 0) {
+        totalCollateral += underlyingPrice * contractSize * numUncovered
       }
-    }
+    })
 
-    return total
-  }, 0)
+    // Handle short puts
+    shortPuts.forEach(shortPut => {
+      const quantity = shortPut.quantity || 1
+      // Find the highest strike long put that could cover this short put
+      const coveringPut = longPuts.find(lp => lp.strike >= shortPut.strike)
+      
+      if (!coveringPut) {
+        // If no covering put, full collateral needed
+        totalCollateral += shortPut.strike * contractSize * quantity
+      }
+    })
+
+    return totalCollateral
+  })()
 
   const isDebit = totalAmount < 0
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
@@ -93,7 +99,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Order Type</span>
-              <span className="font-medium capitalize">{isDebit ? 'Debit' : 'Credit'}</span>
+              <span className={`font-medium capitalize ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
+                {isDebit ? 'Debit' : 'Credit'}
+              </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Volume</span>
@@ -106,7 +114,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             <Separator className="my-2 bg-white/10" />
             {/* Total Amount */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Total {isDebit ? 'Debit' : 'Credit'}</span>
+              <span className={`text-sm ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
+                Total {isDebit ? 'Debit' : 'Credit'}
+              </span>
               <span className="text-lg font-semibold text-white">
                 ${formattedAmount} USDC
               </span>
