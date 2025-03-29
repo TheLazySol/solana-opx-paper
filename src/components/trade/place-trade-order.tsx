@@ -39,7 +39,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             {/* Order Details */}
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Quantity</span>
-              <span className="font-medium">{selectedOptions.length * 100}</span>
+              <span className="font-medium">{selectedOptions.length}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Order Type</span>
