@@ -128,6 +128,5 @@ export interface SelectedOption {
   side: 'call' | 'put'
   price: number
   quantity: number
-  priceType: 'MKT' | 'LIMIT'
   limitPrice?: number
 } 

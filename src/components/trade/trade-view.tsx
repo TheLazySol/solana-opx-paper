@@ -104,7 +104,7 @@ export const TradeView: FC<TradeViewProps> = ({
   }
 
   // Handle limit price updates
-  const handleLimitPriceUpdate = (index: number, limitPrice: number) => {
+  const handleLimitPriceUpdate = (index: number, limitPrice: number): void => {
     const updatedOptions = selectedOptions.map((opt, i) => 
       i === index ? { ...opt, limitPrice } : opt
     )
@@ -123,7 +123,6 @@ export const TradeView: FC<TradeViewProps> = ({
           selectedOptions={selectedOptions}
           onRemoveOption={handleRemoveOption}
           onUpdateQuantity={handleQuantityUpdate}
-          onUpdatePriceType={handlePriceTypeUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
         />
         <PlaceTradeOrder selectedOptions={selectedOptions} />

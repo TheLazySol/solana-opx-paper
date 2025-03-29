@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
@@ -6,23 +6,60 @@ import { X, Plus, Minus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
   onRemoveOption?: (index: number) => void
   onUpdateQuantity?: (index: number, quantity: number) => void
-  onUpdatePriceType?: (index: number, priceType: 'MKT' | 'LIMIT') => void
-  onUpdateLimitPrice?: (index: number, limitPrice: number) => void
+  onUpdateLimitPrice?: (index: number, price: number) => void
 }
 
 export const CreateOrder: FC<CreateOrderProps> = ({ 
   selectedOptions = [],
   onRemoveOption,
   onUpdateQuantity,
-  onUpdatePriceType,
   onUpdateLimitPrice
 }) => {
+  // Get unique assets from selected options
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const uniqueAssets = [...new Set(selectedOptions.map(option => option.asset))];
+  
+  // Get price for each unique asset
+  const { price: firstAssetPrice } = useAssetPriceInfo(uniqueAssets[0] || '');
+  const { price: secondAssetPrice } = useAssetPriceInfo(uniqueAssets[1] || '');
+  const { price: thirdAssetPrice } = useAssetPriceInfo(uniqueAssets[2] || '');
+  const { price: fourthAssetPrice } = useAssetPriceInfo(uniqueAssets[3] || '');
+  
+  // Create assetPriceMap in useMemo to prevent unnecessary re-renders
+  const assetPriceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    
+    if (uniqueAssets[0] && firstAssetPrice) {
+      map.set(uniqueAssets[0], firstAssetPrice);
+    }
+    
+    if (uniqueAssets[1] && secondAssetPrice) {
+      map.set(uniqueAssets[1], secondAssetPrice);
+    }
+    
+    if (uniqueAssets[2] && thirdAssetPrice) {
+      map.set(uniqueAssets[2], thirdAssetPrice);
+    }
+    
+    if (uniqueAssets[3] && fourthAssetPrice) {
+      map.set(uniqueAssets[3], fourthAssetPrice);
+    }
+    
+    return map;
+  }, [
+    uniqueAssets,
+    firstAssetPrice,
+    secondAssetPrice,
+    thirdAssetPrice,
+    fourthAssetPrice
+  ]);
+
   const handleQuantityChange = (index: number, delta: number) => {
     if (!onUpdateQuantity) return
     
@@ -31,15 +68,35 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     onUpdateQuantity(index, newQuantity)
   }
 
-  const handlePriceTypeChange = (index: number, priceType: 'MKT' | 'LIMIT') => {
-    if (!onUpdatePriceType) return
-    onUpdatePriceType(index, priceType)
-  }
+  // Handle price input changes with better user experience
+  const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    if (!onUpdateLimitPrice) return;
+    
+    // Get the raw input value
+    const inputValue = e.target.value;
+    
+    // Allow empty input or valid number format
+    if (inputValue === '' || inputValue === '.' || inputValue === '0') {
+      if (onUpdateLimitPrice && (inputValue === '' || inputValue === '0')) {
+        onUpdateLimitPrice(index, 0);
+      }
+      return;
+    }
+    
+    // Only allow valid number formats
+    if (/^[0-9]*\.?[0-9]*$/.test(inputValue)) {
+      const parsed = parseFloat(inputValue);
+      
+      if (!isNaN(parsed)) {
+        onUpdateLimitPrice(index, parsed);
+      }
+    }
+  };
 
-  const handleLimitPriceChange = (index: number, value: number) => {
-    if (!onUpdateLimitPrice) return
-    onUpdateLimitPrice(index, value)
-  }
+  // Get the display price for an option
+  const getDisplayPrice = (option: SelectedOption): string => {
+    return option.limitPrice !== undefined ? Number(option.limitPrice).toFixed(2) : option.price.toFixed(2);
+  };
 
   return (
     <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
@@ -68,9 +125,6 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 expiry: option.expiry
               })
               
-              // Format the price with appropriate decimals (using 2 for USD)
-              const formattedPrice = option.price.toFixed(2)
-              
               // Determine price color based on option type
               const priceColor = option.type === 'bid' 
                 ? 'text-green-500' 
@@ -92,40 +146,14 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           <div className="relative">
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                             <Input
-                              type="number"
-                              value={(option.limitPrice || option.price).toFixed(2)}
-                              onChange={(e) => {
-                                const value = parseFloat(parseFloat(e.target.value).toFixed(2))
-                                if (!isNaN(value)) {
-                                  handleLimitPriceChange(index, value)
-                                }
-                              }}
+                              type="text"
+                              value={getDisplayPrice(option)}
+                              onChange={(e) => handlePriceInputChange(e, index)}
                               className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
                               placeholder="Enter price"
-                              step="0.01"
-                              min="0"
-                              disabled={option.priceType === 'MKT'}
                             />
                           </div>
                           <span className="text-sm text-muted-foreground">USDC</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant={option.priceType === 'MKT' ? 'default' : 'outline'}
-                            size="sm"
-                            className="h-6 px-2"
-                            onClick={() => handlePriceTypeChange(index, 'MKT')}
-                          >
-                            MKT
-                          </Button>
-                          <Button
-                            variant={option.priceType === 'LIMIT' ? 'default' : 'outline'}
-                            size="sm"
-                            className="h-6 px-2"
-                            onClick={() => handlePriceTypeChange(index, 'LIMIT')}
-                          >
-                            LIMIT
-                          </Button>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1">

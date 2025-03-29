@@ -82,9 +82,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     if (optionsChanged) {
       setSelectedOptions(initialSelectedOptions);
       // Update ref with current initialSelectedOptions
-      prevInitialOptionsRef.current = initialSelectedOptions;
+      prevInitialOptionsRef.current = [...initialSelectedOptions];
     }
-  }, [initialSelectedOptions]); // Remove selectedOptions from dependencies
+  }, [initialSelectedOptions]);
 
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
@@ -119,8 +119,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       expiry: option.expiry,
       asset: assetId,
       price,
-      quantity: 1, // Set initial quantity to 1
-      priceType: 'MKT' as const // Set initial price type to MKT
+      quantity: 1 // Set initial quantity to 1
     }
     
     setSelectedOptions(prev => {
@@ -187,15 +186,19 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   }
 
   // Notify parent component when selected options change
-  // This should ONLY happen when selectedOptions change due to 
-  // user interaction with the option chain, not from initialSelectedOptions updates
   useEffect(() => {
-    // Skip the first render effect after initialSelectedOptions synchronization
-    // This prevents infinite loops when the parent component updates
-    const isInitialOptionsSync = 
-      JSON.stringify(selectedOptions) === JSON.stringify(prevInitialOptionsRef.current);
+    // Only notify parent if the change originated from within this component
+    // and not from a parent update via initialSelectedOptions
+    if (!onOptionsChange) return;
+
+    // Get a stable JSON representation of both arrays for comparison
+    const currentSelectionJson = JSON.stringify(selectedOptions);
+    const initialOptionsJson = JSON.stringify(prevInitialOptionsRef.current);
     
-    if (onOptionsChange && !isInitialOptionsSync) {
+    // Only trigger the callback if this is a local change, not from parent props
+    if (currentSelectionJson !== initialOptionsJson) {
+      // Update our ref to prevent future duplicate notifications
+      prevInitialOptionsRef.current = [...selectedOptions];
       onOptionsChange(selectedOptions);
     }
   }, [selectedOptions, onOptionsChange]);
