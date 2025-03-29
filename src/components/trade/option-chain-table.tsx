@@ -527,7 +527,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         <div className="relative w-full h-0.5">
                           <div className="absolute inset-0 bg-[#4a85ff]" />
                           <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                            bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                            bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
                             ${formatPrice(spotPrice)}
                           </div>
                         </div>
@@ -769,7 +769,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               <div className="relative w-full h-0.5">
                                 <div className="absolute inset-0 bg-[#4a85ff]" />
                                 <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                                  bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                                  bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
                                   ${formatPrice(spotPrice)}
                                 </div>
                               </div>
@@ -808,7 +808,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         <div className="relative w-full h-0.5">
                           <div className="absolute inset-0 bg-[#4a85ff]" />
                           <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                            bg-[#4a85ff] text-white text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
+                            bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
                             ${formatPrice(spotPrice)}
                           </div>
                         </div>
