@@ -125,7 +125,10 @@ export const TradeView: FC<TradeViewProps> = ({
           onUpdateQuantity={handleQuantityUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
         />
-        <PlaceTradeOrder selectedOptions={selectedOptions} />
+        <PlaceTradeOrder 
+          selectedOptions={selectedOptions} 
+          selectedAsset={selectedOptions[0]?.asset || ''} 
+        />
       </div>
       
       {/* PnL Chart */}

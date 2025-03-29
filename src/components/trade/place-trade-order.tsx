@@ -3,15 +3,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
+  selectedAsset: string
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
-  selectedOptions = []
+  selectedOptions = [],
+  selectedAsset
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
+  const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
   
   // Calculate total quantity across all legs
   const totalQuantity = selectedOptions.reduce((total, option) => {
@@ -27,8 +31,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       : total + (option.price * quantity * contractSize)
   }, 0)
 
+  // Calculate volume (USD value of the order)
+  const volume = selectedOptions.reduce((total, option) => {
+    const quantity = option.quantity || 1
+    const contractSize = 100 // Each option contract represents 100 units
+    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
+    return total + (optionPrice * quantity * contractSize)
+  }, 0)
+
   const isDebit = totalAmount < 0
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
+  const formattedVolume = volume.toFixed(2)
 
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
@@ -51,11 +64,15 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <span className="text-muted-foreground">Order Type</span>
               <span className="font-medium capitalize">{isDebit ? 'Debit' : 'Credit'}</span>
             </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Volume</span>
+              <span className="font-medium">${formattedVolume} USDC</span>
+            </div>
             <Separator className="my-2 bg-white/10" />
             {/* Total Amount */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total {isDebit ? 'Debit' : 'Credit'}</span>
-              <span className={`text-lg font-semibold ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
+              <span className="text-lg font-semibold text-white">
                 ${formattedAmount} USDC
               </span>
             </div>
