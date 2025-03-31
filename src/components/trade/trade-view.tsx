@@ -130,16 +130,16 @@ export const TradeView: FC<TradeViewProps> = ({
           onUpdateQuantity={handleQuantityUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
         />
-        <PlaceTradeOrder 
-          selectedOptions={selectedOptions} 
-          selectedAsset={selectedOptions[0]?.asset || ''} 
-          onOrderDataChange={setOrderData}
-        />
         <TradeCollateralProvider 
           selectedOptions={selectedOptions}
           selectedAsset={selectedOptions[0]?.asset || ''}
           isDebit={orderData.isDebit}
           externalCollateralNeeded={orderData.collateralNeeded}
+        />
+        <PlaceTradeOrder 
+          selectedOptions={selectedOptions} 
+          selectedAsset={selectedOptions[0]?.asset || ''} 
+          onOrderDataChange={setOrderData}
         />
       </div>
       
