@@ -132,15 +132,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               
               return (
                 <Card key={index} className="bg-black/10 border border-white/10">
-                  <CardContent className="p-3 flex justify-between items-center">
-                    <div className="flex flex-col space-y-1">
+                  <CardContent className="p-3 flex justify-between items-start">
+                    <div className="flex flex-col space-y-2 w-full">
                       <div className="flex items-center gap-2">
-                        <Badge variant={option.type === 'bid' ? 'default' : 'destructive'} className="capitalize">
+                        <Badge variant={option.type === 'bid' ? 'success' : 'destructive'} className="capitalize">
                           {option.type === 'bid' ? 'Long' : 'Short'}
                         </Badge>
                         <span className="font-medium text-sm">{formattedOption}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">Price:</span>
                           <div className="relative">
@@ -156,29 +156,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           </div>
                           <span className="text-sm text-muted-foreground">USDC</span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-muted-foreground">Quantity:</span>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleQuantityChange(index, -1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="text-sm font-medium w-8 text-center">
-                            {option.quantity || 1}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleQuantityChange(index, 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Qty:</span>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleQuantityChange(index, -1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="text-sm font-medium w-8 text-center">
+                              {option.quantity || 1}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleQuantityChange(index, 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
