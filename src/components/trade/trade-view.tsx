@@ -124,27 +124,41 @@ export const TradeView: FC<TradeViewProps> = ({
     <div className="space-y-4">
       {/* Create Order and Trade Details */}
       <div className="grid grid-cols-1 gap-4">
-        {/* Create Order - Full Width */}
-        <CreateOrder 
-          selectedOptions={selectedOptions}
-          onRemoveOption={handleRemoveOption}
-          onUpdateQuantity={handleQuantityUpdate}
-          onUpdateLimitPrice={handleLimitPriceUpdate}
-        />
-        
-        {/* Collateral and Order Summary - Side by Side on md+ screens */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TradeCollateralProvider 
+        {/* Create Order and Trade Details - 3 columns on 1600px+ screens */}
+        <div className="grid grid-cols-1 2xl:grid-cols-[2fr,1fr,1fr] gap-4">
+          {/* Create Order */}
+          <CreateOrder 
             selectedOptions={selectedOptions}
-            selectedAsset={selectedOptions[0]?.asset || ''}
-            isDebit={orderData.isDebit}
-            externalCollateralNeeded={orderData.collateralNeeded}
+            onRemoveOption={handleRemoveOption}
+            onUpdateQuantity={handleQuantityUpdate}
+            onUpdateLimitPrice={handleLimitPriceUpdate}
           />
-          <PlaceTradeOrder 
-            selectedOptions={selectedOptions} 
-            selectedAsset={selectedOptions[0]?.asset || ''} 
-            onOrderDataChange={setOrderData}
-          />
+          
+          {/* Collateral and Order Summary - Side by Side on md-2xl, separate columns on 2xl+ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-1 gap-4">
+            <TradeCollateralProvider 
+              selectedOptions={selectedOptions}
+              selectedAsset={selectedOptions[0]?.asset || ''}
+              isDebit={orderData.isDebit}
+              externalCollateralNeeded={orderData.collateralNeeded}
+            />
+            <div className="2xl:hidden">
+              <PlaceTradeOrder 
+                selectedOptions={selectedOptions} 
+                selectedAsset={selectedOptions[0]?.asset || ''} 
+                onOrderDataChange={setOrderData}
+              />
+            </div>
+          </div>
+
+          {/* Order Summary - Only visible on 2xl screens as third column */}
+          <div className="hidden 2xl:block">
+            <PlaceTradeOrder 
+              selectedOptions={selectedOptions} 
+              selectedAsset={selectedOptions[0]?.asset || ''} 
+              onOrderDataChange={setOrderData}
+            />
+          </div>
         </div>
       </div>
       
