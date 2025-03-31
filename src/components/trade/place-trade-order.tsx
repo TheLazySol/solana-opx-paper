@@ -146,10 +146,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <span>{hasSelectedOptions ? `${fees.optionCreationFee.toFixed(3)} SOL` : '--'}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Borrow Fee:</span>
-              <span>{borrowedAmount > 0 ? `$${fees.borrowFee.toFixed(2)} USDC` : '--'}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Transaction Cost:</span>
               <span>{hasSelectedOptions ? `${fees.transactionCost.toFixed(3)} SOL` : '--'}</span>
             </div>
@@ -167,10 +163,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
 
           <Separator className="my-2 bg-white/10" />
           
-          {/* Total Amount */}
+          {/* Premium Amount */}
           <div className="flex items-center justify-between">
             <span className={`text-sm ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
-              Total {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
+              Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
             </span>
             <span className="text-lg font-semibold text-white">
               {hasSelectedOptions ? `$${formattedAmount} USDC` : '--'}
