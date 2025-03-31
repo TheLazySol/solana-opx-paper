@@ -1,4 +1,4 @@
-import { FC, useState, useMemo } from 'react'
+import { FC, useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
@@ -38,6 +38,14 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   const [collateralType, setCollateralType] = useState<string>(
     COLLATERAL_TYPES.find(type => type.default)?.value || "USDC"
   )
+
+  // Reset collateral input when all options are removed
+  useEffect(() => {
+    if (!hasSelectedOptions) {
+      setCollateralProvided("")
+      setLeverage([1])
+    }
+  }, [hasSelectedOptions])
 
   // Calculate total collateral needed based on option positions
   const calculateCollateralNeeded = () => {
@@ -138,15 +146,19 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="text-xs text-muted-foreground cursor-help">
-                      Required Collateral:
+                      <span className="border-b border-dotted border-slate-500">Collateral Needed:</span>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>The amount of collateral needed to open this position</p>
+                    <p>The remaining collateral needed after accounting for provided and borrowed amounts</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <span className="font-semibold text-lg">${formattedCollateral}</span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-semibold text-lg">
+                  ${Math.max(0, collateralNeeded - (Number(collateralProvided) || 0) - borrowedAmount).toFixed(2)}
+                </span>
+              </div>
             </div>
 
             {/* Collateral Input */}
@@ -286,8 +298,8 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             {/* Borrow Summary - Always visible */}
             <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Amount Borrowed:</span>
-                <span className="text-sm font-medium">
+                <span className="text-sm text-muted-foreground">Collateral Borrowed:</span>
+                <span className="text-sm font-light">
                   {borrowedAmount > 0 ? `$${borrowedAmount.toFixed(2)}` : '--'}
                 </span>
               </div>
@@ -300,15 +312,15 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Annual rate: {(BASE_ANNUAL_INTEREST_RATE * 100).toFixed(2)}%</p>
+                      <p>{selectedAsset} APR: {(BASE_ANNUAL_INTEREST_RATE * 100).toFixed(2)}%</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <span className="text-sm font-medium">{(dailyBorrowRate * 100).toFixed(3)}%</span>
+                <span className="text-sm font-light text-orange-200">≈{(dailyBorrowRate * 100).toFixed(3)}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Est. Daily Cost:</span>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-red-500">
                   {borrowedAmount > 0 ? `$${dailyBorrowCost.toFixed(2)}` : '--'}
                 </span>
               </div>
