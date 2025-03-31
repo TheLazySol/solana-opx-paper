@@ -137,7 +137,7 @@ export function calculateOption(params: {
     delta = Nd1;
     gamma = NNd1 / (S * v * sqrtT);
     theta = (-(S * v * NNd1) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2) / 100;
-    vega = S * sqrtT * NNd1;
+    vega = (S * sqrtT * NNd1) / 100;
     rho = K * T * Math.exp(-r * T) * Nd2;
   } else {
     const NegNd1 = normalCDF(-d1);
@@ -146,7 +146,7 @@ export function calculateOption(params: {
     delta = -NegNd1;
     gamma = NNd1 / (S * v * sqrtT);
     theta = (-(S * v * NNd1) / (2 * sqrtT) + r * K * Math.exp(-r * T) * NegNd2) / 100;
-    vega = S * sqrtT * NNd1;
+    vega = (S * sqrtT * NNd1) / 100;
     rho = -K * T * Math.exp(-r * T) * NegNd2;
   }
 
