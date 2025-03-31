@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
-import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/option-lab/constants'
+import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]

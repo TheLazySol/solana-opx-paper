@@ -17,7 +17,7 @@ import { ExpirationDatePicker } from './expiration-date-select';
 import { StrikePriceInput } from './strike-price-input';
 import { PremiumDisplay } from './premium-display';
 import { QuantityInput } from './quantity-input';
-import { EDIT_REFRESH_INTERVAL } from '@/constants/option-lab/constants';
+import { EDIT_REFRESH_INTERVAL } from '@/constants/constants';
 import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./maker-summary";
 import { CollateralProvider, CollateralState } from "./collateral-provider";

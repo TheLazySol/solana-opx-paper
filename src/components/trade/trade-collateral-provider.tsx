@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BASE_ANNUAL_INTEREST_RATE, MAX_LEVERAGE } from '@/constants/option-lab/constants'
+import { BASE_ANNUAL_INTEREST_RATE, MAX_LEVERAGE } from '@/constants/constants'
 
 const COLLATERAL_TYPES = [
   { value: "USDC", label: "USDC", default: true },
@@ -129,12 +129,16 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   const dailyBorrowCost = borrowedAmount * dailyBorrowRate;
 
   return (
-    <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
+    <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg h-full">
+      hover:bg-transparent shadow-lg h-full
+      ${isDebit && externalCollateralNeeded === 0 ? 'opacity-50 pointer-events-none select-none' : ''}`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium text-muted-foreground">
           Collateral Requirements
+          {isDebit && externalCollateralNeeded === 0 && (
+            <span className="ml-2 text-xs font-normal">(Not Required)</span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

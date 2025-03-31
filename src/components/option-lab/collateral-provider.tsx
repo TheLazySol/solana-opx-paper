@@ -10,7 +10,7 @@ import {
   BASE_ANNUAL_INTEREST_RATE,
   TRANSACTION_COST_SOL,
   MAX_LEVERAGE
-} from "@/constants/option-lab/constants";
+} from "@/constants/constants";
 import { 
   calculateCollateralNeeded, 
   calculateRequiredCollateral, 
