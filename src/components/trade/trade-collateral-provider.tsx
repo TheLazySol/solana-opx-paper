@@ -99,9 +99,6 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   const collateralNeeded = calculateCollateralNeeded()
   const formattedCollateral = collateralNeeded.toFixed(2)
 
-  // Calculate position size (collateral provided + borrowed amount)
-  const positionSize = Number(collateralProvided || 0) * leverage[0]
-
   // Calculate if enough collateral is provided
   const hasEnoughCollateral = Number(collateralProvided) >= collateralNeeded / leverage[0]
 
@@ -274,23 +271,6 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             </div>
 
             <Separator className="my-2 bg-white/10" />
-
-            {/* Position Size */}
-            <div className="flex items-center justify-between">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm text-muted-foreground cursor-help">Position Size</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Total position size including leverage</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <span className="text-lg font-semibold text-white">
-                ${positionSize.toFixed(2)}
-              </span>
-            </div>
 
             {/* Not Enough Collateral Warning */}
             {!hasEnoughCollateral && Number(collateralProvided) > 0 && (
