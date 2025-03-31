@@ -2,6 +2,7 @@ import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './create-order'
 import { PlaceTradeOrder } from './place-trade-order'
+import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/use-toast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
@@ -117,8 +118,8 @@ export const TradeView: FC<TradeViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Create Order and Place Trade Order */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr] gap-4">
+      {/* Create Order and Trade Details */}
+      <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr,1fr] gap-4">
         <CreateOrder 
           selectedOptions={selectedOptions}
           onRemoveOption={handleRemoveOption}
@@ -128,6 +129,10 @@ export const TradeView: FC<TradeViewProps> = ({
         <PlaceTradeOrder 
           selectedOptions={selectedOptions} 
           selectedAsset={selectedOptions[0]?.asset || ''} 
+        />
+        <TradeCollateralProvider 
+          selectedOptions={selectedOptions}
+          selectedAsset={selectedOptions[0]?.asset || ''}
         />
       </div>
       
