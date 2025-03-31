@@ -8,14 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BASE_ANNUAL_INTEREST_RATE } from '@/constants/option-lab/constants'
+import { BASE_ANNUAL_INTEREST_RATE, MAX_LEVERAGE } from '@/constants/option-lab/constants'
 
 const COLLATERAL_TYPES = [
   { value: "USDC", label: "USDC", default: true },
   { value: "SOL", label: "SOL" },
 ]
-
-const MAX_LEVERAGE = 1.5 // Maximum leverage allowed
 
 interface TradeCollateralProviderProps {
   selectedOptions: SelectedOption[]
