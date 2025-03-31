@@ -4,17 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/option-lab/constants'
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
   selectedAsset: string
   onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
+  borrowedAmount?: number
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedOptions = [],
   selectedAsset,
-  onOrderDataChange
+  onOrderDataChange,
+  borrowedAmount = 0
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -82,6 +85,27 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const formattedVolume = volume.toFixed(2)
   const formattedCollateral = collateralNeeded.toFixed(2)
 
+  // Calculate fees
+  const fees = useMemo(() => {
+    if (!hasSelectedOptions) return {
+      optionCreationFee: 0,
+      borrowFee: 0,
+      transactionCost: 0,
+      totalFees: 0
+    };
+
+    const optionCreationFee = OPTION_CREATION_FEE_RATE * selectedOptions.length; // Fee per option
+    const borrowFee = borrowedAmount * BORROW_FEE_RATE; // Fee for borrowed amount
+    const transactionCost = TRANSACTION_COST_SOL; // Base transaction cost in SOL
+
+    return {
+      optionCreationFee,
+      borrowFee,
+      transactionCost,
+      totalFees: optionCreationFee + borrowFee + transactionCost
+    };
+  }, [hasSelectedOptions, selectedOptions.length, borrowedAmount]);
+
   // Notify parent component of order data changes
   useEffect(() => {
     onOrderDataChange?.({ isDebit, collateralNeeded })
@@ -118,7 +142,37 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <span className="text-muted-foreground">Collateral Needed</span>
               <span className="font-medium">${formattedCollateral} USDC</span>
             </div>
+
+            {/* Fees Section */}
+            <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">Option Creation Fee:</span>
+                <span>{fees.optionCreationFee.toFixed(3)} SOL</span>
+              </div>
+              {borrowedAmount > 0 && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Borrow Fee:</span>
+                  <span>${fees.borrowFee.toFixed(2)} USDC</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">Transaction Cost:</span>
+                <span>{fees.transactionCost.toFixed(3)} SOL</span>
+              </div>
+              <Separator className="my-1 bg-white/10" />
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-medium">Total Fees:</span>
+                <div className="text-right">
+                  <div>{(fees.optionCreationFee + fees.transactionCost).toFixed(3)} SOL</div>
+                  {borrowedAmount > 0 && (
+                    <div>${fees.borrowFee.toFixed(2)} USDC</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <Separator className="my-2 bg-white/10" />
+            
             {/* Total Amount */}
             <div className="flex items-center justify-between">
               <span className={`text-sm ${isDebit ? 'text-red-500' : 'text-green-500'}`}>

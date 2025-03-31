@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BASE_ANNUAL_INTEREST_RATE } from '@/constants/option-lab/constants'
 
 const COLLATERAL_TYPES = [
   { value: "USDC", label: "USDC", default: true },
@@ -109,6 +110,18 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     return Math.min(optimal, MAX_LEVERAGE)
   }
 
+  // Calculate borrowed amount based on collateral and leverage
+  const borrowedAmount = useMemo(() => {
+    if (!Number(collateralProvided) || leverage[0] <= 1) return 0;
+    return Number(collateralProvided) * (leverage[0] - 1);
+  }, [collateralProvided, leverage]);
+
+  // Calculate daily borrow rate
+  const dailyBorrowRate = BASE_ANNUAL_INTEREST_RATE / 365;
+
+  // Calculate estimated daily borrow cost
+  const dailyBorrowCost = borrowedAmount * dailyBorrowRate;
+
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -118,7 +131,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
           Collateral Requirements
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {hasSelectedOptions ? (
           <div className="space-y-3">
             {/* Collateral Details */}
@@ -138,69 +151,55 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               <span className="font-semibold text-lg">${formattedCollateral}</span>
             </div>
 
-            {/* Collateral Input */}
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm font-medium mb-1 block cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>This is the amount of collateral you want to provide for this position.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={collateralType}
-                  onValueChange={setCollateralType}
-                  disabled={isDebit && externalCollateralNeeded === 0}
-                >
-                  <SelectTrigger className="h-10 w-24 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COLLATERAL_TYPES.map((type) => (
-                      <SelectItem
-                        key={type.value}
-                        value={type.value}
-                        className="text-sm"
-                      >
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  value={collateralProvided}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    if (value === '' || /^\d+(\.\d{0,2})?$/.test(value)) {
-                      setCollateralProvided(value)
-                    }
-                  }}
-                  disabled={isDebit && externalCollateralNeeded === 0}
-                  min="1"
-                  step="0.01"
-                  className="h-10 flex-1 px-3 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
-                    focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
-                    text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                    disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="0.00"
-                />
-              </div>
+            {/* Compact Collateral Input */}
+            <div className="flex items-center gap-2">
+              <Select
+                value={collateralType}
+                onValueChange={setCollateralType}
+                disabled={isDebit && externalCollateralNeeded === 0}
+              >
+                <SelectTrigger className="h-8 w-20 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COLLATERAL_TYPES.map((type) => (
+                    <SelectItem
+                      key={type.value}
+                      value={type.value}
+                      className="text-sm"
+                    >
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                value={collateralProvided}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === '' || /^\d+(\.\d{0,2})?$/.test(value)) {
+                    setCollateralProvided(value)
+                  }
+                }}
+                disabled={isDebit && externalCollateralNeeded === 0}
+                min="1"
+                step="0.01"
+                className="h-8 flex-1 px-2 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
+                  focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
+                  text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="0.00"
+              />
             </div>
 
-            {/* Leverage Controls */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
+            {/* Compact Leverage Controls */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="text-sm font-medium cursor-help">
+                      <span className="text-xs font-medium cursor-help">
                         <span className="border-b border-dotted border-slate-500">Leverage</span>
                       </span>
                     </TooltipTrigger>
@@ -209,7 +208,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <div className="flex space-x-1.5">
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -218,63 +217,61 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                       const optimalLeverage = calculateOptimalLeverage()
                       setLeverage([optimalLeverage])
                     }}
-                    className="h-6 px-2 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
+                    className="h-5 px-2 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
                       hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
                       transition-all duration-200"
                   >
-                    Auto-Size
+                    Auto
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const newLeverage = Math.max(1, leverage[0] - 0.01)
-                      setLeverage([newLeverage])
-                    }}
-                    className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
-                      hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
-                      transition-all duration-200 flex items-center justify-center"
-                  >
-                    -
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const newLeverage = Math.min(MAX_LEVERAGE, leverage[0] + 0.01)
-                      setLeverage([newLeverage])
-                    }}
-                    className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
-                      hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
-                      transition-all duration-200 flex items-center justify-center"
-                  >
-                    +
-                  </Button>
+                  <span className="text-xs font-medium w-12 text-right">
+                    {leverage[0].toFixed(2)}x
+                  </span>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Slider
-                  min={1}
-                  max={MAX_LEVERAGE}
-                  step={0.01}
-                  value={leverage}
-                  onValueChange={setLeverage}
-                  className="flex-1"
-                />
-                <span className="font-medium w-12 text-right">
-                  {leverage[0].toFixed(2)}x
-                </span>
-              </div>
+              <Slider
+                min={1}
+                max={MAX_LEVERAGE}
+                step={0.01}
+                value={leverage}
+                onValueChange={setLeverage}
+                className="flex-1"
+              />
             </div>
 
             <Separator className="my-2 bg-white/10" />
 
+            {/* Borrow Summary */}
+            {borrowedAmount > 0 && (
+              <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Amount Borrowed:</span>
+                  <span className="text-sm font-medium">${borrowedAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-xs text-muted-foreground cursor-help">
+                          <span className="border-b border-dotted border-slate-500">Daily Borrow Rate:</span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Annual rate: {(BASE_ANNUAL_INTEREST_RATE * 100).toFixed(2)}%</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <span className="text-sm font-medium">{(dailyBorrowRate * 100).toFixed(3)}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Est. Daily Cost:</span>
+                  <span className="text-sm font-medium">${dailyBorrowCost.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
             {/* Not Enough Collateral Warning */}
             {!hasEnoughCollateral && Number(collateralProvided) > 0 && (
-              <div className="text-sm text-red-500 mt-2">
+              <div className="text-xs text-red-500">
                 Not enough collateral provided. Please increase collateral or leverage.
               </div>
             )}
