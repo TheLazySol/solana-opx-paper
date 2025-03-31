@@ -125,6 +125,16 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 expiry: option.expiry
               })
               
+              // Extract option type (Call/Put) from the formatted string
+              const optionType = formattedOption.includes('Call') ? 'Call' : 'Put'
+              
+              // Extract and format the expiry date
+              const expiryDate = option.expiry.split('T')[0] // Assuming ISO date format
+              
+              // Clean the option name to show asset and strike separately
+              const assetName = option.asset
+              const strikePrice = `$${option.strike}`
+              
               // Determine price color based on option type
               const priceColor = option.type === 'bid' 
                 ? 'text-green-500' 
@@ -132,14 +142,41 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               
               return (
                 <Card key={index} className="bg-black/10 border border-white/10">
-                  <CardContent className="p-3 flex justify-between items-start">
+                  <CardContent className="p-3">
                     <div className="flex flex-col space-y-2 w-full">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={option.type === 'bid' ? 'success' : 'destructive'} className="capitalize">
-                          {option.type === 'bid' ? 'Long' : 'Short'}
-                        </Badge>
-                        <span className="font-medium text-sm">{formattedOption}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                         <Badge variant="grey" className="capitalize">
+                            {assetName}
+                          </Badge>
+                          <Badge variant={option.type === 'bid' ? 'success' : 'destructive'} className="capitalize">
+                            {option.type === 'bid' ? 'Long' : 'Short'}
+                          </Badge>
+                          <Badge variant="blue" className="capitalize">
+                            {optionType}
+                          </Badge>
+                          <Badge variant="blue" className="capitalize">
+                            {strikePrice}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Badge variant="blue" className="capitalize">
+                            EXP: {expiryDate}
+                          </Badge>
+                          {onRemoveOption && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7 text-muted-foreground hover:text-white"
+                              onClick={() => onRemoveOption(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
+                      
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">Price:</span>
@@ -183,17 +220,6 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         </div>
                       </div>
                     </div>
-                    
-                    {onRemoveOption && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 ml-2 text-muted-foreground hover:text-white"
-                        onClick={() => onRemoveOption(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
               )
