@@ -107,7 +107,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg">
+      hover:bg-transparent shadow-lg h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium text-muted-foreground">
           Order Summary
@@ -116,41 +116,41 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       <CardContent className="space-y-4">
         <div className="space-y-3">
           {/* Order Details */}
-          <div className="flex items-center justify-between text-sm">
+          <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Total Quantity</span>
-            <span className="font-medium">{hasSelectedOptions ? totalQuantity : '--'}</span>
+            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity : '--'}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Order Type</span>
-            <span className={`font-medium capitalize ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
+            <span className={`font-medium capitalize text-right ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
               {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Volume</span>
-            <span className="font-medium">
+            <span className="font-medium text-right">
               {hasSelectedOptions ? `$${formattedVolume} USDC` : '--'}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Collateral Needed</span>
-            <span className="font-medium">
+            <span className="font-medium text-right">
               {hasSelectedOptions ? `$${formattedCollateral} USDC` : '--'}
             </span>
           </div>
 
           {/* Fees Section - Always visible */}
           <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-            <div className="flex justify-between items-center text-sm">
+            <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Option Creation Fee:</span>
-              <span>{hasSelectedOptions ? `${fees.optionCreationFee.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `${fees.optionCreationFee.toFixed(3)} SOL` : '--'}</span>
             </div>
-            <div className="flex justify-between items-center text-sm">
+            <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Transaction Cost:</span>
-              <span>{hasSelectedOptions ? `${fees.transactionCost.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `${fees.transactionCost.toFixed(3)} SOL` : '--'}</span>
             </div>
             <Separator className="my-1 bg-white/10" />
-            <div className="flex justify-between items-center text-sm">
+            <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="font-medium">Total Fees:</span>
               <div className="text-right">
                 <div>{hasSelectedOptions ? `${(fees.optionCreationFee + fees.transactionCost).toFixed(3)} SOL` : '--'}</div>
@@ -164,11 +164,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           <Separator className="my-2 bg-white/10" />
           
           {/* Premium Amount */}
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 gap-2">
             <span className={`text-sm ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
               Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
             </span>
-            <span className="text-lg font-semibold text-white">
+            <span className="text-lg font-semibold text-white text-right">
               {hasSelectedOptions ? `$${formattedAmount} USDC` : '--'}
             </span>
           </div>

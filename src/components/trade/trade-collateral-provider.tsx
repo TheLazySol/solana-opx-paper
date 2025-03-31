@@ -125,7 +125,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg">
+      hover:bg-transparent shadow-lg h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium text-muted-foreground">
           Collateral Requirements
@@ -152,7 +152,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             </div>
 
             {/* Collateral Input */}
-            <div>
+            <div className="w-full">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -165,7 +165,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <Select
                   value={collateralType}
                   onValueChange={setCollateralType}

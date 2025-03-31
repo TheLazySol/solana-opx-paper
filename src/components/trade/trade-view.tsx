@@ -123,27 +123,32 @@ export const TradeView: FC<TradeViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Create Order and Trade Details */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr,1fr] gap-4">
+      <div className="grid grid-cols-1 gap-4">
+        {/* Create Order - Full Width */}
         <CreateOrder 
           selectedOptions={selectedOptions}
           onRemoveOption={handleRemoveOption}
           onUpdateQuantity={handleQuantityUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
         />
-        <TradeCollateralProvider 
-          selectedOptions={selectedOptions}
-          selectedAsset={selectedOptions[0]?.asset || ''}
-          isDebit={orderData.isDebit}
-          externalCollateralNeeded={orderData.collateralNeeded}
-        />
-        <PlaceTradeOrder 
-          selectedOptions={selectedOptions} 
-          selectedAsset={selectedOptions[0]?.asset || ''} 
-          onOrderDataChange={setOrderData}
-        />
+        
+        {/* Collateral and Order Summary - Side by Side on md+ screens */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TradeCollateralProvider 
+            selectedOptions={selectedOptions}
+            selectedAsset={selectedOptions[0]?.asset || ''}
+            isDebit={orderData.isDebit}
+            externalCollateralNeeded={orderData.collateralNeeded}
+          />
+          <PlaceTradeOrder 
+            selectedOptions={selectedOptions} 
+            selectedAsset={selectedOptions[0]?.asset || ''} 
+            onOrderDataChange={setOrderData}
+          />
+        </div>
       </div>
       
-      {/* PnL Chart */}
+      {/* PnL Chart - Full Width */}
       <TradePnLChart selectedOptions={selectedOptions} />
     </div>
   )
