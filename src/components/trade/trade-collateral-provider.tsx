@@ -19,11 +19,15 @@ const MAX_LEVERAGE = 1.5 // Maximum leverage allowed
 interface TradeCollateralProviderProps {
   selectedOptions: SelectedOption[]
   selectedAsset: string
+  isDebit: boolean
+  externalCollateralNeeded: number
 }
 
 export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   selectedOptions = [],
-  selectedAsset
+  selectedAsset,
+  isDebit,
+  externalCollateralNeeded
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -155,6 +159,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                 <Select
                   value={collateralType}
                   onValueChange={setCollateralType}
+                  disabled={isDebit && externalCollateralNeeded === 0}
                 >
                   <SelectTrigger className="h-10 w-24 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40">
                     <SelectValue />
@@ -180,11 +185,13 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                       setCollateralProvided(value)
                     }
                   }}
+                  disabled={isDebit && externalCollateralNeeded === 0}
                   min="1"
                   step="0.01"
                   className="h-10 flex-1 px-3 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] 
                     focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40
-                    text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="0.00"
                 />
               </div>

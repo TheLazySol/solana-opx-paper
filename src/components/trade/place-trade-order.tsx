@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -8,11 +8,13 @@ import { useAssetPriceInfo } from '@/context/asset-price-provider'
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
   selectedAsset: string
+  onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedOptions = [],
-  selectedAsset
+  selectedAsset,
+  onOrderDataChange
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -79,6 +81,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
   const formattedVolume = volume.toFixed(2)
   const formattedCollateral = collateralNeeded.toFixed(2)
+
+  // Notify parent component of order data changes
+  useEffect(() => {
+    onOrderDataChange?.({ isDebit, collateralNeeded })
+  }, [isDebit, collateralNeeded, onOrderDataChange])
 
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 

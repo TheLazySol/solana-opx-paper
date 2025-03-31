@@ -20,6 +20,10 @@ export const TradeView: FC<TradeViewProps> = ({
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
   )
   const prevInitialOptionsRef = useRef<SelectedOption[]>(initialSelectedOptions)
+  const [orderData, setOrderData] = useState<{ isDebit: boolean; collateralNeeded: number }>({
+    isDebit: false,
+    collateralNeeded: 0
+  })
 
   // Update selected options ONLY when initialSelectedOptions actually changes
   useEffect(() => {
@@ -129,10 +133,13 @@ export const TradeView: FC<TradeViewProps> = ({
         <PlaceTradeOrder 
           selectedOptions={selectedOptions} 
           selectedAsset={selectedOptions[0]?.asset || ''} 
+          onOrderDataChange={setOrderData}
         />
         <TradeCollateralProvider 
           selectedOptions={selectedOptions}
           selectedAsset={selectedOptions[0]?.asset || ''}
+          isDebit={orderData.isDebit}
+          externalCollateralNeeded={orderData.collateralNeeded}
         />
       </div>
       
