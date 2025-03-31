@@ -132,11 +132,11 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
       hover:bg-transparent shadow-lg h-full
-      ${isDebit && externalCollateralNeeded === 0 ? 'opacity-50 pointer-events-none select-none' : ''}`}>
+      ${(!hasSelectedOptions || (isDebit && externalCollateralNeeded === 0)) ? 'opacity-50 pointer-events-none select-none' : ''}`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium text-muted-foreground">
           Collateral Requirements
-          {isDebit && externalCollateralNeeded === 0 && (
+          {(!hasSelectedOptions || (isDebit && externalCollateralNeeded === 0)) && (
             <span className="ml-2 text-xs font-normal">(Not Required)</span>
           )}
         </CardTitle>
