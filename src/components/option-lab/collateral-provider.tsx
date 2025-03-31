@@ -84,7 +84,15 @@ export function CollateralProvider({
   // Calculate time until expiration (in hours)
   const getTimeUntilExpiration = () => {
     // Find the latest expiry from all options
-    const now = Math.floor(Date.now() / 1000); // Convert to seconds
+    const now = new Date()
+    const utcNow = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds()
+    ))
     let latestExpiry = 0;
     
     options.forEach(option => {
@@ -95,11 +103,11 @@ export function CollateralProvider({
     
     // If no expiry found, use 7 days as default
     if (latestExpiry === 0) {
-      latestExpiry = now + (7 * 24 * 60 * 60); // 7 days in seconds
+      latestExpiry = Math.floor(utcNow.getTime() / 1000) + (7 * 24 * 60 * 60); // 7 days in seconds
     }
     
     // Calculate hours until expiry
-    return Math.max(0, Math.ceil((latestExpiry - now) / 3600));
+    return Math.max(0, Math.ceil((latestExpiry - Math.floor(utcNow.getTime() / 1000)) / 3600));
   };
   
   const hoursUntilExpiry = getTimeUntilExpiration();

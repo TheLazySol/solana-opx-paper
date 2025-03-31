@@ -41,7 +41,8 @@ const formatExpirationDate = (dateStr: string) => {
  */
 export const formatOptionExpirationDate = (dateStr: string) => {
   const date = new Date(dateStr)
-  return format(date, "MMM-dd-yyyy")
+  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+  return format(utcDate, "MMM-dd-yyyy")
 }
 
 /**
@@ -71,7 +72,7 @@ export const SOL_PH_RISK_FREE_RATE = 0.08;
 export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
-export const OPTION_STRIKE_PRICES = [100,105,110,115,120,125,130,135,140,145,150];
+export const OPTION_STRIKE_PRICES = [118,119,120,121,122,123,124,125,126,127,128,129,130];
 
 // Maximum number of option legs allowed in an order
 export const MAX_OPTION_LEGS = 4;
