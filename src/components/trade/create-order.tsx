@@ -101,6 +101,23 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     onUpdateQuantity(index, newQuantity)
   }
 
+  // Handle switching between MKT and LMT
+  const handleOrderTypeChange = (index: number, type: 'MKT' | 'LMT') => {
+    setOrderTypes(prev => ({ ...prev, [index]: type }));
+    
+    if (type === 'MKT') {
+      // When switching to MKT, set limit price to current market price
+      if (onUpdateLimitPrice) {
+        onUpdateLimitPrice(index, selectedOptions[index].price);
+      }
+      // Reset input value to current market price
+      setInputValues(prev => ({ 
+        ...prev, 
+        [index]: selectedOptions[index].price.toFixed(2) 
+      }));
+    }
+  };
+
   // Handle price input changes
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     if (!onUpdateLimitPrice || orderTypes[index] === 'MKT') return;
@@ -220,7 +237,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
                               : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
                           } transition-all duration-200`}
-                          onClick={() => setOrderTypes(prev => ({ ...prev, [index]: 'MKT' }))}
+                          onClick={() => handleOrderTypeChange(index, 'MKT')}
                         >
                           MKT
                         </Button>
@@ -232,7 +249,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
                               : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
                           } transition-all duration-200`}
-                          onClick={() => setOrderTypes(prev => ({ ...prev, [index]: 'LMT' }))}
+                          onClick={() => handleOrderTypeChange(index, 'LMT')}
                         >
                           LMT
                         </Button>
@@ -240,19 +257,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Price:</span>
-                          <div className="relative">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                            <Input
-                              type="text"
-                              value={getDisplayPrice(option, index)}
-                              onChange={(e) => handlePriceInputChange(e, index)}
-                              className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
-                              placeholder="Enter price"
-                              disabled={orderTypes[index] === 'MKT'}
-                            />
-                          </div>
-                          <span className="text-sm text-muted-foreground">USDC</span>
+                          {orderTypes[index] === 'MKT' ? (
+                            // Market Price Display (Text)
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Current Price:</span>
+                              <span className={`text-sm font-medium ${priceColor}`}>
+                                ${option.price.toFixed(2)}
+                              </span>
+                            </div>
+                          ) : (
+                            // Limit Price Input
+                            <>
+                              <span className="text-sm text-muted-foreground">Set Limit Price:</span>
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                                <Input
+                                  type="text"
+                                  value={inputValues[index]}
+                                  onChange={(e) => handlePriceInputChange(e, index)}
+                                  className={`h-6 w-16 text-sm pl-5 ${priceColor}`}
+                                  placeholder="Enter price"
+                                />
+                              </div>
+                            </>
+                          )}
                         </div>
                         
                         <div className="flex items-center gap-2">
