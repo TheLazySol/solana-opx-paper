@@ -31,9 +31,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const totalAmount = selectedOptions.reduce((total, option) => {
     const quantity = option.quantity || 1
     const contractSize = 100 // Each option contract represents 100 units of underlying
+    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
     return option.type === 'bid' 
-      ? total - (option.price * quantity * contractSize)
-      : total + (option.price * quantity * contractSize)
+      ? total - (optionPrice * quantity * contractSize)
+      : total + (optionPrice * quantity * contractSize)
   }, 0)
 
   // Calculate volume (USD value of the order)
