@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react'
+import { FC, useMemo, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
@@ -21,6 +21,21 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   onUpdateQuantity,
   onUpdateLimitPrice
 }) => {
+  const [orderTypes, setOrderTypes] = useState<Record<number, 'MKT' | 'LMT'>>(
+    Object.fromEntries(selectedOptions.map((_, index) => [index, 'MKT']))
+  );
+
+  // Update orderTypes when options change
+  useEffect(() => {
+    setOrderTypes(prev => {
+      const newOrderTypes: Record<number, 'MKT' | 'LMT'> = {};
+      selectedOptions.forEach((_, index) => {
+        newOrderTypes[index] = prev[index] || 'MKT';
+      });
+      return newOrderTypes;
+    });
+  }, [selectedOptions, selectedOptions.length]);
+
   // Get unique assets from selected options
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const uniqueAssets = [...new Set(selectedOptions.map(option => option.asset))];
@@ -177,6 +192,33 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         </div>
                       </div>
                       
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`h-6 w-16 px-2 py-0 text-xs ${
+                            orderTypes[index] === 'MKT' 
+                              ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
+                              : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
+                          } transition-all duration-200`}
+                          onClick={() => setOrderTypes(prev => ({ ...prev, [index]: 'MKT' }))}
+                        >
+                          MKT
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`h-6 w-16 px-2 py-0 text-xs ${
+                            orderTypes[index] === 'LMT' 
+                              ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
+                              : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
+                          } transition-all duration-200`}
+                          onClick={() => setOrderTypes(prev => ({ ...prev, [index]: 'LMT' }))}
+                        >
+                          LMT
+                        </Button>
+                      </div>
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">Price:</span>
@@ -188,7 +230,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               onChange={(e) => handlePriceInputChange(e, index)}
                               className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
                               placeholder="Enter price"
-                              disabled
+                              disabled={orderTypes[index] === 'MKT'}
                             />
                           </div>
                           <span className="text-sm text-muted-foreground">USDC</span>
