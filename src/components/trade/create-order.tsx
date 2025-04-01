@@ -24,6 +24,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const [orderTypes, setOrderTypes] = useState<Record<number, 'MKT' | 'LMT'>>(
     Object.fromEntries(selectedOptions.map((_, index) => [index, 'MKT']))
   );
+  
+  // Add state for input values
+  const [inputValues, setInputValues] = useState<Record<number, string>>(
+    Object.fromEntries(selectedOptions.map((option, index) => [index, option.price.toFixed(2)]))
+  );
 
   // Update orderTypes when options change
   useEffect(() => {
@@ -35,6 +40,19 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       return newOrderTypes;
     });
   }, [selectedOptions, selectedOptions.length]);
+
+  // Update input values when options change
+  useEffect(() => {
+    setInputValues(prev => {
+      const newValues = { ...prev };
+      selectedOptions.forEach((option, index) => {
+        if (!newValues[index]) {
+          newValues[index] = option.price.toFixed(2);
+        }
+      });
+      return newValues;
+    });
+  }, [selectedOptions]);
 
   // Get unique assets from selected options
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,34 +101,35 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     onUpdateQuantity(index, newQuantity)
   }
 
-  // Handle price input changes with better user experience
+  // Handle price input changes
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    if (!onUpdateLimitPrice) return;
+    if (!onUpdateLimitPrice || orderTypes[index] === 'MKT') return;
     
-    // Get the raw input value
     const inputValue = e.target.value;
     
-    // Allow empty input or valid number format
-    if (inputValue === '' || inputValue === '.' || inputValue === '0') {
-      if (onUpdateLimitPrice && (inputValue === '' || inputValue === '0')) {
-        onUpdateLimitPrice(index, 0);
-      }
-      return;
-    }
+    // Don't allow negative numbers
+    if (inputValue.startsWith('-')) return;
     
-    // Only allow valid number formats
-    if (/^[0-9]*\.?[0-9]*$/.test(inputValue)) {
-      const parsed = parseFloat(inputValue);
+    // Update the display value immediately for all valid inputs
+    if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
+      setInputValues(prev => ({ ...prev, [index]: inputValue }));
       
-      if (!isNaN(parsed)) {
-        onUpdateLimitPrice(index, parsed);
+      // Only update the actual price if it's a valid number
+      if (inputValue !== '' && inputValue !== '.') {
+        const parsed = parseFloat(inputValue);
+        if (!isNaN(parsed)) {
+          onUpdateLimitPrice(index, parsed);
+        }
       }
     }
   };
 
   // Get the display price for an option
-  const getDisplayPrice = (option: SelectedOption): string => {
-    return option.limitPrice !== undefined ? Number(option.limitPrice).toFixed(2) : option.price.toFixed(2);
+  const getDisplayPrice = (option: SelectedOption, index: number): string => {
+    if (orderTypes[index] === 'MKT') {
+      return option.price.toFixed(2);
+    }
+    return inputValues[index] || '';
   };
 
   return (
@@ -226,7 +245,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                             <Input
                               type="text"
-                              value={getDisplayPrice(option)}
+                              value={getDisplayPrice(option, index)}
                               onChange={(e) => handlePriceInputChange(e, index)}
                               className={`h-6 w-24 text-sm pl-5 ${priceColor}`}
                               placeholder="Enter price"
