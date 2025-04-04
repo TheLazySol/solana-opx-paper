@@ -37,18 +37,3 @@ Build the web app
 ```shell
 pnpm build
 ```
-## Project Progress
-
-| Component/Feature | Status | Description |
-|------------------|---------|-------------|
-| Next.js Frontend | ✅ Complete | Basic Next.js 14 setup with TypeScript and Tailwind CSS |
-| Wallet Integration | ✅ Complete | Solana wallet adapter integration with UI components |
-| Option Calculator | ✅ Complete | Black-Scholes model implementation for option pricing |
-| Price Oracle | ✅ Complete | Birdeye API integration for real-time token prices |
-| Smart Contract | 🚧 In Progress | Anchor program for option minting and trading |
-| Testing Suite | 🚧 In Progress | Unit tests and integration tests |
-| Documentation | 📝 Ongoing | API documentation and usage guides |
-| UI/UX Design | 🚧 In Progress | Responsive design and user interface components |
-| Security Audit | ⏳ Pending | Smart contract security review |
-| Deployment | ⏳ Pending | Mainnet deployment and final testing |
-
