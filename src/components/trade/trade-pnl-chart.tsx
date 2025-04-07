@@ -11,11 +11,17 @@ import {
   Area,
   Line
 } from "recharts"
-import { SelectedOption } from './option-data'
+import type { SelectedOption } from './option-data'
 import { STANDARD_CONTRACT_SIZE } from '@/constants/constants'
 
+// Extend the base SelectedOption interface with order-specific fields
+interface TradePnLOption extends SelectedOption {
+  orderType?: 'MKT' | 'LMT'
+  limitPrice?: number
+}
+
 interface TradePnLChartProps {
-  selectedOptions: SelectedOption[]
+  selectedOptions: TradePnLOption[]
 }
 
 interface PnLDataPoint {
@@ -89,7 +95,10 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     let totalPremium = 0
     
     selectedOptions.forEach(option => {
-      const price = Number(option.price)
+      // Use limitPrice if it exists, otherwise use market price
+      const price = (option as any).limitPrice !== undefined 
+        ? (option as any).limitPrice 
+        : option.price
       const quantity = Number(option.quantity)
       const contractSize = STANDARD_CONTRACT_SIZE
       
