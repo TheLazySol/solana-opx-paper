@@ -431,7 +431,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 strokeDasharray="3 3"
               >
                 <Label
-                  value={`Break-even: $${price.toFixed(2)}`}
+                  value={`Break Even Price: $${price.toFixed(2)}`}
                   fill="#9ca3af"
                   fontSize={11}
                   position="insideTopRight"
@@ -465,9 +465,9 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               const isBuy = option.type === 'bid'
               
               // Color based on option type and direction
-              const color = isCall 
-                ? (isBuy ? "#f97316" : "#fb923c") // Orange for calls
-                : (isBuy ? "#06b6d4" : "#22d3ee") // Cyan for puts
+              const color = isBuy 
+                ? "#22c55e" // Green for long options
+                : "#ef4444" // Red for short options
               
               // Position label based on index to prevent overlap
               const labelPosition = index % 2 === 0 ? 'insideBottomRight' : 'insideTopRight'
@@ -531,7 +531,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               type="monotone"
               dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
               stroke="none"
-              fillOpacity={0.2}
+              fillOpacity={0.4}
               fill="url(#profitGradient)"
               isAnimationActive={false}
               activeDot={false}
@@ -542,7 +542,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               type="monotone"
               dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
               stroke="none"
-              fillOpacity={0.2}
+              fillOpacity={0.4}
               fill="url(#lossGradient)"
               isAnimationActive={false}
               activeDot={false}
