@@ -29,7 +29,8 @@ interface PnLDataPoint {
   name: string
   value: number
   price: number
-  percentageValue: number // Add percentage value for relative scaling
+  percentageValue: number // Capped percentage value for chart display
+  actualPercentageValue: number // Uncapped percentage value for tooltip
 }
 
 // Custom tooltip component for displaying PnL data
@@ -40,7 +41,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
   const data = payload[0].payload;
   const value = data.value;
-  const percentageValue = data.percentageValue;
+  const percentageValue = data.actualPercentageValue; // Use the uncapped percentage value
 
   // Format value for better readability
   const formattedValue = value >= 0
@@ -200,16 +201,17 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
       // Calculate percentage value relative to premium
       // If premium is 0, use a small number to avoid division by zero
       const absPremium = Math.abs(totalPremium) || 0.01
-      let percentageValue = (pnl / absPremium) * 100
+      const actualPercentageValue = (pnl / absPremium) * 100
       
-      // Cap percentage values at -100% and +100%
-      percentageValue = Math.max(Math.min(percentageValue, 100), -100)
+      // Cap percentage values at -100% and +100% for chart display only
+      const percentageValue = Math.max(Math.min(actualPercentageValue, 100), -100)
 
       return {
         price,
         name: `$${price.toFixed(2)}`,
         value: Number(pnl.toFixed(2)),
-        percentageValue: Number(percentageValue.toFixed(2))
+        percentageValue: Number(percentageValue.toFixed(2)),
+        actualPercentageValue: Number(actualPercentageValue.toFixed(2))
       }
     })
 
