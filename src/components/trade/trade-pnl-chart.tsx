@@ -13,6 +13,7 @@ import {
 } from "recharts"
 import type { SelectedOption } from './option-data'
 import { STANDARD_CONTRACT_SIZE } from '@/constants/constants'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 // Extend the base SelectedOption interface with order-specific fields
 interface TradePnLOption extends SelectedOption {
@@ -28,6 +29,7 @@ interface PnLDataPoint {
   name: string
   value: number
   price: number
+  percentageValue: number // Add percentage value for relative scaling
 }
 
 // Custom tooltip component for displaying PnL data
@@ -38,11 +40,17 @@ const CustomTooltip = ({ active, payload }: any) => {
 
   const data = payload[0].payload;
   const value = data.value;
+  const percentageValue = data.percentageValue;
 
   // Format value for better readability
   const formattedValue = value >= 0
     ? `+$${value.toFixed(2)}`
     : `-$${Math.abs(value).toFixed(2)}`;
+
+  // Format percentage value
+  const formattedPercentage = percentageValue >= 0
+    ? `+${percentageValue.toFixed(2)}%`
+    : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
   const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
@@ -63,6 +71,10 @@ const CustomTooltip = ({ active, payload }: any) => {
           <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
           <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
         </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-gray-300 min-w-[70px]">Return:</span>
+          <span className={`text-xs font-medium ${valueColor}`}>{formattedPercentage}</span>
+        </div>
       </div>
     </div>
   );
@@ -70,6 +82,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = [] }) => {
   const chartRef = useRef<HTMLDivElement>(null)
+  
+  // Get the current asset price from the asset price provider
+  const asset = selectedOptions.length > 0 ? selectedOptions[0]?.asset : ''
+  const { price: currentMarketPrice } = useAssetPriceInfo(asset)
   
   // Calculate PnL points for the chart
   const calculatePnLPoints = useMemo(() => {
@@ -85,7 +101,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     ) / (totalQuantity || 1) // Prevent division by zero
     
     // Create a price range for visualization
-    const priceRange = avgStrike * 0.4 // 40% range
+    const priceRange = avgStrike * 0.10 // 10% range
     const minPrice = Math.max(avgStrike - priceRange, 0)
     const maxPrice = avgStrike + priceRange
     const steps = 100 // Higher resolution for smoother curve
@@ -138,10 +154,19 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
         pnl += positionEffect * intrinsicValue * quantity * contractSize
       })
 
+      // Calculate percentage value relative to premium
+      // If premium is 0, use a small number to avoid division by zero
+      const absPremium = Math.abs(totalPremium) || 0.01
+      let percentageValue = (pnl / absPremium) * 100
+      
+      // Cap percentage values at -100% and +100%
+      percentageValue = Math.max(Math.min(percentageValue, 100), -100)
+
       return {
         price,
         name: `$${price.toFixed(2)}`,
-        value: Number(pnl.toFixed(2))
+        value: Number(pnl.toFixed(2)),
+        percentageValue: Number(percentageValue.toFixed(2))
       }
     })
 
@@ -149,22 +174,33 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
   }, [selectedOptions])
 
   // Calculate max profit and loss for reference lines
-  const { maxProfit, maxLoss, breakEvenPoints, displayMaxProfit } = useMemo(() => {
+  const { maxProfit, maxLoss, breakEvenPoints, displayMaxProfit, maxProfitPercentage, maxLossPercentage } = useMemo(() => {
     if (calculatePnLPoints.length === 0) {
-      return { maxProfit: 0, maxLoss: 0, breakEvenPoints: [], displayMaxProfit: 0 }
+      return { 
+        maxProfit: 0, 
+        maxLoss: 0, 
+        breakEvenPoints: [], 
+        displayMaxProfit: 0,
+        maxProfitPercentage: 0,
+        maxLossPercentage: 0
+      }
     }
     
     let maxProfit = Number.MIN_SAFE_INTEGER
     let maxLoss = Number.MAX_SAFE_INTEGER
+    let maxProfitPercentage = 0
+    let maxLossPercentage = 0
     const breakEvenPoints: number[] = []
     
     // Find max profit and max loss
     calculatePnLPoints.forEach((point, index) => {
       if (point.value > maxProfit) {
         maxProfit = point.value
+        maxProfitPercentage = point.percentageValue
       }
       if (point.value < maxLoss) {
         maxLoss = point.value
+        maxLossPercentage = point.percentageValue
       }
       
       // Detect break-even points
@@ -190,19 +226,11 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
       maxProfit, // Keep original maxProfit for calculations
       maxLoss: Math.abs(maxLoss),
       breakEvenPoints,
-      displayMaxProfit
+      displayMaxProfit,
+      maxProfitPercentage,
+      maxLossPercentage
     }
   }, [calculatePnLPoints])
-
-  // Get the current asset price - for now use the average strike price
-  const currentMarketPrice = useMemo(() => {
-    if (selectedOptions.length === 0) return null
-    
-    const totalQuantity = selectedOptions.reduce((acc, opt) => acc + Number(opt.quantity), 0)
-    return selectedOptions.reduce(
-      (acc, opt) => acc + (Number(opt.strike) * Number(opt.quantity)), 0
-    ) / (totalQuantity || 1)
-  }, [selectedOptions])
 
   // Format X axis ticks for price
   const formatXTick = (value: any) => {
@@ -222,22 +250,15 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     const num = parseFloat(value)
     if (isNaN(num)) return ''
     
-    // Format with +/- sign and K suffix for thousands
-    if (Math.abs(num) >= 1000) {
-      return num >= 0 
-        ? `+$${(num / 1000).toFixed(1)}K` 
-        : `-$${(Math.abs(num) / 1000).toFixed(1)}K`
-    }
-    
-    return num >= 0 ? `+$${num.toFixed(0)}` : `-$${Math.abs(num).toFixed(0)}`
+    // Format with +/- sign and % symbol
+    return num >= 0 ? `+${num.toFixed(0)}%` : `-${Math.abs(num).toFixed(0)}%`
   }
 
   // Calculate the domain for Y axis to ensure $0 is in the middle and proper scaling
   const yAxisDomain = useMemo(() => {
-    const absMax = Math.max(maxProfit > 500 ? 500 : maxProfit, maxLoss);
-    // Make the domain symmetric around zero to center the $0 point
-    return [-absMax, absMax];
-  }, [maxProfit, maxLoss]);
+    // Use fixed domain from -100% to +100% for consistent scaling
+    return [-100, 100];
+  }, []);
 
   // Early return if no options selected
   if (selectedOptions.length === 0) {
@@ -314,7 +335,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               axisLine={{ stroke: '#666' }}
               domain={yAxisDomain}
               label={{
-                value: 'Profit/Loss ($)', 
+                value: 'Return (%)', 
                 angle: -90, 
                 position: 'insideLeft',
                 style: { textAnchor: 'middle' },
@@ -332,36 +353,6 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               }}
             />
 
-            {/* Maximum profit reference line */}
-            <ReferenceLine 
-              y={maxProfit > 500 ? 500 : maxProfit} 
-              stroke="#22c55e"
-              strokeDasharray="3 3"
-            >
-              <Label
-                value={maxProfit > 500 ? "Max Profit: Unlimited" : `Max Profit: $${displayMaxProfit.toFixed(2)}`}
-                fill="#22c55e"
-                fontSize={11}
-                position="insideBottomRight"
-                dx={10}
-              />
-            </ReferenceLine>
-            
-            {/* Maximum loss reference line */}
-            <ReferenceLine 
-              y={-maxLoss} 
-              stroke="#ef4444"
-              strokeDasharray="3 3"
-            >
-              <Label
-                value={`Max Loss: -$${maxLoss.toFixed(2)}`}
-                fill="#ef4444"
-                fontSize={11}
-                position="insideBottomRight"
-                dx={10}
-              />
-            </ReferenceLine>
-            
             {/* Zero line */}
             <ReferenceLine 
               y={0} 
@@ -442,7 +433,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             {/* Positive value line */}
             <Line
               type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : null)}
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : null)}
               dot={false}
               activeDot={{ 
                 r: 4, 
@@ -459,7 +450,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             {/* Negative value line */}
             <Line
               type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : null)}
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : null)}
               dot={false}
               activeDot={{ 
                 r: 4, 
@@ -476,7 +467,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             {/* Profit Area (green, only shows above 0) */}
             <Area
               type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : 0)}
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
               stroke="none"
               fillOpacity={0.2}
               fill="url(#profitGradient)"
@@ -487,7 +478,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             {/* Loss Area (red, only shows below 0) */}
             <Area
               type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : 0)}
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
               stroke="none"
               fillOpacity={0.2}
               fill="url(#lossGradient)"
