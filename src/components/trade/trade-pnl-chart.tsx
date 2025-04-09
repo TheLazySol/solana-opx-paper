@@ -478,15 +478,17 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 key={`breakeven-${index}`}
                 x={price}
                 stroke="#9ca3af"
-                strokeDasharray="3 3"
+                strokeWidth={1.5}
                 isFront={true}
               >
                 <Label
-                  value={`Breakeven: $${price.toFixed(2)}`}
+                  value={`BE: $${price.toFixed(2)}`}
                   fill="#9ca3af"
                   fontSize={11}
-                  position="insideTopRight"
-                  dy={15 + (index * 15)}
+                  fontWeight={600}
+                  position="right"
+                  offset={5}
+                  dy={(index * 20) - 20} // Move up by 20px
                 />
               </ReferenceLine>
             ))}
@@ -497,16 +499,16 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 x={currentMarketPrice}
                 stroke="#4a85ff"
                 strokeWidth={1.5}
+                isFront={true}
                 label={{
                   value: `Current Price: $${currentMarketPrice.toFixed(2)}`,
                   fill: '#4a85ff',
                   fontSize: 11,
                   fontWeight: 600,
-                  position: 'insideTopLeft',
-                  dy: 5,
+                  position: 'insideBottomLeft',
+                  dy: -5,
                   dx: 5
                 }}
-                isFront={true}
               />
             )}
             
@@ -521,9 +523,6 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 ? "#22c55e" // Green for long options
                 : "#ef4444" // Red for short options
               
-              // Position label based on index to prevent overlap
-              const labelPosition = index % 2 === 0 ? 'insideBottomRight' : 'insideTopRight'
-              
               return (
                 <ReferenceLine 
                   key={`strike-${index}`}
@@ -532,12 +531,13 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                   strokeDasharray="2 2"
                   strokeWidth={1.5}
                   label={{ 
-                    value: `${isBuy ? "Long" : "Short"} ${isCall ? "Call" : "Put"} $${strike.toFixed(2)}`,
-                    position: labelPosition,
+                    value: `${isBuy ? "+" : "-"}${isCall ? "C" : "P"} $${strike.toFixed(2)}`,
+                    position: "right",
                     fontSize: 11,
                     fontWeight: 600,
                     fill: color,
-                    dy: index % 2 === 0 ? -5 : 5
+                    offset: 5,
+                    dy: (index * 20) + 40 // Start after breakeven labels
                   }}
                   isFront={true}
                 />
