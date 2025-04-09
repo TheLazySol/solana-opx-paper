@@ -100,13 +100,6 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
       (acc, opt) => acc + (Number(opt.strike) * Number(opt.quantity)), 0
     ) / (totalQuantity || 1) // Prevent division by zero
     
-    // Create a price range for visualization
-    const priceRange = avgStrike * 0.10 // 10% range
-    const minPrice = Math.max(avgStrike - priceRange, 0)
-    const maxPrice = avgStrike + priceRange
-    const steps = 100 // Higher resolution for smoother curve
-    const priceStep = (maxPrice - minPrice) / steps
-
     // Calculate total premium paid/received
     let totalPremium = 0
     
@@ -124,6 +117,67 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
       
       totalPremium += premiumEffect * price * quantity * contractSize
     })
+
+    // Find the price where PnL is zero (breakeven point)
+    let zeroPnLPrice = avgStrike;
+    
+    // If we have a non-zero premium, calculate the approximate breakeven price
+    if (Math.abs(totalPremium) > 0.01) {
+      // For a simple approximation, use the average strike price
+      // This is a starting point - we'll refine it later
+      zeroPnLPrice = avgStrike;
+      
+      // Create a temporary point to check PnL
+      const checkPnL = (price: number) => {
+        let pnl = totalPremium;
+        
+        selectedOptions.forEach(option => {
+          const quantity = Number(option.quantity);
+          const strike = Number(option.strike);
+          const contractSize = STANDARD_CONTRACT_SIZE;
+          const isCall = option.side === 'call';
+          const isBuy = option.type === 'bid';
+          
+          const intrinsicValue = isCall 
+            ? Math.max(0, price - strike)
+            : Math.max(0, strike - price);
+          
+          const positionEffect = isBuy ? 1 : -1;
+          pnl += positionEffect * intrinsicValue * quantity * contractSize;
+        });
+        
+        return pnl;
+      };
+      
+      // Binary search to find the price where PnL is closest to zero
+      let low = Math.max(avgStrike * 0.5, 0);
+      let high = avgStrike * 1.5;
+      let mid;
+      
+      for (let i = 0; i < 10; i++) {
+        mid = (low + high) / 2;
+        const pnl = checkPnL(mid);
+        
+        if (Math.abs(pnl) < 0.01) {
+          break;
+        }
+        
+        if (pnl > 0) {
+          high = mid;
+        } else {
+          low = mid;
+        }
+      }
+      
+      zeroPnLPrice = mid || avgStrike;
+    }
+    
+    // Create a price range for visualization centered around the zero PnL price
+    const priceRange = zeroPnLPrice * 0.10 // 10% range
+    const minPrice = Math.max(zeroPnLPrice - priceRange, 0)
+    const maxPrice = zeroPnLPrice + priceRange
+    const steps = 100 // Higher resolution for smoother curve
+    const priceStep = (maxPrice - minPrice) / steps
 
     // Create points array
     const points = Array.from({ length: steps + 1 }, (_, i) => {
