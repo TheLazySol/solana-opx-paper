@@ -380,6 +380,14 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               axisLine={{ stroke: '#ffffff' }}
               domain={['dataMin', 'dataMax']}
               type="number"
+              label={{
+                value: 'Underlying Asset',
+                position: 'insideBottom',
+                offset: -10,
+                style: { textAnchor: 'middle' },
+                fontSize: 11,
+                fill: '#ffffff'
+              }}
             />
             
             <YAxis
