@@ -173,11 +173,28 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     }
     
     // Create a price range for visualization centered around the zero PnL price
-    const priceRange = zeroPnLPrice * 0.10 // 10% range
-    const minPrice = Math.max(zeroPnLPrice - priceRange, 0)
-    const maxPrice = zeroPnLPrice + priceRange
-    const steps = 100 // Higher resolution for smoother curve
-    const priceStep = (maxPrice - minPrice) / steps
+    // Default to 10% range
+    let priceRange = zeroPnLPrice * 0.10;
+    
+    // Find the min and max strike prices
+    const minStrike = Math.min(...selectedOptions.map(opt => Number(opt.strike)));
+    const maxStrike = Math.max(...selectedOptions.map(opt => Number(opt.strike)));
+    
+    // Calculate the range needed to show all strikes
+    const strikeRange = maxStrike - minStrike;
+    
+    // If the strike range is larger than our default 10% range, expand the range
+    // Add 20% padding to ensure strikes are comfortably visible
+    if (strikeRange > priceRange) {
+      priceRange = strikeRange * 1.2;
+    }
+    
+    // Calculate min and max prices, ensuring we don't go below 0
+    const minPrice = Math.max(zeroPnLPrice - priceRange/2, 0);
+    const maxPrice = zeroPnLPrice + priceRange/2;
+    
+    const steps = 100; // Higher resolution for smoother curve
+    const priceStep = (maxPrice - minPrice) / steps;
 
     // Create points array
     const points = Array.from({ length: steps + 1 }, (_, i) => {
