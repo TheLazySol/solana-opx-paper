@@ -432,83 +432,30 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               }}
             />
 
-            {/* Zero line */}
-            <ReferenceLine 
-              y={0} 
-              stroke="#666"
-              strokeDasharray="3 3"
-            />
-            
-            {/* Break-even points */}
-            {breakEvenPoints.map((price, index) => (
-              <ReferenceLine 
-                key={`breakeven-${index}`}
-                x={price}
-                stroke="#9ca3af"
-                strokeDasharray="3 3"
-              >
-                <Label
-                  value={`Break Even Price: $${price.toFixed(2)}`}
-                  fill="#9ca3af"
-                  fontSize={11}
-                  position="insideTopRight"
-                  dy={15 + (index * 15)}
-                />
-              </ReferenceLine>
-            ))}
-            
-            {/* Current price reference line */}
-            {currentMarketPrice && (
-              <ReferenceLine
-                x={currentMarketPrice}
-                stroke="#4a85ff"
-                strokeWidth={1.5}
-                label={{
-                  value: `Current: $${currentMarketPrice.toFixed(2)}`,
-                  fill: '#4a85ff',
-                  fontSize: 11,
-                  position: 'insideTopLeft',
-                  dy: 5,
-                  dx: 5
-                }}
-                isFront={false}
-              />
-            )}
-            
-            {/* Strike price reference lines */}
-            {selectedOptions.map((option, index) => {
-              const strike = Number(option.strike)
-              const isCall = option.side === 'call'
-              const isBuy = option.type === 'bid'
-              
-              // Color based on option type and direction
-              const color = isBuy 
-                ? "#22c55e" // Green for long options
-                : "#ef4444" // Red for short options
-              
-              // Position label based on index to prevent overlap
-              const labelPosition = index % 2 === 0 ? 'insideBottomRight' : 'insideTopRight'
-              
-              return (
-                <ReferenceLine 
-                  key={`strike-${index}`}
-                  x={strike}
-                  stroke={color}
-                  strokeDasharray="2 2"
-                  label={{ 
-                    value: `${isBuy ? "Long" : "Short"} ${isCall ? "Call" : "Put"} $${strike.toFixed(2)}`,
-                    position: labelPosition,
-                    fontSize: 11,
-                    fill: color,
-                    dy: index % 2 === 0 ? -5 : 5
-                  }}
-                  isFront={false}
-                />
-              )
-            })}
-            
             <CartesianGrid strokeDasharray="2 2" opacity={0.1} />
             
+            {/* Profit Area (green, only shows above 0) */}
+            <Area
+              type="monotone"
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
+              stroke="none"
+              fillOpacity={0.4}
+              fill="url(#profitGradient)"
+              isAnimationActive={false}
+              activeDot={false}
+            />
+            
+            {/* Loss Area (red, only shows below 0) */}
+            <Area
+              type="monotone"
+              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
+              stroke="none"
+              fillOpacity={0.4}
+              fill="url(#lossGradient)"
+              isAnimationActive={false}
+              activeDot={false}
+            />
+
             {/* Positive value line */}
             <Line
               type="monotone"
@@ -542,28 +489,86 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
               isAnimationActive={false}
               connectNulls
             />
-            
-            {/* Profit Area (green, only shows above 0) */}
-            <Area
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
-              stroke="none"
-              fillOpacity={0.4}
-              fill="url(#profitGradient)"
-              isAnimationActive={false}
-              activeDot={false}
+
+            {/* Zero line */}
+            <ReferenceLine 
+              y={0} 
+              stroke="#666"
+              strokeDasharray="3 3"
+              isFront={true}
             />
             
-            {/* Loss Area (red, only shows below 0) */}
-            <Area
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
-              stroke="none"
-              fillOpacity={0.4}
-              fill="url(#lossGradient)"
-              isAnimationActive={false}
-              activeDot={false}
-            />
+            {/* Break-even points */}
+            {breakEvenPoints.map((price, index) => (
+              <ReferenceLine 
+                key={`breakeven-${index}`}
+                x={price}
+                stroke="#9ca3af"
+                strokeDasharray="3 3"
+                isFront={true}
+              >
+                <Label
+                  value={`Break Even Price: $${price.toFixed(2)}`}
+                  fill="#9ca3af"
+                  fontSize={11}
+                  position="insideTopRight"
+                  dy={15 + (index * 15)}
+                />
+              </ReferenceLine>
+            ))}
+            
+            {/* Current price reference line */}
+            {currentMarketPrice && (
+              <ReferenceLine
+                x={currentMarketPrice}
+                stroke="#4a85ff"
+                strokeWidth={1.5}
+                label={{
+                  value: `Current Price: $${currentMarketPrice.toFixed(2)}`,
+                  fill: '#4a85ff',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  position: 'insideTopLeft',
+                  dy: 5,
+                  dx: 5
+                }}
+                isFront={true}
+              />
+            )}
+            
+            {/* Strike price reference lines */}
+            {selectedOptions.map((option, index) => {
+              const strike = Number(option.strike)
+              const isCall = option.side === 'call'
+              const isBuy = option.type === 'bid'
+              
+              // Color based on option type and direction
+              const color = isBuy 
+                ? "#22c55e" // Green for long options
+                : "#ef4444" // Red for short options
+              
+              // Position label based on index to prevent overlap
+              const labelPosition = index % 2 === 0 ? 'insideBottomRight' : 'insideTopRight'
+              
+              return (
+                <ReferenceLine 
+                  key={`strike-${index}`}
+                  x={strike}
+                  stroke={color}
+                  strokeDasharray="2 2"
+                  strokeWidth={1.5}
+                  label={{ 
+                    value: `${isBuy ? "Long" : "Short"} ${isCall ? "Call" : "Put"} $${strike.toFixed(2)}`,
+                    position: labelPosition,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fill: color,
+                    dy: index % 2 === 0 ? -5 : 5
+                  }}
+                  isFront={true}
+                />
+              )
+            })}
           </AreaChart>
         </ResponsiveContainer>
       </div>
