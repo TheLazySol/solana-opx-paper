@@ -375,18 +375,18 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             <XAxis
               dataKey="price"
               tickFormatter={formatXTick}
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-              axisLine={{ stroke: '#666' }}
+              tick={{ fontSize: 11, fill: '#ffffff' }}
+              tickLine={{ stroke: '#ffffff' }}
+              axisLine={{ stroke: '#ffffff' }}
               domain={['dataMin', 'dataMax']}
               type="number"
             />
             
             <YAxis
               tickFormatter={formatYTick}
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-              axisLine={{ stroke: '#666' }}
+              tick={{ fontSize: 11, fill: '#ffffff' }}
+              tickLine={{ stroke: '#ffffff' }}
+              axisLine={{ stroke: '#ffffff' }}
               domain={yAxisDomain}
               label={{
                 value: 'Return (%)', 
@@ -394,7 +394,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 position: 'insideLeft',
                 style: { textAnchor: 'middle' },
                 fontSize: 11,
-                fill: '#666'
+                fill: '#ffffff'
               }}
             />
 
