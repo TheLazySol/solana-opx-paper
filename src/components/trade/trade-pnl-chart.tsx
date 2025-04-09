@@ -99,106 +99,78 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     const avgStrike = selectedOptions.reduce(
       (acc, opt) => acc + (Number(opt.strike) * Number(opt.quantity)), 0
     ) / (totalQuantity || 1) // Prevent division by zero
-    
-    // Calculate total premium paid/received
-    let totalPremium = 0
-    
-    selectedOptions.forEach(option => {
+
+    // Calculate breakeven points for each option
+    const breakEvenPoints = selectedOptions.map(option => {
+      const strike = Number(option.strike);
       // Use limitPrice if it exists, otherwise use market price
+      const premium = (option as any).limitPrice !== undefined 
+        ? (option as any).limitPrice 
+        : option.price;
+      const isCall = option.side === 'call';
+      const isBuy = option.type === 'bid';
+      
+      // For calls: 
+      // - When buying: strike + premium
+      // - When selling: strike - premium
+      // For puts:
+      // - When buying: strike - premium
+      // - When selling: strike + premium
+      if (isCall) {
+        return isBuy ? strike + premium : strike - premium;
+      } else {
+        return isBuy ? strike - premium : strike + premium;
+      }
+    });
+
+    // Calculate total premium paid/received
+    let totalPremium = 0;
+    selectedOptions.forEach(option => {
       const price = (option as any).limitPrice !== undefined 
         ? (option as any).limitPrice 
-        : option.price
-      const quantity = Number(option.quantity)
-      const contractSize = STANDARD_CONTRACT_SIZE
-      
-      // For buys (bid), premium is negative (paid)
-      // For sells (ask), premium is positive (received)
-      const premiumEffect = option.type === 'bid' ? -1 : 1
-      
-      totalPremium += premiumEffect * price * quantity * contractSize
-    })
+        : option.price;
+      const quantity = Number(option.quantity);
+      const contractSize = STANDARD_CONTRACT_SIZE;
+      const premiumEffect = option.type === 'bid' ? -1 : 1;
+      totalPremium += premiumEffect * price * quantity * contractSize;
+    });
 
-    // Find the price where PnL is zero (breakeven point)
-    let zeroPnLPrice = avgStrike;
+    // Calculate the center point as average of breakeven points
+    const avgBreakEven = breakEvenPoints.reduce((sum, point) => sum + point, 0) / breakEvenPoints.length;
     
-    // If we have a non-zero premium, calculate the approximate breakeven price
-    if (Math.abs(totalPremium) > 0.01) {
-      // For a simple approximation, use the average strike price
-      // This is a starting point - we'll refine it later
-      zeroPnLPrice = avgStrike;
-      
-      // Create a temporary point to check PnL
-      const checkPnL = (price: number) => {
-        let pnl = totalPremium;
-        
-        selectedOptions.forEach(option => {
-          const quantity = Number(option.quantity);
-          const strike = Number(option.strike);
-          const contractSize = STANDARD_CONTRACT_SIZE;
-          const isCall = option.side === 'call';
-          const isBuy = option.type === 'bid';
-          
-          const intrinsicValue = isCall 
-            ? Math.max(0, price - strike)
-            : Math.max(0, strike - price);
-          
-          const positionEffect = isBuy ? 1 : -1;
-          pnl += positionEffect * intrinsicValue * quantity * contractSize;
-        });
-        
-        return pnl;
-      };
-      
-      // Binary search to find the price where PnL is closest to zero
-      let low = Math.max(avgStrike * 0.5, 0);
-      let high = avgStrike * 1.5;
-      let mid;
-      
-      for (let i = 0; i < 10; i++) {
-        mid = (low + high) / 2;
-        const pnl = checkPnL(mid);
-        
-        if (Math.abs(pnl) < 0.01) {
-          break;
-        }
-        
-        if (pnl > 0) {
-          high = mid;
-        } else {
-          low = mid;
-        }
-      }
-      
-      zeroPnLPrice = mid || avgStrike;
-    }
+    // Find the min and max values including both strikes and breakeven points
+    const allPricePoints = [
+      ...selectedOptions.map(opt => Number(opt.strike)),
+      ...breakEvenPoints
+    ];
+    const minPrice = Math.min(...allPricePoints);
+    const maxPrice = Math.max(...allPricePoints);
     
-    // Create a price range for visualization centered around the zero PnL price
-    // Default to 10% range
-    let priceRange = zeroPnLPrice * 0.10;
+    // Calculate initial range as 10% of the center point
+    let priceRange = avgBreakEven * 0.10;
     
-    // Find the min and max strike prices
-    const minStrike = Math.min(...selectedOptions.map(opt => Number(opt.strike)));
-    const maxStrike = Math.max(...selectedOptions.map(opt => Number(opt.strike)));
+    // Calculate the minimum range needed to show all points
+    const requiredRange = maxPrice - minPrice;
     
-    // Calculate the range needed to show all strikes
-    const strikeRange = maxStrike - minStrike;
+    // Use the larger of the two ranges and add 20% padding
+    priceRange = Math.max(priceRange, requiredRange) * 1.2;
     
-    // If the strike range is larger than our default 10% range, expand the range
-    // Add 20% padding to ensure strikes are comfortably visible
-    if (strikeRange > priceRange) {
-      priceRange = strikeRange * 1.2;
-    }
+    // Calculate the final min and max prices, centered on avgBreakEven
+    // but expanded if necessary to include all strikes and breakeven points
+    const halfRange = priceRange / 2;
+    const centeredMin = avgBreakEven - halfRange;
+    const centeredMax = avgBreakEven + halfRange;
     
-    // Calculate min and max prices, ensuring we don't go below 0
-    const minPrice = Math.max(zeroPnLPrice - priceRange/2, 0);
-    const maxPrice = zeroPnLPrice + priceRange/2;
+    // Ensure the range includes all points
+    const finalMinPrice = Math.max(Math.min(centeredMin, minPrice - priceRange * 0.1), 0);
+    const finalMaxPrice = Math.max(centeredMax, maxPrice + priceRange * 0.1);
     
     const steps = 100; // Higher resolution for smoother curve
-    const priceStep = (maxPrice - minPrice) / steps;
+    const priceStep = (finalMaxPrice - finalMinPrice) / steps;
 
     // Create points array
     const points = Array.from({ length: steps + 1 }, (_, i) => {
-      const price = minPrice + (i * priceStep)
+      const price = finalMinPrice + (i * priceStep)
       
       // Start with the premium paid/received
       let pnl = totalPremium
@@ -508,7 +480,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
                 isFront={true}
               >
                 <Label
-                  value={`Break Even Price: $${price.toFixed(2)}`}
+                  value={`Breakeven: $${price.toFixed(2)}`}
                   fill="#9ca3af"
                   fontSize={11}
                   position="insideTopRight"
