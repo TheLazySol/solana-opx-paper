@@ -194,11 +194,6 @@ export const OrdersViewOpen = () => {
         })
         
         setPositions(updatedPositions)
-        
-        // Expand all assets by default for better UX
-        if (updatedPositions.length > 0) {
-          setExpandedAssets(updatedPositions.map(pos => pos.id))
-        }
       }
     } catch (error) {
       console.error('Error loading open orders:', error)
@@ -399,12 +394,12 @@ export const OrdersViewOpen = () => {
                               {leg.expiry.split('T')[0]}
                             </Badge>
                             <div className="grid grid-cols-3 gap-x-3 text-sm">
-                              <div className="text-sm">
+                              <div className="text-sm text-right">
                                 <div className="text-muted-foreground">Entry Price</div>
                                 <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
                               </div>
                               <div className="text-right">
-                                <div className="text-muted-foreground">Price</div>
+                                <div className="text-muted-foreground"> Option Price</div>
                                 <div className="font-medium">${leg.marketPrice.toFixed(2)}</div>
                               </div>
                               <div className="text-right">
@@ -418,7 +413,7 @@ export const OrdersViewOpen = () => {
                             <div className="grid grid-cols-2 gap-x-6 text-sm">
                               <div className="text-right">
                                 <div className="text-muted-foreground">Value</div>
-                                <div className="font-medium">${(leg.marketPrice * 100).toFixed(2)}</div>
+                                <div className="font-medium">${((leg.position > 0 ? 1 : -1) * (leg.marketPrice * 100)).toFixed(2)}</div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">P/L</div>
