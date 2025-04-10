@@ -139,6 +139,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             expiry: option.expiry,
             position: option.type === 'bid' ? option.quantity : -option.quantity,
             marketPrice: option.limitPrice !== undefined ? option.limitPrice : option.price,
+            entryPrice: option.limitPrice !== undefined ? option.limitPrice : option.price,
+            underlyingEntryPrice: underlyingPrice || 0,
             delta: option.side === 'call' ? 0.5 : -0.5, // Placeholder values for demo
             theta: -0.01,
             gamma: 0.02,

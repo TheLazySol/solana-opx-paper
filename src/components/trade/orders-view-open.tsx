@@ -143,9 +143,11 @@ export const OrdersViewOpen = () => {
               riskFreeRate: SOL_PH_RISK_FREE_RATE
             })
             
-            // Ensure entryPrice and underlyingEntryPrice are set (for backward compatibility)
-            const entryPrice = leg.entryPrice || newPrice
-            const underlyingEntryPrice = leg.underlyingEntryPrice || currentAssetPrice
+            // IMPORTANT: Only set entry price if it doesn't exist yet
+            // This ensures it's truly static and never changes after first set
+            // For backward compatibility with existing data
+            const entryPrice = leg.entryPrice !== undefined ? leg.entryPrice : newPrice
+            const underlyingEntryPrice = leg.underlyingEntryPrice !== undefined ? leg.underlyingEntryPrice : currentAssetPrice
             
             return {
               ...leg,
@@ -313,10 +315,10 @@ export const OrdersViewOpen = () => {
                         {position.asset}
                       </Badge>
                       <div className="text-sm text-muted-foreground">
-                        Market Price: <span className="text-foreground">${position.marketPrice.toFixed(2)}</span>
+                        Current Price: <span className="text-foreground">${position.marketPrice.toFixed(2)}</span>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Positions: <span className="text-foreground">{position.legs.length}</span>
+                        Options: <span className="text-foreground">{position.legs.length}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-6">
@@ -399,7 +401,7 @@ export const OrdersViewOpen = () => {
                             <div className="grid grid-cols-3 gap-x-3 text-sm">
                               <div className="text-sm">
                                 <div className="text-muted-foreground">Entry Price</div>
-                                <div className="font-medium">${(leg.underlyingEntryPrice || position.marketPrice).toFixed(2)}</div>
+                                <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Price</div>
