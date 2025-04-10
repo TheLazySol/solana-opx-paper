@@ -332,7 +332,7 @@ export const OrdersViewOpen = () => {
                             <div className="grid grid-cols-2 gap-x-6 text-sm">
                               <div className="text-right">
                                 <div className="text-muted-foreground">Value</div>
-                                <div className="font-medium">${leg.value.toFixed(2)}</div>
+                                <div className="font-medium">${(Math.abs(leg.marketPrice * 100)).toFixed(2)}</div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">P/L</div>
