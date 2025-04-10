@@ -47,6 +47,15 @@ export const OrdersViewOpen = () => {
   const [expandedAssets, setExpandedAssets] = useState<string[]>([])
   const [positions, setPositions] = useState<AssetPosition[]>([])
 
+  // Calculate total value based on position direction
+  const calculateTotalValue = (legs: OptionLeg[]) => {
+    return legs.reduce((total, leg) => {
+      const contractValue = leg.marketPrice * 100 // Base contract value
+      const positionValue = contractValue * Math.abs(leg.position) // Value * quantity
+      return total + (leg.position > 0 ? positionValue : -positionValue) // Add for long, subtract for short
+    }, 0)
+  }
+
   // Load positions from localStorage on component mount
   useEffect(() => {
     try {
@@ -61,6 +70,7 @@ export const OrdersViewOpen = () => {
           const netGamma = position.legs.reduce((sum, leg) => sum + leg.gamma, 0)
           const netVega = position.legs.reduce((sum, leg) => sum + leg.vega, 0)
           const netRho = position.legs.reduce((sum, leg) => sum + leg.rho, 0)
+          const totalValue = calculateTotalValue(position.legs)
           
           return {
             ...position,
@@ -69,6 +79,7 @@ export const OrdersViewOpen = () => {
             netGamma,
             netVega,
             netRho,
+            totalValue,
             // Add unique ID using timestamp and index
             id: position.id || `${position.asset}-${Date.now()}-${index}`
           }
@@ -318,13 +329,15 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
                             </Badge>
-                            <div className="text-sm space-x-3">
-                              <span>
-                                <span className="text-muted-foreground">Price:</span> ${leg.marketPrice.toFixed(2)}
-                              </span>
-                              <span>
-                                <span className="text-muted-foreground">Qty:</span> {Math.abs(leg.position)}
-                              </span>
+                            <div className="grid grid-cols-2 gap-x-3 text-sm">
+                              <div className="text-right">
+                                <div className="text-muted-foreground">Price</div>
+                                <div className="font-medium">${leg.marketPrice.toFixed(2)}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-muted-foreground">Qty</div>
+                                <div className="font-medium">{Math.abs(leg.position)}</div>
+                              </div>
                             </div>
                           </div>
                           
