@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, X } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '../ui/button'
 import React from 'react'
+import Image from 'next/image'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -306,6 +307,15 @@ export const OrdersViewOpen = () => {
                           `}
                         />
                       </div>
+                      {position.asset.toUpperCase() === 'SOL' && (
+                        <Image 
+                          src="/token-logos/Solana_logo.png" 
+                          alt="Solana Logo" 
+                          width={24} 
+                          height={24} 
+                          className="mr-1"
+                        />
+                      )}
                       <Badge variant="grey" className="capitalize">
                         {position.asset}
                       </Badge>

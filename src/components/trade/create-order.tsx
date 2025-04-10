@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import Image from 'next/image'
 
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
@@ -197,6 +198,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                     <div className="flex flex-col space-y-2 w-full">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
+                         {assetName.toUpperCase() === 'SOL' && (
+                           <Image 
+                             src="/token-logos/Solana_logo.png" 
+                             alt="Solana Logo" 
+                             width={24} 
+                             height={24} 
+                             className="mr-1"
+                           />
+                         )}
                          <Badge variant="grey" className="capitalize">
                             {assetName}
                           </Badge>

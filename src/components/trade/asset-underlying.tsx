@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
+import Image from 'next/image'
 
 interface AssetTypeProps {
   selectedAsset: string
@@ -82,7 +83,27 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base">
-            {selectedToken.symbol}
+            <div className="flex items-center">
+              {selectedToken.symbol.toUpperCase() === 'SOL' && (
+                <Image 
+                  src="/token-logos/Solana_logo.png" 
+                  alt="Solana Logo" 
+                  width={20} 
+                  height={20} 
+                  className="mr-1.5"
+                />
+              )}
+              {selectedToken.symbol.toUpperCase() === 'LABS' && (
+                <Image 
+                  src="/token-logos/Epicentral_Labs_logo.png" 
+                  alt="Epicentral Labs Logo" 
+                  width={20} 
+                  height={20} 
+                  className="mr-1.5"
+                />
+              )}
+              {selectedToken.symbol}
+            </div>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -93,7 +114,27 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
               onClick={() => handleAssetChange(asset.id)}
               className="cursor-pointer text-sm sm:text-base"
             >
-              {asset.name}
+              <div className="flex items-center">
+                {asset.name.toUpperCase() === 'SOL' && (
+                  <Image 
+                    src="/token-logos/Solana_logo.png" 
+                    alt="Solana Logo" 
+                    width={20} 
+                    height={20} 
+                    className="mr-1.5"
+                  />
+                )}
+                {asset.name.toUpperCase() === 'LABS' && (
+                  <Image 
+                    src="/token-logos/Epicentral_Labs_logo.png" 
+                    alt="Epicentral Labs Logo" 
+                    width={20} 
+                    height={20} 
+                    className="mr-1.5"
+                  />
+                )}
+                {asset.name}
+              </div>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
