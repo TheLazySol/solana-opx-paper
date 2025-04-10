@@ -1,13 +1,15 @@
 'use client'
 
 import { ChevronDown, ChevronRight, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '../ui/button'
 import React from 'react'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
+import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 
 // Data structure for option positions
 type OptionLeg = {
@@ -16,6 +18,8 @@ type OptionLeg = {
   expiry: string
   position: number
   marketPrice: number
+  entryPrice: number
+  underlyingEntryPrice: number
   delta: number
   theta: number
   gamma: number
@@ -46,6 +50,45 @@ type AssetPosition = {
 export const OrdersViewOpen = () => {
   const [expandedAssets, setExpandedAssets] = useState<string[]>([])
   const [positions, setPositions] = useState<AssetPosition[]>([])
+  
+  // Get current asset prices for all assets in positions
+  const { price: solPrice } = useAssetPriceInfo('SOL')
+
+  // Helper function to get price for any asset
+  const getAssetPrice = useCallback((asset: string): number => {
+    switch (asset.toUpperCase()) {
+      case 'SOL': return solPrice || 0
+      default: return 0
+    }
+  }, [solPrice])
+
+  // Helper function to calculate time until expiry in seconds
+  const calculateTimeUntilExpiry = useCallback((expiryDate: string): number => {
+    const expiry = new Date(expiryDate)
+    const now = new Date()
+    
+    // Convert both dates to UTC
+    const utcExpiry = new Date(expiry.getTime() + expiry.getTimezoneOffset() * 60000)
+    const utcNow = new Date(now.getTime() + now.getTimezoneOffset() * 60000)
+    
+    return Math.max(0, Math.floor((utcExpiry.getTime() - utcNow.getTime()) / 1000))
+  }, [])
+
+  // Calculate option price using Black-Scholes model
+  const calculateOptionPrice = useCallback((leg: OptionLeg, currentAssetPrice: number): number => {
+    const timeUntilExpiry = calculateTimeUntilExpiry(leg.expiry)
+    
+    const optionResult = calculateOption({
+      isCall: leg.type === 'Call',
+      strikePrice: leg.strike,
+      spotPrice: currentAssetPrice,
+      timeUntilExpirySeconds: timeUntilExpiry,
+      volatility: SOL_PH_VOLATILITY,
+      riskFreeRate: SOL_PH_RISK_FREE_RATE
+    })
+    
+    return optionResult.price
+  }, [calculateTimeUntilExpiry])
 
   // Calculate total value based on position direction
   const calculateTotalValue = (legs: OptionLeg[]) => {
@@ -54,6 +97,22 @@ export const OrdersViewOpen = () => {
       const positionValue = contractValue * Math.abs(leg.position) // Value * quantity
       return total + (leg.position > 0 ? positionValue : -positionValue) // Add for long, subtract for short
     }, 0)
+  }
+
+  // Calculate P/L based on the change in value from when the position was opened
+  const calculatePnL = (leg: OptionLeg) => {
+    // For long positions: (current price - entry price) * quantity * 100
+    // For short positions: (entry price - current price) * quantity * 100
+    const contractSize = 100 // Each option contract represents 100 units
+    const quantity = Math.abs(leg.position)
+    
+    if (leg.position > 0) {
+      // Long position
+      return (leg.marketPrice - leg.entryPrice) * quantity * contractSize
+    } else {
+      // Short position
+      return (leg.entryPrice - leg.marketPrice) * quantity * contractSize
+    }
   }
 
   // Load positions from localStorage on component mount
@@ -65,21 +124,68 @@ export const OrdersViewOpen = () => {
         
         // Calculate aggregate values for each position and add unique IDs
         const updatedPositions = parsedOrders.map((position, index) => {
-          const netDelta = position.legs.reduce((sum, leg) => sum + leg.delta, 0)
-          const netTheta = position.legs.reduce((sum, leg) => sum + leg.theta, 0)
-          const netGamma = position.legs.reduce((sum, leg) => sum + leg.gamma, 0)
-          const netVega = position.legs.reduce((sum, leg) => sum + leg.vega, 0)
-          const netRho = position.legs.reduce((sum, leg) => sum + leg.rho, 0)
-          const totalValue = calculateTotalValue(position.legs)
+          // Get current asset price
+          const currentAssetPrice = getAssetPrice(position.asset)
+          
+          // Calculate option prices and Greeks using the Black-Scholes model
+          const legsWithUpdatedPrices = position.legs.map(leg => {
+            // Calculate option price using Black-Scholes
+            const newPrice = calculateOptionPrice(leg, currentAssetPrice)
+            
+            // Calculate option Greeks
+            const timeUntilExpiry = calculateTimeUntilExpiry(leg.expiry)
+            const optionResult = calculateOption({
+              isCall: leg.type === 'Call',
+              strikePrice: leg.strike,
+              spotPrice: currentAssetPrice,
+              timeUntilExpirySeconds: timeUntilExpiry, 
+              volatility: SOL_PH_VOLATILITY,
+              riskFreeRate: SOL_PH_RISK_FREE_RATE
+            })
+            
+            // Ensure entryPrice and underlyingEntryPrice are set (for backward compatibility)
+            const entryPrice = leg.entryPrice || newPrice
+            const underlyingEntryPrice = leg.underlyingEntryPrice || currentAssetPrice
+            
+            return {
+              ...leg,
+              marketPrice: newPrice,
+              entryPrice,
+              underlyingEntryPrice,
+              delta: optionResult.greeks.delta,
+              gamma: optionResult.greeks.gamma,
+              theta: optionResult.greeks.theta,
+              vega: optionResult.greeks.vega,
+              rho: optionResult.greeks.rho
+            }
+          })
+          
+          // Calculate P/L for each leg
+          const legsWithPnL = legsWithUpdatedPrices.map(leg => ({
+            ...leg,
+            pnl: calculatePnL(leg)
+          }))
+          
+          // Calculate aggregate values
+          const netDelta = legsWithPnL.reduce((sum, leg) => sum + leg.delta, 0)
+          const netTheta = legsWithPnL.reduce((sum, leg) => sum + leg.theta, 0)
+          const netGamma = legsWithPnL.reduce((sum, leg) => sum + leg.gamma, 0)
+          const netVega = legsWithPnL.reduce((sum, leg) => sum + leg.vega, 0)
+          const netRho = legsWithPnL.reduce((sum, leg) => sum + leg.rho, 0)
+          const totalValue = calculateTotalValue(legsWithPnL)
+          const totalPnl = legsWithPnL.reduce((sum, leg) => sum + leg.pnl, 0)
           
           return {
             ...position,
+            marketPrice: currentAssetPrice,
+            legs: legsWithPnL,
             netDelta,
             netTheta,
             netGamma,
             netVega,
             netRho,
             totalValue,
+            totalPnl,
             // Add unique ID using timestamp and index
             id: position.id || `${position.asset}-${Date.now()}-${index}`
           }
@@ -95,51 +201,12 @@ export const OrdersViewOpen = () => {
     } catch (error) {
       console.error('Error loading open orders:', error)
     }
-  }, [])
+  }, [solPrice, getAssetPrice, calculateOptionPrice, calculateTimeUntilExpiry])
 
-  // Update market prices and P/L values periodically
+  // Update option prices and Greeks periodically based on current asset prices
   useEffect(() => {
-    const updatePositions = () => {
-      setPositions(prevPositions => {
-        return prevPositions.map(position => {
-          // In a real app, we would fetch the latest price from an API
-          // For this demo, we'll simulate price changes
-          const priceChange = (Math.random() - 0.5) * 0.02 // Random price change ±1%
-          const newMarketPrice = position.marketPrice * (1 + priceChange)
-          
-          // Update legs with new market prices and P/L
-          const legs = position.legs.map(leg => {
-            // Simulate changes in option prices based on underlying movement
-            const legPriceChange = priceChange * (leg.delta * 100)
-            const newLegPrice = leg.marketPrice * (1 + legPriceChange)
-            
-            // Calculate new P/L
-            const pnl = (newLegPrice - leg.marketPrice) * Math.abs(leg.position) * 100
-            
-            return {
-              ...leg,
-              marketPrice: newLegPrice,
-              pnl
-            }
-          })
-          
-          // Calculate new totals
-          const totalPnl = legs.reduce((sum, leg) => sum + leg.pnl, 0)
-          
-          return {
-            ...position,
-            marketPrice: newMarketPrice,
-            legs,
-            totalPnl
-          }
-        })
-      })
-    }
-    
-    // Update positions every 10 seconds
-    const intervalId = setInterval(updatePositions, 10000)
-    
-    return () => clearInterval(intervalId)
+    // No need for the random update since we're now using the real price model
+    // based on the useAssetPriceInfo hook, which will trigger updates automatically
   }, [])
 
   const toggleAsset = (id: string) => {
@@ -329,7 +396,11 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
                             </Badge>
-                            <div className="grid grid-cols-2 gap-x-3 text-sm">
+                            <div className="grid grid-cols-3 gap-x-3 text-sm">
+                              <div className="text-sm">
+                                <div className="text-muted-foreground">Entry Price</div>
+                                <div className="font-medium">${(leg.underlyingEntryPrice || position.marketPrice).toFixed(2)}</div>
+                              </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Price</div>
                                 <div className="font-medium">${leg.marketPrice.toFixed(2)}</div>
@@ -345,7 +416,7 @@ export const OrdersViewOpen = () => {
                             <div className="grid grid-cols-2 gap-x-6 text-sm">
                               <div className="text-right">
                                 <div className="text-muted-foreground">Value</div>
-                                <div className="font-medium">${(Math.abs(leg.marketPrice * 100)).toFixed(2)}</div>
+                                <div className="font-medium">${(leg.marketPrice * 100).toFixed(2)}</div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">P/L</div>
