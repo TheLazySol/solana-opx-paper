@@ -473,7 +473,10 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
             />
             
             {/* Break-even points */}
-            {breakEvenPoints.map((price, index) => (
+            {breakEvenPoints.filter((price, index, self) => 
+              // Only keep unique break-even points
+              self.indexOf(price) === index
+            ).map((price, index) => (
               <ReferenceLine 
                 key={`breakeven-${index}`}
                 x={price}
