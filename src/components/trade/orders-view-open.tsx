@@ -306,6 +306,9 @@ export const OrdersViewOpen = () => {
                             border border-[#e5e5e5]/10 dark:border-[#393939]/50"
                         >
                           <div className="flex items-center gap-3">
+                            <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
+                              {leg.position > 0 ? 'Long' : 'Short'}
+                            </Badge>
                             <Badge variant={leg.type === 'Call' ? 'blue' : 'destructive'}>
                               {leg.type}
                             </Badge>
@@ -315,11 +318,13 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
                             </Badge>
-                            <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
-                              {leg.position > 0 ? 'Long' : 'Short'} {Math.abs(leg.position)}
-                            </Badge>
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Price:</span> ${leg.marketPrice.toFixed(2)}
+                            <div className="text-sm space-x-3">
+                              <span>
+                                <span className="text-muted-foreground">Price:</span> ${leg.marketPrice.toFixed(2)}
+                              </span>
+                              <span>
+                                <span className="text-muted-foreground">Qty:</span> {Math.abs(leg.position)}
+                              </span>
                             </div>
                           </div>
                           
