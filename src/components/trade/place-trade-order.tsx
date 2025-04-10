@@ -47,6 +47,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
 
   // Calculate collateral needed based on option positions
   const collateralNeeded = (() => {
+    if (!hasSelectedOptions) return 0;
+    
     const contractSize = 100 // Each option contract represents 100 units
     let totalCollateral = 0
 
@@ -78,7 +80,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       }
     })
 
-    return totalCollateral
+    return Math.max(0, totalCollateral)
   })()
 
   const isDebit = totalAmount < 0
@@ -133,13 +135,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               {hasSelectedOptions ? `$${formattedVolume} USDC` : '--'}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Collateral Needed</span>
-            <span className="font-medium text-right">
-              {hasSelectedOptions ? `$${formattedCollateral} USDC` : '--'}
-            </span>
-          </div>
-
+          
           {/* Fees Section - Always visible */}
           <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <div className="grid grid-cols-2 gap-2 text-sm">
