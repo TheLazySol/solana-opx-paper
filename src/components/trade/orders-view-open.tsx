@@ -1,9 +1,10 @@
 'use client'
 
 import { ChevronDown, ChevronRight, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import React from 'react'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 // Data structure for option positions
 type OptionLeg = {
@@ -35,28 +36,149 @@ type AssetPosition = {
   totalCollateral: number
   totalValue: number
   totalPnl: number
+  // Add id for unique key
+  id: string
 }
 
 export const OrdersViewOpen = () => {
   const [expandedAssets, setExpandedAssets] = useState<string[]>([])
   const [positions, setPositions] = useState<AssetPosition[]>([])
 
-  const toggleAsset = (asset: string) => {
+  // Load positions from localStorage on component mount
+  useEffect(() => {
+    try {
+      const storedOrders = localStorage.getItem('openOrders')
+      if (storedOrders) {
+        const parsedOrders: AssetPosition[] = JSON.parse(storedOrders)
+        
+        // Calculate aggregate values for each position and add unique IDs
+        const updatedPositions = parsedOrders.map((position, index) => {
+          const netDelta = position.legs.reduce((sum, leg) => sum + leg.delta, 0)
+          const netTheta = position.legs.reduce((sum, leg) => sum + leg.theta, 0)
+          const netGamma = position.legs.reduce((sum, leg) => sum + leg.gamma, 0)
+          const netVega = position.legs.reduce((sum, leg) => sum + leg.vega, 0)
+          const netRho = position.legs.reduce((sum, leg) => sum + leg.rho, 0)
+          
+          return {
+            ...position,
+            netDelta,
+            netTheta,
+            netGamma,
+            netVega,
+            netRho,
+            // Add unique ID using timestamp and index
+            id: position.id || `${position.asset}-${Date.now()}-${index}`
+          }
+        })
+        
+        setPositions(updatedPositions)
+        
+        // Expand all assets by default for better UX
+        if (updatedPositions.length > 0) {
+          setExpandedAssets(updatedPositions.map(pos => pos.id))
+        }
+      }
+    } catch (error) {
+      console.error('Error loading open orders:', error)
+    }
+  }, [])
+
+  // Update market prices and P/L values periodically
+  useEffect(() => {
+    const updatePositions = () => {
+      setPositions(prevPositions => {
+        return prevPositions.map(position => {
+          // In a real app, we would fetch the latest price from an API
+          // For this demo, we'll simulate price changes
+          const priceChange = (Math.random() - 0.5) * 0.02 // Random price change ±1%
+          const newMarketPrice = position.marketPrice * (1 + priceChange)
+          
+          // Update legs with new market prices and P/L
+          const legs = position.legs.map(leg => {
+            // Simulate changes in option prices based on underlying movement
+            const legPriceChange = priceChange * (leg.delta * 100)
+            const newLegPrice = leg.marketPrice * (1 + legPriceChange)
+            
+            // Calculate new P/L
+            const pnl = (newLegPrice - leg.marketPrice) * Math.abs(leg.position) * 100
+            
+            return {
+              ...leg,
+              marketPrice: newLegPrice,
+              pnl
+            }
+          })
+          
+          // Calculate new totals
+          const totalPnl = legs.reduce((sum, leg) => sum + leg.pnl, 0)
+          
+          return {
+            ...position,
+            marketPrice: newMarketPrice,
+            legs,
+            totalPnl
+          }
+        })
+      })
+    }
+    
+    // Update positions every 10 seconds
+    const intervalId = setInterval(updatePositions, 10000)
+    
+    return () => clearInterval(intervalId)
+  }, [])
+
+  const toggleAsset = (id: string) => {
     setExpandedAssets(prev => 
-      prev.includes(asset) 
-        ? prev.filter(a => a !== asset)
-        : [...prev, asset]
+      prev.includes(id) 
+        ? prev.filter(a => a !== id)
+        : [...prev, id]
     )
   }
 
-  const handleCloseAll = (asset: string) => {
-    console.log(`Closing all positions for ${asset}`)
-    // Add logic to close all positions
+  const handleCloseAll = (id: string) => {
+    // Remove all positions for this asset
+    const updatedPositions = positions.filter(pos => pos.id !== id)
+    setPositions(updatedPositions)
+    
+    // Update localStorage
+    localStorage.setItem('openOrders', JSON.stringify(updatedPositions))
+    
+    console.log(`Closed position with ID ${id}`)
   }
 
-  const handleCloseLeg = (asset: string, legIndex: number) => {
-    console.log(`Closing leg ${legIndex} for ${asset}`)
-    // Add logic to close specific leg
+  const handleCloseLeg = (id: string, legIndex: number) => {
+    // Find the position for this ID
+    const positionIndex = positions.findIndex(pos => pos.id === id)
+    if (positionIndex === -1) return
+    
+    // Make a deep copy of positions
+    const updatedPositions = [...positions]
+    const position = { ...updatedPositions[positionIndex] }
+    
+    // Remove the leg
+    position.legs = position.legs.filter((_, idx) => idx !== legIndex)
+    
+    // If all legs are removed, remove the entire position
+    if (position.legs.length === 0) {
+      updatedPositions.splice(positionIndex, 1)
+    } else {
+      // Recalculate aggregate values
+      position.netDelta = position.legs.reduce((sum, leg) => sum + leg.delta, 0)
+      position.netTheta = position.legs.reduce((sum, leg) => sum + leg.theta, 0)
+      position.netGamma = position.legs.reduce((sum, leg) => sum + leg.gamma, 0)
+      position.netVega = position.legs.reduce((sum, leg) => sum + leg.vega, 0)
+      position.netRho = position.legs.reduce((sum, leg) => sum + leg.rho, 0)
+      position.totalPnl = position.legs.reduce((sum, leg) => sum + leg.pnl, 0)
+      
+      updatedPositions[positionIndex] = position
+    }
+    
+    // Update state and localStorage
+    setPositions(updatedPositions)
+    localStorage.setItem('openOrders', JSON.stringify(updatedPositions))
+    
+    console.log(`Closed leg ${legIndex} for position with ID ${id}`)
   }
 
   return (
@@ -87,19 +209,19 @@ export const OrdersViewOpen = () => {
             </tr>
           ) : (
             positions.map((position) => (
-              <React.Fragment key={position.asset}>
+              <React.Fragment key={position.id}>
                 <tr 
                   className="border-b border-gray-800 hover:bg-gray-900/50 group"
                 >
                   <td 
                     className="py-2 px-3 flex items-center gap-2 cursor-pointer" 
-                    onClick={() => toggleAsset(position.asset)}
+                    onClick={() => toggleAsset(position.id)}
                   >
                     <div className={`
                       w-4 h-4 flex items-center justify-center 
                       rounded-full border border-gray-700
                       transition-all duration-200
-                      ${expandedAssets.includes(position.asset) 
+                      ${expandedAssets.includes(position.id) 
                         ? 'bg-blue-500/10 border-blue-500/50' 
                         : 'hover:border-gray-600'
                       }
@@ -109,7 +231,7 @@ export const OrdersViewOpen = () => {
                         className={`
                           text-gray-400
                           transition-transform duration-200
-                          ${expandedAssets.includes(position.asset) ? 'rotate-90' : ''}
+                          ${expandedAssets.includes(position.id) ? 'rotate-90' : ''}
                         `}
                       />
                     </div>
@@ -136,7 +258,7 @@ export const OrdersViewOpen = () => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleCloseAll(position.asset)
+                        handleCloseAll(position.id)
                       }}
                       className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
                     >
@@ -144,13 +266,13 @@ export const OrdersViewOpen = () => {
                     </Button>
                   </td>
                 </tr>
-                {expandedAssets.includes(position.asset) && position.legs.map((leg, idx) => (
+                {expandedAssets.includes(position.id) && position.legs.map((leg, idx) => (
                   <tr 
-                    key={`${position.asset}-${idx}`} 
+                    key={`${position.id}-leg-${idx}`} 
                     className="border-b border-gray-800/50"
                   >
                     <td className="py-2 px-3 pl-10">
-                      {leg.type} ${leg.strike} {leg.expiry}
+                      {leg.type} ${leg.strike} {leg.expiry.split('T')[0]}
                     </td>
                     <td className="text-right py-2 px-3">
                       ${leg.marketPrice.toFixed(2)}
@@ -173,7 +295,7 @@ export const OrdersViewOpen = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleCloseLeg(position.asset, idx)}
+                        onClick={() => handleCloseLeg(position.id, idx)}
                         className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
                       >
                         Close

@@ -10,11 +10,13 @@ import { MAX_OPTION_LEGS } from '@/constants/constants'
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
   onOptionsUpdate?: (options: SelectedOption[]) => void
+  onTabChange?: (tab: string) => void
 }
 
 export const TradeView: FC<TradeViewProps> = ({
   initialSelectedOptions = [],
-  onOptionsUpdate
+  onOptionsUpdate,
+  onTabChange
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
@@ -24,6 +26,7 @@ export const TradeView: FC<TradeViewProps> = ({
     isDebit: false,
     collateralNeeded: 0
   })
+  const [borrowedAmount, setBorrowedAmount] = useState<number>(0)
 
   // Update selected options ONLY when initialSelectedOptions actually changes
   useEffect(() => {
@@ -120,6 +123,27 @@ export const TradeView: FC<TradeViewProps> = ({
     }
   }
 
+  // Handle borrowed amount updates from collateral provider
+  const handleBorrowedAmountChange = (amount: number) => {
+    setBorrowedAmount(amount);
+  }
+
+  // Handle order placement
+  const handleOrderPlaced = (options: SelectedOption[]) => {
+    // Reset selected options
+    setSelectedOptions([]);
+    
+    // Notify parent component that options have been updated (cleared)
+    if (onOptionsUpdate) {
+      onOptionsUpdate([]);
+    }
+    
+    // Change to Orders tab
+    if (onTabChange) {
+      onTabChange('orders');
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Create Order and Trade Details */}
@@ -141,12 +165,15 @@ export const TradeView: FC<TradeViewProps> = ({
               selectedAsset={selectedOptions[0]?.asset || ''}
               isDebit={orderData.isDebit}
               externalCollateralNeeded={orderData.collateralNeeded}
+              onBorrowedAmountChange={handleBorrowedAmountChange}
             />
             <div className="2xl:hidden">
               <PlaceTradeOrder 
                 selectedOptions={selectedOptions} 
                 selectedAsset={selectedOptions[0]?.asset || ''} 
                 onOrderDataChange={setOrderData}
+                borrowedAmount={borrowedAmount}
+                onOrderPlaced={handleOrderPlaced}
               />
             </div>
           </div>
@@ -157,6 +184,8 @@ export const TradeView: FC<TradeViewProps> = ({
               selectedOptions={selectedOptions} 
               selectedAsset={selectedOptions[0]?.asset || ''} 
               onOrderDataChange={setOrderData}
+              borrowedAmount={borrowedAmount}
+              onOrderPlaced={handleOrderPlaced}
             />
           </div>
         </div>

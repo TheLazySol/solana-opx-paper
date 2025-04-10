@@ -20,13 +20,15 @@ interface TradeCollateralProviderProps {
   selectedAsset: string
   isDebit: boolean
   externalCollateralNeeded: number
+  onBorrowedAmountChange?: (amount: number) => void
 }
 
 export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   selectedOptions = [],
   selectedAsset,
   isDebit,
-  externalCollateralNeeded
+  externalCollateralNeeded,
+  onBorrowedAmountChange
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -121,6 +123,13 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     if (!Number(collateralProvided) || leverage[0] <= 1) return 0;
     return Number(collateralProvided) * (leverage[0] - 1);
   }, [collateralProvided, leverage]);
+
+  // Notify parent component when borrowed amount changes
+  useEffect(() => {
+    if (onBorrowedAmountChange) {
+      onBorrowedAmountChange(borrowedAmount);
+    }
+  }, [borrowedAmount, onBorrowedAmountChange]);
 
   // Calculate daily borrow rate
   const dailyBorrowRate = BASE_ANNUAL_INTEREST_RATE / 365;

@@ -21,6 +21,10 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
     }
   }, [onOptionsChange])
 
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveView(tab)
+  }, [])
+
   return (
     <div className="space-y-2 sm:space-y-4">
       <Tabs 
@@ -55,6 +59,7 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
           <TradeView 
             initialSelectedOptions={selectedOptions} 
             onOptionsUpdate={handleOptionsUpdate}
+            onTabChange={handleTabChange}
           />
         </TabsContent>
 

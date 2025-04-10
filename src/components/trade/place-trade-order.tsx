@@ -5,19 +5,22 @@ import { Separator } from '@/components/ui/separator'
 import { SelectedOption } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
+import { toast } from "@/hooks/use-toast"
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
   selectedAsset: string
   onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
   borrowedAmount?: number
+  onOrderPlaced?: (options: SelectedOption[]) => void
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedOptions = [],
   selectedAsset,
   onOrderDataChange,
-  borrowedAmount = 0
+  borrowedAmount = 0,
+  onOrderPlaced
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -107,6 +110,85 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     onOrderDataChange?.({ isDebit, collateralNeeded })
   }, [isDebit, collateralNeeded, onOrderDataChange])
 
+  // Handle placing an order
+  const handlePlaceOrder = () => {
+    if (!hasSelectedOptions) return;
+
+    try {
+      // Store the order in localStorage for demo purposes
+      // In a real application, this would be sent to a backend API
+      const existingOrders = JSON.parse(localStorage.getItem('openOrders') || '[]');
+      
+      // Group options by asset
+      const optionsByAsset: Record<string, SelectedOption[]> = {};
+      selectedOptions.forEach(option => {
+        if (!optionsByAsset[option.asset]) {
+          optionsByAsset[option.asset] = [];
+        }
+        optionsByAsset[option.asset].push(option);
+      });
+      
+      // Format options for storage
+      const newOrders = Object.entries(optionsByAsset).map(([asset, options]) => {
+        return {
+          asset,
+          marketPrice: underlyingPrice || 0,
+          legs: options.map(option => ({
+            type: option.side === 'call' ? 'Call' : 'Put',
+            strike: option.strike,
+            expiry: option.expiry,
+            position: option.type === 'bid' ? option.quantity : -option.quantity,
+            marketPrice: option.limitPrice !== undefined ? option.limitPrice : option.price,
+            delta: option.side === 'call' ? 0.5 : -0.5, // Placeholder values for demo
+            theta: -0.01,
+            gamma: 0.02,
+            vega: 0.03,
+            rho: 0.01,
+            collateral: option.type === 'ask' ? option.strike * 100 : 0,
+            value: (option.limitPrice !== undefined ? option.limitPrice : option.price) * option.quantity * 100,
+            pnl: 0, // Initial P/L is 0
+          })),
+          // Calculate aggregated values
+          netDelta: 0, // Will be calculated in orders view
+          netTheta: 0,
+          netGamma: 0,
+          netVega: 0,
+          netRho: 0,
+          totalCollateral: collateralNeeded,
+          totalValue: totalAmount,
+          totalPnl: 0, // Initial P/L is 0
+          // Add a unique ID
+          id: `${asset}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        };
+      });
+      
+      localStorage.setItem('openOrders', JSON.stringify([...existingOrders, ...newOrders]));
+
+      // Show success toast
+      toast({
+        title: "Order Placed",
+        description: "Your order has been placed successfully.",
+        variant: "default",
+      });
+
+      // Notify parent that order was placed
+      if (onOrderPlaced) {
+        onOrderPlaced(selectedOptions);
+      }
+      
+      console.log('Order placed successfully!', selectedOptions);
+    } catch (error) {
+      console.error('Error placing order:', error);
+      
+      // Show error toast
+      toast({
+        title: "Order Failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -175,10 +257,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           className="w-full bg-white/10 hover:bg-white/20 text-white border-0
             transition-all duration-300"
           disabled={!hasSelectedOptions}
-          onClick={() => {
-            // TODO: Implement order placement logic
-            console.log('Placing order...')
-          }}
+          onClick={handlePlaceOrder}
         >
           {hasSelectedOptions ? 'Place Order' : 'No Options Selected'}
         </Button>
