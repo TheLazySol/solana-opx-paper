@@ -80,8 +80,8 @@ export const MAX_OPTION_LEGS = 4;
 // Test expiration dates array for development
 export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
   {
-    value: "2025-04-16",
-    label: "April 16th, 2025",
+    value: "2025-04-23",
+    label: "April 23rd, 2025",
     isMonthly: true
   }
 ];

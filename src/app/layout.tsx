@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 const links = [
   { label: 'Trade', path: '/trade' },
-  { label: 'Portfolio', path: '/account' },
+  { label: 'Analytics', path: '/account' },
   { label: 'Option Lab', path: '/option-lab' },
   { label: 'OMLP', path: '/omlp' },
 ]

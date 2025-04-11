@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 const additionalResources = [
   {
@@ -22,7 +23,7 @@ export default function DashboardFeature() {
   const cards = [
     {
       title: "Trade More for Less",
-      description: "One contract represents 100 of the underlying asset, without borrowing.",
+      description: "One contract represents 100x of the underlying asset.",
       buttonText: "Trade Now"
     },
     {
@@ -51,15 +52,20 @@ export default function DashboardFeature() {
       <div className="relative">
         <div className="absolute inset-0 -z-10">
         </div>
-        <h1 className="text-8xl font-light tracking-wide text-center
-          [text-shadow:_0_0_10px_rgba(255,255,255,0.2),_0_0_30px_rgba(255,255,255,0.2)]
-          transition-all duration-300 hover:[text-shadow:_0_0_20px_rgba(255,255,255,0.2),_0_0_40px_rgba(255,255,255,0.2)]">
-          Solana OPX
-        </h1>
+        <div className="flex justify-center items-center w-full">
+          <Image
+            src="/OPX_LOGO_Chrome.png"
+            alt="Solana OPX Logo"
+            width={300}
+            height={75}
+            className="transition-all duration-300 hover:scale-105"
+            priority
+          />
+        </div>
       </div>
-      <p className="text-xl text-muted-foreground">
-        The first decentralized options exchange on Solana
-      </p>
+      <h1 className="text-2xl text-white font-normal tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] -mt-4 -mb-4">
+       Trade Solana Options
+      </h1>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
         <div className="absolute inset-0 -z-10">
@@ -73,10 +79,10 @@ export default function DashboardFeature() {
               overflow-hidden"
           >
             <CardHeader className="p-6 pb-2">
-              <CardTitle className="text-lg font-semibold">{card.title}</CardTitle>
+              <CardTitle className="text-lg font-normal text-center">{card.title}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-2 pb-4">
-              <CardDescription className="text-sm text-muted-foreground">{card.description}</CardDescription>
+              <CardDescription className="text-sm text-muted-foreground text-center">{card.description}</CardDescription>
             </CardContent>
             <CardFooter className="p-6 pt-0">
               <Button 
