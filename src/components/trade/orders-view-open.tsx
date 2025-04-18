@@ -216,11 +216,42 @@ export const OrdersViewOpen = () => {
   }
 
   const handleCloseAll = (id: string) => {
+    // Find the position for this ID before removing it
+    const position = positions.find(pos => pos.id === id)
+    if (!position) return
+    
+    // Create history entry for the closed position
+    const closedPosition = {
+      id: position.id,
+      asset: position.asset,
+      closedAt: new Date().toISOString(),
+      legs: position.legs.map(leg => ({
+        type: leg.type,
+        strike: leg.strike,
+        expiry: leg.expiry,
+        position: leg.position,
+        entryPrice: leg.entryPrice,
+        exitPrice: leg.marketPrice,
+        pnl: leg.pnl
+      })),
+      totalPnl: position.totalPnl
+    }
+    
+    // Save to closed orders history
+    try {
+      const existingHistory = localStorage.getItem('closedOrders')
+      const historyArray = existingHistory ? JSON.parse(existingHistory) : []
+      historyArray.push(closedPosition)
+      localStorage.setItem('closedOrders', JSON.stringify(historyArray))
+    } catch (error) {
+      console.error('Error saving to order history:', error)
+    }
+    
     // Remove all positions for this asset
     const updatedPositions = positions.filter(pos => pos.id !== id)
     setPositions(updatedPositions)
     
-    // Update localStorage
+    // Update localStorage for open orders
     localStorage.setItem('openOrders', JSON.stringify(updatedPositions))
     
     console.log(`Closed position with ID ${id}`)
@@ -234,6 +265,53 @@ export const OrdersViewOpen = () => {
     // Make a deep copy of positions
     const updatedPositions = [...positions]
     const position = { ...updatedPositions[positionIndex] }
+    
+    // Get the leg being closed before removing it
+    const closedLeg = position.legs[legIndex]
+    
+    // Create history entry for the closed leg
+    const closedLegEntry = {
+      type: closedLeg.type,
+      strike: closedLeg.strike,
+      expiry: closedLeg.expiry,
+      position: closedLeg.position,
+      entryPrice: closedLeg.entryPrice,
+      exitPrice: closedLeg.marketPrice,
+      pnl: closedLeg.pnl
+    }
+    
+    // Save to closed orders history - either as a new position or adding to existing position
+    try {
+      const existingHistory = localStorage.getItem('closedOrders')
+      const historyArray = existingHistory ? JSON.parse(existingHistory) : []
+      
+      // Check if we're closing the last leg - if so, save the entire position
+      if (position.legs.length === 1) {
+        // Save the entire position to history
+        const closedPosition = {
+          id: position.id,
+          asset: position.asset,
+          closedAt: new Date().toISOString(),
+          legs: [closedLegEntry],
+          totalPnl: closedLeg.pnl // Only one leg, so total PNL is just this leg's PNL
+        }
+        historyArray.push(closedPosition)
+      } else {
+        // Save just this leg to history as a single-leg position
+        const closedSingleLegPosition = {
+          id: `${position.id}-leg-${legIndex}-${Date.now()}`,
+          asset: position.asset,
+          closedAt: new Date().toISOString(),
+          legs: [closedLegEntry],
+          totalPnl: closedLeg.pnl
+        }
+        historyArray.push(closedSingleLegPosition)
+      }
+      
+      localStorage.setItem('closedOrders', JSON.stringify(historyArray))
+    } catch (error) {
+      console.error('Error saving to order history:', error)
+    }
     
     // Remove the leg
     position.legs = position.legs.filter((_, idx) => idx !== legIndex)
