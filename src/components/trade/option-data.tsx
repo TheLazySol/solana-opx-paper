@@ -74,8 +74,58 @@ class OptionVolumeTracker {
   }
 }
 
+// Open Interest Tracker - keeps track of active open option positions
+// Using a singleton pattern to maintain state across component instances
+class OpenInterestTracker {
+  private static instance: OpenInterestTracker;
+  private openInterestMap: Map<string, number> = new Map();
+  
+  private constructor() {}
+  
+  public static getInstance(): OpenInterestTracker {
+    if (!OpenInterestTracker.instance) {
+      OpenInterestTracker.instance = new OpenInterestTracker();
+    }
+    return OpenInterestTracker.instance;
+  }
+  
+  // Generate a unique key for an option
+  private getOptionKey(strike: number, expiry: string, side: 'call' | 'put'): string {
+    return `${side}-${strike}-${expiry}`;
+  }
+  
+  // Get open interest for an option
+  public getOpenInterest(strike: number, expiry: string, side: 'call' | 'put'): number {
+    const key = this.getOptionKey(strike, expiry, side);
+    return this.openInterestMap.get(key) || DEFAULT_OPTION_OPEN_INTEREST;
+  }
+  
+  // Increase open interest for an option (when new positions are opened)
+  public increaseOpenInterest(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    const currentOI = this.getOpenInterest(strike, expiry, side);
+    this.openInterestMap.set(key, currentOI + quantity);
+  }
+  
+  // Decrease open interest for an option (when positions are closed)
+  public decreaseOpenInterest(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    const currentOI = this.getOpenInterest(strike, expiry, side);
+    // Ensure we don't go below zero
+    this.openInterestMap.set(key, Math.max(0, currentOI - quantity));
+  }
+  
+  // Reset all open interest (for testing)
+  public resetAllOpenInterest(): void {
+    this.openInterestMap.clear();
+  }
+}
+
 // Export the volume tracker instance
 export const volumeTracker = OptionVolumeTracker.getInstance();
+
+// Export the open interest tracker instance
+export const openInterestTracker = OpenInterestTracker.getInstance();
 
 // Function to update volume when an option is traded
 export const updateOptionVolume = (option: SelectedOption): void => {
@@ -87,6 +137,28 @@ export const updateOptionVolume = (option: SelectedOption): void => {
       option.quantity
     );
   }
+};
+
+// Function to update open interest when an option position is opened
+export const updateOptionOpenInterest = (option: SelectedOption): void => {
+  if (option && option.quantity) {
+    openInterestTracker.increaseOpenInterest(
+      option.strike,
+      option.expiry,
+      option.side,
+      option.quantity
+    );
+  }
+};
+
+// Function to decrease open interest when an option position is closed
+export const decreaseOptionOpenInterest = (strike: number, expiry: string, side: 'call' | 'put', quantity: number): void => {
+  openInterestTracker.decreaseOpenInterest(
+    strike,
+    expiry,
+    side,
+    quantity
+  );
 };
 
 // Helper function to calculate time until expiry in seconds
@@ -149,6 +221,10 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
   // Get call and put volumes from the tracker
   const callVolume = volumeTracker.getVolume(strike, expiryDate, 'call');
   const putVolume = volumeTracker.getVolume(strike, expiryDate, 'put');
+  
+  // Get call and put open interest from the tracker
+  const callOpenInterest = openInterestTracker.getOpenInterest(strike, expiryDate, 'call');
+  const putOpenInterest = openInterestTracker.getOpenInterest(strike, expiryDate, 'put');
 
   return {
     strike,
@@ -157,13 +233,13 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
     callBid,
     callAsk,
     callVolume,
-    callOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
+    callOpenInterest,
     callGreeks: callOption.greeks,
     // Put side
     putBid,
     putAsk,
     putVolume,
-    putOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
+    putOpenInterest,
     putGreeks: putOption.greeks
   }
 }

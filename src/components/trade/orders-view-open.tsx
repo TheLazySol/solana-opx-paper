@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
+import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
 
 // Data structure for option positions
 type OptionLeg = {
@@ -237,6 +238,33 @@ export const OrdersViewOpen = () => {
       totalPnl: position.totalPnl
     }
     
+    // Update volume and decrease open interest for each leg that's being closed
+    position.legs.forEach(leg => {
+      // Convert position format to option format for volume tracking
+      const side = leg.type === 'Call' ? 'call' : 'put'
+      const quantity = Math.abs(leg.position)
+      
+      // Update volume - closing a position is a trade
+      updateOptionVolume({
+        index: 0, // not used by volume tracker
+        asset: position.asset,
+        strike: leg.strike,
+        expiry: leg.expiry,
+        price: leg.marketPrice,
+        side,
+        type: leg.position > 0 ? 'ask' : 'bid', // opposite of original position
+        quantity
+      })
+      
+      // Decrease open interest
+      decreaseOptionOpenInterest(
+        leg.strike,
+        leg.expiry,
+        side,
+        quantity
+      )
+    })
+    
     // Save to closed orders history
     try {
       const existingHistory = localStorage.getItem('closedOrders')
@@ -268,6 +296,30 @@ export const OrdersViewOpen = () => {
     
     // Get the leg being closed before removing it
     const closedLeg = position.legs[legIndex]
+    
+    // Update volume for this leg being closed
+    const side = closedLeg.type === 'Call' ? 'call' : 'put'
+    const quantity = Math.abs(closedLeg.position)
+    
+    // Update volume - closing a position is a trade
+    updateOptionVolume({
+      index: 0, // not used by volume tracker
+      asset: position.asset,
+      strike: closedLeg.strike,
+      expiry: closedLeg.expiry,
+      price: closedLeg.marketPrice,
+      side,
+      type: closedLeg.position > 0 ? 'ask' : 'bid', // opposite of original position
+      quantity
+    })
+    
+    // Decrease open interest
+    decreaseOptionOpenInterest(
+      closedLeg.strike,
+      closedLeg.expiry,
+      side,
+      quantity
+    )
     
     // Create history entry for the closed leg
     const closedLegEntry = {

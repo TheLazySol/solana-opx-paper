@@ -2,7 +2,7 @@ import { FC, useMemo, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { SelectedOption, updateOptionVolume } from './option-data'
+import { SelectedOption, updateOptionVolume, updateOptionOpenInterest } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/use-toast"
@@ -130,6 +130,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         // Update the volume data for each option in the order
         selectedOptions.forEach(option => {
           updateOptionVolume(option);
+          
+          // Also update open interest for each option
+          updateOptionOpenInterest(option);
         });
         
         // Store the order in localStorage for demo purposes
