@@ -50,7 +50,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   }, [hasSelectedOptions])
 
   // Calculate total collateral needed based on option positions
-  const calculateCollateralNeeded = () => {
+  const calculateCollateralNeeded = useMemo(() => {
     let totalCollateral = 0
     const contractSize = 100 // Each option contract represents 100 units
     
@@ -103,15 +103,14 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     })
 
     return totalCollateral
-  }
+  }, [selectedOptions])
 
-  const collateralNeeded = calculateCollateralNeeded()
-  const formattedCollateral = collateralNeeded.toFixed(2)
+  const formattedCollateral = calculateCollateralNeeded.toFixed(2)
 
   // Calculate optimal leverage based on collateral needed and provided
   const calculateOptimalLeverage = () => {
     if (!Number(collateralProvided) || Number(collateralProvided) <= 0) return 1
-    const optimal = collateralNeeded / Number(collateralProvided)
+    const optimal = calculateCollateralNeeded / Number(collateralProvided)
     return Math.min(optimal, MAX_LEVERAGE)
   }
 
@@ -129,7 +128,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   }, [borrowedAmount, onBorrowedAmountChange]);
 
   // Calculate if enough collateral is provided - include borrowed amount
-  const hasEnoughCollateral = Number(collateralProvided) + borrowedAmount >= collateralNeeded
+  const hasEnoughCollateral = Number(collateralProvided) + borrowedAmount >= calculateCollateralNeeded
 
   // Calculate daily borrow rate
   const dailyBorrowRate = BASE_ANNUAL_INTEREST_RATE / 365;
@@ -168,7 +167,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             </TooltipProvider>
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-lg">
-                ${hasSelectedOptions ? Math.max(0, collateralNeeded - (Number(collateralProvided) || 0) - borrowedAmount).toFixed(2) : '0.00'}
+                ${hasSelectedOptions ? Math.max(0, calculateCollateralNeeded - (Number(collateralProvided) || 0) - borrowedAmount).toFixed(2) : '0.00'}
               </span>
             </div>
           </div>
