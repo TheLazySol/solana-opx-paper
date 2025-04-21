@@ -102,13 +102,13 @@ export const OrdersViewHistory: FC = () => {
               {currentPositions.map((position) => (
                 <div 
                   key={position.id}
-                  className="rounded-lg border border-[#e5e5e5]/20 dark:border-[#393939] p-3"
+                  className="rounded-lg border border-[#e5e5e5]/20 dark:border-[#393939] p-2 sm:p-3"
                 >
                   <div 
-                    className="flex items-center justify-between mb-2 cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 cursor-pointer"
                     onClick={() => toggleOrderExpansion(position.id)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       {position.asset.toUpperCase() === 'SOL' && (
                         <Image 
                           src="/token-logos/solana_logo.png" 
@@ -121,19 +121,19 @@ export const OrdersViewHistory: FC = () => {
                       <Badge variant="grey" className="capitalize">
                         {position.asset}
                       </Badge>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Closed: <span className="text-foreground">{formatDate(position.closedAt)}</span>
                       </div>
-                      <div className="text-sm">
+                      <div className="text-xs sm:text-sm">
                         <Badge variant="outline">
                           {position.legs.length} leg{position.legs.length !== 1 ? 's' : ''}
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
                       <div className="text-right">
-                        <div className="text-muted-foreground">Total P/L</div>
-                        <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                        <div className="text-xs sm:text-sm text-muted-foreground">Total P/L</div>
+                        <div className={`text-sm ${position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {position.totalPnl >= 0 ? '+$' : '-$'}
                           {Math.abs(position.totalPnl).toFixed(2)}
                         </div>
@@ -151,10 +151,10 @@ export const OrdersViewHistory: FC = () => {
                       {position.legs.map((leg, idx) => (
                         <div 
                           key={`${position.id}-leg-${idx}`}
-                          className="flex items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
-                            border border-[#e5e5e5]/10 dark:border-[#393939]/50 text-sm"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
+                            border border-[#e5e5e5]/10 dark:border-[#393939]/50 text-xs sm:text-sm"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
                             <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
                               {leg.position > 0 ? 'Long' : 'Short'}
                             </Badge>
@@ -168,7 +168,7 @@ export const OrdersViewHistory: FC = () => {
                               {leg.expiry.split('T')[0]}
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-3 gap-x-4 text-sm">
+                          <div className="grid grid-cols-3 gap-x-2 sm:gap-x-4 text-xs sm:text-sm">
                             <div className="text-right">
                               <div className="text-muted-foreground">Entry</div>
                               <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
@@ -205,7 +205,7 @@ export const OrdersViewHistory: FC = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs sm:text-sm text-muted-foreground">
                   Page {currentPage} of {totalPages}
                 </div>
                 <Button

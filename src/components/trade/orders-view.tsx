@@ -16,7 +16,7 @@ export const OrdersView: FC = () => {
         onValueChange={setActiveOrderTab}
         className="w-full"
       >
-        <TabsList className="w-full sm:w-[600px] h-10 items-center justify-center card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
+        <TabsList className="w-full max-w-[600px] mx-auto h-10 items-center justify-center card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
           border-[#e5e5e5]/20 dark:border-white/5 p-1 mb-4">
           <TabsTrigger 
             value="open"
@@ -38,7 +38,7 @@ export const OrdersView: FC = () => {
         <TabsContent 
           value="open"
           className="min-h-[200px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-            transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-4"
+            transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4"
         >
           <OrdersViewOpen />
         </TabsContent>
@@ -46,7 +46,7 @@ export const OrdersView: FC = () => {
         <TabsContent 
           value="history"
           className="min-h-[200px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-            transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-4"
+            transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4"
         >
           <OrdersViewHistory />
         </TabsContent>

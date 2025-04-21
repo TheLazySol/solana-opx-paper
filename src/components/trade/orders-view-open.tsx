@@ -361,12 +361,12 @@ export const OrdersViewOpen = () => {
               >
                 {/* Position Header */}
                 <div 
-                  className="bg-white/5 dark:bg-black/20 p-3 cursor-pointer hover:bg-white/10 dark:hover:bg-black/30
+                  className="bg-white/5 dark:bg-black/20 p-2 sm:p-3 cursor-pointer hover:bg-white/10 dark:hover:bg-black/30
                     transition-colors duration-200"
                   onClick={() => toggleAsset(position.id)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <div className={`
                         w-4 h-4 flex items-center justify-center 
                         rounded-full border border-[#e5e5e5]/50 dark:border-[#393939]
@@ -397,15 +397,15 @@ export const OrdersViewOpen = () => {
                       <Badge variant="grey" className="capitalize">
                         {position.asset}
                       </Badge>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Current Price: <span className="text-foreground">${position.marketPrice.toFixed(2)}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Options: <span className="text-foreground">{position.legs.length}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="grid grid-cols-2 gap-x-6 text-sm">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-6">
+                      <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 text-xs sm:text-sm">
                         <div className="text-right">
                           <div className="text-muted-foreground">Total Value</div>
                           <div className="font-medium">${position.totalValue.toFixed(2)}</div>
@@ -435,28 +435,28 @@ export const OrdersViewOpen = () => {
 
                 {/* Expanded Content */}
                 {expandedAssets.includes(position.id) && (
-                  <div className="p-3 space-y-3">
-                    {/* Greeks Summary */}
-                    <div className="grid grid-cols-5 gap-4 p-2 rounded-lg bg-white/5 dark:bg-black/20">
+                  <div className="p-2 sm:p-3 space-y-3">
+                    {/* Greeks Summary - Responsive grid that stacks on mobile */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 p-2 rounded-lg bg-white/5 dark:bg-black/20">
                       <div className="text-center">
                         <div className="text-xs text-muted-foreground mb-1">Delta</div>
-                        <div className="font-medium">{position.netDelta.toFixed(2)}</div>
+                        <div className="font-medium text-sm">{position.netDelta.toFixed(2)}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-muted-foreground mb-1">Theta</div>
-                        <div className="font-medium">{position.netTheta.toFixed(3)}</div>
+                        <div className="font-medium text-sm">{position.netTheta.toFixed(3)}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-muted-foreground mb-1">Gamma</div>
-                        <div className="font-medium">{position.netGamma.toFixed(3)}</div>
+                        <div className="font-medium text-sm">{position.netGamma.toFixed(3)}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-muted-foreground mb-1">Vega</div>
-                        <div className="font-medium">{position.netVega.toFixed(3)}</div>
+                        <div className="font-medium text-sm">{position.netVega.toFixed(3)}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-xs text-muted-foreground mb-1">Rho</div>
-                        <div className="font-medium">{position.netRho.toFixed(3)}</div>
+                        <div className="font-medium text-sm">{position.netRho.toFixed(3)}</div>
                       </div>
                     </div>
 
@@ -465,10 +465,10 @@ export const OrdersViewOpen = () => {
                       {position.legs.map((leg, idx) => (
                         <div 
                           key={`${position.id}-leg-${idx}`}
-                          className="flex items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
+                          className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
                             border border-[#e5e5e5]/10 dark:border-[#393939]/50"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
                             <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
                               {leg.position > 0 ? 'Long' : 'Short'}
                             </Badge>
@@ -481,13 +481,16 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
                             </Badge>
-                            <div className="grid grid-cols-3 gap-x-3 text-sm">
-                              <div className="text-sm text-right">
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">
+                            <div className="grid grid-cols-3 gap-x-3 text-xs sm:text-sm w-full sm:w-auto">
+                              <div className="text-right">
                                 <div className="text-muted-foreground">Entry Price</div>
                                 <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
                               </div>
                               <div className="text-right">
-                                <div className="text-muted-foreground"> Option Price</div>
+                                <div className="text-muted-foreground">Option Price</div>
                                 <div className="font-medium">${leg.marketPrice.toFixed(2)}</div>
                               </div>
                               <div className="text-right">
@@ -495,30 +498,30 @@ export const OrdersViewOpen = () => {
                                 <div className="font-medium">{Math.abs(leg.position)}</div>
                               </div>
                             </div>
-                          </div>
                           
-                          <div className="flex items-center gap-6">
-                            <div className="grid grid-cols-2 gap-x-6 text-sm">
-                              <div className="text-right">
-                                <div className="text-muted-foreground">Value</div>
-                                <div className="font-medium">${((leg.position > 0 ? 1 : -1) * (leg.marketPrice * 100)).toFixed(2)}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-muted-foreground">P/L</div>
-                                <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                                  {leg.pnl >= 0 ? '+$' : '-$'}
-                                  {Math.abs(leg.pnl).toFixed(2)}
+                            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-6 w-full sm:w-auto">
+                              <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6 text-xs sm:text-sm">
+                                <div className="text-right">
+                                  <div className="text-muted-foreground">Value</div>
+                                  <div className="font-medium">${((leg.position > 0 ? 1 : -1) * (leg.marketPrice * 100)).toFixed(2)}</div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-muted-foreground">P/L</div>
+                                  <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                                    {leg.pnl >= 0 ? '+$' : '-$'}
+                                    {Math.abs(leg.pnl).toFixed(2)}
+                                  </div>
                                 </div>
                               </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCloseLeg(position.id, idx)}
+                                className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
+                              >
+                                Close
+                              </Button>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCloseLeg(position.id, idx)}
-                              className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
-                            >
-                              Close
-                            </Button>
                           </div>
                         </div>
                       ))}

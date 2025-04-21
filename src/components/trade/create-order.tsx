@@ -157,7 +157,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       <div className="space-y-2 sm:space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-semibold">Create Order</h3>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             {selectedOptions.length}/{MAX_OPTION_LEGS} legs
           </div>
         </div>
@@ -194,10 +194,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               
               return (
                 <Card key={index} className="bg-black/10 border border-white/10">
-                  <CardContent className="p-3">
+                  <CardContent className="p-2 sm:p-3">
                     <div className="flex flex-col space-y-2 w-full">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                          {assetName.toUpperCase() === 'SOL' && (
                            <Image 
                              src="/token-logos/solana_logo.png" 
@@ -221,7 +221,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between sm:justify-end gap-2">
                           <Badge variant="blue" className="capitalize">
                             EXP: {expiryDate}
                           </Badge>
@@ -265,27 +265,27 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {orderTypes[index] === 'MKT' ? (
                             // Market Price Display (Text)
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Current Price:</span>
-                              <span className={`text-sm font-medium ${priceColor}`}>
+                              <span className="text-xs sm:text-sm text-muted-foreground">Current Price:</span>
+                              <span className={`text-xs sm:text-sm font-medium ${priceColor}`}>
                                 ${option.price.toFixed(2)}
                               </span>
                             </div>
                           ) : (
                             // Limit Price Input
                             <>
-                              <span className="text-sm text-muted-foreground">Set Limit Price:</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground">Set Limit Price:</span>
                               <div className="relative">
-                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-muted-foreground">$</span>
                                 <Input
                                   type="text"
                                   value={inputValues[index]}
                                   onChange={(e) => handlePriceInputChange(e, index)}
-                                  className={`h-6 w-16 text-sm pl-5 ${priceColor}`}
+                                  className={`h-6 w-16 text-xs sm:text-sm pl-5 ${priceColor}`}
                                   placeholder="Enter price"
                                 />
                               </div>
@@ -293,8 +293,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Qty:</span>
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
@@ -304,7 +304,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="text-sm font-medium w-8 text-center">
+                            <span className="text-xs sm:text-sm font-medium w-8 text-center">
                               {option.quantity || 1}
                             </span>
                             <Button
