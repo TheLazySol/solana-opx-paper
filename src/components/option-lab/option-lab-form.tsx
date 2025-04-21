@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
-import { useAssetPrice, useAssetPriceInfo } from "@/context/asset-price-provider";
+import { useAssetPriceInfo } from "@/context/asset-price-provider";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),

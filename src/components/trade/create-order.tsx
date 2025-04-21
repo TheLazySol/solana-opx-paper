@@ -16,24 +16,28 @@ interface CreateOrderProps {
   onUpdateLimitPrice?: (index: number, price: number) => void
 }
 
+// Define a type for stable leg identifiers
+type LegKey = string; // option.index as string
+
 export const CreateOrder: FC<CreateOrderProps> = ({ 
   selectedOptions = [],
   onRemoveOption,
   onUpdateQuantity,
   onUpdateLimitPrice
 }) => {
-  // Initialize with empty objects rather than derived from selectedOptions
-  const [orderTypes, setOrderTypes] = useState<Record<number, 'MKT' | 'LMT'>>({});
-  const [inputValues, setInputValues] = useState<Record<number, string>>({});
-  const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
+  // Initialize with empty objects using stable identifiers
+  const [orderTypes, setOrderTypes] = useState<Record<LegKey, 'MKT' | 'LMT'>>({});
+  const [inputValues, setInputValues] = useState<Record<LegKey, string>>({});
+  const [quantityInputs, setQuantityInputs] = useState<Record<LegKey, string>>({});
 
   // Update all state when options change
   useEffect(() => {
     // Update order types
     setOrderTypes(prev => {
-      const newOrderTypes: Record<number, 'MKT' | 'LMT'> = {};
-      selectedOptions.forEach((_, index) => {
-        newOrderTypes[index] = prev[index] || 'MKT';
+      const newOrderTypes: Record<LegKey, 'MKT' | 'LMT'> = {};
+      selectedOptions.forEach((option) => {
+        const legKey = option.index.toString();
+        newOrderTypes[legKey] = prev[legKey] || 'MKT';
       });
       return newOrderTypes;
     });
@@ -41,9 +45,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     // Update price input values
     setInputValues(prev => {
       const newValues = { ...prev };
-      selectedOptions.forEach((option, index) => {
+      selectedOptions.forEach((option) => {
+        const legKey = option.index.toString();
         // Always ensure there's a value
-        newValues[index] = prev[index] || option.price.toFixed(2);
+        newValues[legKey] = prev[legKey] || option.price.toFixed(2);
       });
       return newValues;
     });
@@ -51,9 +56,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     // Update quantity inputs
     setQuantityInputs(prev => {
       const newValues = { ...prev };
-      selectedOptions.forEach((option, index) => {
+      selectedOptions.forEach((option) => {
+        const legKey = option.index.toString();
         // Always ensure there's a value
-        newValues[index] = prev[index] || option.quantity.toFixed(2);
+        newValues[legKey] = prev[legKey] || option.quantity.toFixed(2);
       });
       return newValues;
     });
@@ -101,14 +107,16 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const handleQuantityChange = (index: number, delta: number) => {
     if (!onUpdateQuantity) return
     
-    const currentQuantity = selectedOptions[index].quantity || 0.01
+    const option = selectedOptions[index]
+    const currentQuantity = option.quantity || 0.01
     const newQuantity = Math.max(0.01, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
     onUpdateQuantity(index, newQuantity)
     
-    // Update quantity input field
+    // Update quantity input field using the stable identifier
+    const legKey = option.index.toString()
     setQuantityInputs(prev => ({
       ...prev,
-      [index]: newQuantity.toFixed(2)
+      [legKey]: newQuantity.toFixed(2)
     }))
   }
 
@@ -116,11 +124,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     if (!onUpdateQuantity) return
 
+    const option = selectedOptions[index]
+    const legKey = option.index.toString()
     const inputValue = e.target.value;
 
     // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      setQuantityInputs(prev => ({ ...prev, [index]: inputValue || '0.01' }));
+      setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue || '0.01' }));
 
       // Only update the actual quantity if it's a valid number and at least 0.01
       if (inputValue !== '' && inputValue !== '.') {
@@ -134,24 +144,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
   // Handle switching between MKT and LMT
   const handleOrderTypeChange = (index: number, type: 'MKT' | 'LMT') => {
-    setOrderTypes(prev => ({ ...prev, [index]: type }));
+    const option = selectedOptions[index]
+    const legKey = option.index.toString()
+    
+    setOrderTypes(prev => ({ ...prev, [legKey]: type }));
     
     if (type === 'MKT') {
       // When switching to MKT, set limit price to current market price
       if (onUpdateLimitPrice) {
-        onUpdateLimitPrice(index, selectedOptions[index].price);
+        onUpdateLimitPrice(index, option.price);
       }
       // Reset input value to current market price
       setInputValues(prev => ({ 
         ...prev, 
-        [index]: selectedOptions[index].price.toFixed(2) 
+        [legKey]: option.price.toFixed(2) 
       }));
     }
   };
 
   // Handle price input changes
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    if (!onUpdateLimitPrice || orderTypes[index] === 'MKT') return;
+    const option = selectedOptions[index]
+    const legKey = option.index.toString()
+    
+    if (!onUpdateLimitPrice || orderTypes[legKey] === 'MKT') return;
     
     const inputValue = e.target.value;
     
@@ -160,7 +176,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     
     // Update the display value immediately for all valid inputs
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      setInputValues(prev => ({ ...prev, [index]: inputValue || '0.00' }));
+      setInputValues(prev => ({ ...prev, [legKey]: inputValue || '0.00' }));
       
       // Only update the actual price if it's a valid number
       if (inputValue !== '' && inputValue !== '.') {
@@ -173,16 +189,18 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   };
 
   // Get the display price for an option
-  const getDisplayPrice = (option: SelectedOption, index: number): string => {
-    if (orderTypes[index] === 'MKT') {
+  const getDisplayPrice = (option: SelectedOption): string => {
+    const legKey = option.index.toString()
+    if (orderTypes[legKey] === 'MKT') {
       return option.price.toFixed(2);
     }
-    return inputValues[index] || option.price.toFixed(2); // Ensure always a defined value
+    return inputValues[legKey] || option.price.toFixed(2); // Ensure always a defined value
   };
 
   // Ensure we have a valid quantity value for display
-  const getDisplayQuantity = (option: SelectedOption, index: number): string => {
-    return quantityInputs[index] || option.quantity.toFixed(2);
+  const getDisplayQuantity = (option: SelectedOption): string => {
+    const legKey = option.index.toString()
+    return quantityInputs[legKey] || option.quantity.toFixed(2);
   };
 
   return (
@@ -226,9 +244,12 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               const priceColor = option.type === 'bid' 
                 ? 'text-green-500' 
                 : 'text-red-500'
+                
+              // Get the stable leg key for this option
+              const legKey = option.index.toString()
               
               return (
-                <Card key={index} className="bg-black/10 border border-white/10">
+                <Card key={option.index} className="bg-black/10 border border-white/10">
                   <CardContent className="p-2 sm:p-3">
                     <div className="flex flex-col space-y-2 w-full">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -278,7 +299,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           variant="outline"
                           size="sm"
                           className={`h-6 w-16 px-2 py-0 text-xs ${
-                            orderTypes[index] === 'MKT' 
+                            orderTypes[legKey] === 'MKT' 
                               ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
                               : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
                           } transition-all duration-200`}
@@ -290,7 +311,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           variant="outline"
                           size="sm"
                           className={`h-6 w-16 px-2 py-0 text-xs ${
-                            orderTypes[index] === 'LMT' 
+                            orderTypes[legKey] === 'LMT' 
                               ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
                               : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
                           } transition-all duration-200`}
@@ -302,7 +323,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          {orderTypes[index] === 'MKT' ? (
+                          {orderTypes[legKey] === 'MKT' ? (
                             // Market Price Display (Text)
                             <div className="flex items-center gap-2">
                               <span className="text-xs sm:text-sm text-muted-foreground">Current Price:</span>
@@ -318,7 +339,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-muted-foreground">$</span>
                                 <Input
                                   type="text"
-                                  value={inputValues[index] || option.price.toFixed(2)}
+                                  value={inputValues[legKey] || option.price.toFixed(2)}
                                   onChange={(e) => handlePriceInputChange(e, index)}
                                   className={`h-6 w-16 text-xs sm:text-sm pl-5 ${priceColor}`}
                                   placeholder="Enter price"
@@ -344,7 +365,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             <div className="relative w-14">
                               <Input
                                 type="text"
-                                value={getDisplayQuantity(option, index)}
+                                value={getDisplayQuantity(option)}
                                 onChange={(e) => handleQuantityInputChange(e, index)}
                                 className="h-6 text-xs sm:text-sm text-center px-1"
                                 placeholder="Qty"
