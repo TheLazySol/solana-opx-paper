@@ -111,7 +111,7 @@ export const OrdersViewHistory: FC = () => {
                     <div className="flex items-center gap-3">
                       {position.asset.toUpperCase() === 'SOL' && (
                         <Image 
-                          src="/token-logos/Solana_logo.png" 
+                          src="/token-logos/solana_logo.png" 
                           alt="Solana Logo" 
                           width={24} 
                           height={24} 
