@@ -34,7 +34,12 @@ interface PnLDataPoint {
 }
 
 // Custom tooltip component for displaying PnL data
-const CustomTooltip = ({ active, payload }: any) => {
+import type { TooltipProps } from 'recharts';
+
+const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
+  active,
+  payload
+}) => {
   if (!active || !payload || !payload.length) {
     return null;
   }
@@ -42,7 +47,6 @@ const CustomTooltip = ({ active, payload }: any) => {
   const data = payload[0].payload;
   const value = data.value;
   const percentageValue = data.actualPercentageValue; // Use the uncapped percentage value
-
   // Format value for better readability
   const formattedValue = value >= 0
     ? `+$${value.toFixed(2)}`
