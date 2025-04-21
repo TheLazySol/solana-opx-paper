@@ -78,7 +78,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
               onCheckedChange={setUseGreekSymbols}
             />
             <Label htmlFor="greek-display-mode" className="text-sm cursor-pointer">
-              {useGreekSymbols ? "Greek Symbols" : "Greek Names"}
+              {useGreekSymbols ? "Greek Symbols" : "Greek Symbols"}
             </Label>
           </div>
         </div>
