@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import { Button } from '../ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react'
 
 // Types for closed positions
 type ClosedOptionLeg = {
@@ -29,6 +29,7 @@ type ClosedPosition = {
 export const OrdersViewHistory: FC = () => {
   const [closedPositions, setClosedPositions] = useState<ClosedPosition[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({})
   const positionsPerPage = 10
   
   // Load closed positions from localStorage
@@ -67,6 +68,14 @@ export const OrdersViewHistory: FC = () => {
     }
   }
 
+  // Toggle leg expansion
+  const toggleOrderExpansion = (orderId: string) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }))
+  }
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -95,7 +104,10 @@ export const OrdersViewHistory: FC = () => {
                   key={position.id}
                   className="rounded-lg border border-[#e5e5e5]/20 dark:border-[#393939] p-3"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div 
+                    className="flex items-center justify-between mb-2 cursor-pointer"
+                    onClick={() => toggleOrderExpansion(position.id)}
+                  >
                     <div className="flex items-center gap-3">
                       {position.asset.toUpperCase() === 'SOL' && (
                         <Image 
@@ -112,58 +124,71 @@ export const OrdersViewHistory: FC = () => {
                       <div className="text-sm text-muted-foreground">
                         Closed: <span className="text-foreground">{formatDate(position.closedAt)}</span>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-muted-foreground">Total P/L</div>
-                      <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                        {position.totalPnl >= 0 ? '+$' : '-$'}
-                        {Math.abs(position.totalPnl).toFixed(2)}
+                      <div className="text-sm">
+                        <Badge variant="outline">
+                          {position.legs.length} leg{position.legs.length !== 1 ? 's' : ''}
+                        </Badge>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="text-muted-foreground">Total P/L</div>
+                        <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                          {position.totalPnl >= 0 ? '+$' : '-$'}
+                          {Math.abs(position.totalPnl).toFixed(2)}
+                        </div>
+                      </div>
+                      {expandedOrders[position.id] ? 
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" /> : 
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      }
                     </div>
                   </div>
                   
-                  {/* Closed Legs */}
-                  <div className="space-y-1 mt-2">
-                    {position.legs.map((leg, idx) => (
-                      <div 
-                        key={`${position.id}-leg-${idx}`}
-                        className="flex items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
-                          border border-[#e5e5e5]/10 dark:border-[#393939]/50 text-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
-                            {leg.position > 0 ? 'Long' : 'Short'}
-                          </Badge>
-                          <Badge variant={leg.type === 'Call' ? 'blue' : 'destructive'}>
-                            {leg.type}
-                          </Badge>
-                          <Badge variant="outline">
-                            ${leg.strike}
-                          </Badge>
-                          <Badge variant="outline">
-                            {leg.expiry.split('T')[0]}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-x-4 text-sm">
-                          <div className="text-right">
-                            <div className="text-muted-foreground">Entry</div>
-                            <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
+                  {/* Closed Legs - Only shown when expanded */}
+                  {expandedOrders[position.id] && (
+                    <div className="space-y-1 mt-2">
+                      {position.legs.map((leg, idx) => (
+                        <div 
+                          key={`${position.id}-leg-${idx}`}
+                          className="flex items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
+                            border border-[#e5e5e5]/10 dark:border-[#393939]/50 text-sm"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
+                              {leg.position > 0 ? 'Long' : 'Short'}
+                            </Badge>
+                            <Badge variant={leg.type === 'Call' ? 'blue' : 'destructive'}>
+                              {leg.type}
+                            </Badge>
+                            <Badge variant="outline">
+                              ${leg.strike}
+                            </Badge>
+                            <Badge variant="outline">
+                              {leg.expiry.split('T')[0]}
+                            </Badge>
                           </div>
-                          <div className="text-right">
-                            <div className="text-muted-foreground">Exit</div>
-                            <div className="font-medium">${leg.exitPrice.toFixed(2)}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-muted-foreground">P/L</div>
-                            <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                              {leg.pnl >= 0 ? '+$' : '-$'}
-                              {Math.abs(leg.pnl).toFixed(2)}
+                          <div className="grid grid-cols-3 gap-x-4 text-sm">
+                            <div className="text-right">
+                              <div className="text-muted-foreground">Entry</div>
+                              <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-muted-foreground">Exit</div>
+                              <div className="font-medium">${leg.exitPrice.toFixed(2)}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-muted-foreground">P/L</div>
+                              <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                                {leg.pnl >= 0 ? '+$' : '-$'}
+                                {Math.abs(leg.pnl).toFixed(2)}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
