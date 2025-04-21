@@ -108,9 +108,6 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   const collateralNeeded = calculateCollateralNeeded()
   const formattedCollateral = collateralNeeded.toFixed(2)
 
-  // Calculate if enough collateral is provided
-  const hasEnoughCollateral = Number(collateralProvided) >= collateralNeeded / leverage[0]
-
   // Calculate optimal leverage based on collateral needed and provided
   const calculateOptimalLeverage = () => {
     if (!Number(collateralProvided) || Number(collateralProvided) <= 0) return 1
@@ -130,6 +127,9 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
       onBorrowedAmountChange(borrowedAmount);
     }
   }, [borrowedAmount, onBorrowedAmountChange]);
+
+  // Calculate if enough collateral is provided - include borrowed amount
+  const hasEnoughCollateral = Number(collateralProvided) + borrowedAmount >= collateralNeeded
 
   // Calculate daily borrow rate
   const dailyBorrowRate = BASE_ANNUAL_INTEREST_RATE / 365;

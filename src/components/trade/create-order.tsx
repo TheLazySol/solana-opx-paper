@@ -249,7 +249,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               const legKey = option.index.toString()
               
               return (
-                <Card key={option.index} className="bg-black/10 border border-white/10">
+                <Card key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`} className="bg-black/10 border border-white/10">
                   <CardContent className="p-2 sm:p-3">
                     <div className="flex flex-col space-y-2 w-full">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
