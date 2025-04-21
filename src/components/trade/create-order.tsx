@@ -200,11 +200,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         <div className="flex items-center gap-2">
                          {assetName.toUpperCase() === 'SOL' && (
                            <Image 
-                             src="/token-logos/Solana_logo.png" 
+                             src="/token-logos/solana_logo.png" 
                              alt="Solana Logo" 
-                             width={24} 
-                             height={24} 
-                             className="mr-1"
+                             width={20} 
+                             height={20} 
+                             className="mr-1.5"
                            />
                          )}
                          <Badge variant="grey" className="capitalize">

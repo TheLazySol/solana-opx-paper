@@ -117,7 +117,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
               <div className="flex items-center">
                 {asset.name.toUpperCase() === 'SOL' && (
                   <Image 
-                    src="/token-logos/Solana_logo.png" 
+                    src="/token-logos/solana_logo.png" 
                     alt="Solana Logo" 
                     width={20} 
                     height={20} 
@@ -126,7 +126,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
                 )}
                 {asset.name.toUpperCase() === 'LABS' && (
                   <Image 
-                    src="/token-logos/Epicentral_Labs_logo.png" 
+                    src="/token-logos/epicentral_labs_logo.png" 
                     alt="Epicentral Labs Logo" 
                     width={20} 
                     height={20} 
