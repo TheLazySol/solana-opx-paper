@@ -36,22 +36,14 @@ export const TradeView: FC<TradeViewProps> = ({
       prevOptions.length !== initialSelectedOptions.length || 
       !initialSelectedOptions.every((opt, idx) => {
         const prevOpt = prevOptions[idx]
--        return prevOpt && 
--               opt.asset === prevOpt.asset && 
--               opt.strike === prevOpt.strike &&
--               opt.expiry === prevOpt.expiry &&
--               opt.side === prevOpt.side && 
--               opt.type === prevOpt.type
-+        return (
-+          prevOpt &&
-+          opt.index === prevOpt.index &&
-+          opt.asset === prevOpt.asset &&
-+          opt.strike === prevOpt.strike &&
-+          opt.expiry === prevOpt.expiry &&
-+          opt.side === prevOpt.side &&
-+          opt.type === prevOpt.type &&
-+          opt.price === prevOpt.price    // optional: include price drift
-+        )
+        return (
+          prevOpt &&
+          opt.asset === prevOpt.asset &&
+          opt.strike === prevOpt.strike &&
+          opt.expiry === prevOpt.expiry &&
+          opt.side === prevOpt.side &&
+          opt.type === prevOpt.type
+        )
       })
     // Ensure we don't exceed the maximum number of option legs
     if (optionsChanged) {

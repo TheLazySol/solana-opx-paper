@@ -105,9 +105,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     const breakEvenPoints = selectedOptions.map(option => {
       const strike = Number(option.strike);
       // Use limitPrice if it exists, otherwise use market price
-      const premium = (option as any).limitPrice !== undefined 
-        ? (option as any).limitPrice 
-        : option.price;
+      const premium = option.limitPrice ?? option.price;
       const isCall = option.side === 'call';
       const isBuy = option.type === 'bid';
       
@@ -127,9 +125,7 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
     // Calculate total premium paid/received
     let totalPremium = 0;
     selectedOptions.forEach(option => {
-      const price = (option as any).limitPrice !== undefined 
-        ? (option as any).limitPrice 
-        : option.price;
+      const price = option.limitPrice ?? option.price;
       const quantity = Number(option.quantity);
       const contractSize = STANDARD_CONTRACT_SIZE;
       const premiumEffect = option.type === 'bid' ? -1 : 1;
