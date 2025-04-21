@@ -30,7 +30,7 @@ interface PnLDataPoint {
   value: number
   price: number
   percentageValue: number // Capped percentage value for chart display
-  actualPercentageValue: number // Uncapped percentage value for tooltip
+  actualPercentageValue: number | null // Uncapped percentage value for tooltip, null when totalPremium is zero
 }
 
 // Custom tooltip component for displaying PnL data
@@ -53,9 +53,11 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
     : `-$${Math.abs(value).toFixed(2)}`;
 
   // Format percentage value
-  const formattedPercentage = percentageValue >= 0
-    ? `+${percentageValue.toFixed(2)}%`
-    : `-${Math.abs(percentageValue).toFixed(2)}%`;
+  const formattedPercentage = percentageValue === null
+    ? "N/A" // Handle case when percentage is undefined (totalPremium === 0)
+    : percentageValue >= 0
+      ? `+${percentageValue.toFixed(2)}%`
+      : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
   const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
@@ -199,19 +201,29 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
       })
 
       // Calculate percentage value relative to premium
-      // If premium is 0, use a small number to avoid division by zero
-      const absPremium = Math.abs(totalPremium) || 0.01
-      const actualPercentageValue = (pnl / absPremium) * 100
+      let actualPercentageValue = 0
+      let percentageValue = 0
       
-      // Cap percentage values at -100% and +100% for chart display only
-      const percentageValue = Math.max(Math.min(actualPercentageValue, 100), -100)
+      if (totalPremium === 0) {
+        // If premium is exactly zero, we can't calculate percentage return
+        // Set to NaN to indicate undefined percentage
+        actualPercentageValue = NaN
+        percentageValue = 0 // Use 0 for chart display purposes
+      } else {
+        // Calculate percentage normally when we have a non-zero premium
+        const absPremium = Math.abs(totalPremium)
+        actualPercentageValue = (pnl / absPremium) * 100
+        
+        // Cap percentage values at -100% and +100% for chart display only
+        percentageValue = Math.max(Math.min(actualPercentageValue, 100), -100)
+      }
 
       return {
         price,
         name: `$${price.toFixed(2)}`,
         value: Number(pnl.toFixed(2)),
-        percentageValue: Number(percentageValue.toFixed(2)),
-        actualPercentageValue: Number(actualPercentageValue.toFixed(2))
+        percentageValue: Number(isNaN(percentageValue) ? 0 : percentageValue.toFixed(2)),
+        actualPercentageValue: isNaN(actualPercentageValue) ? null : Number(actualPercentageValue.toFixed(2))
       }
     })
 
