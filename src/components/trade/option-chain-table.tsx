@@ -138,7 +138,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       expiry: option.expiry,
       asset: assetId,
       price,
-      quantity: 1 // Set initial quantity to 1
+      quantity: 0.01 // Set initial quantity to 0.01 (1% of a contract)
     }
     
     setSelectedOptions(prev => {
@@ -201,7 +201,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Format volume and open interest as whole numbers
   const formatInteger = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '0'
-    return Math.round(value).toString()
+    // Format with 2 decimal places if number has decimals, otherwise show as whole number
+    return Number.isInteger(value) ? Math.round(value).toString() : value.toFixed(2)
   }
 
   // Notify parent component when selected options change
@@ -229,6 +230,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   React.useEffect(() => {
     // Register the handleOrderPlaced callback with the parent if onOrderPlaced is provided
     if (onOrderPlaced) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       onOrderPlaced = handleOrderPlaced;
     }
   }, [onOrderPlaced]);
@@ -299,7 +301,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Volume - Contracts traded today
+                        Volume - Contracts traded today (includes fractional contracts)
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -311,7 +313,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OI</TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Open Interest - Total open contracts
+                        Open Interest - Total open contracts (includes fractional contracts)
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -494,7 +496,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OI</TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Open Interest - Total open contracts
+                        Open Interest - Total open contracts (includes fractional contracts)
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -506,7 +508,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Volume - Contracts traded today
+                        Volume - Contracts traded today (includes fractional contracts)
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

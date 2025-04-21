@@ -22,17 +22,14 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   onUpdateQuantity,
   onUpdateLimitPrice
 }) => {
-  const [orderTypes, setOrderTypes] = useState<Record<number, 'MKT' | 'LMT'>>(
-    Object.fromEntries(selectedOptions.map((_, index) => [index, 'MKT']))
-  );
-  
-  // Add state for input values
-  const [inputValues, setInputValues] = useState<Record<number, string>>(
-    Object.fromEntries(selectedOptions.map((option, index) => [index, option.price.toFixed(2)]))
-  );
+  // Initialize with empty objects rather than derived from selectedOptions
+  const [orderTypes, setOrderTypes] = useState<Record<number, 'MKT' | 'LMT'>>({});
+  const [inputValues, setInputValues] = useState<Record<number, string>>({});
+  const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
 
-  // Update orderTypes when options change
+  // Update all state when options change
   useEffect(() => {
+    // Update order types
     setOrderTypes(prev => {
       const newOrderTypes: Record<number, 'MKT' | 'LMT'> = {};
       selectedOptions.forEach((_, index) => {
@@ -40,16 +37,23 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       });
       return newOrderTypes;
     });
-  }, [selectedOptions, selectedOptions.length]);
 
-  // Update input values when options change
-  useEffect(() => {
+    // Update price input values
     setInputValues(prev => {
       const newValues = { ...prev };
       selectedOptions.forEach((option, index) => {
-        if (!newValues[index]) {
-          newValues[index] = option.price.toFixed(2);
-        }
+        // Always ensure there's a value
+        newValues[index] = prev[index] || option.price.toFixed(2);
+      });
+      return newValues;
+    });
+
+    // Update quantity inputs
+    setQuantityInputs(prev => {
+      const newValues = { ...prev };
+      selectedOptions.forEach((option, index) => {
+        // Always ensure there's a value
+        newValues[index] = prev[index] || option.quantity.toFixed(2);
       });
       return newValues;
     });
@@ -97,9 +101,35 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const handleQuantityChange = (index: number, delta: number) => {
     if (!onUpdateQuantity) return
     
-    const currentQuantity = selectedOptions[index].quantity || 1
-    const newQuantity = Math.max(1, currentQuantity + delta) // Ensure quantity doesn't go below 1
+    const currentQuantity = selectedOptions[index].quantity || 0.01
+    const newQuantity = Math.max(0.01, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
     onUpdateQuantity(index, newQuantity)
+    
+    // Update quantity input field
+    setQuantityInputs(prev => ({
+      ...prev,
+      [index]: newQuantity.toFixed(2)
+    }))
+  }
+
+  // Handle direct quantity input changes
+  const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    if (!onUpdateQuantity) return
+
+    const inputValue = e.target.value;
+
+    // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
+    if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
+      setQuantityInputs(prev => ({ ...prev, [index]: inputValue || '0.01' }));
+
+      // Only update the actual quantity if it's a valid number and at least 0.01
+      if (inputValue !== '' && inputValue !== '.') {
+        const parsed = parseFloat(inputValue);
+        if (!isNaN(parsed) && parsed >= 0.01) {
+          onUpdateQuantity(index, parsed);
+        }
+      }
+    }
   }
 
   // Handle switching between MKT and LMT
@@ -130,7 +160,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     
     // Update the display value immediately for all valid inputs
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      setInputValues(prev => ({ ...prev, [index]: inputValue }));
+      setInputValues(prev => ({ ...prev, [index]: inputValue || '0.00' }));
       
       // Only update the actual price if it's a valid number
       if (inputValue !== '' && inputValue !== '.') {
@@ -147,7 +177,12 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (orderTypes[index] === 'MKT') {
       return option.price.toFixed(2);
     }
-    return inputValues[index] || '';
+    return inputValues[index] || option.price.toFixed(2); // Ensure always a defined value
+  };
+
+  // Ensure we have a valid quantity value for display
+  const getDisplayQuantity = (option: SelectedOption, index: number): string => {
+    return quantityInputs[index] || option.quantity.toFixed(2);
   };
 
   return (
@@ -283,7 +318,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-muted-foreground">$</span>
                                 <Input
                                   type="text"
-                                  value={inputValues[index]}
+                                  value={inputValues[index] || option.price.toFixed(2)}
                                   onChange={(e) => handlePriceInputChange(e, index)}
                                   className={`h-6 w-16 text-xs sm:text-sm pl-5 ${priceColor}`}
                                   placeholder="Enter price"
@@ -300,18 +335,28 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, -1)}
+                              onClick={() => handleQuantityChange(index, -0.01)}
+                              title="Decrease by 0.01"
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="text-xs sm:text-sm font-medium w-8 text-center">
-                              {option.quantity || 1}
-                            </span>
+
+                            <div className="relative w-14">
+                              <Input
+                                type="text"
+                                value={getDisplayQuantity(option, index)}
+                                onChange={(e) => handleQuantityInputChange(e, index)}
+                                className="h-6 text-xs sm:text-sm text-center px-1"
+                                placeholder="Qty"
+                              />
+                            </div>
+
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, 1)}
+                              onClick={() => handleQuantityChange(index, 0.01)}
+                              title="Increase by 0.01"
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
