@@ -13,6 +13,16 @@ import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
 
+// Helper for formatting quantity with 2 decimal places, hiding .00 when whole numbers
+const formatQuantity = (quantity: number): string => {
+  // If it's a whole number, display without decimal places
+  if (quantity === Math.floor(quantity)) {
+    return quantity.toString();
+  }
+  // Otherwise, display with 2 decimal places
+  return quantity.toFixed(2);
+}
+
 // Data structure for option positions
 type OptionLeg = {
   type: 'Call' | 'Put'
@@ -106,7 +116,7 @@ export const OrdersViewOpen = () => {
     // For long positions: (current price - entry price) * quantity * 100
     // For short positions: (entry price - current price) * quantity * 100
     const contractSize = 100 // Each option contract represents 100 units
-    const quantity = Math.abs(leg.position)
+    const quantity = Math.abs(leg.position) // Works with fractional quantities
     
     if (leg.position > 0) {
       // Long position
@@ -533,6 +543,9 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
                             </Badge>
+                            <Badge variant="outline">
+                              Qty: {formatQuantity(Math.abs(leg.position))}
+                            </Badge>
                           </div>
                           
                           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">
@@ -547,7 +560,7 @@ export const OrdersViewOpen = () => {
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Qty</div>
-                                <div className="font-medium">{Math.abs(leg.position)}</div>
+                                <div className="font-medium">{formatQuantity(Math.abs(leg.position))}</div>
                               </div>
                             </div>
                           
@@ -555,7 +568,7 @@ export const OrdersViewOpen = () => {
                               <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6 text-xs sm:text-sm">
                                 <div className="text-right">
                                   <div className="text-muted-foreground">Value</div>
-                                  <div className="font-medium">${((leg.position > 0 ? 1 : -1) * (leg.marketPrice * 100)).toFixed(2)}</div>
+                                  <div className="font-medium">${(leg.marketPrice * 100 * Math.abs(leg.position) * (leg.position > 0 ? 1 : -1)).toFixed(2)}</div>
                                 </div>
                                 <div className="text-right">
                                   <div className="text-muted-foreground">P/L</div>

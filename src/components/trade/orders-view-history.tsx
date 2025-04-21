@@ -7,6 +7,16 @@ import Image from 'next/image'
 import { Button } from '../ui/button'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react'
 
+// Helper for formatting quantity with 2 decimal places, hiding .00 when whole numbers
+const formatQuantity = (quantity: number): string => {
+  // If it's a whole number, display without decimal places
+  if (quantity === Math.floor(quantity)) {
+    return quantity.toString();
+  }
+  // Otherwise, display with 2 decimal places
+  return quantity.toFixed(2);
+}
+
 // Types for closed positions
 type ClosedOptionLeg = {
   type: 'Call' | 'Put'
@@ -166,6 +176,9 @@ export const OrdersViewHistory: FC = () => {
                             </Badge>
                             <Badge variant="outline">
                               {leg.expiry.split('T')[0]}
+                            </Badge>
+                            <Badge variant="outline">
+                              Qty: {formatQuantity(Math.abs(leg.position))}
                             </Badge>
                           </div>
                           <div className="grid grid-cols-3 gap-x-2 sm:gap-x-4 text-xs sm:text-sm">
