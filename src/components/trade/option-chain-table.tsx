@@ -28,6 +28,7 @@ interface OptionChainTableProps {
   onOptionsChange?: (options: SelectedOption[]) => void
   initialSelectedOptions?: SelectedOption[]
   useGreekSymbols?: boolean
+  onOrderPlaced?: () => void
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -44,12 +45,14 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   },
   onOptionsChange,
   initialSelectedOptions = [],
-  useGreekSymbols = false
+  useGreekSymbols = false,
+  onOrderPlaced
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
   const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
+  const [refreshVolume, setRefreshVolume] = useState(0); // Counter to force refresh
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -88,8 +91,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [initialSelectedOptions]);
 
+  // Handler for when an order is placed
+  const handleOrderPlaced = () => {
+    // Increment refresh counter to force option chain to regenerate with updated volumes
+    setRefreshVolume(prev => prev + 1);
+    
+    // Call parent handler if provided
+    if (onOrderPlaced) {
+      onOrderPlaced();
+    }
+  };
+
   // Get mock data using the generator function with the current spot price
-  const mockData: OptionContract[] = generateMockOptionData(expirationDate || null, spotPrice || 0)
+  const mockData: OptionContract[] = React.useMemo(() => 
+    generateMockOptionData(expirationDate || null, spotPrice || 0),
+    [expirationDate, spotPrice, refreshVolume] // Add refreshVolume to dependencies
+  );
 
   // Calculate the position of the price indicator
   const getPriceIndicatorPosition = () => {
@@ -207,6 +224,14 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Determine if option buttons should be disabled due to reaching the limit
   const shouldDisableOptionButtons = selectedOptions.length >= MAX_OPTION_LEGS;
+
+  // Export the order placement handler for use by parent components
+  React.useEffect(() => {
+    // Register the handleOrderPlaced callback with the parent if onOrderPlaced is provided
+    if (onOrderPlaced) {
+      onOrderPlaced = handleOrderPlaced;
+    }
+  }, [onOrderPlaced]);
 
   return (
     <div 

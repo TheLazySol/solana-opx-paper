@@ -7,11 +7,13 @@ import { SelectedOption } from './option-data'
 interface TradeViewContainerProps {
   selectedOptions: SelectedOption[]
   onOptionsChange?: (options: SelectedOption[]) => void
+  onOrderPlaced?: () => void
 }
 
 export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   selectedOptions,
-  onOptionsChange
+  onOptionsChange,
+  onOrderPlaced
 }) => {
   const [activeView, setActiveView] = useState('trade')
 
@@ -24,6 +26,13 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   const handleTabChange = useCallback((tab: string) => {
     setActiveView(tab)
   }, [])
+
+  // Handle order placed event to trigger volume update
+  const handleOrderPlaced = useCallback(() => {
+    if (onOrderPlaced) {
+      onOrderPlaced()
+    }
+  }, [onOrderPlaced])
 
   return (
     <div className="space-y-2 sm:space-y-4">

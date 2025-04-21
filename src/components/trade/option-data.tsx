@@ -35,6 +35,60 @@ import {
   OPTION_STRIKE_PRICES
 } from '@/constants/constants'
 
+// Volume Tracker - keeps track of traded option volumes
+// Using a singleton pattern to maintain state across component instances
+class OptionVolumeTracker {
+  private static instance: OptionVolumeTracker;
+  private volumeMap: Map<string, number> = new Map();
+  
+  private constructor() {}
+  
+  public static getInstance(): OptionVolumeTracker {
+    if (!OptionVolumeTracker.instance) {
+      OptionVolumeTracker.instance = new OptionVolumeTracker();
+    }
+    return OptionVolumeTracker.instance;
+  }
+  
+  // Generate a unique key for an option
+  private getOptionKey(strike: number, expiry: string, side: 'call' | 'put'): string {
+    return `${side}-${strike}-${expiry}`;
+  }
+  
+  // Get volume for an option
+  public getVolume(strike: number, expiry: string, side: 'call' | 'put'): number {
+    const key = this.getOptionKey(strike, expiry, side);
+    return this.volumeMap.get(key) || DEFAULT_OPTION_VOLUME;
+  }
+  
+  // Update volume for an option
+  public updateVolume(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    const currentVolume = this.getVolume(strike, expiry, side);
+    this.volumeMap.set(key, currentVolume + quantity);
+  }
+  
+  // Reset all volumes (for testing)
+  public resetAllVolumes(): void {
+    this.volumeMap.clear();
+  }
+}
+
+// Export the volume tracker instance
+export const volumeTracker = OptionVolumeTracker.getInstance();
+
+// Function to update volume when an option is traded
+export const updateOptionVolume = (option: SelectedOption): void => {
+  if (option && option.quantity) {
+    volumeTracker.updateVolume(
+      option.strike,
+      option.expiry,
+      option.side,
+      option.quantity
+    );
+  }
+};
+
 // Helper function to calculate time until expiry in seconds
 /**
  * Calculates the time remaining until option expiry in seconds.
@@ -92,19 +146,23 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
   const putBid = putMidPrice * (1 - OPTION_SPREAD_PERCENTAGE / 2)
   const putAsk = putMidPrice * (1 + OPTION_SPREAD_PERCENTAGE / 2)
 
+  // Get call and put volumes from the tracker
+  const callVolume = volumeTracker.getVolume(strike, expiryDate, 'call');
+  const putVolume = volumeTracker.getVolume(strike, expiryDate, 'put');
+
   return {
     strike,
     expiry: expiryDate,
     // Call side
     callBid,
     callAsk,
-    callVolume: DEFAULT_OPTION_VOLUME,
+    callVolume,
     callOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
     callGreeks: callOption.greeks,
     // Put side
     putBid,
     putAsk,
-    putVolume: DEFAULT_OPTION_VOLUME,
+    putVolume,
     putOpenInterest: DEFAULT_OPTION_OPEN_INTEREST,
     putGreeks: putOption.greeks
   }

@@ -128,7 +128,7 @@ export const TradeView: FC<TradeViewProps> = ({
     setBorrowedAmount(amount);
   }
 
-  // Handle order placement
+  // Handle order placement from PlaceTradeOrder
   const handleOrderPlaced = (options: SelectedOption[]) => {
     // Reset selected options
     setSelectedOptions([]);
