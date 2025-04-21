@@ -66,9 +66,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
 
     // Handle short calls
     shortCalls.forEach(shortCall => {
-      const quantity = shortCall.quantity || 1
-      // Short calls require full underlying price as collateral if not covered
-      const numUncovered = Math.max(0, quantity - longCalls.length)
+      const quantity      = shortCall.quantity || 1
+      const coveredQtySum = longCalls.reduce((q, lc) => q + (lc.quantity || 1), 0)
+      const numUncovered  = Math.max(0, quantity - coveredQtySum)
       if (numUncovered > 0) {
         totalCollateral += underlyingPrice * contractSize * numUncovered
       }
