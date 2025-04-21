@@ -27,6 +27,7 @@ interface OptionChainTableProps {
   greekFilters?: GreekFilters
   onOptionsChange?: (options: SelectedOption[]) => void
   initialSelectedOptions?: SelectedOption[]
+  useGreekSymbols?: boolean
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -42,7 +43,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     volume: true
   },
   onOptionsChange,
-  initialSelectedOptions = []
+  initialSelectedOptions = [],
+  useGreekSymbols = false
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
@@ -294,7 +296,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "ρ" : "Rho"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Rho - Sensitivity to interest rate changes
                       </TooltipContent>
@@ -306,7 +310,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "ν" : "Vega"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Vega - Sensitivity to volatility changes
                       </TooltipContent>
@@ -318,7 +324,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "γ" : "Gamma"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Gamma - Rate of change in Delta
                       </TooltipContent>
@@ -330,7 +338,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "θ" : "Theta"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Theta - Time decay rate
                       </TooltipContent>
@@ -342,7 +352,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "Δ" : "Delta"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Delta - Price change sensitivity
                       </TooltipContent>
@@ -385,7 +397,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Δ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "Δ" : "Delta"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Delta - Price change sensitivity
                       </TooltipContent>
@@ -397,7 +411,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">θ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "θ" : "Theta"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Theta - Time decay rate
                       </TooltipContent>
@@ -409,7 +425,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">γ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "γ" : "Gamma"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Gamma - Rate of change in Delta
                       </TooltipContent>
@@ -421,7 +439,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ν</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "ν" : "Vega"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Vega - Sensitivity to volatility changes
                       </TooltipContent>
@@ -433,7 +453,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">ρ</TooltipTrigger>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
+                        {useGreekSymbols ? "ρ" : "Rho"}
+                      </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Rho - Sensitivity to interest rate changes
                       </TooltipContent>
