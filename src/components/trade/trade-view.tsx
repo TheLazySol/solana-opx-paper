@@ -1,7 +1,7 @@
 import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './create-order'
-import { PlaceTradeOrder } from './place-trade-order'
+import { PlaceTradeOrder } from './trade-place-order'
 import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/use-toast"
