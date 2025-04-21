@@ -66,8 +66,9 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   }, [selectedOptions]);
 
   // Get unique assets from selected options
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const uniqueAssets = [...new Set(selectedOptions.map(option => option.asset))];
+  const uniqueAssets = useMemo(() => {
+    return [...new Set(selectedOptions.map(option => option.asset))];
+  }, [selectedOptions]);
   
   // Get price for each unique asset
   const { price: firstAssetPrice } = useAssetPriceInfo(uniqueAssets[0] || '');
