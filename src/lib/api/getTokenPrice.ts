@@ -80,12 +80,23 @@ export async function getTokenPrice(tokenSymbol: string) {
   const token = TOKENS[tokenSymbol as keyof typeof TOKENS]
   const apiKey = process.env.NEXT_PUBLIC_BIRDEYE_API_KEY
 
+  // Return cached data or default values if token doesn't exist or no API key is available
+  if (!token || !apiKey) {
+    console.warn(`Cannot fetch price for ${tokenSymbol}: ${!token ? 'Token not found' : 'No API key available'}`);
+    return cachedData || {
+      price: 0,
+      priceChange24h: 0,
+      timestamp: Date.now(),
+      humanTime: new Date().toISOString()
+    };
+  }
+
   const options = {
     method: 'GET',
     headers: {
       accept: 'application/json',
       'x-chain': 'solana',
-      'X-API-KEY': apiKey ?? ''
+      'X-API-KEY': apiKey
     }
   }
 

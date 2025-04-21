@@ -136,7 +136,7 @@ export function calculateOption(params: {
     price = S * Nd1 - K * Math.exp(-r * T) * Nd2;
     delta = Nd1;
     gamma = NNd1 / (S * v * sqrtT);
-    theta = (-(S * v * NNd1) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2) / 100;
+    theta = (-(S * v * NNd1) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2) / 365; // Theta is in days, so we divide by 365 for daily theta decay.
     vega = (S * sqrtT * NNd1) / 100;
     rho = K * T * Math.exp(-r * T) * Nd2;
   } else {
@@ -145,7 +145,7 @@ export function calculateOption(params: {
     price = K * Math.exp(-r * T) * NegNd2 - S * NegNd1;
     delta = -NegNd1;
     gamma = NNd1 / (S * v * sqrtT);
-    theta = (-(S * v * NNd1) / (2 * sqrtT) + r * K * Math.exp(-r * T) * NegNd2) / 100;
+    theta = (-(S * v * NNd1) / (2 * sqrtT) + r * K * Math.exp(-r * T) * NegNd2) / 365; // Theta is in days, so we divide by 365 for daily theta decay.
     vega = (S * sqrtT * NNd1) / 100;
     rho = -K * T * Math.exp(-r * T) * NegNd2;
   }
