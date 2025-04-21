@@ -18,7 +18,7 @@ import {
 import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
-import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, MAX_OPTION_LEGS } from '@/constants/constants'
+import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { toast } from "@/hooks/use-toast"
 
 interface OptionChainTableProps {
@@ -104,8 +104,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = React.useMemo(() => 
-    generateMockOptionData(expirationDate || null, spotPrice || 0),
-    [expirationDate, spotPrice] // Add refreshVolume to dependencies
+    generateMockOptionData(expirationDate || null, spotPrice || 0, refreshVolume),
+    [expirationDate, spotPrice, refreshVolume] // Add refreshVolume to dependencies
   );
 
   // Calculate the position of the price indicator

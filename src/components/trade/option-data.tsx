@@ -245,7 +245,7 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
 }
 
 // Mock data generator function
-export const generateMockOptionData = (expirationDate: string | null, spotPrice: number): OptionContract[] => {
+export const generateMockOptionData = (expirationDate: string | null, spotPrice: number, refreshVolume: number): OptionContract[] => {
   // If no spot price is available, return empty array
   if (!spotPrice) {
     return []
