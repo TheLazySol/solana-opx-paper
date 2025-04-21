@@ -65,7 +65,9 @@ class OptionVolumeTracker {
   public updateVolume(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
     const key = this.getOptionKey(strike, expiry, side);
     const currentVolume = this.getVolume(strike, expiry, side);
-    this.volumeMap.set(key, currentVolume + quantity);
+    // Volume is normally reported as an absolute number of contracts traded
+    const updated = currentVolume + Math.abs(quantity);
+    this.volumeMap.set(key, updated);
   }
   
   // Reset all volumes (for testing)
