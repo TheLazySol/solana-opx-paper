@@ -139,9 +139,9 @@ export const OrdersViewOpen = () => {
           // Get current asset price
           const currentAssetPrice = getAssetPrice(position.asset)
           
-          // Calculate option prices and Greeks using the Black-Scholes model
+          // Calculate option prices and Greeks using the Black‑Scholes model
           const legsWithUpdatedPrices = position.legs.map(leg => {
-            // Calculate option price using Black-Scholes
+            // Calculate option price using Black‑Scholes
             const newPrice = calculateOptionPrice(leg, currentAssetPrice)
             
             // Calculate option Greeks
@@ -200,8 +200,8 @@ export const OrdersViewOpen = () => {
             netRho,
             totalValue,
             totalPnl,
-            // Add unique ID using timestamp and index
-            id: position.id || `${position.asset}-${Date.now()}-${index}`
+            // Add unique ID using asset and index
+            id: position.id ?? `${position.asset}-${index}-${parsedOrders.indexOf(position)}`
           }
         })
         
