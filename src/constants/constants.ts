@@ -63,7 +63,7 @@ export type ExpirationDate = {
 export const ASSET_PRICE_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 // SOL PH Volatility
-export const SOL_PH_VOLATILITY = 0.45;
+export const SOL_PH_VOLATILITY = 1.16;
 
 // SOL PH Risk Free Rate
 export const SOL_PH_RISK_FREE_RATE = 0.08;
@@ -72,7 +72,7 @@ export const SOL_PH_RISK_FREE_RATE = 0.08;
 export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
-export const OPTION_STRIKE_PRICES = [100,105,110,115,120,125,130,135,140,145,150];
+export const OPTION_STRIKE_PRICES = [110,115,120,125,130,135,140,145,150];
 
 // Maximum number of option legs allowed in an order
 export const MAX_OPTION_LEGS = 4;
@@ -80,8 +80,8 @@ export const MAX_OPTION_LEGS = 4;
 // Test expiration dates array for development
 export const EMPTY_EXPIRATION_DATES: ExpirationDate[] = [
   {
-    value: "2025-04-23",
-    label: "April 23rd, 2025",
+    value: "2025-05-07",
+    label: "May 7th, 2025",
     isMonthly: true
   }
 ];
