@@ -28,18 +28,160 @@ export function MakerSummary({
 }: MakerSummaryProps) {
   const totalPremium = calculateTotalPremium(options);
   
-  // Calculate liquidation prices
+  // Calculate PnL data points similar to the PnL chart
+  const pnlPoints = useMemo(() => {
+    if (options.length === 0 || !collateralProvided) return [];
+    
+    // Calculate total premium received (this is our max profit at expiration)
+    const totalPremium = options.reduce((acc, opt) => 
+      acc + (Number(opt.premium) * Number(opt.quantity) * 100), 0);
+      
+    // For the price range, use the weighted average of strike prices as center point
+    const totalQuantity = options.reduce((acc, opt) => acc + Number(opt.quantity), 0);
+    const avgStrike = options.reduce(
+      (acc, opt) => acc + (Number(opt.strikePrice) * Number(opt.quantity)), 0
+    ) / totalQuantity;
+    
+    // Create a wider price range for better visualization and finding liquidation points
+    const priceRange = avgStrike * 1.0; // 100% range for better chance of finding liquidation points
+    const minPrice = Math.max(avgStrike - priceRange, 0);
+    const maxPrice = avgStrike + priceRange;
+    const steps = 200; // Higher resolution for more accurate liquidation point detection
+    const priceStep = (maxPrice - minPrice) / steps;
+    
+    // Create points array
+    return Array.from({ length: steps + 1 }, (_, i) => {
+      const price = minPrice + (i * priceStep);
+      
+      // Calculate PnL at each price point
+      let pnl = totalPremium;
+      
+      options.forEach(option => {
+        const quantity = Number(option.quantity);
+        const strike = Number(option.strikePrice);
+        const contractSize = 100; // Each contract represents 100 units
+        const isCall = option.optionType.toLowerCase() === 'call';
+        
+        // Calculate intrinsic value
+        const intrinsicValue = isCall 
+          ? Math.max(0, price - strike)
+          : Math.max(0, strike - price);
+          
+        // For maker/seller, we lose money as option goes ITM
+        pnl -= quantity * intrinsicValue * contractSize;
+      });
+      
+      // Apply leverage effect on losses (but not on profits)
+      if (pnl < 0) {
+        pnl = pnl * leverage;
+      }
+      
+      // Calculate percentage value relative to collateral
+      const percentageValue = (pnl / collateralProvided) * 100;
+      
+      return {
+        price,
+        pnl,
+        percentageValue
+      };
+    });
+  }, [options, collateralProvided, leverage]);
+  
+  // Find liquidation points (where PnL = -100% of collateral)
+  const exactLiquidationPrices = useMemo(() => {
+    if (pnlPoints.length === 0) return { upward: null, downward: null };
+    
+    // Find points where percentage value is closest to -100%
+    // First sort points by price
+    const sortedPoints = [...pnlPoints].sort((a, b) => a.price - b.price);
+    
+    // Find the points where the percentage crosses or gets very close to -100%
+    let downwardPoint = null;
+    let upwardPoint = null;
+    
+    for (let i = 0; i < sortedPoints.length - 1; i++) {
+      const current = sortedPoints[i];
+      const next = sortedPoints[i + 1];
+      
+      // Check if we cross the -100% threshold (or get very close)
+      const currentIsAbove = current.percentageValue > -99.5;
+      const nextIsBelow = next.percentageValue <= -99.5;
+      
+      if (currentIsAbove && nextIsBelow) {
+        // If we're moving from higher to lower prices (for puts)
+        if (current.price > next.price && !downwardPoint) {
+          // Interpolate for more accuracy
+          const ratio = (current.percentageValue - (-100)) / (current.percentageValue - next.percentageValue);
+          const interpolatedPrice = current.price - ratio * (current.price - next.price);
+          downwardPoint = interpolatedPrice;
+        }
+        // If we're moving from lower to higher prices (for calls)
+        else if (current.price < next.price && !upwardPoint) {
+          // Interpolate for more accuracy
+          const ratio = (current.percentageValue - (-100)) / (current.percentageValue - next.percentageValue);
+          const interpolatedPrice = current.price + ratio * (next.price - current.price);
+          upwardPoint = interpolatedPrice;
+        }
+      }
+    }
+    
+    // For points that are very close to -100%, consider them actual liquidation points
+    if (!downwardPoint) {
+      // Use find instead of reduce to avoid TypeScript errors
+      const minNegative = sortedPoints.find(point => 
+        point.percentageValue <= -99 && point.percentageValue > -101 && point.price < (assetPrice || Infinity)
+      );
+      
+      if (minNegative) {
+        downwardPoint = minNegative.price;
+      }
+    }
+    
+    if (!upwardPoint) {
+      // Find the highest price point that is close to -100%
+      let maxNegativePoint = null;
+      let maxNegativePrice = 0;
+      
+      for (const point of sortedPoints) {
+        if (point.percentageValue <= -99 && 
+            point.percentageValue > -101 && 
+            point.price > (assetPrice || 0) && 
+            point.price > maxNegativePrice) {
+          maxNegativePoint = point;
+          maxNegativePrice = point.price;
+        }
+      }
+      
+      if (maxNegativePoint) {
+        upwardPoint = maxNegativePoint.price;
+      }
+    }
+    
+    return { 
+      upward: upwardPoint, 
+      downward: downwardPoint 
+    };
+  }, [pnlPoints, assetPrice]);
+  
+  // Use the exact liquidation points if found, otherwise fall back to the estimated prices
   const liquidationPrices = useMemo(() => {
     if (!assetPrice || assetPrice <= 0 || options.length === 0) {
       return { upward: null, downward: null };
     }
+    
+    // If we found exact liquidation points from the PnL chart data, use those
+    if (exactLiquidationPrices.upward || exactLiquidationPrices.downward) {
+      return exactLiquidationPrices;
+    }
+    
+    // Otherwise fall back to the estimated calculation
     return calculateLiquidationPrice(
       options,
       collateralProvided,
       leverage,
       assetPrice
     );
-  }, [options, collateralProvided, leverage, assetPrice]);
+  }, [options, collateralProvided, leverage, assetPrice, exactLiquidationPrices]);
 
   // Calculate position size (collateral provided + borrowed amount)
   const positionSize = useMemo(() => {
@@ -164,10 +306,10 @@ export function MakerSummary({
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-xs">
                         <p className="text-xs">
-                          If the asset price reaches these levels, your position may be liquidated based on your current leverage ({leverage}x).
+                          Asset price at which you would lose 100% of your collateral, leading to liquidation with your current leverage ({leverage}x).
                         </p>
                         <p className="text-xs mt-1">
-                          This is calculated based on your collateral and the potential losses from your option positions.
+                          This is calculated based on your total position, option premiums, and potential losses at expiration.
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -175,24 +317,28 @@ export function MakerSummary({
                   {(liquidationPrices.upward || liquidationPrices.downward) ? (
                     <div className="flex flex-col">
                       {liquidationPrices.upward && (
-                        <span className="font-bold text-sm sm:text-lg">
-                          ${liquidationPrices.upward.toFixed(2)}
+                        <div className="flex items-start">
+                          <span className="font-bold text-sm sm:text-lg">
+                            ${liquidationPrices.upward.toFixed(2)}
+                          </span>
                           {assetPrice && (
-                            <span className="text-xs ml-1 font-normal opacity-75">
-                              ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}%)
+                            <span className="text-xs ml-1 font-normal opacity-75 mt-1">
+                              ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}% ↑)
                             </span>
                           )}
-                        </span>
+                        </div>
                       )}
-                      {!liquidationPrices.upward && liquidationPrices.downward && (
-                        <span className="font-bold text-sm sm:text-lg">
-                          ${liquidationPrices.downward.toFixed(2)}
+                      {liquidationPrices.downward && (
+                        <div className="flex items-start mt-1">
+                          <span className="font-bold text-sm sm:text-lg">
+                            ${liquidationPrices.downward.toFixed(2)}
+                          </span>
                           {assetPrice && (
-                            <span className="text-xs ml-1 font-normal opacity-75">
-                              ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}%)
+                            <span className="text-xs ml-1 font-normal opacity-75 mt-1">
+                              ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}% ↓)
                             </span>
                           )}
-                        </span>
+                        </div>
                       )}
                     </div>
                   ) : (
