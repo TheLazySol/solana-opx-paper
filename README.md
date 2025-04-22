@@ -3,11 +3,13 @@
 ## Getting Started
 
 ### Prerequisites
-
-- Node v20.13.1 or higher
-- Rust v1.84.0 or higher
-- Anchor CLI 0.30.1 or higher
-- Solana CLI 2.0.23 or higher
+| Tool        | Version     |
+|-------------|-------------|
+| Node        | `>=22.14.0` |
+| Rust        | `>=1.86.0`  |
+| Anchor CLI  | `0.31.1`    |
+| Solana CLI  | `>=2.1.21`  |
+| mucho       | `0.10.0`    |
 
 ### Installation
 
