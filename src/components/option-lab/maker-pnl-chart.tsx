@@ -35,6 +35,8 @@ interface PnLDataPoint {
   name: string
   value: number
   price: number
+  percentageValue: number // Capped percentage value for chart display
+  actualPercentageValue: number | null // Uncapped percentage value for tooltip
 }
 
 // Add a custom tooltip component before the main component
@@ -45,11 +47,19 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
 
   const data = payload[0].payload;
   const value = data.value; // Ensure this is the correct field from your data points
+  const percentageValue = data.actualPercentageValue; // Use the uncapped percentage value
 
   // Format value for better readability
   const formattedValue = value >= 0
     ? `+$${value.toFixed(2)}`
     : `-$${Math.abs(value).toFixed(2)}`;
+
+  // Format percentage value
+  const formattedPercentage = percentageValue === null
+    ? "N/A" // Handle case when percentage is undefined
+    : percentageValue >= 0
+      ? `+${percentageValue.toFixed(2)}%`
+      : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
   const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
@@ -69,6 +79,10 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
           <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-gray-300 min-w-[70px]">Return:</span>
+          <span className={`text-xs font-medium ${valueColor}`}>{formattedPercentage}</span>
         </div>
       </div>
     </div>
@@ -157,14 +171,31 @@ export function MakerPnlChart({
         pnl = -collateralProvided
       }
 
+      // Calculate percentage value relative to collateral
+      let actualPercentageValue = 0
+      let percentageValue = 0
+      
+      if (collateralProvided === 0) {
+        // If collateral is zero, we can't calculate percentage return
+        actualPercentageValue = NaN
+        percentageValue = 0 // Use 0 for chart display purposes
+      } else {
+        // Calculate percentage based on collateral provided
+        actualPercentageValue = (pnl / collateralProvided) * 100
+        
+        // Cap percentage values at -100% and +100% for chart display only
+        percentageValue = Math.max(Math.min(actualPercentageValue, 100), -100)
+      }
+
       return {
         price,
         name: `$${price.toFixed(2)}`,
-        value: Number(pnl.toFixed(2))
+        value: Number(pnl.toFixed(2)),
+        percentageValue: Number(isNaN(percentageValue) ? 0 : percentageValue.toFixed(2)),
+        actualPercentageValue: isNaN(actualPercentageValue) ? null : Number(actualPercentageValue.toFixed(2))
       }
     })
 
-    console.log(points); // Log to see the data structure and values
     return points
   }, [options, collateralProvided, leverage])
 
@@ -173,6 +204,12 @@ export function MakerPnlChart({
     return options.reduce((acc, opt) => 
       acc + (Number(opt.premium) * Number(opt.quantity) * 100), 0)
   }, [options])
+
+  // Calculate max profit percentage
+  const maxProfitPercentage = useMemo(() => {
+    if (collateralProvided === 0) return 0
+    return Math.min((maxProfit / collateralProvided) * 100, 100) // Cap at 100%
+  }, [maxProfit, collateralProvided])
 
   // Calculate max loss - which is collateral required
   const maxLoss = useMemo(() => {
@@ -204,6 +241,9 @@ export function MakerPnlChart({
     return Math.min(totalRisk, collateralProvided)
   }, [options, collateralProvided, leverage])
 
+  // Max loss is always 100% of collateral for percentage display
+  const maxLossPercentage = 100
+
   // Get market price from the first option (could be improved with a weighted average)
   const currentMarketPrice = useMemo(() => {
     if (assetPrice && assetPrice > 0) {
@@ -230,27 +270,19 @@ export function MakerPnlChart({
     return `$${num.toFixed(0)}`
   }
 
-  // Format Y axis ticks for profit/loss
+  // Format Y axis ticks for profit/loss percentage
   const formatYTick = (value: any) => {
     const num = parseFloat(value)
     if (isNaN(num)) return ''
     
-    // Format with +/- sign and K suffix for thousands
-    if (Math.abs(num) >= 1000) {
-      return num >= 0 
-        ? `+$${(num / 1000).toFixed(1)}K` 
-        : `-$${(Math.abs(num) / 1000).toFixed(1)}K`
-    }
-    
-    return num >= 0 ? `+$${num.toFixed(0)}` : `-$${Math.abs(num).toFixed(0)}`
+    // Format with +/- sign and % symbol
+    return num >= 0 ? `+${num.toFixed(0)}%` : `-${Math.abs(num).toFixed(0)}%`
   }
 
-  // Calculate the domain for Y axis to ensure $0 is in the middle
+  // Fixed domain for Y axis from -100% to +100%
   const yAxisDomain = useMemo(() => {
-    const absMax = Math.max(maxProfit, maxLoss);
-    // Make the domain symmetric around zero to center the $0 point
-    return [-absMax, absMax];
-  }, [maxProfit, maxLoss]);
+    return [-100, 100];
+  }, []);
 
   // Early return if no data yet
   if (calculatePnLPoints.length === 0) {
@@ -308,7 +340,7 @@ export function MakerPnlChart({
             axisLine={{ stroke: '#ffffff' }}
             domain={yAxisDomain}
             label={{
-              value: 'Profit/Loss ($)', 
+              value: 'Return (%)', 
               angle: -90, 
               position: 'insideLeft',
               style: { textAnchor: 'middle' },
@@ -325,12 +357,12 @@ export function MakerPnlChart({
             }}
           />
           <ReferenceLine 
-            y={maxProfit} 
+            y={maxProfitPercentage} 
             stroke="#22c55e"
             strokeDasharray="3 3"
           >
             <Label
-              value={`Max Profit: $${maxProfit.toFixed(2)}`}
+              value={`Max Profit: +${maxProfitPercentage.toFixed(0)}%`}
               fill="#22c55e"
               fontSize={11}
               position="insideBottomRight"
@@ -338,12 +370,12 @@ export function MakerPnlChart({
             />
           </ReferenceLine>
           <ReferenceLine 
-            y={-maxLoss} 
+            y={-maxLossPercentage} 
             stroke="#ef4444"
             strokeDasharray="3 3"
           >
             <Label
-              value={`Max Loss: -$${maxLoss.toFixed(2)}`}
+              value={`Max Loss: -${maxLossPercentage.toFixed(0)}%`}
               fill="#ef4444"
               fontSize={11}
               position="insideBottomLeft"
@@ -403,7 +435,7 @@ export function MakerPnlChart({
           {/* Positive value line */}
           <Line
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : null)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : null)}
             dot={false}
             activeDot={{ 
               r: 4, 
@@ -420,7 +452,7 @@ export function MakerPnlChart({
           {/* Negative value line */}
           <Line
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : null)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : null)}
             dot={false}
             activeDot={{ 
               r: 4, 
@@ -437,7 +469,7 @@ export function MakerPnlChart({
           {/* Profit Area (green, only shows above 0) */}
           <Area
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : 0)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
             stroke="none"
             fillOpacity={0.4}
             fill="url(#profitGradient)"
@@ -448,7 +480,7 @@ export function MakerPnlChart({
           {/* Loss Area (red, only shows below 0) */}
           <Area
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : 0)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
             stroke="none"
             fillOpacity={0.4}
             fill="url(#lossGradient)"
