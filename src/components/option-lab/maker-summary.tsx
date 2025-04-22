@@ -301,7 +301,7 @@ export function MakerSummary({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-xs text-muted-foreground mb-1 cursor-help">
-                          <span className="border-b border-dotted border-muted-foreground">Liquidation Threshold</span>
+                          <span className="border-b border-dotted border-muted-foreground">Liquidation Price</span>
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-xs">
