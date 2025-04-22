@@ -29,13 +29,13 @@ export const QuantityInput = () => {
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
               Quantity
               <TooltipIndicator />
             </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The number of option contracts to sell. Each contract represents 100 units of the underlying asset.</p>
+            <p className="text-xs sm:text-sm">The number of option contracts to sell. Each contract represents 100 units of the underlying asset.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -48,10 +48,10 @@ export const QuantityInput = () => {
           placeholder="Enter quantity (1-10,000)"
           value={getValues('quantity')}
           onChange={(e) => handleQuantityChange(e.target.value)}
-          className="h-10"
+          className="h-9 sm:h-10 text-sm sm:text-base"
         />
       </FormControl>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 

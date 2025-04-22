@@ -56,31 +56,44 @@ export function MakerSummary({
   return (
     <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
       transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardContent className="px-4 py-4">
+      <CardContent className="px-2 sm:px-4 py-3 sm:py-4">
         {options.length === 0 ? (
-          <div className="flex items-center justify-center h-24 text-sm text-muted-foreground 
+          <div className="flex items-center justify-center h-24 text-xs sm:text-sm text-muted-foreground 
             border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
             Add options to see PnL projection at expiration
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {/* PnL Chart */}
             <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
               border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-              hover:bg-transparent shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-semibold mb-3">Profit & Loss Projection</h3>
-              <MakerPnlChart 
-                options={options}
-                collateralProvided={collateralProvided}
-                leverage={leverage}
-                assetPrice={assetPrice}
-              />
+              hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4">
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 cursor-help">
+                      <span className="border-b border-dotted border-slate-500">Profit & Loss Projection</span>
+                    </h3>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs" side="top">
+                    <p className="text-xs sm:text-sm">This chart shows your projected profit or loss at option expiration across different asset price points.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div className="h-64 sm:h-auto">
+                <MakerPnlChart 
+                  options={options}
+                  collateralProvided={collateralProvided}
+                  leverage={leverage}
+                  assetPrice={assetPrice}
+                />
+              </div>
             </div>
 
             {/* Options List */}
             <div className="space-y-2">
               {/* Metrics Section - Redesigned with single row layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
                 {/* Position Size */}
                 <div className="flex flex-col p-1">
                   <TooltipProvider>
@@ -95,7 +108,7 @@ export function MakerSummary({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className="font-bold text-lg">
+                  <span className="font-bold text-sm sm:text-lg">
                     ${positionSize.toFixed(2)}
                   </span>
                 </div>
@@ -111,10 +124,11 @@ export function MakerSummary({
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
                         <p className="text-xs">Maximum profit potential before any transaction costs or fees</p>
+                        <p className="text-xs mt-1">For option sellers, the maximum profit is limited to the premium collected.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className="font-bold text-lg text-green-500">
+                  <span className="font-bold text-sm sm:text-lg text-green-500">
                     ${totalPremium.toFixed(2)}
                   </span>
                 </div>
@@ -130,10 +144,11 @@ export function MakerSummary({
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
                         <p className="text-xs">Maximum amount you can lose on this position, limited to your provided collateral</p>
+                        <p className="text-xs mt-1">When your total losses approach this amount, your position may be liquidated.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <span className="font-bold text-lg text-red-500">
+                  <span className="font-bold text-sm sm:text-lg text-red-500">
                     -${maxLoss.toFixed(2)}
                   </span>
                 </div>
@@ -151,13 +166,16 @@ export function MakerSummary({
                         <p className="text-xs">
                           If the asset price reaches these levels, your position may be liquidated based on your current leverage ({leverage}x).
                         </p>
+                        <p className="text-xs mt-1">
+                          This is calculated based on your collateral and the potential losses from your option positions.
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                   {(liquidationPrices.upward || liquidationPrices.downward) ? (
                     <div className="flex flex-col">
                       {liquidationPrices.upward && (
-                        <span className="font-bold text-lg">
+                        <span className="font-bold text-sm sm:text-lg">
                           ${liquidationPrices.upward.toFixed(2)}
                           {assetPrice && (
                             <span className="text-xs ml-1 font-normal opacity-75">
@@ -167,7 +185,7 @@ export function MakerSummary({
                         </span>
                       )}
                       {!liquidationPrices.upward && liquidationPrices.downward && (
-                        <span className="font-bold text-lg">
+                        <span className="font-bold text-sm sm:text-lg">
                           ${liquidationPrices.downward.toFixed(2)}
                           {assetPrice && (
                             <span className="text-xs ml-1 font-normal opacity-75">
@@ -178,7 +196,7 @@ export function MakerSummary({
                       )}
                     </div>
                   ) : (
-                    <span className="font-bold text-lg text-muted-foreground">--</span>
+                    <span className="font-bold text-sm sm:text-lg text-muted-foreground">--</span>
                   )}
                 </div>
               </div>

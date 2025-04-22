@@ -34,10 +34,10 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
 
   return (
     <FormItem>
-      <FormLabel className="pt-3 mb-2 flex items-center">
+      <FormLabel className="pt-2 sm:pt-3 mb-1 sm:mb-2 flex items-center text-xs sm:text-sm">
         <span>Current Price:</span>
         {assetPrice > 0 && (
-          <span className="ml-2 text-[#4a85ff] text-sm font-normal">
+          <span className="ml-2 text-[#4a85ff] text-xs sm:text-sm font-normal">
             ${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset))}
           </span>
         )}
@@ -47,19 +47,19 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
         defaultValue={getValues('asset')}
       >
         <FormControl>
-          <SelectTrigger>
+          <SelectTrigger className="h-9 sm:h-10 text-sm sm:text-base">
             <SelectValue placeholder="Select asset" />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
           {Object.entries(TOKENS).map(([symbol, token]) => (
-            <SelectItem key={symbol} value={symbol}>
+            <SelectItem key={symbol} value={symbol} className="text-sm">
               {token.name} ({token.symbol})
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 

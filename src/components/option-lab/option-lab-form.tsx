@@ -281,132 +281,130 @@ export function OptionLabForm() {
   };
 
   return (
-    <div className="mx-auto max-w-[1400px] w-full px-6">
+    <div className="mx-auto max-w-[1400px] w-full px-4 sm:px-6">
       <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className="space-y-8">
-          <div className="grid grid-cols-12 gap-4">
-            {/* Left side - Option Form */}
-            <div className="col-span-3">
-              <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-                transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-                <CardContent className="space-y-6 py-6">
-                  <AssetSelector assetPrice={assetPrice} />
-                  <OptionTypeSelector />
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <ExpirationDatePicker />
+        <form onSubmit={onSubmit} className="space-y-6">
+          {/* Container for all components */}
+          <div className="flex flex-col space-y-6">
+            {/* 1. PnL Chart & Maker Summary at the top - Full width on all screens */}
+            <div className="w-full">
+              <MakerSummary 
+                options={pendingOptions}
+                onRemoveOption={removeOptionFromSummary}
+                collateralProvided={Number(collateralState.collateralProvided) || 0}
+                leverage={collateralState.leverage}
+                assetPrice={assetPrice}
+              />
+              {pendingOptions.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Please add at least 1 option contract to the summary before minting!
+                </p>
+              )}
+            </div>
+            
+            {/* 2. Form Controls (Option inputs + Collateral Provider) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* Option Form Inputs - Left side on desktop, top on mobile */}
+              <div className="col-span-1 lg:col-span-7">
+                <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
+                  transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
+                  <CardContent className="space-y-4 sm:space-y-6 py-4 sm:py-6">
+                    {/* Top row: Asset and Option Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <AssetSelector assetPrice={assetPrice} />
+                      <OptionTypeSelector />
                     </div>
-                    <div className="flex-1">
+                    
+                    {/* Middle row: Expiration and Strike */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ExpirationDatePicker />
                       <StrikePriceInput assetPrice={assetPrice} />
                     </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
+                    
+                    {/* Bottom row: Premium and Quantity */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
-                    </div>
-                    <div className="flex-1">
                       <QuantityInput />
                     </div>
-                  </div>
-                  
-                  {/* Moved buttons to the bottom of the card with added margin-top for spacing */}
-                  <div className="flex flex-col justify-center gap-2 mt-auto pt-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={addOptionToSummary}
-                      className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
-                        hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
-                        backdrop-blur-sm
-                        transition-all duration-200
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
-                        disabled:hover:scale-100"
-                      disabled={
-                        !methods.getValues("strikePrice") || 
-                        !methods.getValues("premium") ||
-                        !methods.getValues("expirationDate")
-                      }
-                    >
-                      {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
-                    </Button>
-
-                    {/* Horizontal divider */}
-                    <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
-
-                    {/* Option Contract Display */}
-                    {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
-                      <div 
-                        className={cn(
-                          "group flex items-center justify-between py-2 px-3 mt-1",
-                          "backdrop-blur-sm bg-white/5 dark:bg-black/20",
-                          "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
-                          "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
-                          "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
-                        )}
+                    
+                    {/* Add/Update Option Button */}
+                    <div className="flex flex-col justify-center mt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={addOptionToSummary}
+                        className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
+                          hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
+                          backdrop-blur-sm
+                          transition-all duration-200
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                          disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
+                          disabled:hover:scale-100"
+                        disabled={
+                          !methods.getValues("strikePrice") || 
+                          !methods.getValues("premium") ||
+                          !methods.getValues("expirationDate")
+                        }
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-semibold tracking-tight">
-                              {pendingOptions[pendingOptions.length - 1].quantity}
-                            </span>
-                            <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md text-[10px]">SHORT</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium">
-                              {pendingOptions[pendingOptions.length - 1].asset} {pendingOptions[pendingOptions.length - 1].optionType.toUpperCase()}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-normal">
-                              ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)} Strike @ {Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
-                          className="h-6 w-6 p-0 transition-colors duration-200 
-                            hover:bg-destructive/20 hover:text-destructive-foreground"
+                        {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
+                      </Button>
+                    </div>
+
+                    {/* Option Contract Display - Only show when options exist */}
+                    {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
+                      <div>
+                        <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
+                        <div 
+                          className={cn(
+                            "group flex items-center justify-between py-2 px-3",
+                            "backdrop-blur-sm bg-white/5 dark:bg-black/20",
+                            "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
+                            "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
+                            "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+                          )}
                         >
-                          <X className="h-3 w-3" />
-                        </Button>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-semibold tracking-tight">
+                                {pendingOptions[pendingOptions.length - 1].quantity}
+                              </span>
+                              <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md text-[10px]">SHORT</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium">
+                                {pendingOptions[pendingOptions.length - 1].asset} {pendingOptions[pendingOptions.length - 1].optionType.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-normal">
+                                ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)} Strike @ {Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
+                            className="h-6 w-6 p-0 transition-colors duration-200 
+                              hover:bg-destructive/20 hover:text-destructive-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right side - Maker Summary & Collateral Provider */}
-            <div className="col-span-9"> 
-              <div className="grid grid-cols-9 gap-4">
-                {/* Maker Summary - PnL Chart */}
-                <div className="col-span-6">
-                  <MakerSummary 
-                    options={pendingOptions}
-                    onRemoveOption={removeOptionFromSummary}
-                    collateralProvided={Number(collateralState.collateralProvided) || 0}
-                    leverage={collateralState.leverage}
-                    assetPrice={assetPrice}
-                  />
-                  {pendingOptions.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-4">
-                      Please add at least 1 option contract to the summary before minting!
-                    </p>
-                  )}
-                </div>
-                
-                {/* Collateral Provider */}
-                <div className="col-span-3">
-                  <CollateralProvider 
-                    options={pendingOptions}
-                    onStateChange={handleCollateralStateChange}
-                    onMint={onSubmit}
-                    isSubmitting={isSubmitting}
-                    hasValidationError={!!methods.formState.errors.root}
-                    hasPendingOptions={pendingOptions.length > 0}
-                  />
-                </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Collateral Provider - Right side on desktop, bottom on mobile */}
+              <div className="col-span-1 lg:col-span-5">
+                <CollateralProvider 
+                  options={pendingOptions}
+                  onStateChange={handleCollateralStateChange}
+                  onMint={onSubmit}
+                  isSubmitting={isSubmitting}
+                  hasValidationError={!!methods.formState.errors.root}
+                  hasPendingOptions={pendingOptions.length > 0}
+                />
               </div>
             </div>
           </div>

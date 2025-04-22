@@ -56,13 +56,13 @@ export const ExpirationDatePicker = () => {
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
               Expiration Date
               <TooltipIndicator />
             </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The date when the option expires. The option can only be exercised on or before this date.</p>
+            <p className="text-xs sm:text-sm">The date when the option expires. The option can only be exercised on or before this date.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -72,7 +72,8 @@ export const ExpirationDatePicker = () => {
             <Button
               variant={"outline"}
               className={cn(
-                "w-full pl-3 text-left font-normal h-10",
+                "w-full pl-3 text-left font-normal h-9 sm:h-10",
+                "text-xs sm:text-sm",
                 "bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]",
                 "focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40",
                 !getValues('expirationDate') && "text-muted-foreground"
@@ -105,10 +106,11 @@ export const ExpirationDatePicker = () => {
             defaultMonth={startDate}
             fromDate={new Date()}
             toDate={endDate}
+            className="text-xs sm:text-sm"
           />
         </PopoverContent>
       </Popover>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 
