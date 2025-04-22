@@ -289,7 +289,7 @@ export function OptionLabForm() {
             <div className="col-span-3">
               <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
                 transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 py-6">
                   <AssetSelector assetPrice={assetPrice} />
                   <OptionTypeSelector />
                   <div className="flex gap-4">
@@ -310,7 +310,7 @@ export function OptionLabForm() {
                   </div>
                   
                   {/* Moved buttons to the bottom of the card with added margin-top for spacing */}
-                  <div className="flex flex-col justify-center gap-2 mt-auto">
+                  <div className="flex flex-col justify-center gap-2 mt-auto pt-2">
                     <Button 
                       type="button" 
                       variant="outline"
@@ -338,21 +338,21 @@ export function OptionLabForm() {
                     {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
                       <div 
                         className={cn(
-                          "group flex items-center justify-between py-1 px-2 mt-1",
+                          "group flex items-center justify-between py-2 px-3 mt-1",
                           "backdrop-blur-sm bg-white/5 dark:bg-black/20",
                           "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
                           "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
                           "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
                         )}
                       >
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             <span className="text-sm font-semibold tracking-tight">
                               {pendingOptions[pendingOptions.length - 1].quantity}
                             </span>
                             <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md text-[10px]">SHORT</span>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex flex-col">
                             <span className="text-xs font-medium">
                               {pendingOptions[pendingOptions.length - 1].asset} {pendingOptions[pendingOptions.length - 1].optionType.toUpperCase()}
                             </span>

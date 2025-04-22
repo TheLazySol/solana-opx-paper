@@ -186,7 +186,7 @@ export function CollateralProvider({
       <CardHeader className="px-4 py-3 pb-0">
         <CardTitle className="text-xl font-bold">Open Position</CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pt-2 space-y-2">
+      <CardContent className="px-4 pt-2 space-y-3">
         {/* Collateral Needed */}
         <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
           <span className="text-xs text-muted-foreground">Collateral Needed to Open Position:</span>
@@ -327,7 +327,7 @@ export function CollateralProvider({
 
         {/* Costs and Fees (Combined) */}
         <div className="flex flex-col rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-          <div className="flex items-center justify-between p-1.5 border-b border-[#e5e5e5]/20 dark:border-[#393939]/50">
+          <div className="flex items-center justify-between p-2 border-b border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
@@ -342,8 +342,8 @@ export function CollateralProvider({
               {(hourlyInterestRate * 10000).toFixed(4)}% per hour
             </span>
           </div>
-          <div className="p-1.5 space-y-1">
-            <div className="grid grid-cols-2 gap-y-0.5 text-sm">
+          <div className="p-2 space-y-1">
+            <div className="grid grid-cols-2 gap-y-1 text-sm">
               <span>
                 <TooltipProvider>
                   <Tooltip delayDuration={100}>
@@ -389,7 +389,7 @@ export function CollateralProvider({
               </span>
               <span className="text-right font-normal">${borrowFee.toFixed(2)}</span>
 
-              <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-0.5 pt-0.5"></div>
+              <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-1 pt-1"></div>
 
               <span>
                 <TooltipProvider>
@@ -419,7 +419,7 @@ export function CollateralProvider({
               </span>
               <span className="text-right font-normal">{transactionCost} SOL</span>
 
-              <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-0.5 pt-0.5"></div>
+              <div className="col-span-2 border-t border-[#e5e5e5]/20 dark:border-[#393939]/50 mt-1 pt-1"></div>
 
               <span>
                 <TooltipProvider>
@@ -462,9 +462,9 @@ export function CollateralProvider({
             type="submit" 
             onClick={onMint}
             disabled={isSubmitting || !hasPendingOptions || hasValidationError || !isEnoughCollateral}
-            className="mt-2 w-full h-10 bg-white/95 hover:bg-white/100 text-black border border-white/20
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10
-              hover:scale-[0.98] transition-all duration-200"
+            className="mt-4 w-full h-10 bg-gradient-to-r from-[#4a85ff] to-[#6366f1] hover:from-[#3a75ff] hover:to-[#5255f0] text-white
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-[#4a85ff] disabled:hover:to-[#6366f1]
+              hover:scale-[0.99] transition-all duration-200 shadow-md hover:shadow-lg"
           >
             {isSubmitting 
               ? "Minting..." 

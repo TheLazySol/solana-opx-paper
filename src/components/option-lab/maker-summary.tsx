@@ -65,7 +65,9 @@ export function MakerSummary({
         ) : (
           <div className="space-y-4">
             {/* PnL Chart */}
-            <div className="rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50 p-4">
+            <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
+              border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
+              hover:bg-transparent shadow-lg rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-3">Profit & Loss Projection</h3>
               <MakerPnlChart 
                 options={options}

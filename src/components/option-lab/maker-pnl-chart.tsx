@@ -254,7 +254,7 @@ export function MakerPnlChart({
 
   // Early return if no data yet
   if (calculatePnLPoints.length === 0) {
-    return <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+    return <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
       No option data available for chart
     </div>
   }
@@ -286,18 +286,26 @@ export function MakerPnlChart({
           <XAxis
             dataKey="price"
             tickFormatter={formatXTick}
-            tick={{ fontSize: 11, fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-            axisLine={{ stroke: '#666' }}
+            tick={{ fontSize: 11, fill: '#ffffff' }}
+            tickLine={{ stroke: '#ffffff' }}
+            axisLine={{ stroke: '#ffffff' }}
             domain={['dataMin', 'dataMax']}
             type="number"
+            label={{
+              value: 'Underlying Asset',
+              position: 'insideBottom',
+              offset: -10,
+              style: { textAnchor: 'middle' },
+              fontSize: 11,
+              fill: '#ffffff'
+            }}
           />
           
           <YAxis
             tickFormatter={formatYTick}
-            tick={{ fontSize: 11, fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-            axisLine={{ stroke: '#666' }}
+            tick={{ fontSize: 11, fill: '#ffffff' }}
+            tickLine={{ stroke: '#ffffff' }}
+            axisLine={{ stroke: '#ffffff' }}
             domain={yAxisDomain}
             label={{
               value: 'Profit/Loss ($)', 
@@ -305,7 +313,7 @@ export function MakerPnlChart({
               position: 'insideLeft',
               style: { textAnchor: 'middle' },
               fontSize: 11,
-              fill: '#666'
+              fill: '#ffffff'
             }}
           />
           <Tooltip
@@ -364,7 +372,7 @@ export function MakerPnlChart({
                 dy: 5,
                 dx: 5
               }}
-              isFront={false}
+              isFront={true}
             />
           )}
           
@@ -378,13 +386,14 @@ export function MakerPnlChart({
                 x={strike}
                 stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
                 strokeDasharray="2 2"
+                strokeWidth={1.5}
                 label={{ 
                   value: `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
                   position: 'insideBottomRight',
                   fontSize: 11,
                   fill: isCall ? "#f97316" : "#06b6d4"
                 }}
-                isFront={false}
+                isFront={true}
               />
             )
           })}
@@ -430,7 +439,7 @@ export function MakerPnlChart({
             type="monotone"
             dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : 0)}
             stroke="none"
-            fillOpacity={0.2}
+            fillOpacity={0.4}
             fill="url(#profitGradient)"
             isAnimationActive={false}
             activeDot={false}
@@ -441,7 +450,7 @@ export function MakerPnlChart({
             type="monotone"
             dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : 0)}
             stroke="none"
-            fillOpacity={0.2}
+            fillOpacity={0.4}
             fill="url(#lossGradient)"
             isAnimationActive={false}
             activeDot={false}
