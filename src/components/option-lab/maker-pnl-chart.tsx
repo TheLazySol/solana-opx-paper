@@ -346,7 +346,7 @@ export function MakerPnlChart({
               value={`Max Loss: -$${maxLoss.toFixed(2)}`}
               fill="#ef4444"
               fontSize={11}
-              position="insideBottomRight"
+              position="insideBottomLeft"
               dx={10}
             />
           </ReferenceLine>
