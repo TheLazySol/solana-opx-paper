@@ -441,7 +441,7 @@ export function CollateralProvider({
                 <TooltipProvider>
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
-                      <span className="cursor-help border-b border-dotted border-slate-500">New Max Profit</span>
+                      <span className="cursor-help border-b border-dotted border-slate-500">Net Max Profit</span>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">Your maximum potential profit from this position after accounting for all costs.</p>
