@@ -263,6 +263,34 @@ export function MakerPnlChart({
   // Max loss is always 100% of collateral for percentage display
   const maxLossPercentage = 100
 
+  // Determine if there are any short calls to adjust label positions
+  const hasShortCalls = useMemo(() => {
+    return options.some(option => option.optionType.toLowerCase() === 'call')
+  }, [options])
+
+  // Determine if there are any short puts to adjust label positions
+  const hasShortPuts = useMemo(() => {
+    return options.some(option => option.optionType.toLowerCase() === 'put')
+  }, [options])
+
+  // Determine label positions based on option types
+  const maxProfitPosition = useMemo(() => {
+    // For calls only, put max profit on left. For puts only or mixed, keep on right
+    if (hasShortCalls && !hasShortPuts) {
+      return isMobile ? "left" : "insideBottomLeft"
+    }
+    return isMobile ? "right" : "insideBottomRight"
+  }, [hasShortCalls, hasShortPuts, isMobile])
+
+  // Determine label positions based on option types
+  const maxLossPosition = useMemo(() => {
+    // For calls only, put max loss on right. For puts only or mixed, keep on left
+    if (hasShortCalls && !hasShortPuts) {
+      return isMobile ? "right" : "insideBottomRight"
+    }
+    return isMobile ? "left" : "insideBottomLeft"
+  }, [hasShortCalls, hasShortPuts, isMobile])
+  
   // Get market price from the first option (could be improved with a weighted average)
   const currentMarketPrice = useMemo(() => {
     if (assetPrice && assetPrice > 0) {
@@ -404,9 +432,9 @@ export function MakerPnlChart({
               value={isMobile ? `+${maxProfitPercentage.toFixed(0)}%` : `Max Profit: +${maxProfitPercentage.toFixed(0)}%`}
               fill="#22c55e"
               fontSize={isMobile ? 12 : 11}
-              position={isMobile ? "right" : "insideBottomRight"}
+              position={maxProfitPosition}
               dy={isMobile ? -20 : undefined}
-              dx={isMobile ? -5 : 10}
+              dx={isMobile ? (maxProfitPosition === "left" ? 5 : -5) : 10}
             />
           </ReferenceLine>
           <ReferenceLine 
@@ -418,9 +446,9 @@ export function MakerPnlChart({
               value={isMobile ? `-${maxLossPercentage.toFixed(0)}%` : `Max Loss: -${maxLossPercentage.toFixed(0)}%`}
               fill="#ef4444"
               fontSize={isMobile ? 12 : 11}
-              position={isMobile ? "left" : "insideBottomLeft"}
+              position={maxLossPosition}
               dy={isMobile ? -20 : undefined}
-              dx={isMobile ? 5 : 10}
+              dx={isMobile ? (maxLossPosition === "left" ? 5 : -5) : 10}
             />
           </ReferenceLine>
           
