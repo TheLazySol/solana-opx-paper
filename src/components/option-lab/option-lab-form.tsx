@@ -48,9 +48,8 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .int({ message: "Quantity must be a whole number" })
-    .min(1, { message: "Quantity must be at least 1" })
-    .max(100, { message: "Quantity must be at most 100" })
+    .min(0.001, { message: "Quantity must be at least 0.001" })
+    .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
 export function OptionLabForm() {
@@ -66,7 +65,7 @@ export function OptionLabForm() {
       optionType: "call",
       strikePrice: 0,
       premium: '',
-      quantity: 1,
+      quantity: 0.001,
       expirationDate: undefined,
     },
   });
@@ -237,7 +236,7 @@ export function OptionLabForm() {
           timestamp: new Date(),
           owner: publicKey,
           status: 'pending',
-          size: values.quantity,
+          size: Number(values.quantity),
           expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
         };
         return newOption;
@@ -410,7 +409,7 @@ export function OptionLabForm() {
                                 <div className="flex items-center justify-end gap-2">
                                   <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                                   <span className="text-xs sm:text-sm font-medium">
-                                    {pendingOptions[pendingOptions.length - 1].quantity}
+                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(3)}
                                   </span>
                                 </div>
                               </div>
