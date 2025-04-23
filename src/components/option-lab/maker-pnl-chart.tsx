@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo, useRef, useEffect, useState } from 'react'
 import {
   CartesianGrid,
   XAxis,
@@ -35,6 +35,8 @@ interface PnLDataPoint {
   name: string
   value: number
   price: number
+  percentageValue: number // Capped percentage value for chart display
+  actualPercentageValue: number | null // Uncapped percentage value for tooltip
 }
 
 // Add a custom tooltip component before the main component
@@ -45,11 +47,19 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
 
   const data = payload[0].payload;
   const value = data.value; // Ensure this is the correct field from your data points
+  const percentageValue = data.actualPercentageValue; // Use the uncapped percentage value
 
   // Format value for better readability
   const formattedValue = value >= 0
     ? `+$${value.toFixed(2)}`
     : `-$${Math.abs(value).toFixed(2)}`;
+
+  // Format percentage value
+  const formattedPercentage = percentageValue === null
+    ? "N/A" // Handle case when percentage is undefined
+    : percentageValue >= 0
+      ? `+${percentageValue.toFixed(2)}%`
+      : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
   const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
@@ -70,6 +80,10 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
           <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
           <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
         </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-gray-300 min-w-[70px]">Return:</span>
+          <span className={`text-xs font-medium ${valueColor}`}>{formattedPercentage}</span>
+        </div>
       </div>
     </div>
   );
@@ -85,6 +99,25 @@ export function MakerPnlChart({
   const chartRef = useRef<HTMLDivElement>(null)
   // Always use expiration view - no toggle needed
   const showExpiration = true
+  
+  // State to track if the chart is being viewed on a mobile device
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Effect to detect mobile screen size
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 640) // 640px is the sm breakpoint in Tailwind
+    }
+    
+    // Check on mount
+    checkIfMobile()
+    
+    // Add event listener
+    window.addEventListener('resize', checkIfMobile)
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile)
+  }, [])
   
   // Calculate liquidation prices but don't display them on chart
   const liquidationPrices = useMemo(() => {
@@ -157,14 +190,31 @@ export function MakerPnlChart({
         pnl = -collateralProvided
       }
 
+      // Calculate percentage value relative to collateral
+      let actualPercentageValue = 0
+      let percentageValue = 0
+      
+      if (collateralProvided === 0) {
+        // If collateral is zero, we can't calculate percentage return
+        actualPercentageValue = NaN
+        percentageValue = 0 // Use 0 for chart display purposes
+      } else {
+        // Calculate percentage based on collateral provided
+        actualPercentageValue = (pnl / collateralProvided) * 100
+        
+        // Cap percentage values at -100% and +100% for chart display only
+        percentageValue = Math.max(Math.min(actualPercentageValue, 100), -100)
+      }
+
       return {
         price,
         name: `$${price.toFixed(2)}`,
-        value: Number(pnl.toFixed(2))
+        value: Number(pnl.toFixed(2)),
+        percentageValue: Number(isNaN(percentageValue) ? 0 : percentageValue.toFixed(2)),
+        actualPercentageValue: isNaN(actualPercentageValue) ? null : Number(actualPercentageValue.toFixed(2))
       }
     })
 
-    console.log(points); // Log to see the data structure and values
     return points
   }, [options, collateralProvided, leverage])
 
@@ -173,6 +223,12 @@ export function MakerPnlChart({
     return options.reduce((acc, opt) => 
       acc + (Number(opt.premium) * Number(opt.quantity) * 100), 0)
   }, [options])
+
+  // Calculate max profit percentage
+  const maxProfitPercentage = useMemo(() => {
+    if (collateralProvided === 0) return 0
+    return Math.min((maxProfit / collateralProvided) * 100, 100) // Cap at 100%
+  }, [maxProfit, collateralProvided])
 
   // Calculate max loss - which is collateral required
   const maxLoss = useMemo(() => {
@@ -204,6 +260,37 @@ export function MakerPnlChart({
     return Math.min(totalRisk, collateralProvided)
   }, [options, collateralProvided, leverage])
 
+  // Max loss is always 100% of collateral for percentage display
+  const maxLossPercentage = 100
+
+  // Determine if there are any short calls to adjust label positions
+  const hasShortCalls = useMemo(() => {
+    return options.some(option => option.optionType.toLowerCase() === 'call')
+  }, [options])
+
+  // Determine if there are any short puts to adjust label positions
+  const hasShortPuts = useMemo(() => {
+    return options.some(option => option.optionType.toLowerCase() === 'put')
+  }, [options])
+
+  // Determine label positions based on option types
+  const maxProfitPosition = useMemo(() => {
+    // For calls only, put max profit on left. For puts only or mixed, keep on right
+    if (hasShortCalls && !hasShortPuts) {
+      return isMobile ? "left" : "insideBottomLeft"
+    }
+    return isMobile ? "right" : "insideBottomRight"
+  }, [hasShortCalls, hasShortPuts, isMobile])
+
+  // Determine label positions based on option types
+  const maxLossPosition = useMemo(() => {
+    // For calls only, put max loss on right. For puts only or mixed, keep on left
+    if (hasShortCalls && !hasShortPuts) {
+      return isMobile ? "right" : "insideBottomRight"
+    }
+    return isMobile ? "left" : "insideBottomLeft"
+  }, [hasShortCalls, hasShortPuts, isMobile])
+  
   // Get market price from the first option (could be improved with a weighted average)
   const currentMarketPrice = useMemo(() => {
     if (assetPrice && assetPrice > 0) {
@@ -226,38 +313,44 @@ export function MakerPnlChart({
       return `$${(num / 1000).toFixed(1)}K`
     }
     
+    // For mobile, show even fewer decimals
+    if (isMobile) {
+      return `$${num.toFixed(0)}`
+    }
+    
     // Don't show the $ for intermediate ticks to reduce clutter
     return `$${num.toFixed(0)}`
   }
 
-  // Format Y axis ticks for profit/loss
+  // Format Y axis ticks for profit/loss percentage
   const formatYTick = (value: any) => {
     const num = parseFloat(value)
     if (isNaN(num)) return ''
     
-    // Format with +/- sign and K suffix for thousands
-    if (Math.abs(num) >= 1000) {
-      return num >= 0 
-        ? `+$${(num / 1000).toFixed(1)}K` 
-        : `-$${(Math.abs(num) / 1000).toFixed(1)}K`
+    // Format with +/- sign and % symbol
+    // For mobile, make it even shorter
+    if (isMobile) {
+      return num >= 0 ? `+${num}%` : `${num}%`
     }
-    
-    return num >= 0 ? `+$${num.toFixed(0)}` : `-$${Math.abs(num).toFixed(0)}`
+    return num >= 0 ? `+${num.toFixed(0)}%` : `-${Math.abs(num).toFixed(0)}%`
   }
 
-  // Calculate the domain for Y axis to ensure $0 is in the middle
+  // Fixed domain for Y axis from -100% to +100%
   const yAxisDomain = useMemo(() => {
-    const absMax = Math.max(maxProfit, maxLoss);
-    // Make the domain symmetric around zero to center the $0 point
-    return [-absMax, absMax];
-  }, [maxProfit, maxLoss]);
+    return [-100, 100];
+  }, []);
 
   // Early return if no data yet
   if (calculatePnLPoints.length === 0) {
-    return <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+    return <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
       No option data available for chart
     </div>
   }
+
+  // Adjust chart margins based on device size
+  const chartMargins = isMobile 
+    ? { top: 30, right: 20, bottom: 30, left: 20 }  // More top and bottom margins on mobile
+    : { top: 20, right: 20, bottom: 20, left: 20 }; // Original margins on desktop
 
   return (
     <div 
@@ -267,7 +360,7 @@ export function MakerPnlChart({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={calculatePnLPoints}
-          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+          margin={chartMargins}
         >
           <defs>
             {/* Green gradient for profit region */}
@@ -286,27 +379,41 @@ export function MakerPnlChart({
           <XAxis
             dataKey="price"
             tickFormatter={formatXTick}
-            tick={{ fontSize: 11, fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-            axisLine={{ stroke: '#666' }}
+            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff' }}
+            tickLine={{ stroke: '#ffffff' }}
+            axisLine={{ stroke: '#ffffff' }}
             domain={['dataMin', 'dataMax']}
             type="number"
+            label={isMobile ? undefined : {
+              value: 'Underlying Asset',
+              position: 'insideBottom',
+              offset: -10,
+              style: { textAnchor: 'middle' },
+              fontSize: 11,
+              fill: '#ffffff'
+            }}
+            // Reduce number of ticks on mobile
+            interval={isMobile ? 'preserveStartEnd' : 0}
+            tickCount={isMobile ? 3 : 5}
           />
           
           <YAxis
             tickFormatter={formatYTick}
-            tick={{ fontSize: 11, fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-            axisLine={{ stroke: '#666' }}
+            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff' }}
+            tickLine={{ stroke: '#ffffff' }}
+            axisLine={{ stroke: '#ffffff' }}
             domain={yAxisDomain}
-            label={{
-              value: 'Profit/Loss ($)', 
+            label={isMobile ? undefined : {
+              value: 'Return (%)', 
               angle: -90, 
               position: 'insideLeft',
               style: { textAnchor: 'middle' },
               fontSize: 11,
-              fill: '#666'
+              fill: '#ffffff'
             }}
+            // Reduce number of ticks on mobile
+            tickCount={isMobile ? 5 : 10}
+            width={isMobile ? 35 : 40}
           />
           <Tooltip
             content={<CustomTooltip showExpiration={showExpiration} />}
@@ -317,29 +424,31 @@ export function MakerPnlChart({
             }}
           />
           <ReferenceLine 
-            y={maxProfit} 
+            y={maxProfitPercentage} 
             stroke="#22c55e"
             strokeDasharray="3 3"
           >
             <Label
-              value={`Max Profit: $${maxProfit.toFixed(2)}`}
+              value={isMobile ? `+${maxProfitPercentage.toFixed(0)}%` : `Max Profit: +${maxProfitPercentage.toFixed(0)}%`}
               fill="#22c55e"
-              fontSize={11}
-              position="insideBottomRight"
-              dx={10}
+              fontSize={isMobile ? 12 : 11}
+              position={maxProfitPosition}
+              dy={isMobile ? -20 : undefined}
+              dx={isMobile ? (maxProfitPosition === "left" ? 5 : -5) : 10}
             />
           </ReferenceLine>
           <ReferenceLine 
-            y={-maxLoss} 
+            y={-maxLossPercentage} 
             stroke="#ef4444"
             strokeDasharray="3 3"
           >
             <Label
-              value={`Max Loss: -$${maxLoss.toFixed(2)}`}
+              value={isMobile ? `-${maxLossPercentage.toFixed(0)}%` : `Max Loss: -${maxLossPercentage.toFixed(0)}%`}
               fill="#ef4444"
-              fontSize={11}
-              position="insideBottomRight"
-              dx={10}
+              fontSize={isMobile ? 12 : 11}
+              position={maxLossPosition}
+              dy={isMobile ? -20 : undefined}
+              dx={isMobile ? (maxLossPosition === "left" ? 5 : -5) : 10}
             />
           </ReferenceLine>
           
@@ -357,14 +466,14 @@ export function MakerPnlChart({
               stroke="#4a85ff"
               strokeWidth={1.5}
               label={{
-                value: `Current: $${currentMarketPrice.toFixed(2)}`,
+                value: isMobile ? `$${currentMarketPrice.toFixed(0)}` : `Current: $${currentMarketPrice.toFixed(2)}`,
                 fill: '#4a85ff',
-                fontSize: 11,
-                position: 'insideTopLeft',
-                dy: 5,
-                dx: 5
+                fontSize: isMobile ? 12 : 11,
+                position: isMobile ? "top" : "insideTopLeft",
+                dy: isMobile ? -15 : 5,
+                dx: isMobile ? 0 : 5
               }}
-              isFront={false}
+              isFront={true}
             />
           )}
           
@@ -372,19 +481,33 @@ export function MakerPnlChart({
           {options.map((option, index) => {
             const strike = Number(option.strikePrice)
             const isCall = option.optionType.toLowerCase() === 'call'
+            
+            // For mobile view, only show labels for first 2 strikes or alternate between calls and puts
+            const shouldShowLabel = !isMobile || index === 0 || 
+              (isMobile && options.length <= 2) || 
+              (isMobile && index % 2 === 0 && options.length <= 4);
+            
+            // For mobile, calculate vertical positioning of label to avoid overlap
+            // Offsetting each label by its position in array
+            const labelOffset = isMobile ? (index * 15) % 60 : undefined;
+            
             return (
               <ReferenceLine 
                 key={`strike-${index}`}
                 x={strike}
                 stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
                 strokeDasharray="2 2"
-                label={{ 
-                  value: `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
-                  position: 'insideBottomRight',
-                  fontSize: 11,
-                  fill: isCall ? "#f97316" : "#06b6d4"
-                }}
-                isFront={false}
+                strokeWidth={1.5}
+                label={shouldShowLabel ? { 
+                  value: isMobile ? 
+                    `${isCall ? "C" : "P"}:$${strike.toFixed(0)}` : 
+                    `${isCall ? "Call" : "Put"} Strike: $${strike.toFixed(2)}`,
+                  position: isMobile ? "bottom" : "insideBottomRight",
+                  fontSize: isMobile ? 12 : 11,
+                  fill: isCall ? "#f97316" : "#06b6d4",
+                  dy: isMobile ? labelOffset : undefined
+                } : undefined}
+                isFront={true}
               />
             )
           })}
@@ -394,15 +517,15 @@ export function MakerPnlChart({
           {/* Positive value line */}
           <Line
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : null)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : null)}
             dot={false}
             activeDot={{ 
-              r: 4, 
+              r: isMobile ? 4 : 4, 
               fill: "#22c55e", 
               stroke: "white", 
-              strokeWidth: 2 
+              strokeWidth: isMobile ? 2 : 2 
             }}
-            strokeWidth={1.5}
+            strokeWidth={isMobile ? 2 : 1.5}
             stroke="#22c55e"
             isAnimationActive={false}
             connectNulls
@@ -411,15 +534,15 @@ export function MakerPnlChart({
           {/* Negative value line */}
           <Line
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : null)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : null)}
             dot={false}
             activeDot={{ 
-              r: 4, 
+              r: isMobile ? 4 : 4, 
               fill: "#ef4444", 
               stroke: "white", 
-              strokeWidth: 2 
+              strokeWidth: isMobile ? 2 : 2 
             }}
-            strokeWidth={1.5}
+            strokeWidth={isMobile ? 2 : 1.5}
             stroke="#ef4444"
             isAnimationActive={false}
             connectNulls
@@ -428,9 +551,9 @@ export function MakerPnlChart({
           {/* Profit Area (green, only shows above 0) */}
           <Area
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value >= 0 ? dataPoint.value : 0)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
             stroke="none"
-            fillOpacity={0.2}
+            fillOpacity={isMobile ? 0.3 : 0.4}
             fill="url(#profitGradient)"
             isAnimationActive={false}
             activeDot={false}
@@ -439,9 +562,9 @@ export function MakerPnlChart({
           {/* Loss Area (red, only shows below 0) */}
           <Area
             type="monotone"
-            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.value < 0 ? dataPoint.value : 0)}
+            dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
             stroke="none"
-            fillOpacity={0.2}
+            fillOpacity={isMobile ? 0.3 : 0.4}
             fill="url(#lossGradient)"
             isAnimationActive={false}
             activeDot={false}

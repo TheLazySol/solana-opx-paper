@@ -26,6 +26,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
 import { useAssetPriceInfo } from "@/context/asset-price-provider";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -46,9 +48,8 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .int({ message: "Quantity must be a whole number" })
-    .min(1, { message: "Quantity must be at least 1" })
-    .max(100, { message: "Quantity must be at most 100" })
+    .min(0.001, { message: "Quantity must be at least 0.001" })
+    .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
 export function OptionLabForm() {
@@ -64,7 +65,7 @@ export function OptionLabForm() {
       optionType: "call",
       strikePrice: 0,
       premium: '',
-      quantity: 1,
+      quantity: 0.001,
       expirationDate: undefined,
     },
   });
@@ -235,7 +236,7 @@ export function OptionLabForm() {
           timestamp: new Date(),
           owner: publicKey,
           status: 'pending',
-          size: values.quantity,
+          size: Number(values.quantity),
           expirationDate: format(values.expirationDate, 'yyyy-MM-dd')
         };
         return newOption;
@@ -281,132 +282,156 @@ export function OptionLabForm() {
   };
 
   return (
-    <div className="mx-auto max-w-[1400px] w-full px-6">
+    <div className="mx-auto max-w-[1400px] w-full px-4 sm:px-6">
       <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className="space-y-8">
-          <div className="grid grid-cols-12 gap-4">
-            {/* Left side - Option Form */}
-            <div className="col-span-3">
-              <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-                transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-                <CardContent className="space-y-6">
-                  <AssetSelector assetPrice={assetPrice} />
-                  <OptionTypeSelector />
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <ExpirationDatePicker />
+        <form onSubmit={onSubmit} className="space-y-6">
+          {/* Container for all components */}
+          <div className="flex flex-col space-y-6">
+            {/* 1. PnL Chart & Maker Summary at the top - Full width on all screens */}
+            <div className="w-full">
+              <MakerSummary 
+                options={pendingOptions}
+                onRemoveOption={removeOptionFromSummary}
+                collateralProvided={Number(collateralState.collateralProvided) || 0}
+                leverage={collateralState.leverage}
+                assetPrice={assetPrice}
+              />
+              {pendingOptions.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Please add at least 1 option contract to the summary before minting!
+                </p>
+              )}
+            </div>
+            
+            {/* 2. Form Controls (Option inputs + Collateral Provider) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* Option Form Inputs - Left side on desktop, top on mobile */}
+              <div className="col-span-1 lg:col-span-7">
+                <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
+                  transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
+                  <CardContent className="space-y-4 sm:space-y-6 py-4 sm:py-6">
+                    {/* Top row: Asset and Option Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <AssetSelector assetPrice={assetPrice} />
+                      <OptionTypeSelector />
                     </div>
-                    <div className="flex-1">
+                    
+                    {/* Middle row: Expiration and Strike */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ExpirationDatePicker />
                       <StrikePriceInput assetPrice={assetPrice} />
                     </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
+                    
+                    {/* Bottom row: Premium and Quantity */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <PremiumDisplay lastUpdated={lastUpdated} manualRefresh={manualRefresh} isDebouncing={isDebouncing} />
-                    </div>
-                    <div className="flex-1">
                       <QuantityInput />
                     </div>
-                  </div>
-                  
-                  {/* Moved buttons to the bottom of the card with added margin-top for spacing */}
-                  <div className="flex flex-col justify-center gap-2 mt-auto">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={addOptionToSummary}
-                      className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
-                        hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
-                        backdrop-blur-sm
-                        transition-all duration-200
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
-                        disabled:hover:scale-100"
-                      disabled={
-                        !methods.getValues("strikePrice") || 
-                        !methods.getValues("premium") ||
-                        !methods.getValues("expirationDate")
-                      }
-                    >
-                      {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
-                    </Button>
-
-                    {/* Horizontal divider */}
-                    <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
-
-                    {/* Option Contract Display */}
-                    {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
-                      <div 
-                        className={cn(
-                          "group flex items-center justify-between py-1 px-2 mt-1",
-                          "backdrop-blur-sm bg-white/5 dark:bg-black/20",
-                          "border border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg",
-                          "hover:bg-[#4a85ff]/5 hover:border-[#4a85ff]/40",
-                          "transition-all duration-200 hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
-                        )}
+                    
+                    {/* Add/Update Option Button */}
+                    <div className="flex flex-col justify-center mt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={addOptionToSummary}
+                        className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
+                          hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
+                          backdrop-blur-sm
+                          transition-all duration-200
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                          disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
+                          disabled:hover:scale-100"
+                        disabled={
+                          !methods.getValues("strikePrice") || 
+                          !methods.getValues("premium") ||
+                          !methods.getValues("expirationDate")
+                        }
                       >
-                        <div className="flex items-center gap-1">
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-semibold tracking-tight">
-                              {pendingOptions[pendingOptions.length - 1].quantity}
-                            </span>
-                            <span className="px-1.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-md text-[10px]">SHORT</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs font-medium">
-                              {pendingOptions[pendingOptions.length - 1].asset} {pendingOptions[pendingOptions.length - 1].optionType.toUpperCase()}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-normal">
-                              ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)} Strike @ {Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
-                          className="h-6 w-6 p-0 transition-colors duration-200 
-                            hover:bg-destructive/20 hover:text-destructive-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
+                      </Button>
+                    </div>
+
+                    {/* Option Contract Display - Only show when options exist */}
+                    {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
+                      <div>
+                        <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
+                        <Card className="bg-black/10 border border-white/10">
+                          <CardContent className="p-2 sm:p-3">
+                            <div className="flex flex-col space-y-2 w-full">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {pendingOptions[pendingOptions.length - 1].asset.toUpperCase() === 'SOL' && (
+                                    <Image 
+                                      src="/token-logos/solana_logo.png" 
+                                      alt="Solana Logo" 
+                                      width={20} 
+                                      height={20} 
+                                      className="mr-1.5"
+                                    />
+                                  )}
+                                  <Badge variant="grey" className="capitalize">
+                                    {pendingOptions[pendingOptions.length - 1].asset}
+                                  </Badge>
+                                  <Badge variant="destructive" className="capitalize">
+                                    Short
+                                  </Badge>
+                                  <Badge variant="blue" className="capitalize">
+                                    {pendingOptions[pendingOptions.length - 1].optionType}
+                                  </Badge>
+                                  <Badge variant="blue" className="capitalize">
+                                    ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="flex items-center justify-between sm:justify-end gap-2">
+                                  <Badge variant="blue" className="capitalize">
+                                    EXP: {format(pendingOptions[pendingOptions.length - 1].expirationDate, 'yyyy-MM-dd')}
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
+                                    className="h-7 w-7 text-muted-foreground hover:text-white"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-xs sm:text-sm text-muted-foreground">Premium:</span>
+                                  <span className="text-xs sm:text-sm font-medium text-red-500">
+                                    ${Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
+                                  </span>
+                                </div>
+                                
+                                <div className="flex items-center justify-end gap-2">
+                                  <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
+                                  <span className="text-xs sm:text-sm font-medium">
+                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(3)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right side - Maker Summary & Collateral Provider */}
-            <div className="col-span-9"> 
-              <div className="grid grid-cols-9 gap-4">
-                {/* Maker Summary - PnL Chart */}
-                <div className="col-span-6">
-                  <MakerSummary 
-                    options={pendingOptions}
-                    onRemoveOption={removeOptionFromSummary}
-                    collateralProvided={Number(collateralState.collateralProvided) || 0}
-                    leverage={collateralState.leverage}
-                    assetPrice={assetPrice}
-                  />
-                  {pendingOptions.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-4">
-                      Please add at least 1 option contract to the summary before minting!
-                    </p>
-                  )}
-                </div>
-                
-                {/* Collateral Provider */}
-                <div className="col-span-3">
-                  <CollateralProvider 
-                    options={pendingOptions}
-                    onStateChange={handleCollateralStateChange}
-                    onMint={onSubmit}
-                    isSubmitting={isSubmitting}
-                    hasValidationError={!!methods.formState.errors.root}
-                    hasPendingOptions={pendingOptions.length > 0}
-                  />
-                </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Collateral Provider - Right side on desktop, bottom on mobile */}
+              <div className="col-span-1 lg:col-span-5">
+                <CollateralProvider 
+                  options={pendingOptions}
+                  onStateChange={handleCollateralStateChange}
+                  onMint={onSubmit}
+                  isSubmitting={isSubmitting}
+                  hasValidationError={!!methods.formState.errors.root}
+                  hasPendingOptions={pendingOptions.length > 0}
+                />
               </div>
             </div>
           </div>

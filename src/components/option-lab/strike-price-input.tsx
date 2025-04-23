@@ -69,13 +69,13 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
               Strike Price
               <TooltipIndicator />
             </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The market price at which the option can be exercised by the buyer.</p>
+            <p className="text-xs sm:text-sm">The market price at which the option can be exercised by the buyer.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -89,11 +89,11 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
             placeholder="Enter strike price"
             value={getValues('strikePrice')}
             onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
-            className="h-10 pl-7"
+            className="h-9 sm:h-10 pl-7 text-sm sm:text-base"
           />
         </div>
       </FormControl>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 

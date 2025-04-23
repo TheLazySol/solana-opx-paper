@@ -13,15 +13,15 @@ export const QuantityInput = () => {
       setValue('quantity', '');
       return;
     }
-    const num = parseInt(value);
-    if (num < 1 || num > 10000) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0.001 || num > 10000) {
       setError('quantity', { 
-        message: `Quantity must be between 1 and 10,000` 
+        message: `Quantity must be between 0.001 and 10,000` 
       });
       return;
     }
     clearErrors('quantity');
-    setValue('quantity', Math.floor(num));
+    setValue('quantity', num);
   };
 
   return (
@@ -29,29 +29,29 @@ export const QuantityInput = () => {
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <FormLabel className="mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
+            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
               Quantity
               <TooltipIndicator />
             </FormLabel>
           </TooltipTrigger>
           <TooltipContent>
-            <p>The number of option contracts to sell. Each contract represents 100 units of the underlying asset.</p>
+            <p className="text-xs sm:text-sm">The number of option contracts to sell. Fractional quantities are supported.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <FormControl>
         <Input
           type="number"
-          min="1"
+          min="0.001"
           max="10000"
-          step="1"
-          placeholder="Enter quantity (1-10,000)"
+          step="0.001"
+          placeholder="Enter quantity (0.001-10,000)"
           value={getValues('quantity')}
           onChange={(e) => handleQuantityChange(e.target.value)}
-          className="h-10"
+          className="h-9 sm:h-10 text-sm sm:text-base"
         />
       </FormControl>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 

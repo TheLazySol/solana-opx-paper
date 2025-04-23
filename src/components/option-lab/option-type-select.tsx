@@ -15,7 +15,7 @@ export const OptionTypeSelector = () => {
 
   return (
     <FormItem>
-      <FormLabel>Option Type</FormLabel>
+      <FormLabel className="mb-1 sm:mb-2 text-xs sm:text-sm">Option Type</FormLabel>
       <FormControl>
         <div className="flex gap-2">
           <Button
@@ -25,6 +25,7 @@ export const OptionTypeSelector = () => {
             className={cn(
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
+              "text-xs sm:text-sm",
               "transition-all duration-200",
               optionType === "call" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
@@ -38,6 +39,7 @@ export const OptionTypeSelector = () => {
             className={cn(
               "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
               "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
+              "text-xs sm:text-sm",
               "transition-all duration-200",
               optionType === "put" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
             )}
@@ -46,7 +48,7 @@ export const OptionTypeSelector = () => {
           </Button>
         </div>
       </FormControl>
-      <FormMessage />
+      <FormMessage className="text-xs sm:text-sm" />
     </FormItem>
   );
 }; 
