@@ -16,12 +16,14 @@ export interface OptionContract {
   callVolume: number
   callOpenInterest: number
   callGreeks: OptionGreeks
+  callOptionsAvailable: number
   // Put side
   putBid: number
   putAsk: number
   putVolume: number
   putOpenInterest: number
   putGreeks: OptionGreeks
+  putOptionsAvailable: number
 }
 
 // Import Black-Scholes model and constants
@@ -123,11 +125,68 @@ class OpenInterestTracker {
   }
 }
 
+// Options Availability Tracker - keeps track of the quantity of options available to trade
+// Using a singleton pattern to maintain state across component instances
+class OptionsAvailabilityTracker {
+  private static instance: OptionsAvailabilityTracker;
+  private availabilityMap: Map<string, number> = new Map();
+  
+  private constructor() {}
+  
+  public static getInstance(): OptionsAvailabilityTracker {
+    if (!OptionsAvailabilityTracker.instance) {
+      OptionsAvailabilityTracker.instance = new OptionsAvailabilityTracker();
+    }
+    return OptionsAvailabilityTracker.instance;
+  }
+  
+  // Generate a unique key for an option
+  private getOptionKey(strike: number, expiry: string, side: 'call' | 'put'): string {
+    return `${side}-${strike}-${expiry}`;
+  }
+  
+  // Get the quantity of options available
+  public getOptionsAvailable(strike: number, expiry: string, side: 'call' | 'put'): number {
+    const key = this.getOptionKey(strike, expiry, side);
+    // Default to 0 options available if no entry exists
+    return this.availabilityMap.get(key) ?? 0;
+  }
+  
+  // Set available quantity for an option
+  public setOptionsAvailable(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    this.availabilityMap.set(key, Math.max(0, quantity));
+  }
+  
+  // Decrease available options when options are purchased
+  public decreaseOptionsAvailable(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    const currentAvailable = this.getOptionsAvailable(strike, expiry, side);
+    // Ensure we don't go below zero
+    this.availabilityMap.set(key, Math.max(0, currentAvailable - quantity));
+  }
+  
+  // Increase available options when options are returned to the market
+  public increaseOptionsAvailable(strike: number, expiry: string, side: 'call' | 'put', quantity: number): void {
+    const key = this.getOptionKey(strike, expiry, side);
+    const currentAvailable = this.getOptionsAvailable(strike, expiry, side);
+    this.availabilityMap.set(key, currentAvailable + quantity);
+  }
+  
+  // Reset all availability (for testing)
+  public resetAllAvailability(): void {
+    this.availabilityMap.clear();
+  }
+}
+
 // Export the volume tracker instance
 export const volumeTracker = OptionVolumeTracker.getInstance();
 
 // Export the open interest tracker instance
 export const openInterestTracker = OpenInterestTracker.getInstance();
+
+// Export the options availability tracker instance
+export const optionsAvailabilityTracker = OptionsAvailabilityTracker.getInstance();
 
 // Function to update volume when an option is traded
 export const updateOptionVolume = (option: SelectedOption): void => {
@@ -228,6 +287,10 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
   const callOpenInterest = openInterestTracker.getOpenInterest(strike, expiryDate, 'call');
   const putOpenInterest = openInterestTracker.getOpenInterest(strike, expiryDate, 'put');
 
+  // Check availability status
+  const callOptionsAvailable = optionsAvailabilityTracker.getOptionsAvailable(strike, expiryDate, 'call');
+  const putOptionsAvailable = optionsAvailabilityTracker.getOptionsAvailable(strike, expiryDate, 'put');
+
   return {
     strike,
     expiry: expiryDate,
@@ -237,12 +300,14 @@ function calculateOptionData(strike: number, expiryDate: string, spotPrice: numb
     callVolume,
     callOpenInterest,
     callGreeks: callOption.greeks,
+    callOptionsAvailable,
     // Put side
     putBid,
     putAsk,
     putVolume,
     putOpenInterest,
-    putGreeks: putOption.greeks
+    putGreeks: putOption.greeks,
+    putOptionsAvailable
   }
 }
 

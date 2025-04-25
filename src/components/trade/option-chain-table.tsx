@@ -41,6 +41,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     vega: false,
     rho: false,
     oi: false,
+    oa: true,
     volume: true
   },
   onOptionsChange,
@@ -267,6 +268,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   (visibleGreeks.gamma ? 1 : 0) +
                   (visibleGreeks.theta ? 1 : 0) +
                   (visibleGreeks.delta ? 1 : 0) +
+                  (visibleGreeks.oa ? 1 : 0) +
                   1 // Price column
                 }
                 className="text-center font-bold text-lg text-[#4a85ff]"
@@ -284,6 +286,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   (visibleGreeks.gamma ? 1 : 0) +
                   (visibleGreeks.vega ? 1 : 0) +
                   (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.oa ? 1 : 0) +
                   (visibleGreeks.oi ? 1 : 0) +
                   (visibleGreeks.volume ? 1 : 0)
                 }
@@ -328,6 +331,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                       </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Rho - Sensitivity to interest rate changes
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+              )}
+              {visibleGreeks.oa && (
+                <TableHead className="text-center w-[85px]">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
+                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                        Options Available - Quantity of options available to trade
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -490,6 +505,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   </TooltipProvider>
                 </TableHead>
               )}
+              {visibleGreeks.oa && (
+                <TableHead className="text-center w-[85px]">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
+                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                        Options Available - Quantity of options available to trade
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+              )}
               {visibleGreeks.oi && (
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
@@ -532,6 +559,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     (visibleGreeks.gamma ? 1 : 0) +
                     (visibleGreeks.theta ? 1 : 0) +
                     (visibleGreeks.delta ? 1 : 0) +
+                    (visibleGreeks.oa ? 1 : 0) +
                     1 + // Price column
                     1 + // Strike column
                     1 + // Put price column
@@ -540,6 +568,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     (visibleGreeks.gamma ? 1 : 0) +
                     (visibleGreeks.vega ? 1 : 0) +
                     (visibleGreeks.rho ? 1 : 0) +
+                    (visibleGreeks.oa ? 1 : 0) +
                     (visibleGreeks.oi ? 1 : 0) +
                     (visibleGreeks.volume ? 1 : 0)
                   } className="text-center py-4">
@@ -560,6 +589,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.theta ? 1 : 0) +
                           (visibleGreeks.delta ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           1 + // Price column
                           1 + // Strike column
                           1 + // Put price column
@@ -568,6 +598,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.vega ? 1 : 0) +
                           (visibleGreeks.rho ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           (visibleGreeks.oi ? 1 : 0) +
                           (visibleGreeks.volume ? 1 : 0)
                         }
@@ -612,6 +643,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (visibleGreeks.gamma ? 1 : 0) +
                               (visibleGreeks.theta ? 1 : 0) +
                               (visibleGreeks.delta ? 1 : 0) +
+                              (visibleGreeks.oa ? 1 : 0) +
                               1 // Price column
                             }
                             className={cn(
@@ -633,6 +665,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               {visibleGreeks.rho && (
                                 <div className="text-center py-1 opacity-70">
                                   {formatGreek(option.callGreeks.rho)}
+                                </div>
+                              )}
+                              {visibleGreeks.oa && (
+                                <div className="text-center py-1 opacity-70">
+                                  {formatInteger(option.callOptionsAvailable)}
                                 </div>
                               )}
                               {visibleGreeks.vega && (
@@ -708,6 +745,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (visibleGreeks.gamma ? 1 : 0) +
                               (visibleGreeks.vega ? 1 : 0) +
                               (visibleGreeks.rho ? 1 : 0) +
+                              (visibleGreeks.oa ? 1 : 0) +
                               (visibleGreeks.oi ? 1 : 0) +
                               (visibleGreeks.volume ? 1 : 0)
                             }
@@ -778,6 +816,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                   {formatGreek(option.putGreeks.rho)}
                                 </div>
                               )}
+                              {visibleGreeks.oa && (
+                                <div className="text-center py-1 opacity-70">
+                                  {formatInteger(option.putOptionsAvailable)}
+                                </div>
+                              )}
                               {visibleGreeks.oi && (
                                 <div className="text-center py-1 opacity-70">
                                   {formatInteger(option.putOpenInterest)}
@@ -802,6 +845,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 (visibleGreeks.gamma ? 1 : 0) +
                                 (visibleGreeks.theta ? 1 : 0) +
                                 (visibleGreeks.delta ? 1 : 0) +
+                                (visibleGreeks.oa ? 1 : 0) +
                                 1 + // Price column
                                 1 + // Strike column
                                 1 + // Put price column
@@ -810,6 +854,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 (visibleGreeks.gamma ? 1 : 0) +
                                 (visibleGreeks.vega ? 1 : 0) +
                                 (visibleGreeks.rho ? 1 : 0) +
+                                (visibleGreeks.oa ? 1 : 0) +
                                 (visibleGreeks.oi ? 1 : 0) +
                                 (visibleGreeks.volume ? 1 : 0)
                               }
@@ -841,6 +886,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.theta ? 1 : 0) +
                           (visibleGreeks.delta ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           1 + // Price column
                           1 + // Strike column
                           1 + // Put price column
@@ -849,6 +895,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.vega ? 1 : 0) +
                           (visibleGreeks.rho ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           (visibleGreeks.oi ? 1 : 0) +
                           (visibleGreeks.volume ? 1 : 0)
                         }

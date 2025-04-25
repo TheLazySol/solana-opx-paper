@@ -26,7 +26,8 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     gamma: false,
     vega: false,
     rho: false,
-    oi: false,
+    oa: true,
+    oi: true,
     volume: true
   })
   const [useGreekSymbols, setUseGreekSymbols] = useState(false)

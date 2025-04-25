@@ -16,6 +16,7 @@ export interface GreekFilters {
   gamma: boolean
   vega: boolean
   rho: boolean
+  oa: boolean
   oi: boolean
   volume: boolean
 }
@@ -32,6 +33,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
     gamma: false,
     vega: false,
     rho: false,
+    oa: false,
     oi: false,
     volume: true
   },
@@ -101,6 +103,15 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
         >
           <span>Rho (ρ)</span>
           {filters.rho && <Check className="h-4 w-4" />}
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem 
+          onClick={(e) => toggleFilter('oa', e)} 
+          className="flex items-center justify-between cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <span>Options Available</span>
+          {filters.oa && <Check className="h-4 w-4" />}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
