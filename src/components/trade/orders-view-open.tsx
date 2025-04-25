@@ -227,10 +227,58 @@ export const OrdersViewOpen = () => {
     )
   }
 
+  // Function to remove a pending option from mintedOptions
+  const removePendingOption = (leg: OptionLeg) => {
+    try {
+      console.log('Removing pending option from mintedOptions:', {
+        strike: leg.strike,
+        expiry: leg.expiry,
+        type: leg.type
+      });
+      
+      // Only remove if the option is pending
+      if (leg.status !== 'pending') return;
+      
+      // Get minted options from localStorage
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (!mintedOptionsStr) return;
+      
+      const mintedOptions = JSON.parse(mintedOptionsStr);
+      
+      // Find the corresponding mintedOption by matching strike, expiry, and option type
+      const side = leg.type === 'Call' ? 'call' : 'put';
+      
+      // Remove the matching option(s)
+      const updatedMintedOptions = mintedOptions.filter((opt: any) => 
+        !(opt.strike === leg.strike && 
+          opt.expiry === leg.expiry && 
+          opt.side === side && 
+          opt.status === 'pending')
+      );
+      
+      // Save back to localStorage
+      localStorage.setItem('mintedOptions', JSON.stringify(updatedMintedOptions));
+      
+      console.log(`Removed ${mintedOptions.length - updatedMintedOptions.length} pending options from mintedOptions`);
+      
+      // Dispatch a custom event to notify other components in the same window
+      window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'));
+    } catch (error) {
+      console.error('Error removing pending option from mintedOptions:', error);
+    }
+  };
+
   const handleCloseAll = (id: string) => {
     // Find the position for this ID before removing it
     const position = positions.find(pos => pos.id === id)
     if (!position) return
+    
+    // For each leg that is pending, remove it from mintedOptions
+    position.legs.forEach(leg => {
+      if (leg.status === 'pending' && leg.position < 0) {
+        removePendingOption(leg);
+      }
+    });
     
     // Create history entry for the closed position
     const closedPosition = {
@@ -307,6 +355,11 @@ export const OrdersViewOpen = () => {
     
     // Get the leg being closed before removing it
     const closedLeg = position.legs[legIndex]
+    
+    // If this is a pending option, remove it from mintedOptions
+    if (closedLeg.status === 'pending' && closedLeg.position < 0) {
+      removePendingOption(closedLeg);
+    }
     
     // Update volume for this leg being closed
     const side = closedLeg.type === 'Call' ? 'call' : 'put'

@@ -1,7 +1,7 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { ExpirationDateSelector } from './expiration-date'
 import { FilterGreeks, GreekFilters } from './filter-greeks'
-import { ExpirationDate } from '@/constants/constants'
+import { ExpirationDate, EMPTY_EXPIRATION_DATES, formatOptionExpirationDate } from '@/constants/constants'
 import { Button } from '../ui/button'
 import { RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -14,16 +14,77 @@ interface OptionChainUtilsProps {
   expirationDates?: ExpirationDate[]
   greekFilters: GreekFilters
   onGreekFiltersChange: (filters: GreekFilters) => void
+  refreshExpirations?: number
 }
 
 export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
   selectedExpiration,
   onExpirationChange,
-  expirationDates,
+  expirationDates: propExpirationDates,
   greekFilters,
-  onGreekFiltersChange
+  onGreekFiltersChange,
+  refreshExpirations = 0
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [allExpirationDates, setAllExpirationDates] = useState<ExpirationDate[]>(propExpirationDates || EMPTY_EXPIRATION_DATES);
+
+  // Function to get expiration dates from minted options
+  useEffect(() => {
+    const getMintedOptionExpirations = () => {
+      try {
+        // Get minted options from localStorage
+        const mintedOptionsStr = localStorage.getItem('mintedOptions');
+        if (!mintedOptionsStr) return propExpirationDates || EMPTY_EXPIRATION_DATES;
+        
+        const mintedOptions = JSON.parse(mintedOptionsStr);
+        
+        // Extract unique expiration dates
+        const uniqueDates = new Set<string>();
+        
+        // Add dates from prop expiration dates
+        if (propExpirationDates) {
+          propExpirationDates.forEach(date => uniqueDates.add(date.value));
+        } else {
+          EMPTY_EXPIRATION_DATES.forEach(date => uniqueDates.add(date.value));
+        }
+        
+        // Add dates from minted options
+        mintedOptions.forEach((option: any) => {
+          if (option.expiry) {
+            uniqueDates.add(option.expiry);
+          }
+        });
+        
+        // Convert to ExpirationDate format
+        const expiryDates = Array.from(uniqueDates).map(date => ({
+          value: date,
+          label: formatOptionExpirationDate(date),
+          isMonthly: false // We don't know if it's monthly, so default to false
+        }));
+        
+        // Sort by date (earliest first)
+        expiryDates.sort((a, b) => {
+          const dateA = new Date(a.value);
+          const dateB = new Date(b.value);
+          return dateA.getTime() - dateB.getTime();
+        });
+        
+        return expiryDates;
+      } catch (error) {
+        console.error('Error getting minted option expirations:', error);
+        return propExpirationDates || EMPTY_EXPIRATION_DATES;
+      }
+    };
+    
+    // Update expiration dates
+    const updatedDates = getMintedOptionExpirations();
+    setAllExpirationDates(updatedDates);
+    
+    // If no date is selected and we have dates, select the first one
+    if (!selectedExpiration && updatedDates.length > 0) {
+      onExpirationChange(updatedDates[0].value);
+    }
+  }, [propExpirationDates, selectedExpiration, onExpirationChange, refreshExpirations]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -46,7 +107,7 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
       <ExpirationDateSelector
         selectedExpiration={selectedExpiration}
         onExpirationChange={onExpirationChange}
-        expirationDates={expirationDates}
+        expirationDates={allExpirationDates}
       />
       <FilterGreeks 
         filters={greekFilters}

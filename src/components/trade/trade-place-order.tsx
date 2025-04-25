@@ -172,7 +172,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               collateral: option.type === 'ask' ? option.strike * 100 : 0,
               value: (option.limitPrice !== undefined ? option.limitPrice : option.price) * option.quantity * 100,
               pnl: 0, // Initial P/L is 0
-              status: 'filled' // Add status as filled for buying trades
+              // Buyer orders are immediately "filled"
+              // Seller orders through trading would also be filled immediately (but option minted from option lab stay pending)
+              status: 'filled'
             })),
             // Calculate aggregated values
             netDelta: 0, // Will be calculated in orders view
@@ -230,6 +232,14 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const decreaseAvailableOptions = (option: SelectedOption) => {
     if (!option || !option.quantity) return;
     
+    console.log('Decreasing available options for:', {
+      type: option.type,  // 'bid' means buying, which should decrease available
+      side: option.side,  // 'call' or 'put'
+      strike: option.strike,
+      expiry: option.expiry,
+      quantity: option.quantity
+    });
+    
     // Only decrease availability for ask orders (buying from available options)
     if (option.type === 'bid') {
       // Get the current minted options from localStorage
@@ -245,6 +255,16 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           opt.expiry === option.expiry && 
           opt.side === option.side && 
           opt.status === 'pending'
+        );
+        
+        console.log(`Found ${matchingOptions.length} matching pending options:`, 
+          matchingOptions.map((opt: any) => ({
+            strike: opt.strike,
+            side: opt.side, 
+            expiry: opt.expiry,
+            quantity: opt.quantity,
+            status: opt.status
+          }))
         );
         
         if (matchingOptions.length > 0) {
@@ -275,6 +295,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               return dateA.getTime() - dateB.getTime();
             });
             
+            // Create a list of filled option IDs to track which options were filled
+            const filledOptionIds = [];
+
+            // When updating the mintedOptions status
             for (const mintedOption of matchingOptions) {
               if (remainingQuantity <= 0) break;
               
@@ -290,7 +314,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                 // Otherwise, mark as filled and continue with next option
                 else {
                   mintedOptions[optionIndex].status = 'filled';
+                  // Store the ID or a reference to this filled option
+                  filledOptionIds.push(optionIndex);
                   remainingQuantity -= mintedOption.quantity;
+                  
+                  console.log(`Marked option as filled: ${mintedOption.strike} ${mintedOption.side} ${mintedOption.expiry}`);
                 }
               }
             }
@@ -314,15 +342,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     leg.status === 'pending' &&
                     leg.position < 0 // Short position (selling)
                   ) {
-                    // If this position has been filled, update its status
-                    const matchedOption = matchingOptions.find((opt: any) => 
-                      opt.status === 'filled' && 
-                      opt.strike === leg.strike && 
-                      opt.expiry === leg.expiry
-                    );
-                    
-                    if (matchedOption) {
+                    // There was at least one filled option matching this leg criteria
+                    if (filledOptionIds.length > 0) {
                       position.legs[i].status = 'filled';
+                      console.log(`Changed position status to filled: ${leg.strike} ${leg.type} ${leg.expiry}`);
                     }
                   }
                 }
