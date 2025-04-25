@@ -90,15 +90,91 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
     setIsRefreshing(true);
     
     try {
+      // Log the current options in localStorage
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (mintedOptionsStr) {
+        const mintedOptions = JSON.parse(mintedOptionsStr);
+        console.log('Current options in localStorage:', mintedOptions);
+      }
+      
+      // Clean up options in localStorage
+      cleanupPendingOptions();
+      
       // Refresh prices for all tokens in parallel
       await Promise.all(
         Object.keys(TOKENS).map(symbol => getTokenPrice(symbol))
       );
+      
+      // Dispatch event to notify that options have been updated
+      window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'));
     } catch (error) {
       console.error('Error refreshing token prices:', error);
     } finally {
       // Stop the refresh animation after all prices are fetched
       setIsRefreshing(false);
+    }
+  };
+  
+  // Helper function to clean up pending options
+  const cleanupPendingOptions = () => {
+    try {
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (!mintedOptionsStr) return;
+      
+      const mintedOptions = JSON.parse(mintedOptionsStr);
+      console.log('Before cleanup, total options:', mintedOptions.length);
+      
+      // Group options by expiry and strike
+      const optionsByExpiryAndStrike: Record<string, Record<number, any[]>> = {};
+      
+      // Initialize the structure
+      mintedOptions.forEach((option: any) => {
+        if (!option.expiry || option.strike === undefined) return;
+        
+        if (!optionsByExpiryAndStrike[option.expiry]) {
+          optionsByExpiryAndStrike[option.expiry] = {};
+        }
+        
+        if (!optionsByExpiryAndStrike[option.expiry][option.strike]) {
+          optionsByExpiryAndStrike[option.expiry][option.strike] = [];
+        }
+        
+        optionsByExpiryAndStrike[option.expiry][option.strike].push(option);
+      });
+      
+      // Check each strike for pending options
+      let updatedOptions: any[] = [];
+      
+      Object.entries(optionsByExpiryAndStrike).forEach(([expiry, strikeMap]) => {
+        Object.entries(strikeMap).forEach(([strike, options]) => {
+          // Check if there are any pending options for this strike
+          const hasPendingOptions = options.some(opt => opt.status === 'pending');
+          
+          if (hasPendingOptions) {
+            // If there are pending options, keep all options for this strike
+            updatedOptions = updatedOptions.concat(options);
+            console.log(`Strike ${strike} (${expiry}): Keeping all options - has pending options`);
+          } else {
+            // If no pending options, only keep filled options
+            const filledOptions = options.filter(opt => opt.status === 'filled');
+            updatedOptions = updatedOptions.concat(filledOptions);
+            
+            if (filledOptions.length > 0) {
+              console.log(`Strike ${strike} (${expiry}): Keeping ${filledOptions.length} filled options`);
+            } else {
+              console.log(`Strike ${strike} (${expiry}): Removing all options - no pending or filled`);
+            }
+          }
+        });
+      });
+      
+      console.log('After cleanup, total options:', updatedOptions.length);
+      
+      // Update localStorage with the cleaned options
+      localStorage.setItem('mintedOptions', JSON.stringify(updatedOptions));
+      
+    } catch (error) {
+      console.error('Error cleaning up pending options:', error);
     }
   };
 

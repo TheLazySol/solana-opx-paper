@@ -340,27 +340,39 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
     return [];
   }
   
-  // Extract unique strike prices from minted options
-  const strikePrices = Array.from(new Set(expiryMintedOptions.map(option => option.strike)));
+  // Group options by strike
+  const optionsByStrike: Record<number, any[]> = {};
+  expiryMintedOptions.forEach(option => {
+    if (!optionsByStrike[option.strike]) {
+      optionsByStrike[option.strike] = [];
+    }
+    optionsByStrike[option.strike].push(option);
+  });
+  
+  // Extract strike prices only if they have pending options or filled options
+  const strikePrices = Object.entries(optionsByStrike)
+    .filter(([_, options]) => {
+      // Check if this strike has any pending options
+      const hasPendingOptions = options.some(opt => opt.status === 'pending');
+      
+      // Only include strikes with pending options
+      return hasPendingOptions;
+    })
+    .map(([strike, _]) => Number(strike));
   
   // Sort strike prices
   strikePrices.sort((a, b) => a - b);
   
-  // Generate option data for each strike
+  // Generate option data for each valid strike
   const options = strikePrices.map(strike => {
     // Start with the standard calculation
     const option = calculateOptionData(strike, expiry, spotPrice);
     
-    // Check if there are minted options for this strike
-    const callMintedOptions = expiryMintedOptions.filter(
-      o => o.strike === strike && o.side === 'call'
-    );
+    // Get all options for this strike
+    const strikeOptions = optionsByStrike[strike] || [];
     
-    const putMintedOptions = expiryMintedOptions.filter(
-      o => o.strike === strike && o.side === 'put'
-    );
-    
-    // Update options availability based on minted options (both pending and filled)
+    // Process call options
+    const callMintedOptions = strikeOptions.filter(o => o.side === 'call');
     if (callMintedOptions.length > 0) {
       // Count only pending options as available
       const pendingCallOptions = callMintedOptions.filter(opt => opt.status === 'pending');
@@ -380,6 +392,8 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
       option.callVolume = volumeTracker.getVolume(strike, expiry, 'call');
     }
     
+    // Process put options
+    const putMintedOptions = strikeOptions.filter(o => o.side === 'put');
     if (putMintedOptions.length > 0) {
       // Count only pending options as available
       const pendingPutOptions = putMintedOptions.filter(opt => opt.status === 'pending');
