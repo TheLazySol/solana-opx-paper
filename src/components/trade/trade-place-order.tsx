@@ -192,6 +192,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         
         localStorage.setItem('openOrders', JSON.stringify([...existingOrders, ...newOrders]));
 
+        // Dispatch a custom event to notify other components in the same window
+        window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
+
         // Show success toast
         toast({
           title: "Order Placed",
@@ -344,8 +347,13 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   ) {
                     // There was at least one filled option matching this leg criteria
                     if (filledOptionIds.length > 0) {
+                      const matchedOption = position.legs[i];
                       position.legs[i].status = 'filled';
-                      console.log(`Changed position status to filled: ${leg.strike} ${leg.type} ${leg.expiry}`);
+                      // Record the actual fill price 
+                      position.legs[i].entryPrice = option.price;
+                      // Also update the current market price
+                      position.legs[i].marketPrice = option.price;
+                      console.log(`Changed position status to filled: ${leg.strike} ${leg.type} ${leg.expiry} at price $${option.price}`);
                     }
                   }
                 }
@@ -353,6 +361,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               
               localStorage.setItem('openOrders', JSON.stringify(openOrders));
             }
+
+            // Dispatch a custom event
+            window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
           }
         }
       } catch (error) {

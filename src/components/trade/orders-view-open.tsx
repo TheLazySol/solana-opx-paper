@@ -63,6 +63,7 @@ type AssetPosition = {
 export const OrdersViewOpen = () => {
   const [expandedAssets, setExpandedAssets] = useState<string[]>([])
   const [positions, setPositions] = useState<AssetPosition[]>([])
+  const [forceUpdate, setForceUpdate] = useState(0)
   
   // Get current asset prices for all assets in positions
   const { price: solPrice } = useAssetPriceInfo('SOL')
@@ -114,24 +115,23 @@ export const OrdersViewOpen = () => {
 
   // Calculate P/L based on the change in value from when the position was opened
   const calculatePnL = (leg: OptionLeg) => {
-    // If the order is still pending, return 0 - no P/L yet
+    // If the order is still pending, no P/L calculation is needed
     if (leg.status === 'pending') {
       return 0;
     }
 
-    // For long positions: (current price - entry price) * quantity * 100
-    // For short positions: (entry price - current price) * quantity * 100
-    const contractSize = 100 // Each option contract represents 100 units
-    const quantity = Math.abs(leg.position) // Works with fractional quantities
+    // For filled orders, calculate P/L based on the difference between current market price and entry price
+    const contractSize = 100; // Each option contract represents 100 units
+    const quantity = Math.abs(leg.position); // Works with fractional quantities
     
     if (leg.position > 0) {
-      // Long position
-      return (leg.marketPrice - leg.entryPrice) * quantity * contractSize
+      // Long position: (current price - entry price) * quantity * 100
+      return (leg.marketPrice - leg.entryPrice) * quantity * contractSize;
     } else {
-      // Short position
-      return (leg.entryPrice - leg.marketPrice) * quantity * contractSize
+      // Short position: (entry price - current price) * quantity * 100
+      return (leg.entryPrice - leg.marketPrice) * quantity * contractSize;
     }
-  }
+  };
 
   // Load positions from localStorage on component mount
   useEffect(() => {
@@ -216,13 +216,49 @@ export const OrdersViewOpen = () => {
     } catch (error) {
       console.error('Error loading open orders:', error)
     }
-  }, [solPrice, getAssetPrice, calculateOptionPrice, calculateTimeUntilExpiry])
+  }, [solPrice, getAssetPrice, calculateOptionPrice, calculateTimeUntilExpiry, forceUpdate])
 
   // Update option prices and Greeks periodically based on current asset prices
   useEffect(() => {
     // No need for the random update since we're now using the real price model
     // based on the useAssetPriceInfo hook, which will trigger updates automatically
   }, [])
+
+  // Add an effect to listen for localStorage changes that might indicate options being filled
+  useEffect(() => {
+    // Function to handle storage events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'openOrders') {
+        // Reload positions from localStorage
+        try {
+          const storedOrders = localStorage.getItem('openOrders');
+          if (storedOrders) {
+            // Don't need to parse and process here - the main useEffect will handle it
+            // Just force a re-render by incrementing a counter
+            setForceUpdate(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error('Error handling storage change:', error);
+        }
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for local updates (within the same window)
+    const handleLocalUpdate = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+    
+    window.addEventListener('openOrdersUpdated', handleLocalUpdate);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('openOrdersUpdated', handleLocalUpdate);
+    };
+  }, []);
 
   const toggleAsset = (id: string) => {
     setExpandedAssets(prev => 
