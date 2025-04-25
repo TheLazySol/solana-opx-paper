@@ -104,15 +104,6 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           <span>Rho (ρ)</span>
           {filters.rho && <Check className="h-4 w-4" />}
         </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('oa', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Options Available</span>
-          {filters.oa && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         
@@ -123,6 +114,15 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
         >
           <span>Volume</span>
           {filters.volume && <Check className="h-4 w-4" />}
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem 
+          onClick={(e) => toggleFilter('oa', e)} 
+          className="flex items-center justify-between cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <span>Options Available</span>
+          {filters.oa && <Check className="h-4 w-4" />}
         </DropdownMenuItem>
         
         <DropdownMenuItem 
