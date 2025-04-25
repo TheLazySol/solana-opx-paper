@@ -169,6 +169,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               collateral: option.type === 'ask' ? option.strike * 100 : 0,
               value: (option.limitPrice !== undefined ? option.limitPrice : option.price) * option.quantity * 100,
               pnl: 0, // Initial P/L is 0
+              status: 'filled' // Add status as filled for buying trades
             })),
             // Calculate aggregated values
             netDelta: 0, // Will be calculated in orders view

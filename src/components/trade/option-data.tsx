@@ -33,8 +33,7 @@ import {
   SOL_PH_RISK_FREE_RATE,
   OPTION_SPREAD_PERCENTAGE,
   DEFAULT_OPTION_VOLUME,
-  DEFAULT_OPTION_OPEN_INTEREST,
-  OPTION_STRIKE_PRICES
+  DEFAULT_OPTION_OPEN_INTEREST
 } from '@/constants/constants'
 
 // Volume Tracker - keeps track of traded option volumes
@@ -319,9 +318,69 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
   }
 
   const expiry = expirationDate || "2024-12-31"
-
+  
+  // Check for minted options from localStorage
+  let mintedOptions: any[] = [];
+  try {
+    const mintedOptionsStr = localStorage.getItem('mintedOptions');
+    if (mintedOptionsStr) {
+      mintedOptions = JSON.parse(mintedOptionsStr);
+    }
+  } catch (error) {
+    console.error('Error loading minted options:', error);
+  }
+  
+  // Filter minted options for the current expiration date
+  const expiryMintedOptions = mintedOptions.filter(option => 
+    option.expiry === expiry
+  );
+  
+  // If no minted options exist for this expiry, return empty array
+  if (expiryMintedOptions.length === 0) {
+    return [];
+  }
+  
+  // Extract unique strike prices from minted options
+  const strikePrices = Array.from(new Set(expiryMintedOptions.map(option => option.strike)));
+  
+  // Sort strike prices
+  strikePrices.sort((a, b) => a - b);
+  
   // Generate option data for each strike
-  return OPTION_STRIKE_PRICES.map(strike => calculateOptionData(strike, expiry, spotPrice))
+  const options = strikePrices.map(strike => {
+    // Start with the standard calculation
+    const option = calculateOptionData(strike, expiry, spotPrice);
+    
+    // Check if there are minted options for this strike
+    const callMintedOptions = expiryMintedOptions.filter(
+      o => o.strike === strike && o.side === 'call'
+    );
+    
+    const putMintedOptions = expiryMintedOptions.filter(
+      o => o.strike === strike && o.side === 'put'
+    );
+    
+    // Update options availability based on minted options
+    if (callMintedOptions.length > 0) {
+      // Sum up the total quantity of call options minted
+      const totalCallQuantity = callMintedOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      // Update options available
+      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'call', totalCallQuantity);
+      option.callOptionsAvailable = totalCallQuantity;
+    }
+    
+    if (putMintedOptions.length > 0) {
+      // Sum up the total quantity of put options minted
+      const totalPutQuantity = putMintedOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      // Update options available
+      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'put', totalPutQuantity);
+      option.putOptionsAvailable = totalPutQuantity;
+    }
+    
+    return option;
+  });
+  
+  return options;
 }
 
 // Selected option type

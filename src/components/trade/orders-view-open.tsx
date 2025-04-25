@@ -40,6 +40,7 @@ type OptionLeg = {
   collateral: number
   value: number
   pnl: number
+  status?: 'pending' | 'filled'
 }
 
 type AssetPosition = {
@@ -546,6 +547,11 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               Qty: {formatQuantity(Math.abs(leg.position))}
                             </Badge>
+                            {leg.status === 'pending' && (
+                              <Badge variant="warning" className="animate-pulse">
+                                PENDING
+                              </Badge>
+                            )}
                           </div>
                           
                           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">

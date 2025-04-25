@@ -242,14 +242,84 @@ export function OptionLabForm() {
         return newOption;
       });
       
-      // Log created options instead of adding to store (as requested, don't send data anywhere yet)
+      // Save options to localStorage for orders-view-open.tsx
+      try {
+        // Format option leg for the orders view
+        const formattedPositions = pendingOptions.map((option, index) => {
+          const currentAssetPrice = assetPrice || 0;
+          
+          // Create an AssetPosition object for each created option
+          return {
+            asset: option.asset,
+            marketPrice: currentAssetPrice,
+            id: `${option.asset}-${Date.now()}-${index}`,
+            legs: [{
+              type: option.optionType === 'call' ? 'Call' : 'Put',
+              strike: Number(option.strikePrice),
+              expiry: format(option.expirationDate, 'yyyy-MM-dd'),
+              position: -1 * Number(option.quantity), // Negative to represent short position
+              marketPrice: Number(option.premium),
+              entryPrice: Number(option.premium),
+              underlyingEntryPrice: currentAssetPrice,
+              delta: 0, // Will be calculated in orders-view-open
+              theta: 0,
+              gamma: 0,
+              vega: 0,
+              rho: 0,
+              collateral: 0,
+              value: -1 * Number(option.premium) * 100 * Number(option.quantity), // Negative value for short
+              pnl: 0,
+              status: 'pending' // Add status field
+            }],
+            netDelta: 0,
+            netTheta: 0,
+            netGamma: 0,
+            netVega: 0,
+            netRho: 0,
+            totalCollateral: 0,
+            totalValue: -1 * Number(option.premium) * 100 * Number(option.quantity),
+            totalPnl: 0
+          };
+        });
+        
+        // Get existing open orders, if any
+        const existingOrdersJSON = localStorage.getItem('openOrders');
+        const existingOrders = existingOrdersJSON ? JSON.parse(existingOrdersJSON) : [];
+        
+        // Combine with new orders
+        const allOrders = [...existingOrders, ...formattedPositions];
+        
+        // Save to localStorage
+        localStorage.setItem('openOrders', JSON.stringify(allOrders));
+        
+        // Also save the mint data to a separate localStorage key for the option chain to access
+        const mintedOptions = pendingOptions.map(option => ({
+          asset: option.asset,
+          strike: Number(option.strikePrice),
+          expiry: format(option.expirationDate, 'yyyy-MM-dd'),
+          price: Number(option.premium),
+          quantity: Number(option.quantity),
+          side: option.optionType,
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        }));
+        
+        const existingMintedJSON = localStorage.getItem('mintedOptions');
+        const existingMinted = existingMintedJSON ? JSON.parse(existingMintedJSON) : [];
+        localStorage.setItem('mintedOptions', JSON.stringify([...existingMinted, ...mintedOptions]));
+        
+      } catch (error) {
+        console.error('Error saving options to localStorage:', error);
+      }
+      
+      // Log created options 
       console.log('Options created:', createdOptions);
       
       // Clear pending options but keep the form values
       setPendingOptions([]);
       
-      // Remove navigation to trade page
-      // router.push("/trade");
+      // Navigate to trade page
+      router.push("/trade");
     } catch (error) {
       console.error('Error minting options:', error);
     } finally {

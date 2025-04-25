@@ -236,6 +236,46 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [onOrderPlaced]);
 
+  // Modified price column rendering to remove special handling for pending options
+  const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
+    return (
+      <div className="flex flex-col space-y-0.5">
+        <button
+          onClick={() => handlePriceClick(index, side, 'bid')}
+          onMouseEnter={() => setHoveredPrice({ index, side, type: 'bid' })}
+          onMouseLeave={() => setHoveredPrice(null)}
+          className={cn(
+            "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+            (hoveredPrice?.index === index && 
+            hoveredPrice?.side === side && 
+            hoveredPrice?.type === 'bid') && "bg-green-500/10",
+            isOptionSelected(index, side, 'bid') && "bg-green-500/20",
+            shouldDisableOptionButtons && !isOptionSelected(index, side, 'bid') && "opacity-50 cursor-not-allowed"
+          )}
+          disabled={shouldDisableOptionButtons && !isOptionSelected(index, side, 'bid')}
+        >
+          {formatPrice(side === 'call' ? option.callBid : option.putBid)}
+        </button>
+        <button
+          onClick={() => handlePriceClick(index, side, 'ask')}
+          onMouseEnter={() => setHoveredPrice({ index, side, type: 'ask' })}
+          onMouseLeave={() => setHoveredPrice(null)}
+          className={cn(
+            "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+            (hoveredPrice?.index === index && 
+            hoveredPrice?.side === side && 
+            hoveredPrice?.type === 'ask') && "bg-red-500/10",
+            isOptionSelected(index, side, 'ask') && "bg-red-500/20",
+            shouldDisableOptionButtons && !isOptionSelected(index, side, 'ask') && "opacity-50 cursor-not-allowed"
+          )}
+          disabled={shouldDisableOptionButtons && !isOptionSelected(index, side, 'ask')}
+        >
+          {formatPrice(side === 'call' ? option.callAsk : option.putAsk)}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div 
       className={cn(
@@ -693,45 +733,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 </div>
                               )}
                               <div className="text-center font-medium py-1">
-                                <div className="flex flex-col space-y-0.5">
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'call', 'bid')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'call' && 
-                                      hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid')}
-                                  >
-                                    {formatPrice(option.callBid)}
-                                  </button>
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'call', 'ask')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'call' && 
-                                      hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask')}
-                                  >
-                                    {formatPrice(option.callAsk)}
-                                  </button>
-                                </div>
+                                {renderPriceColumn(option, index, 'call')}
                               </div>
                             </div>
                           </TableCell>
                           
-                          {/* Strike price (center) */}
+                          {/* Strike price (center) - Remove highlighting for pending options */}
                           <TableCell className="text-center font-bold bg-muted/20">
                             ${formatPrice(option.strike)}
                           </TableCell>
@@ -756,40 +763,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           >
                             <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
                               <div className="text-center font-medium py-1">
-                                <div className="flex flex-col space-y-0.5">
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'put', 'bid')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'put' && 
-                                      hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid')}
-                                  >
-                                    {formatPrice(option.putBid)}
-                                  </button>
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'put', 'ask')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'put' && 
-                                      hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask')}
-                                  >
-                                    {formatPrice(option.putAsk)}
-                                  </button>
-                                </div>
+                                {renderPriceColumn(option, index, 'put')}
                               </div>
                               {visibleGreeks.delta && (
                                 <div className="text-center py-1">
