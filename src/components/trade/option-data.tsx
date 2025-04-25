@@ -360,21 +360,43 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
       o => o.strike === strike && o.side === 'put'
     );
     
-    // Update options availability based on minted options
+    // Update options availability based on minted options (both pending and filled)
     if (callMintedOptions.length > 0) {
-      // Sum up the total quantity of call options minted
-      const totalCallQuantity = callMintedOptions.reduce((sum, opt) => sum + opt.quantity, 0);
-      // Update options available
-      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'call', totalCallQuantity);
-      option.callOptionsAvailable = totalCallQuantity;
+      // Count only pending options as available
+      const pendingCallOptions = callMintedOptions.filter(opt => opt.status === 'pending');
+      const totalPendingCallQuantity = pendingCallOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      
+      // Set options available to the total pending quantity
+      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'call', totalPendingCallQuantity);
+      option.callOptionsAvailable = totalPendingCallQuantity;
+      
+      // Update open interest - just get the current value from tracker
+      option.callOpenInterest = openInterestTracker.getOpenInterest(strike, expiry, 'call');
+      
+      // Update volume - count only filled options for volume
+      const filledCallOptions = callMintedOptions.filter(opt => opt.status === 'filled');
+      const filledCallQuantity = filledCallOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      volumeTracker.updateVolume(strike, expiry, 'call', filledCallQuantity);
+      option.callVolume = volumeTracker.getVolume(strike, expiry, 'call');
     }
     
     if (putMintedOptions.length > 0) {
-      // Sum up the total quantity of put options minted
-      const totalPutQuantity = putMintedOptions.reduce((sum, opt) => sum + opt.quantity, 0);
-      // Update options available
-      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'put', totalPutQuantity);
-      option.putOptionsAvailable = totalPutQuantity;
+      // Count only pending options as available
+      const pendingPutOptions = putMintedOptions.filter(opt => opt.status === 'pending');
+      const totalPendingPutQuantity = pendingPutOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      
+      // Set options available to the total pending quantity
+      optionsAvailabilityTracker.setOptionsAvailable(strike, expiry, 'put', totalPendingPutQuantity);
+      option.putOptionsAvailable = totalPendingPutQuantity;
+      
+      // Update open interest - just get the current value from tracker
+      option.putOpenInterest = openInterestTracker.getOpenInterest(strike, expiry, 'put');
+      
+      // Update volume - count only filled options for volume
+      const filledPutOptions = putMintedOptions.filter(opt => opt.status === 'filled');
+      const filledPutQuantity = filledPutOptions.reduce((sum, opt) => sum + opt.quantity, 0);
+      volumeTracker.updateVolume(strike, expiry, 'put', filledPutQuantity);
+      option.putVolume = volumeTracker.getVolume(strike, expiry, 'put');
     }
     
     return option;

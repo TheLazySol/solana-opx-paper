@@ -114,6 +114,11 @@ export const OrdersViewOpen = () => {
 
   // Calculate P/L based on the change in value from when the position was opened
   const calculatePnL = (leg: OptionLeg) => {
+    // If the order is still pending, return 0 - no P/L yet
+    if (leg.status === 'pending') {
+      return 0;
+    }
+
     // For long positions: (current price - entry price) * quantity * 100
     // For short positions: (entry price - current price) * quantity * 100
     const contractSize = 100 // Each option contract represents 100 units
@@ -226,7 +231,6 @@ export const OrdersViewOpen = () => {
         : [...prev, id]
     )
   }
-
   // Function to remove a pending option from mintedOptions
   const removePendingOption = (leg: OptionLeg) => {
     try {
@@ -611,11 +615,15 @@ export const OrdersViewOpen = () => {
                             <div className="grid grid-cols-3 gap-x-3 text-xs sm:text-sm w-full sm:w-auto">
                               <div className="text-right">
                                 <div className="text-muted-foreground">Entry Price</div>
-                                <div className="font-medium">${leg.entryPrice.toFixed(2)}</div>
+                                <div className="font-medium">
+                                  {leg.status === 'pending' ? '-' : `$${leg.entryPrice.toFixed(2)}`}
+                                </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Option Price</div>
-                                <div className="font-medium">${leg.marketPrice.toFixed(2)}</div>
+                                <div className="font-medium">
+                                  {leg.status === 'pending' ? '-' : `$${leg.marketPrice.toFixed(2)}`}
+                                </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Qty</div>
@@ -627,13 +635,18 @@ export const OrdersViewOpen = () => {
                               <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6 text-xs sm:text-sm">
                                 <div className="text-right">
                                   <div className="text-muted-foreground">Value</div>
-                                  <div className="font-medium">${(leg.marketPrice * 100 * Math.abs(leg.position) * (leg.position > 0 ? 1 : -1)).toFixed(2)}</div>
+                                  <div className="font-medium">
+                                    {leg.status === 'pending' 
+                                      ? '-' 
+                                      : `$${(leg.marketPrice * 100 * Math.abs(leg.position) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
+                                  </div>
                                 </div>
                                 <div className="text-right">
                                   <div className="text-muted-foreground">P/L</div>
                                   <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                                    {leg.pnl >= 0 ? '+$' : '-$'}
-                                    {Math.abs(leg.pnl).toFixed(2)}
+                                    {leg.status === 'pending' 
+                                      ? '-' 
+                                      : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
                                   </div>
                                 </div>
                               </div>
