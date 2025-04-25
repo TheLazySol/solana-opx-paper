@@ -106,7 +106,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = React.useMemo(() => 
     generateMockOptionData(expirationDate || null, spotPrice || 0, refreshVolume),
-    [expirationDate, spotPrice, refreshVolume] // Add refreshVolume to dependencies
+    [expirationDate, spotPrice, refreshVolume]
   );
 
   // Calculate the position of the price indicator

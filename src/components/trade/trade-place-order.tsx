@@ -2,7 +2,7 @@ import { FC, useMemo, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { SelectedOption, updateOptionVolume, updateOptionOpenInterest } from './option-data'
+import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/use-toast"
@@ -133,6 +133,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           
           // Also update open interest for each option
           updateOptionOpenInterest(option);
+          
+          // Decrease available options when purchased
+          decreaseAvailableOptions(option);
         });
         
         // Store the order in localStorage for demo purposes
@@ -221,6 +224,118 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         setIsPlacingOrder(false);
       }
     }, 750);
+  };
+
+  // Function to decrease available options when purchased
+  const decreaseAvailableOptions = (option: SelectedOption) => {
+    if (!option || !option.quantity) return;
+    
+    // Only decrease availability for ask orders (buying from available options)
+    if (option.type === 'bid') {
+      // Get the current minted options from localStorage
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (!mintedOptionsStr) return;
+      
+      try {
+        const mintedOptions = JSON.parse(mintedOptionsStr);
+        
+        // Find matching options by strike, expiry, and side
+        const matchingOptions = mintedOptions.filter((opt: any) => 
+          opt.strike === option.strike && 
+          opt.expiry === option.expiry && 
+          opt.side === option.side && 
+          opt.status === 'pending'
+        );
+        
+        if (matchingOptions.length > 0) {
+          // Get the total quantity available
+          const totalAvailable = matchingOptions.reduce(
+            (sum: number, opt: any) => sum + opt.quantity, 0
+          );
+          
+          // If trying to purchase more than available, limit the purchase
+          const purchaseQuantity = Math.min(option.quantity, totalAvailable);
+          
+          if (purchaseQuantity > 0) {
+            // Decrease the available options in the tracker
+            optionsAvailabilityTracker.decreaseOptionsAvailable(
+              option.strike, 
+              option.expiry, 
+              option.side, 
+              purchaseQuantity
+            );
+            
+            // Update the status of minted options - fill orders sequentially until quantity is fulfilled
+            let remainingQuantity = purchaseQuantity;
+            
+            // Sort matching options to fill the oldest ones first
+            matchingOptions.sort((a: any, b: any) => {
+              const dateA = new Date(a.timestamp);
+              const dateB = new Date(b.timestamp);
+              return dateA.getTime() - dateB.getTime();
+            });
+            
+            for (const mintedOption of matchingOptions) {
+              if (remainingQuantity <= 0) break;
+              
+              const optionIndex = mintedOptions.findIndex((opt: any) => opt === mintedOption);
+              
+              if (optionIndex !== -1) {
+                // If quantity is less than or equal to this option's quantity, partially fill
+                if (remainingQuantity < mintedOption.quantity) {
+                  // Reduce quantity
+                  mintedOptions[optionIndex].quantity -= remainingQuantity;
+                  remainingQuantity = 0;
+                } 
+                // Otherwise, mark as filled and continue with next option
+                else {
+                  mintedOptions[optionIndex].status = 'filled';
+                  remainingQuantity -= mintedOption.quantity;
+                }
+              }
+            }
+            
+            // Save updated options back to localStorage
+            localStorage.setItem('mintedOptions', JSON.stringify(mintedOptions));
+            
+            // Update open orders to reflect filled status for corresponding positions
+            const openOrdersStr = localStorage.getItem('openOrders');
+            if (openOrdersStr) {
+              const openOrders = JSON.parse(openOrdersStr);
+              
+              for (const position of openOrders) {
+                for (let i = 0; i < position.legs.length; i++) {
+                  const leg = position.legs[i];
+                  // Check for matching order
+                  if (
+                    leg.strike === option.strike && 
+                    leg.expiry === option.expiry && 
+                    (leg.type === (option.side === 'call' ? 'Call' : 'Put')) && 
+                    leg.status === 'pending' &&
+                    leg.position < 0 // Short position (selling)
+                  ) {
+                    // If this position has been filled, update its status
+                    const matchedOption = matchingOptions.find((opt: any) => 
+                      opt.status === 'filled' && 
+                      opt.strike === leg.strike && 
+                      opt.expiry === leg.expiry
+                    );
+                    
+                    if (matchedOption) {
+                      position.legs[i].status = 'filled';
+                    }
+                  }
+                }
+              }
+              
+              localStorage.setItem('openOrders', JSON.stringify(openOrders));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error updating option availability:', error);
+      }
+    }
   };
 
   return (
