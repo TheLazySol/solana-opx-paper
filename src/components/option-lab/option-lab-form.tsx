@@ -48,7 +48,7 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .min(0.001, { message: "Quantity must be at least 0.001" })
+    .min(0.01, { message: "Quantity must be at least 0.01" })
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
@@ -65,7 +65,7 @@ export function OptionLabForm() {
       optionType: "call",
       strikePrice: 0,
       premium: '',
-      quantity: 0.001,
+      quantity: 0.01,
       expirationDate: undefined,
     },
   });
@@ -479,7 +479,7 @@ export function OptionLabForm() {
                                 <div className="flex items-center justify-end gap-2">
                                   <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                                   <span className="text-xs sm:text-sm font-medium">
-                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(3)}
+                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(2)}
                                   </span>
                                 </div>
                               </div>
