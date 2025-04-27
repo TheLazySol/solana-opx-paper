@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { OptionOrder } from "@/types/order";
 import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
 import { AssetSelector } from './asset-selector';
@@ -52,11 +52,39 @@ const formSchema = z.object({
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
+// Helper functions for getting bi-weekly dates (same as in expiration-date-select.tsx)
+function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 14);
+  }
+  return dates;
+}
+
+// Helper function to get the next available bi-weekly date from the allowed dates
+function getNextAvailableBiWeeklyDate(): Date {
+  const startDate = new Date(2025, 0, 1); // January 1st, 2025
+  const endDate = new Date(2026, 0, 1);   // January 1st, 2026
+  const allowedDates = getBiWeeklyDates(startDate, endDate);
+  
+  // Find the first date that is in the future
+  const now = new Date();
+  const nextAvailableDate = allowedDates.find(date => date > now);
+  
+  // Return the next available date or default to the first date in the sequence
+  return nextAvailableDate || allowedDates[0];
+}
+
 export function OptionLabForm() {
   const router = useRouter();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([]);
+
+  // Get the next available expiration date
+  const defaultExpirationDate = getNextAvailableBiWeeklyDate();
 
   const methods = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +94,7 @@ export function OptionLabForm() {
       strikePrice: 0,
       premium: '',
       quantity: 0.01,
-      expirationDate: undefined,
+      expirationDate: defaultExpirationDate,
     },
   });
 
