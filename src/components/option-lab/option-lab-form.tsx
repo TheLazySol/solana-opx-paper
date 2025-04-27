@@ -35,9 +35,12 @@ const formSchema = z.object({
   expirationDate: z.date({
     required_error: "Expiration date is required",
   }),
-  strikePrice: z.coerce.number().min(0, {
-    message: "Strike price must be a positive number",
-  }),
+  strikePrice: z.union([
+    z.string().min(0),
+    z.coerce.number().min(0, {
+      message: "Strike price must be a positive number",
+    })
+  ]),
   premium: z.string().refine(
     (val) => {
       if (val === '') return true;
@@ -91,9 +94,9 @@ export function OptionLabForm() {
     defaultValues: {
       asset: "SOL",
       optionType: "call",
-      strikePrice: 0,
+      strikePrice: '',
       premium: '',
-      quantity: 0.01,
+      quantity: 1.00,
       expirationDate: defaultExpirationDate,
     },
   });
@@ -130,8 +133,8 @@ export function OptionLabForm() {
       return;
     }
     
-    if (!assetPrice || !values.expirationDate) {
-      console.log('Missing spot price or expiration date, cannot calculate');
+    if (!assetPrice || !values.expirationDate || !values.strikePrice || values.strikePrice === '') {
+      console.log('Missing spot price, expiration date, or strike price, cannot calculate');
       return;
     }
     
@@ -144,7 +147,7 @@ export function OptionLabForm() {
       const riskFreeRate = SOL_PH_RISK_FREE_RATE;
       const result = await calculateOption({
         isCall: values.optionType === 'call',
-        strikePrice: Number(values.strikePrice),
+        strikePrice: typeof values.strikePrice === 'string' ? Number(values.strikePrice) : values.strikePrice,
         spotPrice: assetPrice,
         timeUntilExpirySeconds: timeUntilExpiry,
         volatility,
@@ -176,7 +179,7 @@ export function OptionLabForm() {
     }
     const values = methods.getValues();
     const strikePrice = values.strikePrice;
-    if (strikePrice) {
+    if (strikePrice && strikePrice !== '') {
       debounceTimer.current = setTimeout(() => {
         if (!values.expirationDate) {
           const tempValues = {...values};
@@ -206,7 +209,7 @@ export function OptionLabForm() {
 
   const addOptionToSummary = async () => {
     const values = methods.getValues();
-    if (!values.strikePrice || !values.expirationDate) {
+    if (!values.strikePrice || values.strikePrice === '' || !values.expirationDate) {
       methods.setError('root', { 
         message: 'Please fill in all required fields' 
       });
@@ -255,7 +258,7 @@ export function OptionLabForm() {
       const createdOptions = pendingOptions.map(values => {
         const newOption: OptionOrder = {
           publicKey: new PublicKey(Keypair.generate().publicKey),
-          strike: Number(values.strikePrice),
+          strike: typeof values.strikePrice === 'string' ? Number(values.strikePrice) : Number(values.strikePrice),
           price: Number(values.premium),
           bidPrice: 0,
           askPrice: Number(values.premium),
@@ -283,7 +286,7 @@ export function OptionLabForm() {
             id: `${option.asset}-${Date.now()}-${index}`,
             legs: [{
               type: option.optionType === 'call' ? 'Call' : 'Put',
-              strike: Number(option.strikePrice),
+              strike: typeof option.strikePrice === 'string' ? Number(option.strikePrice) : Number(option.strikePrice),
               expiry: format(option.expirationDate, 'yyyy-MM-dd'),
               position: -1 * Number(option.quantity), // Negative to represent short position
               marketPrice: Number(option.premium),
@@ -323,7 +326,7 @@ export function OptionLabForm() {
         // Also save the mint data to a separate localStorage key for the option chain to access
         const mintedOptions = pendingOptions.map(option => ({
           asset: option.asset,
-          strike: Number(option.strikePrice),
+          strike: typeof option.strikePrice === 'string' ? Number(option.strikePrice) : Number(option.strikePrice),
           expiry: format(option.expirationDate, 'yyyy-MM-dd'),
           price: Number(option.premium),
           quantity: Number(option.quantity),
@@ -358,7 +361,7 @@ export function OptionLabForm() {
   const manualRefresh = () => {
     console.log('Manual refresh triggered');
     const values = methods.getValues();
-    if (values.strikePrice && values.expirationDate) {
+    if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
@@ -441,6 +444,7 @@ export function OptionLabForm() {
                           disabled:hover:scale-100"
                         disabled={
                           !methods.getValues("strikePrice") || 
+                          methods.getValues("strikePrice") === "" ||
                           !methods.getValues("premium") ||
                           !methods.getValues("expirationDate")
                         }
