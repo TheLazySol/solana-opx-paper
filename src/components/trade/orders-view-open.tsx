@@ -30,7 +30,8 @@ type OptionLeg = {
   expiry: string
   position: number
   marketPrice: number
-  entryPrice: number
+  entryPrice: number  // Will now represent the average entry price
+  avgEntryPrice?: number  // Optional for backward compatibility
   underlyingEntryPrice: number
   delta: number
   theta: number
@@ -41,9 +42,15 @@ type OptionLeg = {
   value: number
   pnl: number
   status?: 'pending' | 'filled'
-  // Add fields to track filled and remaining quantities
+  // Fields to track filled and remaining quantities
   filledQuantity?: number
   pendingQuantity?: number
+  // Track fill history for average price calculations
+  fillHistory?: Array<{
+    price: number,
+    quantity: number,
+    timestamp: string
+  }>
 }
 
 type AssetPosition = {
@@ -154,32 +161,36 @@ export const OrdersViewOpen = () => {
     return optionResult.price
   }, [calculateTimeUntilExpiry])
 
-  // Calculate total value based on position direction
+  // Calculate total value based on position direction and filled quantities
   const calculateTotalValue = (legs: OptionLeg[]) => {
     return legs.reduce((total, leg) => {
+      // Only calculate value for filled portions
+      const filledQuantity = leg.filledQuantity ?? 0;
+      if (filledQuantity <= 0) return total;
+      
       const contractValue = leg.marketPrice * 100 // Base contract value
-      const positionValue = contractValue * Math.abs(leg.position) // Value * quantity
+      const positionValue = contractValue * filledQuantity // Value * filled quantity
       return total + (leg.position > 0 ? positionValue : -positionValue) // Add for long, subtract for short
     }, 0)
   }
 
   // Calculate P/L based on the change in value from when the position was opened
   const calculatePnL = (leg: OptionLeg) => {
-    // If the order is still fully pending, no P/L calculation is needed
-    if (leg.status === 'pending' && !(leg.filledQuantity ?? 0)) {
+    // Only calculate P/L for filled portions of a position
+    const filledQuantity = leg.filledQuantity ?? 0;
+    if (filledQuantity <= 0) {
       return 0;
     }
 
     // For filled or partially filled orders, calculate P/L based on the difference between current market price and entry price
     const contractSize = 100; // Each option contract represents 100 units
-    const quantity = leg.filledQuantity ?? Math.abs(leg.position); // Use filled quantity if available
     
     if (leg.position > 0) {
-      // Long position: (current price - entry price) * quantity * 100
-      return (leg.marketPrice - leg.entryPrice) * quantity * contractSize;
+      // Long position: (current price - entry price) * filledQuantity * 100
+      return (leg.marketPrice - leg.entryPrice) * filledQuantity * contractSize;
     } else {
-      // Short position: (entry price - current price) * quantity * 100
-      return (leg.entryPrice - leg.marketPrice) * quantity * contractSize;
+      // Short position: (entry price - current price) * filledQuantity * 100
+      return (leg.entryPrice - leg.marketPrice) * filledQuantity * contractSize;
     }
   };
 
@@ -385,6 +396,11 @@ export const OrdersViewOpen = () => {
       if (leg.status === 'pending' && (leg.pendingQuantity ?? 0) > 0 && leg.position < 0) {
         removePendingOption(leg);
       }
+      
+      // If this is a buyer position, update seller positions
+      if (leg.position > 0) {
+        updateSellerPositionOnBuyerClose(leg);
+      }
     });
     
     // Create history entry for the closed position
@@ -470,6 +486,12 @@ export const OrdersViewOpen = () => {
     // If this is a pending option with pending quantity, remove it from mintedOptions
     if (closedLeg.status === 'pending' && (closedLeg.pendingQuantity ?? 0) > 0 && closedLeg.position < 0) {
       removePendingOption(closedLeg);
+    }
+    
+    // If this is a buyer closing a position, update seller positions
+    if (closedLeg.position > 0) {
+      // Call the function to update seller positions
+      updateSellerPositionOnBuyerClose(closedLeg);
     }
     
     // Only process if there are filled options to close
@@ -569,6 +591,116 @@ export const OrdersViewOpen = () => {
     console.log(`Closed leg ${legIndex} for position with ID ${id}`)
   }
 
+  // Function to find and update the seller's position when a buyer closes a position
+  const updateSellerPositionOnBuyerClose = (closedLeg: OptionLeg) => {
+    try {
+      // Only process if this is a buyer closing their position 
+      // (position > 0 means a long/buy position)
+      if (closedLeg.position <= 0 || (closedLeg.filledQuantity ?? 0) <= 0) {
+        return;
+      }
+
+      console.log('Looking for seller positions to update for:', {
+        strike: closedLeg.strike,
+        expiry: closedLeg.expiry,
+        type: closedLeg.type
+      });
+      
+      // Get all open orders
+      const openOrdersStr = localStorage.getItem('openOrders');
+      if (!openOrdersStr) return;
+      
+      const openOrders = JSON.parse(openOrdersStr);
+      let positionsUpdated = false;
+      
+      // Loop through all positions to find sellers of this option
+      for (const position of openOrders) {
+        for (let i = 0; i < position.legs.length; i++) {
+          const leg = position.legs[i];
+          
+          // Check if this is a matching seller position (opposite side of the closed position)
+          if (
+            leg.strike === closedLeg.strike && 
+            leg.expiry === closedLeg.expiry && 
+            leg.type === closedLeg.type && 
+            leg.position < 0 && // Must be a short position (selling)
+            (leg.status === 'filled' || (leg.filledQuantity ?? 0) > 0)
+          ) {
+            // Found a matching seller position that was filled
+            console.log('Found matching seller position:', {
+              legIndex: i,
+              position: position.id,
+              status: leg.status,
+              filledQty: leg.filledQuantity,
+              pendingQty: leg.pendingQuantity
+            });
+            
+            // Get current quantities
+            const filledQty = leg.filledQuantity ?? Math.abs(leg.position);
+            const pendingQty = leg.pendingQuantity ?? 0;
+            const closedQty = closedLeg.filledQuantity ?? Math.abs(closedLeg.position);
+            
+            // Calculate how much of this seller's position can be returned to pending
+            const qtyToReturnToPending = Math.min(filledQty, closedQty);
+            
+            if (qtyToReturnToPending > 0) {
+              // Update seller's position quantities
+              position.legs[i].filledQuantity = Math.max(0, filledQty - qtyToReturnToPending);
+              position.legs[i].pendingQuantity = pendingQty + qtyToReturnToPending;
+              
+              // If all quantity is now pending, update status to pending
+              if (position.legs[i].filledQuantity === 0) {
+                position.legs[i].status = 'pending';
+              }
+              
+              // Reset P/L calculation for the portion returned to pending
+              // We'll leave the entry price unchanged as it's needed for historical reference
+              
+              console.log(`Updated seller position: ${qtyToReturnToPending} returned to pending status`);
+              positionsUpdated = true;
+            }
+          }
+        }
+      }
+      
+      // If any positions were updated, save back to localStorage
+      if (positionsUpdated) {
+        localStorage.setItem('openOrders', JSON.stringify(openOrders));
+        
+        // Also need to update the mintedOptions to reflect the changes
+        const mintedOptionsStr = localStorage.getItem('mintedOptions');
+        if (mintedOptionsStr) {
+          const mintedOptions = JSON.parse(mintedOptionsStr);
+          
+          // Find the mintedOptions matching the criteria
+          const side = closedLeg.type === 'Call' ? 'call' : 'put';
+          
+          // Add new pending options with the quantity that was closed
+          mintedOptions.push({
+            strike: closedLeg.strike,
+            expiry: closedLeg.expiry,
+            side: side.toLowerCase(),
+            status: 'pending',
+            quantity: closedLeg.filledQuantity ?? Math.abs(closedLeg.position),
+            timestamp: new Date().toISOString()
+          });
+          
+          // Save updated mintedOptions
+          localStorage.setItem('mintedOptions', JSON.stringify(mintedOptions));
+          
+          // NOTE: We are intentionally NOT increasing options availability (OA)
+          // as this should only reflect newly created options, not returned positions
+        }
+        
+        // Dispatch events to notify all components
+        window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
+        window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'));
+      }
+    } catch (error) {
+      console.error('Error updating seller positions:', error);
+    }
+  };
+
   return (
     <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -652,21 +784,24 @@ export const OrdersViewOpen = () => {
                       <div className="text-center">
                         <div className="text-muted-foreground">Total Value</div>
                         <div className="font-medium">
-                          {position.legs.every(leg => (leg.filledQuantity ?? 0) === 0) 
-                            ? '-' 
-                            : `$${position.totalValue.toFixed(2)}`}
+                          {(() => {
+                            const filledCount = position.legs.reduce((count, leg) => 
+                              count + (leg.filledQuantity ?? 0), 0);
+                            return filledCount > 0 ? `$${position.totalValue.toFixed(2)}` : '-';
+                          })()}
                         </div>
                       </div>
                       
                       <div className="text-center">
                         <div className="text-muted-foreground">Total P/L</div>
                         <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {position.legs.every(leg => (leg.filledQuantity ?? 0) === 0) 
-                            ? '-' 
-                            : <>
-                                {position.totalPnl >= 0 ? '+$' : '-$'}
-                                {Math.abs(position.totalPnl).toFixed(2)}
-                              </>}
+                          {(() => {
+                            const filledCount = position.legs.reduce((count, leg) => 
+                              count + (leg.filledQuantity ?? 0), 0);
+                            return filledCount > 0 
+                              ? <>{position.totalPnl >= 0 ? '+$' : '-$'}{Math.abs(position.totalPnl).toFixed(2)}</>
+                              : '-';
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -746,7 +881,7 @@ export const OrdersViewOpen = () => {
                           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">
                             <div className="grid grid-cols-3 gap-x-3 text-xs sm:text-sm w-full sm:w-auto">
                               <div className="text-right">
-                                <div className="text-muted-foreground">Entry Price</div>
+                                <div className="text-muted-foreground">Avg Price</div>
                                 <div className="font-medium">
                                   {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
                                 </div>

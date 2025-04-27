@@ -288,7 +288,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       quantity: option.quantity
     });
     
-    // Only decrease availability for ask orders (buying from available options)
+    // Only decrease availability for bid orders (buying from available options)
     if (option.type === 'bid') {
       // Get the current minted options from localStorage
       const mintedOptionsStr = localStorage.getItem('mintedOptions');
@@ -333,82 +333,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               purchaseQuantity
             );
             
-            // Update the status of minted options - fill orders sequentially until quantity is fulfilled
-            let remainingQuantity = purchaseQuantity;
-            
-            // Sort matching options to fill the oldest ones first
-            matchingOptions.sort((a: any, b: any) => {
-              const dateA = new Date(a.timestamp);
-              const dateB = new Date(b.timestamp);
-              return dateA.getTime() - dateB.getTime();
-            });
-            
-            // Create a list of filled option IDs to track which options were filled
-            const filledOptionIds = [];
-
-            // When updating the mintedOptions status
-            for (const mintedOption of matchingOptions) {
-              if (remainingQuantity <= 0) break;
-              
-              const optionIndex = mintedOptions.findIndex((opt: any) => opt === mintedOption);
-              
-              if (optionIndex !== -1) {
-                // If quantity is less than or equal to this option's quantity, partially fill
-                if (remainingQuantity < mintedOption.quantity) {
-                  // Reduce quantity
-                  mintedOptions[optionIndex].quantity -= remainingQuantity;
-                  remainingQuantity = 0;
-                } 
-                // Otherwise, mark as filled and continue with next option
-                else {
-                  mintedOptions[optionIndex].status = 'filled';
-                  // Store the ID or a reference to this filled option
-                  filledOptionIds.push(optionIndex);
-                  remainingQuantity -= mintedOption.quantity;
-                  
-                  console.log(`Marked option as filled: ${mintedOption.strike} ${mintedOption.side} ${mintedOption.expiry}`);
-                }
-              }
-            }
-            
-            // Save updated options back to localStorage
-            localStorage.setItem('mintedOptions', JSON.stringify(mintedOptions));
-            
-            // Update open orders to reflect filled status for corresponding positions
-            const openOrdersStr = localStorage.getItem('openOrders');
-            if (openOrdersStr) {
-              const openOrders = JSON.parse(openOrdersStr);
-              
-              for (const position of openOrders) {
-                for (let i = 0; i < position.legs.length; i++) {
-                  const leg = position.legs[i];
-                  // Check for matching order
-                  if (
-                    leg.strike === option.strike && 
-                    leg.expiry === option.expiry && 
-                    (leg.type === (option.side === 'call' ? 'Call' : 'Put')) && 
-                    leg.status === 'pending' &&
-                    leg.position < 0 // Short position (selling)
-                  ) {
-                    // There was at least one filled option matching this leg criteria
-                    if (filledOptionIds.length > 0) {
-                      const matchedOption = position.legs[i];
-                      position.legs[i].status = 'filled';
-                      // Record the actual fill price 
-                      position.legs[i].entryPrice = option.price;
-                      // Also update the current market price
-                      position.legs[i].marketPrice = option.price;
-                      console.log(`Changed position status to filled: ${leg.strike} ${leg.type} ${leg.expiry} at price $${option.price}`);
-                    }
-                  }
-                }
-              }
-              
-              localStorage.setItem('openOrders', JSON.stringify(openOrders));
-            }
-
-            // Dispatch a custom event
-            window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
+            // The rest of the logic for matching buyer/seller is now handled by matchBuyOrderWithMintedOptions
+            // No need to manually update mintedOptions or seller positions here
           }
         }
       } catch (error) {

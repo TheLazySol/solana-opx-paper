@@ -173,4 +173,36 @@ export const calculateLiquidationPrice = (
   }
   
   return { upward: upwardLiquidationPrice, downward: downwardLiquidationPrice };
+};
+
+/**
+ * Calculates the average entry price for a position based on fill history
+ * 
+ * @param previousAvgPrice Previous average price 
+ * @param previousFilledQuantity Previous filled quantity
+ * @param newFillPrice New fill price
+ * @param newFillQuantity New fill quantity
+ * @returns The new average entry price
+ */
+export const calculateAverageEntryPrice = (
+  previousAvgPrice: number,
+  previousFilledQuantity: number,
+  newFillPrice: number,
+  newFillQuantity: number
+): number => {
+  // If there's no previous history or quantities are zero, return the new price
+  if (previousFilledQuantity <= 0 || previousAvgPrice <= 0) {
+    return newFillPrice;
+  }
+
+  // If new quantity is zero, maintain the previous average
+  if (newFillQuantity <= 0) {
+    return previousAvgPrice;
+  }
+
+  // Calculate weighted average: (prevQty * prevPrice + newQty * newPrice) / totalQty
+  const totalQuantity = previousFilledQuantity + newFillQuantity;
+  const weightedSum = (previousAvgPrice * previousFilledQuantity) + (newFillPrice * newFillQuantity);
+  
+  return weightedSum / totalQuantity;
 }; 

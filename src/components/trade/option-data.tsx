@@ -35,6 +35,7 @@ import {
   DEFAULT_OPTION_VOLUME,
   DEFAULT_OPTION_OPEN_INTEREST
 } from '@/constants/constants'
+import { calculateAverageEntryPrice } from '@/constants/option-lab/calculations'
 
 // Volume Tracker - keeps track of traded option volumes
 // Using a singleton pattern to maintain state across component instances
@@ -437,6 +438,8 @@ export const handleOptionFill = (
   quantity: number,
   price: number
 ): void => {
+  console.log(`Handling option fill: ${side} ${strike} ${expiry} - qty: ${quantity}, price: ${price}`);
+  
   // 1. Update volume since a trade happened
   volumeTracker.updateVolume(strike, expiry, side, quantity);
   
@@ -445,6 +448,8 @@ export const handleOptionFill = (
   
   // 3. Decrease available options
   const currentAvailable = optionsAvailabilityTracker.getOptionsAvailable(strike, expiry, side);
+  console.log(`Current available options: ${currentAvailable}`);
+  
   if (currentAvailable >= quantity) {
     optionsAvailabilityTracker.decreaseOptionsAvailable(strike, expiry, side, quantity);
     
@@ -462,9 +467,11 @@ export const handleOptionFill = (
           opt.status === 'pending'
         );
         
+        console.log(`Found ${pendingOptions.length} pending options for this criteria`);
+        
         // We need to find which pending option(s) to update
         let remainingToFill = quantity;
-        const updatedOptions = mintedOptions.map((opt: any) => {
+        const updatedMintedOptions = mintedOptions.map((opt: any) => {
           // Skip if not matching or not pending or no more quantity to fill
           if (
             opt.strike !== strike || 
@@ -479,6 +486,8 @@ export const handleOptionFill = (
           // Calculate how much of this option to fill
           const fillAmount = Math.min(remainingToFill, opt.quantity);
           remainingToFill -= fillAmount;
+          
+          console.log(`Filling option: ${fillAmount} of ${opt.quantity}`);
           
           // Update the option status
           if (fillAmount >= opt.quantity) {
@@ -498,7 +507,7 @@ export const handleOptionFill = (
               status: 'filled',
               filledAt: new Date().toISOString(),
               filledPrice: price,
-              id: `${opt.id}-filled-${Date.now()}`
+              id: `${opt.id || 'option'}-filled-${Date.now()}`
             };
             
             // Second part: remaining pending portion
@@ -509,28 +518,40 @@ export const handleOptionFill = (
           }
         });
         
-        // Add any pending options that weren't fully filled
-        const updatedMintedOptions = [
-          ...updatedOptions,
-          // Add back any partially filled options with their remaining quantities
-          ...mintedOptions.filter((opt: any) => 
+        // Create the final array of options
+        // First, add all options from the updated array
+        const finalMintedOptions = [...updatedMintedOptions];
+        
+        // Then, add back any partially filled options with their remaining quantities
+        mintedOptions.forEach((opt: any) => {
+          if (
             opt.strike === strike && 
             opt.expiry === expiry && 
             opt.side === side && 
             opt.status === 'pending' &&
-            opt.quantity > 0
-          )
-        ];
+            opt.quantity > 0 &&
+            // Check if this option has been partially filled
+            updatedMintedOptions.some((updatedOpt: any) => 
+              (updatedOpt.id && updatedOpt.id.startsWith(`${opt.id || 'option'}-filled-`))
+            )
+          ) {
+            finalMintedOptions.push(opt);
+          }
+        });
         
         // Save back to localStorage
-        localStorage.setItem('mintedOptions', JSON.stringify(updatedMintedOptions));
+        localStorage.setItem('mintedOptions', JSON.stringify(finalMintedOptions));
         
         // Dispatch custom event to notify components
         window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'));
+        
+        console.log('Updated minted options stored in localStorage');
       }
     } catch (error) {
       console.error('Error updating minted options:', error);
     }
+  } else {
+    console.warn(`Not enough available options: requested ${quantity}, available ${currentAvailable}`);
   }
 }
 
@@ -602,4 +623,140 @@ export const matchBuyOrderWithMintedOptions = (
   } catch (error) {
     console.error('Error updating buyer position:', error);
   }
-} 
+  
+  // Find and update seller positions with average price
+  updateSellerPositionsWithAvgPrice(buyOrder.strike, buyOrder.expiry, buyOrder.side, fillQuantity, buyOrder.price);
+}
+
+// Function to update seller positions with average price calculation
+const updateSellerPositionsWithAvgPrice = (
+  strike: number,
+  expiry: string,
+  side: 'call' | 'put',
+  fillQuantity: number,
+  fillPrice: number
+): void => {
+  try {
+    console.log('Updating seller positions with avg price:', {
+      strike,
+      expiry,
+      side,
+      fillQuantity,
+      fillPrice
+    });
+    
+    // Get all open orders
+    const openOrdersStr = localStorage.getItem('openOrders');
+    if (!openOrdersStr) return;
+    
+    const openOrders = JSON.parse(openOrdersStr);
+    let positionsUpdated = false;
+    
+    // Loop through all positions to find sellers of this option
+    for (const position of openOrders) {
+      for (let i = 0; i < position.legs.length; i++) {
+        const leg = position.legs[i];
+        
+        // Check if this is a matching seller position
+        const legSide = leg.type === 'Call' ? 'call' : 'put';
+        
+        if (
+          leg.strike === strike && 
+          leg.expiry === expiry && 
+          legSide.toLowerCase() === side.toLowerCase() && 
+          leg.position < 0 // Must be a short position (selling)
+          // Removed status check - we want to match any seller position
+        ) {
+          // Found a matching seller position
+          console.log('Found matching seller position:', {
+            position: position.id,
+            leg: i,
+            strike,
+            expiry,
+            side,
+            status: leg.status,
+            pendingQty: leg.pendingQuantity ?? 0,
+            filledQty: leg.filledQuantity ?? 0
+          });
+          
+          // Initialize quantities if they don't exist
+          if (leg.pendingQuantity === undefined) {
+            leg.pendingQuantity = Math.abs(leg.position);
+          }
+          
+          if (leg.filledQuantity === undefined) {
+            leg.filledQuantity = 0;
+          }
+          
+          // Calculate how much of this position can be filled
+          const pendingQty = leg.pendingQuantity;
+          const qtyToFill = Math.min(pendingQty, fillQuantity);
+          
+          if (qtyToFill > 0) {
+            // Get current quantities and price
+            const currentFilledQty = leg.filledQuantity;
+            const currentEntryPrice = leg.entryPrice || fillPrice;
+            
+            // Calculate new average entry price
+            const newAvgPrice = calculateAverageEntryPrice(
+              currentEntryPrice,
+              currentFilledQty,
+              fillPrice,
+              qtyToFill
+            );
+            
+            console.log('Calculated new avg price:', {
+              currentEntryPrice,
+              currentFilledQty,
+              fillPrice,
+              qtyToFill,
+              newAvgPrice
+            });
+            
+            // Update seller's position
+            position.legs[i].filledQuantity = (currentFilledQty + qtyToFill);
+            position.legs[i].pendingQuantity = Math.max(0, pendingQty - qtyToFill);
+            position.legs[i].entryPrice = newAvgPrice;
+            
+            // Also set avgEntryPrice for clarity and backward compatibility
+            position.legs[i].avgEntryPrice = newAvgPrice;
+            
+            // Add to fill history if available
+            if (!position.legs[i].fillHistory) {
+              position.legs[i].fillHistory = [];
+            }
+            
+            position.legs[i].fillHistory.push({
+              price: fillPrice,
+              quantity: qtyToFill,
+              timestamp: new Date().toISOString()
+            });
+            
+            // If all quantity now filled, update status to filled
+            if (position.legs[i].pendingQuantity === 0) {
+              position.legs[i].status = 'filled';
+            } else {
+              // If partially filled, make sure status reflects that
+              position.legs[i].status = 'pending';
+            }
+            
+            console.log(`Updated seller position with avg price: ${newAvgPrice.toFixed(2)} (filled: ${qtyToFill}, remaining: ${position.legs[i].pendingQuantity})`);
+            positionsUpdated = true;
+          }
+        }
+      }
+    }
+    
+    // If any positions were updated, save back to localStorage
+    if (positionsUpdated) {
+      localStorage.setItem('openOrders', JSON.stringify(openOrders));
+      
+      // Dispatch events to notify all components
+      window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
+    } else {
+      console.log('No matching seller positions found to update');
+    }
+  } catch (error) {
+    console.error('Error updating seller positions with avg price:', error);
+  }
+}; 
