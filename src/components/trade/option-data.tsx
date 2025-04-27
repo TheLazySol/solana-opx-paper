@@ -355,8 +355,11 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
       // Check if this strike has any pending options
       const hasPendingOptions = options.some(opt => opt.status === 'pending');
       
-      // Only include strikes with pending options
-      return hasPendingOptions;
+      // Check if this strike has any filled options (open interest)
+      const hasFilledOptions = options.some(opt => opt.status === 'filled');
+      
+      // Include strikes with either pending options OR filled options
+      return hasPendingOptions || hasFilledOptions;
     })
     .map(([strike, _]) => Number(strike));
   
@@ -424,4 +427,179 @@ export interface SelectedOption {
   price: number
   quantity: number
   limitPrice?: number
+}
+
+// Function to handle when an option is filled (bought from a seller)
+export const handleOptionFill = (
+  strike: number,
+  expiry: string,
+  side: 'call' | 'put',
+  quantity: number,
+  price: number
+): void => {
+  // 1. Update volume since a trade happened
+  volumeTracker.updateVolume(strike, expiry, side, quantity);
+  
+  // 2. Update open interest (a new position was opened)
+  openInterestTracker.increaseOpenInterest(strike, expiry, side, quantity);
+  
+  // 3. Decrease available options
+  const currentAvailable = optionsAvailabilityTracker.getOptionsAvailable(strike, expiry, side);
+  if (currentAvailable >= quantity) {
+    optionsAvailabilityTracker.decreaseOptionsAvailable(strike, expiry, side, quantity);
+    
+    // 4. Get minted options from localStorage
+    try {
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (mintedOptionsStr) {
+        const mintedOptions = JSON.parse(mintedOptionsStr);
+        
+        // Find pending options that match this criteria
+        const pendingOptions = mintedOptions.filter((opt: any) => 
+          opt.strike === strike && 
+          opt.expiry === expiry && 
+          opt.side === side && 
+          opt.status === 'pending'
+        );
+        
+        // We need to find which pending option(s) to update
+        let remainingToFill = quantity;
+        const updatedOptions = mintedOptions.map((opt: any) => {
+          // Skip if not matching or not pending or no more quantity to fill
+          if (
+            opt.strike !== strike || 
+            opt.expiry !== expiry || 
+            opt.side !== side || 
+            opt.status !== 'pending' ||
+            remainingToFill <= 0
+          ) {
+            return opt;
+          }
+          
+          // Calculate how much of this option to fill
+          const fillAmount = Math.min(remainingToFill, opt.quantity);
+          remainingToFill -= fillAmount;
+          
+          // Update the option status
+          if (fillAmount >= opt.quantity) {
+            // Fully filled
+            return {
+              ...opt,
+              status: 'filled',
+              filledAt: new Date().toISOString(),
+              filledPrice: price
+            };
+          } else {
+            // Partially filled - split into two options
+            // First part: filled portion
+            const filledOption = {
+              ...opt,
+              quantity: fillAmount,
+              status: 'filled',
+              filledAt: new Date().toISOString(),
+              filledPrice: price,
+              id: `${opt.id}-filled-${Date.now()}`
+            };
+            
+            // Second part: remaining pending portion
+            opt.quantity -= fillAmount;
+            
+            // Return the filled option, the pending option stays in the array
+            return filledOption;
+          }
+        });
+        
+        // Add any pending options that weren't fully filled
+        const updatedMintedOptions = [
+          ...updatedOptions,
+          // Add back any partially filled options with their remaining quantities
+          ...mintedOptions.filter((opt: any) => 
+            opt.strike === strike && 
+            opt.expiry === expiry && 
+            opt.side === side && 
+            opt.status === 'pending' &&
+            opt.quantity > 0
+          )
+        ];
+        
+        // Save back to localStorage
+        localStorage.setItem('mintedOptions', JSON.stringify(updatedMintedOptions));
+        
+        // Dispatch custom event to notify components
+        window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'));
+      }
+    } catch (error) {
+      console.error('Error updating minted options:', error);
+    }
+  }
+}
+
+// Function to match pending buy orders with minted options
+export const matchBuyOrderWithMintedOptions = (
+  buyOrder: SelectedOption,
+  buyerPositionId: string, 
+  buyerLegIndex: number
+): void => {
+  // Check if there are available options of this type to buy
+  const availableQuantity = optionsAvailabilityTracker.getOptionsAvailable(
+    buyOrder.strike,
+    buyOrder.expiry,
+    buyOrder.side
+  );
+  
+  if (availableQuantity <= 0 || !buyOrder.quantity) {
+    console.log('No options available to buy');
+    return;
+  }
+  
+  // Calculate how many options can be filled
+  const fillQuantity = Math.min(buyOrder.quantity, availableQuantity);
+  
+  if (fillQuantity <= 0) return;
+  
+  // Process this filled order
+  handleOptionFill(
+    buyOrder.strike,
+    buyOrder.expiry, 
+    buyOrder.side,
+    fillQuantity,
+    buyOrder.price
+  );
+  
+  // Now update the buyer's order to show it's been filled
+  // Instead of importing directly, update the order in localStorage
+  // to avoid circular dependencies
+  try {
+    const storedOrders = localStorage.getItem('openOrders');
+    if (storedOrders) {
+      const orders = JSON.parse(storedOrders);
+      const position = orders.find((p: any) => p.id === buyerPositionId);
+      
+      if (position && position.legs && position.legs[buyerLegIndex]) {
+        const leg = position.legs[buyerLegIndex];
+        const totalPosition = Math.abs(leg.position);
+        
+        // Initialize filled and pending quantities if they don't exist
+        if (leg.filledQuantity === undefined) leg.filledQuantity = 0;
+        if (leg.pendingQuantity === undefined) leg.pendingQuantity = totalPosition;
+        
+        // Update the quantities
+        leg.filledQuantity += fillQuantity;
+        leg.pendingQuantity = Math.max(0, leg.pendingQuantity - fillQuantity);
+        
+        // Update status if fully filled
+        if (leg.pendingQuantity === 0) {
+          leg.status = 'filled';
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem('openOrders', JSON.stringify(orders));
+        
+        // Dispatch event to notify components
+        window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
+      }
+    }
+  } catch (error) {
+    console.error('Error updating buyer position:', error);
+  }
 } 

@@ -2,7 +2,7 @@ import { FC, useMemo, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker } from './option-data'
+import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/use-toast"
@@ -159,22 +159,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     // Simulate API call with a short delay
     setTimeout(() => {
       try {
-        // Update the volume data for each option in the order
-        selectedOptions.forEach(option => {
-          updateOptionVolume(option);
-          
-          // Also update open interest for each option
-          updateOptionOpenInterest(option);
-          
-          // Decrease available options when purchased
-          decreaseAvailableOptions(option);
-        });
-        
-        // Store the order in localStorage for demo purposes
-        // In a real application, this would be sent to a backend API
-        const existingOrders = JSON.parse(localStorage.getItem('openOrders') || '[]');
-        
-        // Group options by asset
+        // Format options for storage - this needs to be done first to get position IDs
         const optionsByAsset: Record<string, SelectedOption[]> = {};
         selectedOptions.forEach(option => {
           if (!optionsByAsset[option.asset]) {
@@ -183,7 +168,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           optionsByAsset[option.asset].push(option);
         });
         
-        // Format options for storage
+        // Create and store the new orders
+        const existingOrders = JSON.parse(localStorage.getItem('openOrders') || '[]');
+        
+        // Create formatted orders to store
         const newOrders = Object.entries(optionsByAsset).map(([asset, options]) => {
           return {
             asset,
@@ -204,9 +192,13 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               collateral: option.type === 'ask' ? option.strike * 100 : 0,
               value: (option.limitPrice !== undefined ? option.limitPrice : option.price) * option.quantity * 100,
               pnl: 0, // Initial P/L is 0
-              // Buyer orders are immediately "filled"
-              // Seller orders through trading would also be filled immediately (but option minted from option lab stay pending)
-              status: 'filled'
+              // If buying, set status to filled
+              // If selling, we need to check if it's matched with a buyer
+              status: option.type === 'bid' ? 'filled' : 'pending',
+              // For buyer positions, both quantities are already set
+              // For seller positions, initialize quantities
+              filledQuantity: option.type === 'bid' ? option.quantity : 0,
+              pendingQuantity: option.type === 'bid' ? 0 : option.quantity
             })),
             // Calculate aggregated values
             netDelta: 0, // Will be calculated in orders view
@@ -221,46 +213,67 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             id: `${asset}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
           };
         });
-        
+
+        // Save the orders first so we have the IDs
         localStorage.setItem('openOrders', JSON.stringify([...existingOrders, ...newOrders]));
 
-        // Dispatch a custom event to notify other components in the same window
-        window.dispatchEvent(new CustomEvent('openOrdersUpdated'));
-
-        // Show success toast
-        toast({
-          title: "Order Placed",
-          description: "Your order has been placed successfully.",
-          variant: "default",
+        // Process each option
+        selectedOptions.forEach((option, optionIndex) => {
+          // Update the volume data for each option
+          updateOptionVolume(option);
+          
+          // Update open interest for each option
+          updateOptionOpenInterest(option);
+          
+          // Decrease available options when purchased
+          decreaseAvailableOptions(option);
+          
+          // For buy orders, match with minted options
+          if (option.type === 'bid') {
+            // Find which asset position contains this option
+            const assetIndex = Object.keys(optionsByAsset).findIndex(asset => 
+              optionsByAsset[asset].includes(option)
+            );
+            
+            if (assetIndex !== -1) {
+              const assetName = Object.keys(optionsByAsset)[assetIndex];
+              const positionId = newOrders[assetIndex].id;
+              
+              // Find the leg index within this position
+              const legIndex = optionsByAsset[assetName].findIndex(o => 
+                o.strike === option.strike && 
+                o.expiry === option.expiry &&
+                o.side === option.side
+              );
+              
+              // Try to match this buy order with available minted options
+              if (legIndex !== -1) {
+                matchBuyOrderWithMintedOptions(option, positionId, legIndex);
+              }
+            }
+          }
         });
-
-        // Set success state
-        setOrderSuccess(true);
-
-        // Reset success state after a delay
-        setTimeout(() => {
-          setOrderSuccess(false);
-        }, 2000);
-
-        // Notify parent that order was placed
-        if (onOrderPlaced) {
-          onOrderPlaced(selectedOptions);
-        }
         
-        console.log('Order placed successfully!', selectedOptions);
+        setOrderSuccess(true);
+        onOrderPlaced && onOrderPlaced(selectedOptions);
+        
+        // Clear selection after a short delay
+        setTimeout(() => {
+          // Update order data with current values
+          onOrderDataChange && onOrderDataChange({ isDebit, collateralNeeded });
+          
+          // Dispatch a custom event to reset selected options externally
+          window.dispatchEvent(new CustomEvent('resetSelectedOptions'));
+          
+          setOrderSuccess(false);
+          setIsPlacingOrder(false);
+        }, 1500);
+        
       } catch (error) {
         console.error('Error placing order:', error);
-        
-        // Show error toast
-        toast({
-          title: "Order Failed",
-          description: "There was an error placing your order. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
         setIsPlacingOrder(false);
       }
-    }, 750);
+    }, 500);
   };
 
   // Function to decrease available options when purchased

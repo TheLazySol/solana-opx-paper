@@ -41,6 +41,9 @@ type OptionLeg = {
   value: number
   pnl: number
   status?: 'pending' | 'filled'
+  // Add fields to track filled and remaining quantities
+  filledQuantity?: number
+  pendingQuantity?: number
 }
 
 type AssetPosition = {
@@ -58,6 +61,53 @@ type AssetPosition = {
   totalPnl: number
   // Add id for unique key
   id: string
+}
+
+// Function to update when a position is partially filled
+export const updatePositionFill = (positionId: string, legIndex: number, filledAmount: number) => {
+  try {
+    // Get open orders from localStorage
+    const storedOrders = localStorage.getItem('openOrders')
+    if (!storedOrders) return
+    
+    const orders = JSON.parse(storedOrders)
+    
+    // Find the position with the matching ID
+    const position = orders.find((p: any) => p.id === positionId)
+    if (!position || !position.legs || !position.legs[legIndex]) return
+    
+    const leg = position.legs[legIndex]
+    
+    // Calculate new filled and pending quantities
+    const totalPosition = Math.abs(leg.position)
+    const currentFilled = leg.filledQuantity || 0
+    const currentPending = leg.pendingQuantity || totalPosition
+    
+    // Make sure we don't fill more than what's pending
+    const actualFillAmount = Math.min(filledAmount, currentPending)
+    
+    if (actualFillAmount <= 0) return
+    
+    // Update the quantities
+    leg.filledQuantity = currentFilled + actualFillAmount
+    leg.pendingQuantity = Math.max(0, currentPending - actualFillAmount)
+    
+    // If all are filled, update status
+    if (leg.pendingQuantity === 0) {
+      leg.status = 'filled'
+    } else if (leg.filledQuantity > 0) {
+      // Partial fill - keep pending status but we'll display differently
+      leg.status = 'pending'
+    }
+    
+    // Save back to localStorage
+    localStorage.setItem('openOrders', JSON.stringify(orders))
+    
+    // Dispatch custom event to notify components
+    window.dispatchEvent(new CustomEvent('openOrdersUpdated'))
+  } catch (error) {
+    console.error('Error updating position fill:', error)
+  }
 }
 
 export const OrdersViewOpen = () => {
@@ -115,14 +165,14 @@ export const OrdersViewOpen = () => {
 
   // Calculate P/L based on the change in value from when the position was opened
   const calculatePnL = (leg: OptionLeg) => {
-    // If the order is still pending, no P/L calculation is needed
-    if (leg.status === 'pending') {
+    // If the order is still fully pending, no P/L calculation is needed
+    if (leg.status === 'pending' && !(leg.filledQuantity ?? 0)) {
       return 0;
     }
 
-    // For filled orders, calculate P/L based on the difference between current market price and entry price
+    // For filled or partially filled orders, calculate P/L based on the difference between current market price and entry price
     const contractSize = 100; // Each option contract represents 100 units
-    const quantity = Math.abs(leg.position); // Works with fractional quantities
+    const quantity = leg.filledQuantity ?? Math.abs(leg.position); // Use filled quantity if available
     
     if (leg.position > 0) {
       // Long position: (current price - entry price) * quantity * 100
@@ -167,6 +217,21 @@ export const OrdersViewOpen = () => {
             const entryPrice = leg.entryPrice !== undefined ? leg.entryPrice : newPrice
             const underlyingEntryPrice = leg.underlyingEntryPrice !== undefined ? leg.underlyingEntryPrice : currentAssetPrice
             
+            // Make sure we have filledQuantity and pendingQuantity
+            let filledQuantity = leg.filledQuantity;
+            let pendingQuantity = leg.pendingQuantity;
+            
+            // If these fields don't exist yet, calculate them based on status
+            if (filledQuantity === undefined || pendingQuantity === undefined) {
+              if (leg.status === 'pending') {
+                filledQuantity = 0;
+                pendingQuantity = Math.abs(leg.position);
+              } else {
+                filledQuantity = Math.abs(leg.position);
+                pendingQuantity = 0;
+              }
+            }
+            
             return {
               ...leg,
               marketPrice: newPrice,
@@ -176,7 +241,9 @@ export const OrdersViewOpen = () => {
               gamma: optionResult.greeks.gamma,
               theta: optionResult.greeks.theta,
               vega: optionResult.greeks.vega,
-              rho: optionResult.greeks.rho
+              rho: optionResult.greeks.rho,
+              filledQuantity,
+              pendingQuantity
             }
           })
           
@@ -315,7 +382,7 @@ export const OrdersViewOpen = () => {
     
     // For each leg that is pending, remove it from mintedOptions
     position.legs.forEach(leg => {
-      if (leg.status === 'pending' && leg.position < 0) {
+      if (leg.status === 'pending' && (leg.pendingQuantity ?? 0) > 0 && leg.position < 0) {
         removePendingOption(leg);
       }
     });
@@ -332,36 +399,40 @@ export const OrdersViewOpen = () => {
         position: leg.position,
         entryPrice: leg.entryPrice,
         exitPrice: leg.marketPrice,
-        pnl: leg.pnl
+        pnl: leg.pnl,
+        filledQuantity: leg.filledQuantity ?? 0
       })),
       totalPnl: position.totalPnl
     }
     
     // Update volume and decrease open interest for each leg that's being closed
     position.legs.forEach(leg => {
-      // Convert position format to option format for volume tracking
-      const side = leg.type === 'Call' ? 'call' : 'put'
-      const quantity = Math.abs(leg.position)
-      
-      // Update volume - closing a position is a trade
-      updateOptionVolume({
-        index: 0, // not used by volume tracker
-        asset: position.asset,
-        strike: leg.strike,
-        expiry: leg.expiry,
-        price: leg.marketPrice,
-        side,
-        type: leg.position > 0 ? 'ask' : 'bid', // opposite of original position
-        quantity
-      })
-      
-      // Decrease open interest
-      decreaseOptionOpenInterest(
-        leg.strike,
-        leg.expiry,
-        side,
-        quantity
-      )
+      // Only process if there are filled options to close
+      if ((leg.filledQuantity ?? 0) > 0) {
+        // Convert position format to option format for volume tracking
+        const side = leg.type === 'Call' ? 'call' : 'put'
+        const quantity = leg.filledQuantity ?? 0
+        
+        // Update volume - closing a position is a trade
+        updateOptionVolume({
+          index: 0, // not used by volume tracker
+          asset: position.asset,
+          strike: leg.strike,
+          expiry: leg.expiry,
+          price: leg.marketPrice,
+          side,
+          type: leg.position > 0 ? 'ask' : 'bid', // opposite of original position
+          quantity
+        })
+        
+        // Decrease open interest
+        decreaseOptionOpenInterest(
+          leg.strike,
+          leg.expiry,
+          side,
+          quantity
+        )
+      }
     })
     
     // Save to closed orders history
@@ -396,34 +467,37 @@ export const OrdersViewOpen = () => {
     // Get the leg being closed before removing it
     const closedLeg = position.legs[legIndex]
     
-    // If this is a pending option, remove it from mintedOptions
-    if (closedLeg.status === 'pending' && closedLeg.position < 0) {
+    // If this is a pending option with pending quantity, remove it from mintedOptions
+    if (closedLeg.status === 'pending' && (closedLeg.pendingQuantity ?? 0) > 0 && closedLeg.position < 0) {
       removePendingOption(closedLeg);
     }
     
-    // Update volume for this leg being closed
-    const side = closedLeg.type === 'Call' ? 'call' : 'put'
-    const quantity = Math.abs(closedLeg.position)
-    
-    // Update volume - closing a position is a trade
-    updateOptionVolume({
-      index: 0, // not used by volume tracker
-      asset: position.asset,
-      strike: closedLeg.strike,
-      expiry: closedLeg.expiry,
-      price: closedLeg.marketPrice,
-      side,
-      type: closedLeg.position > 0 ? 'ask' : 'bid', // opposite of original position
-      quantity
-    })
-    
-    // Decrease open interest
-    decreaseOptionOpenInterest(
-      closedLeg.strike,
-      closedLeg.expiry,
-      side,
-      quantity
-    )
+    // Only process if there are filled options to close
+    if ((closedLeg.filledQuantity ?? 0) > 0) {
+      // Update volume for this leg being closed
+      const side = closedLeg.type === 'Call' ? 'call' : 'put'
+      const quantity = closedLeg.filledQuantity ?? 0
+      
+      // Update volume - closing a position is a trade
+      updateOptionVolume({
+        index: 0, // not used by volume tracker
+        asset: position.asset,
+        strike: closedLeg.strike,
+        expiry: closedLeg.expiry,
+        price: closedLeg.marketPrice,
+        side,
+        type: closedLeg.position > 0 ? 'ask' : 'bid', // opposite of original position
+        quantity
+      })
+      
+      // Decrease open interest
+      decreaseOptionOpenInterest(
+        closedLeg.strike,
+        closedLeg.expiry,
+        side,
+        quantity
+      )
+    }
     
     // Create history entry for the closed leg
     const closedLegEntry = {
@@ -433,7 +507,8 @@ export const OrdersViewOpen = () => {
       position: closedLeg.position,
       entryPrice: closedLeg.entryPrice,
       exitPrice: closedLeg.marketPrice,
-      pnl: closedLeg.pnl
+      pnl: closedLeg.pnl,
+      filledQuantity: closedLeg.filledQuantity ?? 0
     }
     
     // Save to closed orders history - either as a new position or adding to existing position
@@ -565,10 +640,10 @@ export const OrdersViewOpen = () => {
                         <div className="text-muted-foreground">(Filled / Open)</div>
                         <div className="text-foreground">
                           {(() => {
-                            const total = position.legs.reduce((total, leg) => total + Math.abs(leg.position), 0);
                             const filled = position.legs.reduce((count, leg) => 
-                              count + (leg.status !== 'pending' ? Math.abs(leg.position) : 0), 0);
-                            const pending = total - filled;
+                              count + (leg.filledQuantity ?? 0), 0);
+                            const pending = position.legs.reduce((count, leg) => 
+                              count + (leg.pendingQuantity ?? 0), 0);
                             return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
                           })()}
                         </div>
@@ -577,7 +652,7 @@ export const OrdersViewOpen = () => {
                       <div className="text-center">
                         <div className="text-muted-foreground">Total Value</div>
                         <div className="font-medium">
-                          {position.legs.every(leg => leg.status === 'pending') 
+                          {position.legs.every(leg => (leg.filledQuantity ?? 0) === 0) 
                             ? '-' 
                             : `$${position.totalValue.toFixed(2)}`}
                         </div>
@@ -586,7 +661,7 @@ export const OrdersViewOpen = () => {
                       <div className="text-center">
                         <div className="text-muted-foreground">Total P/L</div>
                         <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {position.legs.every(leg => leg.status === 'pending') 
+                          {position.legs.every(leg => (leg.filledQuantity ?? 0) === 0) 
                             ? '-' 
                             : <>
                                 {position.totalPnl >= 0 ? '+$' : '-$'}
@@ -659,15 +734,9 @@ export const OrdersViewOpen = () => {
                               {leg.expiry.split('T')[0]}
                             </Badge>
                             <Badge variant="outline">
-                              Qty: {(() => {
-                                if (leg.status === 'pending') {
-                                  return `0 / ${formatQuantity(Math.abs(leg.position))}`;
-                                } else {
-                                  return `${formatQuantity(Math.abs(leg.position))} / 0`;
-                                }
-                              })()}
+                              Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
                             </Badge>
-                            {leg.status === 'pending' && (
+                            {leg.status === 'pending' && (leg.pendingQuantity ?? 0) > 0 && (
                               <Badge variant="warning" className="animate-pulse">
                                 PENDING
                               </Badge>
@@ -679,25 +748,19 @@ export const OrdersViewOpen = () => {
                               <div className="text-right">
                                 <div className="text-muted-foreground">Entry Price</div>
                                 <div className="font-medium">
-                                  {leg.status === 'pending' ? '-' : `$${leg.entryPrice.toFixed(2)}`}
+                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Option Price</div>
                                 <div className="font-medium">
-                                  {leg.status === 'pending' ? '-' : `$${leg.marketPrice.toFixed(2)}`}
+                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.marketPrice.toFixed(2)}`}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Qty</div>
                                 <div className="font-medium">
-                                  {(() => {
-                                    if (leg.status === 'pending') {
-                                      return `0 / ${formatQuantity(Math.abs(leg.position))}`;
-                                    } else {
-                                      return `${formatQuantity(Math.abs(leg.position))} / 0`;
-                                    }
-                                  })()}
+                                  {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
                                 </div>
                               </div>
                             </div>
@@ -707,15 +770,15 @@ export const OrdersViewOpen = () => {
                                 <div className="text-right">
                                   <div className="text-muted-foreground">Value</div>
                                   <div className="font-medium">
-                                    {leg.status === 'pending' 
+                                    {(leg.filledQuantity ?? 0) === 0
                                       ? '-' 
-                                      : `$${(leg.marketPrice * 100 * Math.abs(leg.position) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
+                                      : `$${(leg.marketPrice * 100 * (leg.filledQuantity ?? 0) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
                                   </div>
                                 </div>
                                 <div className="text-right">
                                   <div className="text-muted-foreground">P/L</div>
                                   <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                                    {leg.status === 'pending' 
+                                    {(leg.filledQuantity ?? 0) === 0
                                       ? '-' 
                                       : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
                                   </div>

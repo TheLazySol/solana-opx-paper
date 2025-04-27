@@ -145,6 +145,27 @@ export const TradeView: FC<TradeViewProps> = ({
     }
   }
 
+  // Add an effect to listen for resetSelectedOptions events
+  useEffect(() => {
+    const handleResetOptions = () => {
+      // Reset the selected options
+      setSelectedOptions([]);
+      
+      // Also notify parent
+      if (onOptionsUpdate) {
+        onOptionsUpdate([]);
+      }
+    };
+    
+    // Listen for the resetSelectedOptions event
+    window.addEventListener('resetSelectedOptions', handleResetOptions);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resetSelectedOptions', handleResetOptions);
+    };
+  }, [onOptionsUpdate]);
+
   return (
     <div className="space-y-4">
       {/* Create Order and Trade Details */}
