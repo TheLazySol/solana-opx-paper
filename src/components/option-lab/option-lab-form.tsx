@@ -51,7 +51,7 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .min(0.01, { message: "Quantity must be at least 0.01" })
+    .min(0, { message: "Quantity must be a non-negative number" })
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
@@ -215,6 +215,15 @@ export function OptionLabForm() {
       });
       return;
     }
+    
+    // Ensure quantity is at least 0.01
+    if (values.quantity < 0.01) {
+      methods.setError('quantity', {
+        message: 'Quantity must be at least 0.01 to create an option'
+      });
+      return;
+    }
+    
     if (isCalculatingPremium || calculatedPrice === null) {
       methods.setError('root', { 
         message: 'Please wait for premium calculation to complete' 
@@ -252,6 +261,16 @@ export function OptionLabForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!publicKey || pendingOptions.length === 0) return;
+    
+    // Ensure all options have valid quantities
+    const hasInvalidQuantity = pendingOptions.some(option => option.quantity < 0.01);
+    if (hasInvalidQuantity) {
+      methods.setError('quantity', {
+        message: 'All options must have a quantity of at least 0.01'
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       // Create options but don't add them to a store
@@ -446,7 +465,8 @@ export function OptionLabForm() {
                           !methods.getValues("strikePrice") || 
                           methods.getValues("strikePrice") === "" ||
                           !methods.getValues("premium") ||
-                          !methods.getValues("expirationDate")
+                          !methods.getValues("expirationDate") ||
+                          methods.getValues("quantity") < 0.01
                         }
                       >
                         {pendingOptions.length > 0 ? "Update Option" : "Add Option"}

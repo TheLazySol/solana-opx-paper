@@ -14,14 +14,19 @@ export const QuantityInput = () => {
       return;
     }
     const num = parseFloat(value);
-    if (isNaN(num) || num < 0.01 || num > 1000) {
+    if (isNaN(num) || num < 0 || num > 1000) {
       setError('quantity', { 
-        message: `Quantity must be between 0.01 and 1000` 
+        message: `Quantity must be between 0.01 and 1000 for submission` 
       });
-      return;
+    } else if (num === 0) {
+      // Allow zero but show a message that it needs to be at least 0.01 for submission
+      setError('quantity', { 
+        message: `Quantity must be at least 0.01 for submission` 
+      });
+    } else {
+      clearErrors('quantity');
     }
-    clearErrors('quantity');
-    setValue('quantity', num);
+    setValue('quantity', value);
   };
 
   return (
@@ -42,7 +47,6 @@ export const QuantityInput = () => {
       <FormControl>
         <Input
           type="number"
-          min="0.01"
           max="10000"
           step="0.01"
           placeholder="Min Qty: 0.01"
