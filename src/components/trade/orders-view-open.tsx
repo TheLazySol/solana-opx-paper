@@ -553,24 +553,36 @@ export const OrdersViewOpen = () => {
                       <Badge variant="grey" className="capitalize">
                         {position.asset}
                       </Badge>
-                      <div className="text-xs sm:text-sm text-muted-foreground">
-                        Current Price: <span className="text-foreground">${position.marketPrice.toFixed(2)}</span>
+                      <div className="text-right text-xs sm:text-sm">
+                        <div className="text-muted-foreground">Current Price</div>
+                        <div className="text-foreground">${position.marketPrice.toFixed(2)}</div>
                       </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">
-                        Options: <span className="text-foreground">{position.legs.length}</span>
+                      <div className="text-right text-xs sm:text-sm">
+                        <div className="text-muted-foreground">Total Options</div>
+                        <div className="text-foreground">
+                          {formatQuantity(position.legs.reduce((total, leg) => total + Math.abs(leg.position), 0))}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-6">
                       <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 text-xs sm:text-sm">
                         <div className="text-right">
                           <div className="text-muted-foreground">Total Value</div>
-                          <div className="font-medium">${position.totalValue.toFixed(2)}</div>
+                          <div className="font-medium">
+                            {position.legs.every(leg => leg.status === 'pending') 
+                              ? '-' 
+                              : `$${position.totalValue.toFixed(2)}`}
+                          </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-muted-foreground">P/L</div>
+                          <div className="text-muted-foreground">Total P/L</div>
                           <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                            {position.totalPnl >= 0 ? '+$' : '-$'}
-                            {Math.abs(position.totalPnl).toFixed(2)}
+                            {position.legs.every(leg => leg.status === 'pending') 
+                              ? '-' 
+                              : <>
+                                  {position.totalPnl >= 0 ? '+$' : '-$'}
+                                  {Math.abs(position.totalPnl).toFixed(2)}
+                                </>}
                           </div>
                         </div>
                       </div>
