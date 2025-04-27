@@ -94,6 +94,13 @@ export const calculateMaxProfitPotential = (
   return totalPremium - borrowCost - optionCreationFee - transactionCostInUSD;
 }
 
+export const calculateMinCollateralRequired = (
+  collateralNeeded: number,
+  maxLeverage: number = MAX_LEVERAGE
+): number => {
+  return collateralNeeded / maxLeverage;
+}
+
 /**
  * Calculate the liquidation price for an option seller based on their collateral and leverage
  * 

@@ -130,11 +130,16 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
   // Calculate if enough collateral is provided - include borrowed amount
   const hasEnoughCollateral = Number(collateralProvided) + borrowedAmount >= calculateCollateralNeeded
 
-  // Calculate daily borrow rate
-  const dailyBorrowRate = BASE_ANNUAL_INTEREST_RATE / 365;
+  // Calculate hourly borrow rate (instead of daily)
+  const hourlyBorrowRate = BASE_ANNUAL_INTEREST_RATE / (365 * 24);
 
-  // Calculate estimated daily borrow cost
-  const dailyBorrowCost = borrowedAmount * dailyBorrowRate;
+  // Calculate estimated hourly borrow cost
+  const hourlyBorrowCost = borrowedAmount * hourlyBorrowRate;
+
+  // Calculate minimum required collateral
+  const minCollateralRequired = useMemo(() => {
+    return calculateCollateralNeeded / MAX_LEVERAGE;
+  }, [calculateCollateralNeeded]);
 
   return (
     <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
@@ -174,18 +179,37 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
 
           {/* Collateral Input */}
           <div className="w-full">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-sm font-medium mb-1 block cursor-help">
-                    <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This is the amount of collateral you want to provide for this position.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="flex items-center justify-between mb-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm font-medium cursor-help">
+                      <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>This is the amount of collateral you want to provide for this position.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div className="text-xs text-muted-foreground">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span 
+                        className="cursor-pointer hover:text-[#4a85ff] transition-colors duration-200"
+                        onClick={() => setCollateralProvided(minCollateralRequired.toFixed(2))}
+                      >
+                        <span className="border-b border-dotted border-slate-500">Min Required: ${minCollateralRequired.toFixed(2)}</span>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Click to auto-fill minimum collateral required with max leverage ({MAX_LEVERAGE}x)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
             <div className="flex items-center gap-2 w-full">
               <Select
                 value={collateralType}
@@ -319,7 +343,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="text-sm text-muted-foreground cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Daily Borrow Rate:</span>
+                      <span className="border-b border-dotted border-slate-500">Hourly Borrow Rate:</span>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -327,12 +351,12 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <span className="text-sm font-light text-orange-200">≈{(dailyBorrowRate * 100).toFixed(3)}%</span>
+              <span className="text-sm font-light text-orange-200">≈{(hourlyBorrowRate * 100).toFixed(4)}%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Est. Daily Cost:</span>
+              <span className="text-sm text-muted-foreground">Est. Hourly Cost:</span>
               <span className="text-sm font-medium text-red-500">
-                {borrowedAmount > 0 ? `$${dailyBorrowCost.toFixed(2)}` : '--'}
+                {borrowedAmount > 0 ? `$${hourlyBorrowCost.toFixed(4)}` : '--'}
               </span>
             </div>
           </div>

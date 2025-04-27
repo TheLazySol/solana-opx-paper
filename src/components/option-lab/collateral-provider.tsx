@@ -21,7 +21,8 @@ import {
   calculateBorrowCost,
   calculateOptionCreationFee,
   calculateBorrowFee,
-  calculateMaxProfitPotential
+  calculateMaxProfitPotential,
+  calculateMinCollateralRequired
 } from "@/constants/option-lab/calculations";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -64,6 +65,7 @@ export function CollateralProvider({
   hasPendingOptions = false
 }: CollateralProviderProps) {
   const baseCollateralNeeded = calculateCollateralNeeded(options);
+  const minCollateralRequired = calculateMinCollateralRequired(baseCollateralNeeded, MAX_LEVERAGE);
   const totalPremium = calculateTotalPremium(options);
   const [collateralProvided, setCollateralProvided] = useState<string>("");
   const [leverage, setLeverage] = useState<number[]>([1]);
@@ -204,18 +206,37 @@ export function CollateralProvider({
         
         {/* Collateral Amount */}
         <div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-xs sm:text-sm font-medium mb-1 block cursor-help">
-                  <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs sm:text-sm">This is the amount of collateral you want to provide for this position.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center justify-between mb-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs sm:text-sm font-medium cursor-help">
+                    <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs sm:text-sm">This is the amount of collateral you want to provide for this position.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="text-xs text-muted-foreground">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span 
+                      className="cursor-pointer hover:text-[#4a85ff] transition-colors duration-200"
+                      onClick={() => setCollateralProvided(minCollateralRequired.toFixed(2))}
+                    >
+                      <span className="border-b border-dotted border-slate-500">Min Required: ${minCollateralRequired.toFixed(2)}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Click to auto-fill minimum collateral required with max leverage ({MAX_LEVERAGE}x)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <Select
               value={collateralType}
@@ -376,19 +397,19 @@ export function CollateralProvider({
               {/* Borrow Cost */}
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Borrow Cost:</span>
-                <span className="font-medium">${borrowCost.toFixed(4)}</span>
+                <span className="font-medium">${borrowCost.toFixed(2)}</span>
               </div>
               
               {/* Option Creation Fee */}
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Option Creation Fee:</span>
-                <span className="font-medium">${optionCreationFee.toFixed(4)}</span>
+                <span className="font-medium">${optionCreationFee.toFixed(2)}</span>
               </div>
               
               {/* Transaction Cost */}
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Transaction Cost:</span>
-                <span className="font-medium">${transactionCost.toFixed(4)}</span>
+                <span className="font-medium">${transactionCost.toFixed(2)}</span>
               </div>
               
               {/* Divider Line */}
