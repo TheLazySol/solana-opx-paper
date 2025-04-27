@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
-import { CreateOrder } from './create-order'
+import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-place-order'
 import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
