@@ -8,6 +8,7 @@ export enum OptionParameterId {
   ASK = "ask",         // The ask price of an option
   VOLUME = "volume",   // The trading volume of an option
   OI = "oi",           // Open interest of an option
+  OA = "oa",           // option contract availability
   IV = "iv",           // Implied volatility of an option
   DELTA = "delta",     // The delta of an option (price sensitivity to changes in underlying asset)
   THETA = "theta",     // The theta of an option (time sensitivity)

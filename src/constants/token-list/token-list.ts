@@ -16,13 +16,6 @@ export const TOKENS = {
       symbol: 'SOL',
       name: 'Solana'
     },
-    LABS: {
-      address: 'LABSh5DTebUcUbEoLzXKCiXFJLecDFiDWiBGUU1GpxR',
-      decimals: 9,
-      displayDecimals: 6,
-      symbol: 'LABS',
-      name: 'Epicentral Labs'
-    },
     // Add more tokens here that we wish to list on the exchange.
   } as const
 
