@@ -426,16 +426,6 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               </div>
                             </>
                           )}
-                          
-                          {/* Always show options available display */}
-                          {option.type === 'bid' && (
-                            <div className="flex items-center gap-1 ml-2">
-                              <span className="text-xs sm:text-sm text-muted-foreground">Option&apos;s Available:</span>
-                              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
-                                {getOptionsAvailableDisplay(option)}
-                              </span>
-                            </div>
-                          )}
                         </div>
                         
                         <div className="flex flex-col items-end gap-1">
@@ -474,7 +464,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             </div>
                           </div>
                           
-                          {/* Remove warning message as we're showing available quantity above */}
+                          {/* Display options available under quantity section */}
+                          {option.type === 'bid' && (
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              <span className="text-xs sm:text-sm text-muted-foreground">Options Available:</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
+                                {getOptionsAvailableDisplay(option)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
