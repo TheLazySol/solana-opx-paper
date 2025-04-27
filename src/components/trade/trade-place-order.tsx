@@ -386,7 +386,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           {/* Order Details */}
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Total Quantity</span>
-            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity : '--'}</span>
+            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Order Type</span>
@@ -405,17 +405,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Option Creation Fee:</span>
-              <span className="text-right">{hasSelectedOptions ? `${fees.optionCreationFee.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Transaction Cost:</span>
-              <span className="text-right">{hasSelectedOptions ? `${fees.transactionCost.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
             </div>
             <Separator className="my-1 bg-white/10" />
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="font-medium">Total Fees:</span>
               <div className="text-right">
-                <div>{hasSelectedOptions ? `${(fees.optionCreationFee + fees.transactionCost).toFixed(3)} SOL` : '--'}</div>
+                <div>{hasSelectedOptions ? `-- SOL` : '--'}</div>
                 {borrowedAmount > 0 && (
                   <div>${fees.borrowFee.toFixed(2)} USDC</div>
                 )}
