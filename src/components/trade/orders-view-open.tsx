@@ -553,51 +553,60 @@ export const OrdersViewOpen = () => {
                       <Badge variant="grey" className="capitalize">
                         {position.asset}
                       </Badge>
-                      <div className="text-right text-xs sm:text-sm">
+                    </div>
+
+                    <div className="grid grid-cols-4 w-full sm:w-auto gap-x-4 sm:gap-x-12 text-xs sm:text-sm mt-2 sm:mt-0">
+                      <div className="text-center">
                         <div className="text-muted-foreground">Current Price</div>
                         <div className="text-foreground">${position.marketPrice.toFixed(2)}</div>
                       </div>
-                      <div className="text-right text-xs sm:text-sm">
-                        <div className="text-muted-foreground">Total Options</div>
+                      
+                      <div className="text-center">
+                        <div className="text-muted-foreground">(Filled / Open)</div>
                         <div className="text-foreground">
-                          {formatQuantity(position.legs.reduce((total, leg) => total + Math.abs(leg.position), 0))}
+                          {(() => {
+                            const total = position.legs.reduce((total, leg) => total + Math.abs(leg.position), 0);
+                            const filled = position.legs.reduce((count, leg) => 
+                              count + (leg.status !== 'pending' ? Math.abs(leg.position) : 0), 0);
+                            const pending = total - filled;
+                            return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-muted-foreground">Total Value</div>
+                        <div className="font-medium">
+                          {position.legs.every(leg => leg.status === 'pending') 
+                            ? '-' 
+                            : `$${position.totalValue.toFixed(2)}`}
+                        </div>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-muted-foreground">Total P/L</div>
+                        <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                          {position.legs.every(leg => leg.status === 'pending') 
+                            ? '-' 
+                            : <>
+                                {position.totalPnl >= 0 ? '+$' : '-$'}
+                                {Math.abs(position.totalPnl).toFixed(2)}
+                              </>}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-6">
-                      <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 text-xs sm:text-sm">
-                        <div className="text-right">
-                          <div className="text-muted-foreground">Total Value</div>
-                          <div className="font-medium">
-                            {position.legs.every(leg => leg.status === 'pending') 
-                              ? '-' 
-                              : `$${position.totalValue.toFixed(2)}`}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-muted-foreground">Total P/L</div>
-                          <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                            {position.legs.every(leg => leg.status === 'pending') 
-                              ? '-' 
-                              : <>
-                                  {position.totalPnl >= 0 ? '+$' : '-$'}
-                                  {Math.abs(position.totalPnl).toFixed(2)}
-                                </>}
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleCloseAll(position.id)
-                        }}
-                        className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
-                      >
-                        Close All
-                      </Button>
-                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCloseAll(position.id)
+                      }}
+                      className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110 mt-2 sm:mt-0"
+                    >
+                      Close All
+                    </Button>
                   </div>
                 </div>
 
@@ -650,7 +659,13 @@ export const OrdersViewOpen = () => {
                               {leg.expiry.split('T')[0]}
                             </Badge>
                             <Badge variant="outline">
-                              Qty: {formatQuantity(Math.abs(leg.position))}
+                              Qty: {(() => {
+                                if (leg.status === 'pending') {
+                                  return `0 / ${formatQuantity(Math.abs(leg.position))}`;
+                                } else {
+                                  return `${formatQuantity(Math.abs(leg.position))} / 0`;
+                                }
+                              })()}
                             </Badge>
                             {leg.status === 'pending' && (
                               <Badge variant="warning" className="animate-pulse">
@@ -675,7 +690,15 @@ export const OrdersViewOpen = () => {
                               </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">Qty</div>
-                                <div className="font-medium">{formatQuantity(Math.abs(leg.position))}</div>
+                                <div className="font-medium">
+                                  {(() => {
+                                    if (leg.status === 'pending') {
+                                      return `0 / ${formatQuantity(Math.abs(leg.position))}`;
+                                    } else {
+                                      return `${formatQuantity(Math.abs(leg.position))} / 0`;
+                                    }
+                                  })()}
+                                </div>
                               </div>
                             </div>
                           
