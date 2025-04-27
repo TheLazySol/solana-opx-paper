@@ -67,7 +67,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
         const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
           option.strike, 
           option.expiry, 
-          option.side
+          option.side  // This should correctly differentiate between Call and Put
         );
         
         // Store the max available
@@ -143,11 +143,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     
     const option = selectedOptions[index]
     const currentQuantity = option.quantity || 0.1
-    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
+    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.1
     
     // If bidding (buying), check maximum available
     const legKey = option.index.toString()
-    if (option.type === 'bid' && maxAvailableOptions[legKey]) {
+    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
       const maxAvailable = maxAvailableOptions[legKey]
       if (maxAvailable > 0 && newQuantity > maxAvailable) {
         newQuantity = maxAvailable
@@ -173,11 +173,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
     // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue || '0.01' }));
-
       // Only update the actual quantity if it's a valid number and at least 0.01
       if (inputValue !== '' && inputValue !== '.') {
         let parsed = parseFloat(inputValue);
+        
         if (!isNaN(parsed) && parsed >= 0.01) {
           // If bidding (buying), check maximum available
           if (option.type === 'bid' && maxAvailableOptions[legKey]) {
@@ -186,10 +185,22 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               parsed = maxAvailable
               // Update the input field with the capped value
               setQuantityInputs(prev => ({ ...prev, [legKey]: maxAvailable.toFixed(2) }));
+              // Update parent component with capped value
+              onUpdateQuantity(index, parsed);
+              return; // Exit early since we've already updated everything
             }
           }
+          
+          // If we didn't hit the cap, update normally
+          setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
           onUpdateQuantity(index, parsed);
+        } else {
+          // Still update the input field for usability
+          setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
         }
+      } else {
+        // Empty or just a decimal point - update input field only
+        setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
       }
     }
   }
