@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
+import { optionsAvailabilityTracker } from './option-data'
 
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
@@ -29,9 +30,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const [orderTypes, setOrderTypes] = useState<Record<LegKey, 'MKT' | 'LMT'>>({});
   const [inputValues, setInputValues] = useState<Record<LegKey, string>>({});
   const [quantityInputs, setQuantityInputs] = useState<Record<LegKey, string>>({});
+  const [maxAvailableOptions, setMaxAvailableOptions] = useState<Record<LegKey, number>>({});
 
   // Update all state when options change
   useEffect(() => {
+    // Create a new state object for max available options
+    const newMaxAvailable: Record<LegKey, number> = {};
+    
     // Update order types
     setOrderTypes(prev => {
       const newOrderTypes: Record<LegKey, 'MKT' | 'LMT'> = {};
@@ -53,6 +58,34 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       return newValues;
     });
 
+    // Update quantity inputs and check max available options
+    selectedOptions.forEach((option) => {
+      const legKey = option.index.toString();
+      
+      // If option type is 'bid', get the maximum available
+      if (option.type === 'bid') {
+        const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
+          option.strike, 
+          option.expiry, 
+          option.side
+        );
+        
+        // Store the max available
+        newMaxAvailable[legKey] = availableOptions;
+        
+        // If current quantity is more than available, cap it
+        if (option.quantity > availableOptions && availableOptions > 0) {
+          // Update the quantity in parent component
+          if (onUpdateQuantity) {
+            onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), availableOptions);
+          }
+        }
+      }
+    });
+    
+    // Set the max available options state
+    setMaxAvailableOptions(newMaxAvailable);
+    
     // Update quantity inputs
     setQuantityInputs(prev => {
       const newValues = { ...prev };
@@ -63,7 +96,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       });
       return newValues;
     });
-  }, [selectedOptions]);
+  }, [selectedOptions, onUpdateQuantity]);
 
   // Get unique assets from selected options
   const uniqueAssets = useMemo(() => {
@@ -109,12 +142,21 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (!onUpdateQuantity) return
     
     const option = selectedOptions[index]
-    const currentQuantity = option.quantity || 0.01
-    const newQuantity = Math.max(0.01, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
+    const currentQuantity = option.quantity || 0.1
+    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
+    
+    // If bidding (buying), check maximum available
+    const legKey = option.index.toString()
+    if (option.type === 'bid' && maxAvailableOptions[legKey]) {
+      const maxAvailable = maxAvailableOptions[legKey]
+      if (maxAvailable > 0 && newQuantity > maxAvailable) {
+        newQuantity = maxAvailable
+      }
+    }
+    
     onUpdateQuantity(index, newQuantity)
     
     // Update quantity input field using the stable identifier
-    const legKey = option.index.toString()
     setQuantityInputs(prev => ({
       ...prev,
       [legKey]: newQuantity.toFixed(2)
@@ -135,8 +177,17 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
       // Only update the actual quantity if it's a valid number and at least 0.01
       if (inputValue !== '' && inputValue !== '.') {
-        const parsed = parseFloat(inputValue);
+        let parsed = parseFloat(inputValue);
         if (!isNaN(parsed) && parsed >= 0.01) {
+          // If bidding (buying), check maximum available
+          if (option.type === 'bid' && maxAvailableOptions[legKey]) {
+            const maxAvailable = maxAvailableOptions[legKey]
+            if (maxAvailable > 0 && parsed > maxAvailable) {
+              parsed = maxAvailable
+              // Update the input field with the capped value
+              setQuantityInputs(prev => ({ ...prev, [legKey]: maxAvailable.toFixed(2) }));
+            }
+          }
           onUpdateQuantity(index, parsed);
         }
       }
@@ -204,6 +255,30 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     return quantityInputs[legKey] || option.quantity.toFixed(2);
   };
 
+  // Get available options warning if needed
+  const getAvailableOptionsWarning = (option: SelectedOption): string | null => {
+    const legKey = option.index.toString()
+    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
+      const availableQty = maxAvailableOptions[legKey]
+      if (availableQty === 0) {
+        return "No options available";
+      } else if (option.quantity >= availableQty) {
+        return `Max available: ${availableQty.toFixed(2)}`;
+      }
+    }
+    return null;
+  };
+
+  // Get available options display
+  const getOptionsAvailableDisplay = (option: SelectedOption): string => {
+    const legKey = option.index.toString()
+    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
+      const availableQty = maxAvailableOptions[legKey]
+      return availableQty.toFixed(2);
+    }
+    return "N/A"; // Not applicable for ask options
+  };
+
   return (
     <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -248,6 +323,9 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 
               // Get the stable leg key for this option
               const legKey = option.index.toString()
+
+              // Get availability warning
+              const availabilityWarning = getAvailableOptionsWarning(option)
               
               return (
                 <Card key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`} className="bg-black/10 border border-white/10">
@@ -348,41 +426,55 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               </div>
                             </>
                           )}
+                          
+                          {/* Always show options available display */}
+                          {option.type === 'bid' && (
+                            <div className="flex items-center gap-1 ml-2">
+                              <span className="text-xs sm:text-sm text-muted-foreground">Option&apos;s Available:</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
+                                {getOptionsAvailableDisplay(option)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, -0.01)}
-                              title="Decrease by 0.01"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleQuantityChange(index, -0.10)}
+                                title="Decrease by 0.10"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
 
-                            <div className="relative w-14">
-                              <Input
-                                type="text"
-                                value={getDisplayQuantity(option)}
-                                onChange={(e) => handleQuantityInputChange(e, index)}
-                                className="h-6 text-xs sm:text-sm text-center px-1"
-                                placeholder="Qty"
-                              />
+                              <div className="relative w-14">
+                                <Input
+                                  type="text"
+                                  value={getDisplayQuantity(option)}
+                                  onChange={(e) => handleQuantityInputChange(e, index)}
+                                  className="h-6 text-xs sm:text-sm text-center px-1"
+                                  placeholder="Qty"
+                                />
+                              </div>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleQuantityChange(index, 0.10)}
+                                title="Increase by 0.10"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
                             </div>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, 0.01)}
-                              title="Increase by 0.01"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
                           </div>
+                          
+                          {/* Remove warning message as we're showing available quantity above */}
                         </div>
                       </div>
                     </div>
