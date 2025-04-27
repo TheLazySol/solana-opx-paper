@@ -318,8 +318,8 @@ export function OptionLabForm() {
       // Clear pending options but keep the form values
       setPendingOptions([]);
       
-      // Navigate to trade page
-      router.push("/trade");
+      // Navigate to trade page with query params to activate the orders tab and open positions
+      router.push("/trade?view=orders&tab=open");
     } catch (error) {
       console.error('Error minting options:', error);
     } finally {

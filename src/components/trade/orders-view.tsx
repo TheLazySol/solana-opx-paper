@@ -5,8 +5,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { OrdersViewOpen } from './orders-view-open'
 import { OrdersViewHistory } from './orders-view-history'
 
-export const OrdersView: FC = () => {
-  const [activeOrderTab, setActiveOrderTab] = useState('open')
+interface OrdersViewProps {
+  activeTab?: string
+  setActiveTab?: (tab: string) => void
+}
+
+export const OrdersView: FC<OrdersViewProps> = ({ 
+  activeTab: externalActiveTab,
+  setActiveTab: externalSetActiveTab
+}) => {
+  // Use internal state if no external state is provided
+  const [internalActiveTab, setInternalActiveTab] = useState('open')
+  
+  // Use either external or internal state
+  const activeOrderTab = externalActiveTab || internalActiveTab
+  const setActiveOrderTab = externalSetActiveTab || setInternalActiveTab
 
   return (
     <div className="space-y-4">

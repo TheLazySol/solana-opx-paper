@@ -5,14 +5,34 @@ import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { AssetChart } from '@/components/trade/asset-chart'
 import { AssetType } from '@/components/trade/asset-underlying'
 import { TOKENS } from '@/constants/token-list/token-list'
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption } from '@/components/trade/option-data'
+import { useSearchParams } from 'next/navigation'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [volumeUpdateTrigger, setVolumeUpdateTrigger] = useState(0)
+  const [activeView, setActiveView] = useState('trade')
+  const [activeOrderTab, setActiveOrderTab] = useState('open')
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
+  
+  // Get search parameters to determine which tabs to show
+  const searchParams = useSearchParams()
+
+  // On component mount, check for view and tab params
+  useEffect(() => {
+    const view = searchParams.get('view')
+    const tab = searchParams.get('tab')
+    
+    if (view === 'orders') {
+      setActiveView('orders')
+    }
+    
+    if (tab === 'open') {
+      setActiveOrderTab('open')
+    }
+  }, [searchParams])
 
   // Handle option changes from both sources (chain table and create order)
   const handleOptionsChange = useCallback((options: SelectedOption[]) => {
@@ -61,6 +81,10 @@ export default function TradePage() {
                 selectedOptions={selectedOptions}
                 onOptionsChange={handleOptionsChange}
                 onOrderPlaced={handleOrderPlaced}
+                activeView={activeView}
+                setActiveView={setActiveView}
+                activeOrderTab={activeOrderTab}
+                setActiveOrderTab={setActiveOrderTab}
               />
             </div>
           </div>
