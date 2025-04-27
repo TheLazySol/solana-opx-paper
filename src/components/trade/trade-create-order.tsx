@@ -59,15 +59,20 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     });
 
     // Update quantity inputs and check max available options
+    const newQuantityInputs: Record<LegKey, string> = {};
+    
     selectedOptions.forEach((option) => {
       const legKey = option.index.toString();
+      
+      // Preserve existing quantity input or initialize with current option quantity
+      newQuantityInputs[legKey] = quantityInputs[legKey] || option.quantity.toFixed(2);
       
       // If option type is 'bid', get the maximum available
       if (option.type === 'bid') {
         const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
           option.strike, 
           option.expiry, 
-          option.side  // This should correctly differentiate between Call and Put
+          option.side
         );
         
         // Store the max available
@@ -78,6 +83,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
           // Update the quantity in parent component
           if (onUpdateQuantity) {
             onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), availableOptions);
+            // Also update the local input value to match
+            newQuantityInputs[legKey] = availableOptions.toFixed(2);
           }
         }
       }
@@ -87,15 +94,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     setMaxAvailableOptions(newMaxAvailable);
     
     // Update quantity inputs
-    setQuantityInputs(prev => {
-      const newValues = { ...prev };
-      selectedOptions.forEach((option) => {
-        const legKey = option.index.toString();
-        // Always ensure there's a value
-        newValues[legKey] = prev[legKey] || option.quantity.toFixed(2);
-      });
-      return newValues;
-    });
+    setQuantityInputs(newQuantityInputs);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOptions, onUpdateQuantity]);
 
   // Get unique assets from selected options
@@ -143,17 +143,18 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     
     const option = selectedOptions[index]
     const currentQuantity = option.quantity || 0.1
-    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.1
+    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
     
     // If bidding (buying), check maximum available
     const legKey = option.index.toString()
-    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
+    if (option.type === 'bid' && maxAvailableOptions[legKey]) {
       const maxAvailable = maxAvailableOptions[legKey]
       if (maxAvailable > 0 && newQuantity > maxAvailable) {
         newQuantity = maxAvailable
       }
     }
     
+    // Important: Update only the EXACT option that was modified (by index)
     onUpdateQuantity(index, newQuantity)
     
     // Update quantity input field using the stable identifier
@@ -185,13 +186,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               parsed = maxAvailable
               // Update the input field with the capped value
               setQuantityInputs(prev => ({ ...prev, [legKey]: maxAvailable.toFixed(2) }));
-              // Update parent component with capped value
+              // Update parent component with capped value - specifically for this leg only
               onUpdateQuantity(index, parsed);
               return; // Exit early since we've already updated everything
             }
           }
           
-          // If we didn't hit the cap, update normally
+          // If we didn't hit the cap, update normally - this specific leg only
           setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
           onUpdateQuantity(index, parsed);
         } else {

@@ -33,7 +33,8 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
 
   // Update highlight effect when price changes
   useEffect(() => {
-    if (priceChange) {
+    // Only proceed if there's an actual price change
+    if (priceChange !== undefined && priceChange !== null) {
       // Clear any existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
