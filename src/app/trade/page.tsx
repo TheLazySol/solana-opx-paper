@@ -48,6 +48,12 @@ export default function TradePage() {
     setSelectedOptions([])
   }, [])
 
+  // Function to switch to the trade view when an option is selected
+  const handleSwitchToCreateOrder = useCallback(() => {
+    // Ensure the trade view is active to show the create order form
+    setActiveView('trade')
+  }, [])
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
       <div className="grid grid-cols-1 gap-2 sm:gap-4">
@@ -74,6 +80,7 @@ export default function TradePage() {
                 onOptionsChange={handleOptionsChange}
                 selectedOptions={selectedOptions}
                 onOrderPlaced={handleOrderPlaced}
+                onSwitchToCreateOrder={handleSwitchToCreateOrder}
               />
             </div>
             <div className="overflow-x-auto -mx-2 px-2">

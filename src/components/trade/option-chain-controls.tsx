@@ -11,13 +11,15 @@ interface OptionChainControlsProps {
   onOptionsChange?: (options: SelectedOption[]) => void
   selectedOptions?: SelectedOption[]
   onOrderPlaced?: () => void
+  onSwitchToCreateOrder?: () => void
 }
 
 export const OptionChainControls: FC<OptionChainControlsProps> = ({ 
   assetId,
   onOptionsChange,
   selectedOptions = [],
-  onOrderPlaced
+  onOrderPlaced,
+  onSwitchToCreateOrder
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
   const [greekFilters, setGreekFilters] = useState<GreekFilters>({
@@ -120,6 +122,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             initialSelectedOptions={selectedOptions}
             useGreekSymbols={useGreekSymbols}
             onOrderPlaced={handleOrderPlaced}
+            onSwitchToCreateOrder={onSwitchToCreateOrder}
           />
         </div>
       </div>

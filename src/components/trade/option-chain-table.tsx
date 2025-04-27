@@ -29,6 +29,7 @@ interface OptionChainTableProps {
   initialSelectedOptions?: SelectedOption[]
   useGreekSymbols?: boolean
   onOrderPlaced?: () => void
+  onSwitchToCreateOrder?: () => void
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -47,7 +48,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   onOptionsChange,
   initialSelectedOptions = [],
   useGreekSymbols = false,
-  onOrderPlaced
+  onOrderPlaced,
+  onSwitchToCreateOrder
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
@@ -106,7 +108,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = React.useMemo(() => 
     generateMockOptionData(expirationDate || null, spotPrice || 0, refreshVolume),
-    [expirationDate, spotPrice]
+    [expirationDate, refreshVolume, spotPrice]
   );
 
   // Calculate the position of the price indicator
@@ -174,6 +176,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         return [...filteredOptions, newOption]
       }
     })
+    
+    // Switch to the create order tab when a price is clicked
+    if (onSwitchToCreateOrder) {
+      onSwitchToCreateOrder();
+    }
   }
 
   const isOptionSelected = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
