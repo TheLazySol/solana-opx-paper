@@ -38,16 +38,16 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'mintedOptions') {
+        // Only refresh expiration data without triggering a full table refresh
         setRefreshExpirations(prev => prev + 1)
-        setRefreshTrigger(prev => prev + 1)
       }
     }
     
     window.addEventListener('storage', handleStorageChange)
     
     const handleLocalUpdate = () => {
+      // Only refresh expiration data without triggering a full table refresh
       setRefreshExpirations(prev => prev + 1)
-      setRefreshTrigger(prev => prev + 1)
     }
     
     window.addEventListener('mintedOptionsUpdated', handleLocalUpdate)

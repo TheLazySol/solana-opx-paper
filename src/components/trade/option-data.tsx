@@ -385,10 +385,7 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
       // Update open interest - just get the current value from tracker
       option.callOpenInterest = openInterestTracker.getOpenInterest(strike, expiry, 'call');
       
-      // Update volume - count only filled options for volume
-      const filledCallOptions = callMintedOptions.filter(opt => opt.status === 'filled');
-      const filledCallQuantity = filledCallOptions.reduce((sum, opt) => sum + opt.quantity, 0);
-      volumeTracker.updateVolume(strike, expiry, 'call', filledCallQuantity);
+      // Get volume from tracker without updating it
       option.callVolume = volumeTracker.getVolume(strike, expiry, 'call');
     }
     
@@ -406,10 +403,7 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
       // Update open interest - just get the current value from tracker
       option.putOpenInterest = openInterestTracker.getOpenInterest(strike, expiry, 'put');
       
-      // Update volume - count only filled options for volume
-      const filledPutOptions = putMintedOptions.filter(opt => opt.status === 'filled');
-      const filledPutQuantity = filledPutOptions.reduce((sum, opt) => sum + opt.quantity, 0);
-      volumeTracker.updateVolume(strike, expiry, 'put', filledPutQuantity);
+      // Get volume from tracker without updating it
       option.putVolume = volumeTracker.getVolume(strike, expiry, 'put');
     }
     
