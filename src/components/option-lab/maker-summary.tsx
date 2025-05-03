@@ -228,6 +228,7 @@ export function MakerSummary({
                   collateralProvided={collateralProvided}
                   leverage={leverage}
                   assetPrice={assetPrice}
+                  liquidationPrices={liquidationPrices}
                 />
               </div>
             </div>
