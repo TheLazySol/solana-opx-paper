@@ -77,7 +77,22 @@ export const updatePositionFill = (positionId: string, legIndex: number, filledA
     const storedOrders = localStorage.getItem('openOrders')
     if (!storedOrders) return
     
-    const orders = JSON.parse(storedOrders)
+    let parsedData;
+    try {
+      parsedData = JSON.parse(storedOrders);
+    } catch (parseError) {
+      console.error('Error parsing openOrders JSON:', parseError);
+      return;
+    }
+    
+    // Validate that we have an array
+    const orders = Array.isArray(parsedData) 
+      ? parsedData 
+      : /* fallback to empty list */ [];
+    
+    if (!Array.isArray(parsedData)) {
+      console.error('openOrders data is not an array, using empty array instead');
+    }
     
     // Find the position with the matching ID
     const position = orders.find((p: any) => p.id === positionId)
