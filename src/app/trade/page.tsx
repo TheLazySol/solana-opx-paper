@@ -7,7 +7,7 @@ import { AssetType } from '@/components/trade/asset-underlying'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption } from '@/components/trade/option-data'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
@@ -52,6 +52,11 @@ export default function TradePage() {
   const handleSwitchToCreateOrder = useCallback(() => {
     // Ensure the trade view is active to show the create order form
     setActiveView('trade')
+    
+    // Strip stale param
+    const params = new URLSearchParams(window.location.search)
+    params.delete('view')
+    window.history.replaceState(null, '', `?${params.toString()}`)
   }, [])
 
   return (
