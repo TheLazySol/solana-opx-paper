@@ -19,6 +19,7 @@ export default function TradePage() {
   
   // Get search parameters to determine which tabs to show
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   // On component mount, check for view and tab params
   useEffect(() => {
@@ -33,6 +34,25 @@ export default function TradePage() {
       setActiveOrderTab('open')
     }
   }, [searchParams])
+
+  // Push state changes back into URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    if (activeView === 'orders') {
+      params.set('view', activeView)
+    } else {
+      params.delete('view')
+    }
+    
+    if (activeOrderTab === 'open') {
+      params.set('tab', activeOrderTab)
+    } else {
+      params.delete('tab')
+    }
+    
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }, [activeView, activeOrderTab, router, searchParams])
 
   // Handle option changes from both sources (chain table and create order)
   const handleOptionsChange = useCallback((options: SelectedOption[]) => {
@@ -52,11 +72,6 @@ export default function TradePage() {
   const handleSwitchToCreateOrder = useCallback(() => {
     // Ensure the trade view is active to show the create order form
     setActiveView('trade')
-    
-    // Strip stale param
-    const params = new URLSearchParams(window.location.search)
-    params.delete('view')
-    window.history.replaceState(null, '', `?${params.toString()}`)
   }, [])
 
   return (
