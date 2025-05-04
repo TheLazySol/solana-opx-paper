@@ -871,11 +871,6 @@ export const OrdersViewOpen = () => {
                             <Badge variant="outline">
                               Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
                             </Badge>
-                            {leg.status === 'pending' && (leg.pendingQuantity ?? 0) > 0 && (
-                              <Badge variant="warning" className="animate-pulse">
-                                PENDING
-                              </Badge>
-                            )}
                           </div>
                           
                           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">
