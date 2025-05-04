@@ -177,6 +177,24 @@ class OptionsAvailabilityTracker {
   public resetAllAvailability(): void {
     this.availabilityMap.clear();
   }
+  
+  // Clear availability data for a specific expiry date
+  public clearAvailabilityForExpiry(expiry: string): void {
+    // Create a list of keys to remove
+    const keysToRemove: string[] = [];
+    
+    // Find all keys that contain this expiry date
+    this.availabilityMap.forEach((_, key) => {
+      if (key.endsWith(`-${expiry}`)) {
+        keysToRemove.push(key);
+      }
+    });
+    
+    // Remove all keys for this expiry
+    keysToRemove.forEach(key => {
+      this.availabilityMap.delete(key);
+    });
+  }
 }
 
 // Export the volume tracker instance
@@ -319,6 +337,9 @@ export const generateMockOptionData = (expirationDate: string | null, spotPrice:
   }
 
   const expiry = expirationDate || "2024-12-31"
+  
+  // Clear previous availability data for this expiry to prevent stale data
+  optionsAvailabilityTracker.clearAvailabilityForExpiry(expiry);
   
   // Check for minted options from localStorage
   let mintedOptions: any[] = [];
