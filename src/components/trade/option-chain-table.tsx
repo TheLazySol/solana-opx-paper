@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useMemo } from 'react'
 import React from 'react'
 import {
   Table,
@@ -56,6 +56,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
   const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
   const [refreshVolume, setRefreshVolume] = useState(0); // Counter to force refresh
+
+  // Use useMemo to compute the shouldDisableOptionButtons flag
+  const shouldDisableOptionButtons = useMemo(
+    () => selectedOptions.length >= MAX_OPTION_LEGS,
+    [selectedOptions.length]
+  );
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -230,9 +236,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
       onOptionsChange(selectedOptions);
     }
   }, [selectedOptions, onOptionsChange]);
-
-  // Determine if option buttons should be disabled due to reaching the limit
-  const shouldDisableOptionButtons = selectedOptions.length >= MAX_OPTION_LEGS;
 
   // Modified price column rendering to remove special handling for pending options
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
