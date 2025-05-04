@@ -538,24 +538,35 @@ export const handleOptionFill = (
           }
         });
         
-        // Create the final array of options
-        // First, add all options from the updated array
-        const finalMintedOptions = [...updatedMintedOptions];
+        // Create a new array with all the options
+        const finalMintedOptions: any[] = [];
         
-        // Then, add back any partially filled options with their remaining quantities
+        // Track options that have been partially filled to avoid duplicates
+        const partiallyFilledIds = new Set();
+        
+        // Process all options
         mintedOptions.forEach((opt: any) => {
-          if (
-            opt.strike === strike && 
-            opt.expiry === expiry && 
-            opt.side === side && 
-            opt.status === 'pending' &&
-            opt.quantity > 0 &&
-            // Check if this option has been partially filled
-            updatedMintedOptions.some((updatedOpt: any) => 
-              (updatedOpt.id && updatedOpt.id.startsWith(`${opt.id || 'option'}-filled-`))
-            )
-          ) {
-            finalMintedOptions.push(opt);
+          const isTargetOption = opt.strike === strike && 
+                                 opt.expiry === expiry && 
+                                 opt.side === side && 
+                                 opt.status === 'pending';
+          
+          // Find the corresponding updated option
+          const updatedOpt = updatedMintedOptions.find((u: any) => 
+            u.id === opt.id || (u.id?.startsWith(`${opt.id || 'option'}-filled-`))
+          );
+          
+          if (isTargetOption && updatedOpt && updatedOpt.id !== opt.id) {
+            // This was partially filled, add the updated version
+            finalMintedOptions.push(updatedOpt);
+            // Also add the remaining pending portion
+            if (opt.quantity > 0) {
+              finalMintedOptions.push(opt);
+            }
+            partiallyFilledIds.add(opt.id);
+          } else if (!partiallyFilledIds.has(opt.id)) {
+            // Add all other options that weren't partially filled
+            finalMintedOptions.push(opt.id === updatedOpt?.id ? updatedOpt : opt);
           }
         });
         
@@ -616,7 +627,7 @@ export const matchBuyOrderWithMintedOptions = (
       const orders = JSON.parse(storedOrders);
       const position = orders.find((p: any) => p.id === buyerPositionId);
       
-      if (position && position.legs && position.legs[buyerLegIndex]) {
+      if (position?.legs?.[buyerLegIndex]) {
         const leg = position.legs[buyerLegIndex];
         const totalPosition = Math.abs(leg.position);
         
@@ -677,15 +688,14 @@ const updateSellerPositionsWithAvgPrice = (
       for (let i = 0; i < position.legs.length; i++) {
         const leg = position.legs[i];
         
-        // Check if this is a matching seller position
-        const legSide = leg.type === 'Call' ? 'call' : 'put';
+        // Convert leg type to lowercase for consistent comparison
+        const legSide = leg.type?.toLowerCase() === 'call' ? 'call' : 'put';
         
         if (
           leg.strike === strike && 
           leg.expiry === expiry && 
-          legSide.toLowerCase() === side.toLowerCase() && 
+          legSide === side.toLowerCase() && 
           leg.position < 0 // Must be a short position (selling)
-          // Removed status check - we want to match any seller position
         ) {
           // Found a matching seller position
           console.log('Found matching seller position:', {

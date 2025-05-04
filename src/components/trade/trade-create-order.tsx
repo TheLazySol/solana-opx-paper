@@ -71,7 +71,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
         
         // Preserve existing quantity input or initialize with current option quantity
         if (!newQuantityInputs[legKey]) {
-          const safeQuantity = option.quantity ?? MIN_QTY;
+          const safeQuantity = option.quantity || MIN_QTY;
           newQuantityInputs[legKey] = safeQuantity.toFixed(2);
           needsUpdate = true;
         }
@@ -89,7 +89,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
           newMaxAvailable[legKey] = safeAvailableOptions;
           
           // If current quantity is more than available, cap it
-          const qtyRequested = option.quantity ?? MIN_QTY;
+          const qtyRequested = option.quantity || MIN_QTY;
           if (qtyRequested > safeAvailableOptions && safeAvailableOptions > 0) {
             // Update the quantity in parent component
             if (onUpdateQuantity) {
@@ -154,7 +154,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (!onUpdateQuantity) return
     
     const option = selectedOptions[index]
-    const currentQuantity = option.quantity ?? MIN_QTY
+    const currentQuantity = option.quantity || MIN_QTY
     let newQuantity = Math.max(MIN_QTY, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below MIN_QTY
     
     // If bidding (buying), check maximum available
@@ -287,7 +287,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       if (availableQty === 0) {
         return "No options available";
       } else {
-        const qtyRequested = option.quantity ?? MIN_QTY;
+        const qtyRequested = option.quantity || MIN_QTY;
         if (qtyRequested > availableQty) {
           return `Max available: ${availableQty.toFixed(2)}`;
         }
@@ -463,8 +463,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6"
-                                onClick={() => handleQuantityChange(index, -0.10)}
-                                title="Decrease by 0.10"
+                                onClick={() => handleQuantityChange(index, -MIN_QTY)}
+                                title={`Decrease by ${MIN_QTY}`}
                               >
                                 <Minus className="h-3 w-3" />
                               </Button>
@@ -483,8 +483,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6"
-                                onClick={() => handleQuantityChange(index, 0.10)}
-                                title="Increase by 0.10"
+                                onClick={() => handleQuantityChange(index, MIN_QTY)}
+                                title={`Increase by ${MIN_QTY}`}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
