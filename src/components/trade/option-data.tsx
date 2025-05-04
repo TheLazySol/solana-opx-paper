@@ -461,17 +461,16 @@ export const handleOptionFill = (
 ): void => {
   console.log(`Handling option fill: ${side} ${strike} ${expiry} - qty: ${quantity}, price: ${price}`);
   
-  // 1. Update volume since a trade happened
-  volumeTracker.updateVolume(strike, expiry, side, quantity);
-  
-  // 2. Update open interest (a new position was opened)
-  openInterestTracker.increaseOpenInterest(strike, expiry, side, quantity);
-  
-  // 3. Decrease available options
+  // 1. Check capacity first
   const currentAvailable = optionsAvailabilityTracker.getOptionsAvailable(strike, expiry, side);
   console.log(`Current available options: ${currentAvailable}`);
   
   if (currentAvailable >= quantity) {
+    // 2. Persist trade metrics only when the fill is valid
+    volumeTracker.updateVolume(strike, expiry, side, quantity);
+    openInterestTracker.increaseOpenInterest(strike, expiry, side, quantity);
+    
+    // 3. Decrease availability
     optionsAvailabilityTracker.decreaseOptionsAvailable(strike, expiry, side, quantity);
     
     // 4. Get minted options from localStorage

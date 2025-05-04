@@ -336,14 +336,13 @@ export const OrdersViewOpen = () => {
       }
     };
     
-    // Add event listener
-    window.addEventListener('storage', handleStorageChange);
-    
     // Custom event for local updates (within the same window)
     const handleLocalUpdate = () => {
       setForceUpdate(prev => prev + 1);
     };
     
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('openOrdersUpdated', handleLocalUpdate);
     
     // Clean up
@@ -351,7 +350,7 @@ export const OrdersViewOpen = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('openOrdersUpdated', handleLocalUpdate);
     };
-  }, []);
+  }, []); // Empty dependency array to prevent duplicate listeners
 
   const toggleAsset = (id: string) => {
     setExpandedAssets(prev => 
