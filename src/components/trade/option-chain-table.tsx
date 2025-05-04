@@ -234,15 +234,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Determine if option buttons should be disabled due to reaching the limit
   const shouldDisableOptionButtons = selectedOptions.length >= MAX_OPTION_LEGS;
 
-  // Export the order placement handler for use by parent components
-  React.useEffect(() => {
-    // Register the handleOrderPlaced callback with the parent if onOrderPlaced is provided
-    if (onOrderPlaced) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      onOrderPlaced = handleOrderPlaced;
-    }
-  }, [onOrderPlaced]);
-
   // Modified price column rendering to remove special handling for pending options
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
     return (
