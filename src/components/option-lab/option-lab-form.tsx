@@ -36,7 +36,7 @@ const formSchema = z.object({
     required_error: "Expiration date is required",
   }),
   strikePrice: z.union([
-    z.string().min(0),
+    z.string().min(1, { message: "Strike price is required" }),
     z.coerce.number().min(0, {
       message: "Strike price must be a positive number",
     })
@@ -51,7 +51,7 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .min(0, { message: "Quantity must be a non-negative number" })
+    .min(0, { message: "Quantity must be at least 0.01" })
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
