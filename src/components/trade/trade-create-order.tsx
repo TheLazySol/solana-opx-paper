@@ -71,7 +71,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
         
         // Preserve existing quantity input or initialize with current option quantity
         if (!newQuantityInputs[legKey]) {
-          newQuantityInputs[legKey] = option.quantity.toFixed(2);
+          const safeQuantity = option.quantity ?? MIN_QTY;
+          newQuantityInputs[legKey] = safeQuantity.toFixed(2);
           needsUpdate = true;
         }
         
@@ -83,16 +84,18 @@ export const CreateOrder: FC<CreateOrderProps> = ({
             option.side
           );
           
-          // Store the max available
-          newMaxAvailable[legKey] = availableOptions;
+          // Store the max available (default to 0 if undefined)
+          const safeAvailableOptions = availableOptions ?? 0;
+          newMaxAvailable[legKey] = safeAvailableOptions;
           
           // If current quantity is more than available, cap it
-          if (option.quantity > availableOptions && availableOptions > 0) {
+          const qtyRequested = option.quantity ?? MIN_QTY;
+          if (qtyRequested > safeAvailableOptions && safeAvailableOptions > 0) {
             // Update the quantity in parent component
             if (onUpdateQuantity) {
-              onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), availableOptions);
+              onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), safeAvailableOptions);
               // Also update the local input value to match
-              newQuantityInputs[legKey] = availableOptions.toFixed(2);
+              newQuantityInputs[legKey] = safeAvailableOptions.toFixed(2);
               needsUpdate = true;
             }
           }
@@ -151,13 +154,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (!onUpdateQuantity) return
     
     const option = selectedOptions[index]
-    const currentQuantity = option.quantity || 0.1
+    const currentQuantity = option.quantity ?? MIN_QTY
     let newQuantity = Math.max(MIN_QTY, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below MIN_QTY
     
     // If bidding (buying), check maximum available
     const legKey = option.index.toString()
-    if (option.type === 'bid' && maxAvailableOptions[legKey]) {
-      const maxAvailable = maxAvailableOptions[legKey]
+    if (option.type === 'bid') {
+      const maxAvailable = maxAvailableOptions[legKey] ?? 0
       if (maxAvailable > 0 && newQuantity > maxAvailable) {
         newQuantity = maxAvailable
       }
@@ -189,8 +192,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
         
         if (!isNaN(parsed) && parsed >= MIN_QTY) {
           // If bidding (buying), check maximum available
-          if (option.type === 'bid' && maxAvailableOptions[legKey]) {
-            const maxAvailable = maxAvailableOptions[legKey]
+          if (option.type === 'bid') {
+            const maxAvailable = maxAvailableOptions[legKey] ?? 0
             if (maxAvailable > 0 && parsed > maxAvailable) {
               parsed = maxAvailable
               // Update the input field with the capped value
@@ -279,12 +282,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   // Get available options warning if needed
   const getAvailableOptionsWarning = (option: SelectedOption): string | null => {
     const legKey = option.index.toString()
-    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
-      const availableQty = maxAvailableOptions[legKey]
+    if (option.type === 'bid') {
+      const availableQty = maxAvailableOptions[legKey] ?? 0
       if (availableQty === 0) {
         return "No options available";
-      } else if (option.quantity >= availableQty) {
-        return `Max available: ${availableQty.toFixed(2)}`;
+      } else {
+        const qtyRequested = option.quantity ?? MIN_QTY;
+        if (qtyRequested > availableQty) {
+          return `Max available: ${availableQty.toFixed(2)}`;
+        }
       }
     }
     return null;
@@ -293,8 +299,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   // Get available options display
   const getOptionsAvailableDisplay = (option: SelectedOption): string => {
     const legKey = option.index.toString()
-    if (option.type === 'bid' && maxAvailableOptions[legKey] !== undefined) {
-      const availableQty = maxAvailableOptions[legKey]
+    if (option.type === 'bid') {
+      const availableQty = maxAvailableOptions[legKey] ?? 0
       return availableQty.toFixed(2);
     }
     return "N/A"; // Not applicable for ask options
