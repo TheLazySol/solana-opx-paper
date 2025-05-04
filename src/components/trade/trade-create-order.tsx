@@ -10,6 +10,9 @@ import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
 import { optionsAvailabilityTracker } from './option-data'
 
+// Define minimum quantity constant
+const MIN_QTY = 0.1 // 1/10th contract
+
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
   onRemoveOption?: (index: number) => void
@@ -149,7 +152,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     
     const option = selectedOptions[index]
     const currentQuantity = option.quantity || 0.1
-    let newQuantity = Math.max(0.1, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
+    let newQuantity = Math.max(MIN_QTY, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below MIN_QTY
     
     // If bidding (buying), check maximum available
     const legKey = option.index.toString()
@@ -180,11 +183,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
     // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      // Only update the actual quantity if it's a valid number and at least 0.01
+      // Only update the actual quantity if it's a valid number and at least MIN_QTY
       if (inputValue !== '' && inputValue !== '.') {
         let parsed = parseFloat(inputValue);
         
-        if (!isNaN(parsed) && parsed >= 0.01) {
+        if (!isNaN(parsed) && parsed >= MIN_QTY) {
           // If bidding (buying), check maximum available
           if (option.type === 'bid' && maxAvailableOptions[legKey]) {
             const maxAvailable = maxAvailableOptions[legKey]
