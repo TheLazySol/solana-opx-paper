@@ -59,43 +59,49 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     });
 
     // Update quantity inputs and check max available options
-    const newQuantityInputs: Record<LegKey, string> = {};
-    
-    selectedOptions.forEach((option) => {
-      const legKey = option.index.toString();
+    setQuantityInputs(prev => {
+      const newQuantityInputs = { ...prev };
+      let needsUpdate = false;
       
-      // Preserve existing quantity input or initialize with current option quantity
-      newQuantityInputs[legKey] = quantityInputs[legKey] || option.quantity.toFixed(2);
-      
-      // If option type is 'bid', get the maximum available
-      if (option.type === 'bid') {
-        const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
-          option.strike, 
-          option.expiry, 
-          option.side
-        );
+      selectedOptions.forEach((option) => {
+        const legKey = option.index.toString();
         
-        // Store the max available
-        newMaxAvailable[legKey] = availableOptions;
+        // Preserve existing quantity input or initialize with current option quantity
+        if (!newQuantityInputs[legKey]) {
+          newQuantityInputs[legKey] = option.quantity.toFixed(2);
+          needsUpdate = true;
+        }
         
-        // If current quantity is more than available, cap it
-        if (option.quantity > availableOptions && availableOptions > 0) {
-          // Update the quantity in parent component
-          if (onUpdateQuantity) {
-            onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), availableOptions);
-            // Also update the local input value to match
-            newQuantityInputs[legKey] = availableOptions.toFixed(2);
+        // If option type is 'bid', get the maximum available
+        if (option.type === 'bid') {
+          const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
+            option.strike, 
+            option.expiry, 
+            option.side
+          );
+          
+          // Store the max available
+          newMaxAvailable[legKey] = availableOptions;
+          
+          // If current quantity is more than available, cap it
+          if (option.quantity > availableOptions && availableOptions > 0) {
+            // Update the quantity in parent component
+            if (onUpdateQuantity) {
+              onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), availableOptions);
+              // Also update the local input value to match
+              newQuantityInputs[legKey] = availableOptions.toFixed(2);
+              needsUpdate = true;
+            }
           }
         }
-      }
+      });
+      
+      // Set the max available options state
+      setMaxAvailableOptions(newMaxAvailable);
+      
+      // Only update if something changed
+      return needsUpdate ? newQuantityInputs : prev;
     });
-    
-    // Set the max available options state
-    setMaxAvailableOptions(newMaxAvailable);
-    
-    // Update quantity inputs
-    setQuantityInputs(newQuantityInputs);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOptions, onUpdateQuantity]);
 
   // Get unique assets from selected options
@@ -484,6 +490,11 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 {getOptionsAvailableDisplay(option)}
                               </span>
                             </div>
+                          )}
+                          
+                          {/* Display availability warning */}
+                          {availabilityWarning && (
+                            <p className="text-xs text-red-500 mt-1">{availabilityWarning}</p>
                           )}
                         </div>
                       </div>
