@@ -2,11 +2,17 @@ import { FC, useMemo, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { SelectedOption, updateOptionVolume, updateOptionOpenInterest } from './option-data'
+import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/use-toast"
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, AlertCircle } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
@@ -27,7 +33,33 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
+  const [insufficientOptions, setInsufficientOptions] = useState(false)
   
+  // Check if any selected option has insufficient availability
+  useEffect(() => {
+    if (selectedOptions.length === 0) {
+      setInsufficientOptions(false);
+      return;
+    }
+    
+    // Check each option's availability
+    const hasInsufficientOptions = selectedOptions.some(option => {
+      // Only check bid (buy) options
+      if (option.type === 'bid') {
+        const availableQty = optionsAvailabilityTracker.getOptionsAvailable(
+          option.strike,
+          option.expiry,
+          option.side
+        );
+        
+        return option.quantity > availableQty;
+      }
+      return false;
+    });
+    
+    setInsufficientOptions(hasInsufficientOptions);
+  }, [selectedOptions]);
+
   // Calculate total quantity across all legs
   const totalQuantity = selectedOptions.reduce((total, option) => {
     return total + (option.quantity || 1)
@@ -127,19 +159,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     // Simulate API call with a short delay
     setTimeout(() => {
       try {
-        // Update the volume data for each option in the order
-        selectedOptions.forEach(option => {
-          updateOptionVolume(option);
-          
-          // Also update open interest for each option
-          updateOptionOpenInterest(option);
-        });
-        
-        // Store the order in localStorage for demo purposes
-        // In a real application, this would be sent to a backend API
-        const existingOrders = JSON.parse(localStorage.getItem('openOrders') || '[]');
-        
-        // Group options by asset
+        // Format options for storage - this needs to be done first to get position IDs
         const optionsByAsset: Record<string, SelectedOption[]> = {};
         selectedOptions.forEach(option => {
           if (!optionsByAsset[option.asset]) {
@@ -148,7 +168,10 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           optionsByAsset[option.asset].push(option);
         });
         
-        // Format options for storage
+        // Create and store the new orders
+        const existingOrders = JSON.parse(localStorage.getItem('openOrders') || '[]');
+        
+        // Create formatted orders to store
         const newOrders = Object.entries(optionsByAsset).map(([asset, options]) => {
           return {
             asset,
@@ -169,6 +192,13 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               collateral: option.type === 'ask' ? option.strike * 100 : 0,
               value: (option.limitPrice !== undefined ? option.limitPrice : option.price) * option.quantity * 100,
               pnl: 0, // Initial P/L is 0
+              // If buying, set status to filled
+              // If selling, we need to check if it's matched with a buyer
+              status: option.type === 'bid' ? 'filled' : 'pending',
+              // For buyer positions, both quantities are already set
+              // For seller positions, initialize quantities
+              filledQuantity: option.type === 'bid' ? option.quantity : 0,
+              pendingQuantity: option.type === 'bid' ? 0 : option.quantity
             })),
             // Calculate aggregated values
             netDelta: 0, // Will be calculated in orders view
@@ -183,43 +213,134 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             id: `${asset}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
           };
         });
-        
+
+        // Save the orders first so we have the IDs
         localStorage.setItem('openOrders', JSON.stringify([...existingOrders, ...newOrders]));
 
-        // Show success toast
-        toast({
-          title: "Order Placed",
-          description: "Your order has been placed successfully.",
-          variant: "default",
+        // Process each option
+        selectedOptions.forEach((option, optionIndex) => {
+          // Update the volume data for each option
+          updateOptionVolume(option);
+          
+          // Update open interest for each option
+          updateOptionOpenInterest(option);
+          
+          // Decrease available options when purchased
+          decreaseAvailableOptions(option);
+          
+          // For buy orders, match with minted options
+          if (option.type === 'bid') {
+            // Find which asset position contains this option
+            const assetIndex = Object.keys(optionsByAsset).findIndex(asset => 
+              optionsByAsset[asset].includes(option)
+            );
+            
+            if (assetIndex !== -1) {
+              const assetName = Object.keys(optionsByAsset)[assetIndex];
+              const positionId = newOrders[assetIndex].id;
+              
+              // Find the leg index within this position
+              const legIndex = optionsByAsset[assetName].findIndex(o => 
+                o.strike === option.strike && 
+                o.expiry === option.expiry &&
+                o.side === option.side
+              );
+              
+              // Try to match this buy order with available minted options
+              if (legIndex !== -1) {
+                matchBuyOrderWithMintedOptions(option, positionId, legIndex);
+              }
+            }
+          }
         });
-
-        // Set success state
-        setOrderSuccess(true);
-
-        // Reset success state after a delay
-        setTimeout(() => {
-          setOrderSuccess(false);
-        }, 2000);
-
-        // Notify parent that order was placed
-        if (onOrderPlaced) {
-          onOrderPlaced(selectedOptions);
-        }
         
-        console.log('Order placed successfully!', selectedOptions);
+        setOrderSuccess(true);
+        onOrderPlaced && onOrderPlaced(selectedOptions);
+        
+        // Clear selection after a short delay
+        setTimeout(() => {
+          // Update order data with current values
+          onOrderDataChange && onOrderDataChange({ isDebit, collateralNeeded });
+          
+          // Dispatch a custom event to reset selected options externally
+          window.dispatchEvent(new CustomEvent('resetSelectedOptions'));
+          
+          setOrderSuccess(false);
+          setIsPlacingOrder(false);
+        }, 1500);
+        
       } catch (error) {
         console.error('Error placing order:', error);
-        
-        // Show error toast
-        toast({
-          title: "Order Failed",
-          description: "There was an error placing your order. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
         setIsPlacingOrder(false);
       }
-    }, 750);
+    }, 500);
+  };
+
+  // Function to decrease available options when purchased
+  const decreaseAvailableOptions = (option: SelectedOption) => {
+    if (!option || !option.quantity) return;
+    
+    console.log('Decreasing available options for:', {
+      type: option.type,  // 'bid' means buying, which should decrease available
+      side: option.side,  // 'call' or 'put'
+      strike: option.strike,
+      expiry: option.expiry,
+      quantity: option.quantity
+    });
+    
+    // Only decrease availability for bid orders (buying from available options)
+    if (option.type === 'bid') {
+      // Get the current minted options from localStorage
+      const mintedOptionsStr = localStorage.getItem('mintedOptions');
+      if (!mintedOptionsStr) return;
+      
+      try {
+        const mintedOptions = JSON.parse(mintedOptionsStr);
+        
+        // Find matching options by strike, expiry, and side
+        const matchingOptions = mintedOptions.filter((opt: any) => 
+          opt.strike === option.strike && 
+          opt.expiry === option.expiry && 
+          opt.side === option.side && 
+          opt.status === 'pending'
+        );
+        
+        console.log(`Found ${matchingOptions.length} matching pending options:`, 
+          matchingOptions.map((opt: any) => ({
+            strike: opt.strike,
+            side: opt.side, 
+            expiry: opt.expiry,
+            quantity: opt.quantity,
+            status: opt.status
+          }))
+        );
+        
+        if (matchingOptions.length > 0) {
+          // Get the total quantity available
+          const totalAvailable = matchingOptions.reduce(
+            (sum: number, opt: any) => sum + opt.quantity, 0
+          );
+          
+          // If trying to purchase more than available, limit the purchase
+          const purchaseQuantity = Math.min(option.quantity, totalAvailable);
+          
+          if (purchaseQuantity > 0) {
+            // Decrease the available options in the tracker
+            optionsAvailabilityTracker.decreaseOptionsAvailable(
+              option.strike, 
+              option.expiry, 
+              option.side, 
+              purchaseQuantity
+            );
+            
+            // The rest of the logic for matching buyer/seller is now handled by matchBuyOrderWithMintedOptions
+            // No need to manually update mintedOptions or seller positions here
+          }
+        }
+      } catch (error) {
+        console.error('Error updating option availability:', error);
+      }
+    }
   };
 
   return (
@@ -236,7 +357,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           {/* Order Details */}
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Total Quantity</span>
-            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity : '--'}</span>
+            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Order Type</span>
@@ -255,17 +376,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Option Creation Fee:</span>
-              <span className="text-right">{hasSelectedOptions ? `${fees.optionCreationFee.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Transaction Cost:</span>
-              <span className="text-right">{hasSelectedOptions ? `${fees.transactionCost.toFixed(3)} SOL` : '--'}</span>
+              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
             </div>
             <Separator className="my-1 bg-white/10" />
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="font-medium">Total Fees:</span>
               <div className="text-right">
-                <div>{hasSelectedOptions ? `${(fees.optionCreationFee + fees.transactionCost).toFixed(3)} SOL` : '--'}</div>
+                <div>{hasSelectedOptions ? `-- SOL` : '--'}</div>
                 {borrowedAmount > 0 && (
                   <div>${fees.borrowFee.toFixed(2)} USDC</div>
                 )}
@@ -286,29 +407,47 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           </div>
         </div>
 
-        <Button 
-          className="w-full bg-white/10 hover:bg-white/20 text-white border-0
-            transition-all duration-300 relative"
-          disabled={!hasSelectedOptions || isPlacingOrder}
-          onClick={handlePlaceOrder}
-        >
-          {isPlacingOrder ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </span>
-          ) : orderSuccess ? (
-            <span className="flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Order Placed
-            </span>
-          ) : (
-            hasSelectedOptions ? 'Place Order' : 'No Options Selected'
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <Button 
+                  className="w-full bg-white/10 hover:bg-white/20 text-white border-0
+                    transition-all duration-300 relative"
+                  disabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+                  onClick={handlePlaceOrder}
+                >
+                  {isPlacingOrder ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : orderSuccess ? (
+                    <span className="flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Order Placed
+                    </span>
+                  ) : insufficientOptions ? (
+                    <span className="flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Insufficient Options
+                    </span>
+                  ) : (
+                    hasSelectedOptions ? 'Place Order' : 'No Options Selected'
+                  )}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {insufficientOptions && (
+              <TooltipContent className="bg-red-900/90 text-white border-red-600">
+                <p>There are not enough options available to trade for the quantity selected.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </CardContent>
     </Card>
   )

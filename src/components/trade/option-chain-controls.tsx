@@ -1,4 +1,4 @@
-import { FC, useState, useCallback, useRef } from 'react'
+import { FC, useState, useCallback, useRef, useEffect } from 'react'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters } from './filter-greeks'
@@ -11,13 +11,15 @@ interface OptionChainControlsProps {
   onOptionsChange?: (options: SelectedOption[]) => void
   selectedOptions?: SelectedOption[]
   onOrderPlaced?: () => void
+  onSwitchToCreateOrder?: () => void
 }
 
 export const OptionChainControls: FC<OptionChainControlsProps> = ({ 
   assetId,
   onOptionsChange,
   selectedOptions = [],
-  onOrderPlaced
+  onOrderPlaced,
+  onSwitchToCreateOrder
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
   const [greekFilters, setGreekFilters] = useState<GreekFilters>({
@@ -26,12 +28,37 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     gamma: false,
     vega: false,
     rho: false,
-    oi: false,
+    oa: true,
+    oi: true,
     volume: true
   })
   const [useGreekSymbols, setUseGreekSymbols] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [refreshExpirations, setRefreshExpirations] = useState(0)
   const optionChainTableRef = useRef<{ refreshVolumes: () => void } | null>(null)
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'mintedOptions') {
+        // Only refresh expiration data without triggering a full table refresh
+        setRefreshExpirations(prev => prev + 1)
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    const handleLocalUpdate = () => {
+      // Only refresh expiration data without triggering a full table refresh
+      setRefreshExpirations(prev => prev + 1)
+    }
+    
+    window.addEventListener('mintedOptionsUpdated', handleLocalUpdate)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('mintedOptionsUpdated', handleLocalUpdate)
+    }
+  }, [])
 
   // Handle expiration date selection change
   const handleExpirationChange = useCallback((expiration: string) => {
@@ -70,6 +97,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             onExpirationChange={handleExpirationChange}
             greekFilters={greekFilters}
             onGreekFiltersChange={handleGreekFiltersChange}
+            refreshExpirations={refreshExpirations}
           />
           <div className="flex items-center space-x-2">
             <Switch
@@ -86,7 +114,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
       <div className="w-full overflow-x-auto">
         <div className="min-w-[800px]">
           <OptionChainTable 
-            key={`option-chain-${refreshTrigger}`} // Add key with refresh trigger to force remount
+            key={`option-chain-${refreshTrigger}`}
             assetId={assetId}
             expirationDate={selectedExpiration}
             greekFilters={greekFilters}
@@ -94,6 +122,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             initialSelectedOptions={selectedOptions}
             useGreekSymbols={useGreekSymbols}
             onOrderPlaced={handleOrderPlaced}
+            onSwitchToCreateOrder={onSwitchToCreateOrder}
           />
         </div>
       </div>

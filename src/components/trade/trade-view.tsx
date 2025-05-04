@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from 'react'
 import { TradePnLChart } from './trade-pnl-chart'
-import { CreateOrder } from './create-order'
+import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-place-order'
 import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
@@ -144,6 +144,27 @@ export const TradeView: FC<TradeViewProps> = ({
       onTabChange('orders');
     }
   }
+
+  // Add an effect to listen for resetSelectedOptions events
+  useEffect(() => {
+    const handleResetOptions = () => {
+      // Reset the selected options
+      setSelectedOptions([]);
+      
+      // Also notify parent
+      if (onOptionsUpdate) {
+        onOptionsUpdate([]);
+      }
+    };
+    
+    // Listen for the resetSelectedOptions event
+    window.addEventListener('resetSelectedOptions', handleResetOptions);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resetSelectedOptions', handleResetOptions);
+    };
+  }, [onOptionsUpdate]);
 
   return (
     <div className="space-y-4">

@@ -28,9 +28,11 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
 
   const handleStrikePriceChange = (value: string) => {
     if (value === "") {
-      setValue('strikePrice', value);
+      setValue('strikePrice', "");
+      clearErrors("strikePrice");
       return;
     }
+    
     if (!validateStrikePrice(value, assetPrice)) {
       let errorMessage = "";
       if (assetPrice && assetPrice >= 100) {
@@ -47,6 +49,8 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       clearErrors("strikePrice");
     }
     setValue('strikePrice', value);
+    
+    // Don't try to calculate price for an empty value
     if (value) {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
@@ -86,7 +90,7 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
             type="text"
             step={getStepValue(assetPrice)}
             min="0"
-            placeholder="Enter strike price"
+            placeholder="Enter Strike Price"
             value={getValues('strikePrice')}
             onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
             className="h-9 sm:h-10 pl-7 text-sm sm:text-base"

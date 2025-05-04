@@ -3,12 +3,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { OptionOrder } from "@/types/order";
 import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
 import { AssetSelector } from './asset-selector';
@@ -35,9 +35,12 @@ const formSchema = z.object({
   expirationDate: z.date({
     required_error: "Expiration date is required",
   }),
-  strikePrice: z.coerce.number().min(0, {
-    message: "Strike price must be a positive number",
-  }),
+  strikePrice: z.union([
+    z.string().min(1, { message: "Strike price is required" }),
+    z.coerce.number().min(0, {
+      message: "Strike price must be a positive number",
+    })
+  ]),
   premium: z.string().refine(
     (val) => {
       if (val === '') return true;
@@ -48,9 +51,34 @@ const formSchema = z.object({
   ),
   quantity: z.coerce
     .number()
-    .min(0.001, { message: "Quantity must be at least 0.001" })
+    .min(0, { message: "Quantity must be at least 0.01" })
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
+
+// Helper functions for getting bi-weekly dates (same as in expiration-date-select.tsx)
+function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 14);
+  }
+  return dates;
+}
+
+// Helper function to get the next available bi-weekly date from the allowed dates
+function getNextAvailableBiWeeklyDate(): Date {
+  const startDate = new Date(2025, 0, 1); // January 1st, 2025
+  const endDate = new Date(2026, 0, 1);   // January 1st, 2026
+  const allowedDates = getBiWeeklyDates(startDate, endDate);
+  
+  // Find the first date that is in the future
+  const now = new Date();
+  const nextAvailableDate = allowedDates.find(date => date > now);
+  
+  // Return the next available date or default to the first date in the sequence
+  return nextAvailableDate || allowedDates[0];
+}
 
 export function OptionLabForm() {
   const router = useRouter();
@@ -58,15 +86,18 @@ export function OptionLabForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([]);
 
+  // Get the next available expiration date
+  const defaultExpirationDate = getNextAvailableBiWeeklyDate();
+
   const methods = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       asset: "SOL",
       optionType: "call",
-      strikePrice: 0,
+      strikePrice: '',
       premium: '',
-      quantity: 0.001,
-      expirationDate: undefined,
+      quantity: 1.00,
+      expirationDate: defaultExpirationDate,
     },
   });
 
@@ -95,6 +126,10 @@ export function OptionLabForm() {
     maxProfitPotential: 0
   });
 
+  // Use useWatch instead of methods.watch in dependency array
+  const strikePrice = useWatch({ control: methods.control, name: 'strikePrice' });
+  const expirationDate = useWatch({ control: methods.control, name: 'expirationDate' });
+
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
     console.log('Calculating option price for values:', values);
     if (isCalculatingPremium) {
@@ -102,8 +137,8 @@ export function OptionLabForm() {
       return;
     }
     
-    if (!assetPrice || !values.expirationDate) {
-      console.log('Missing spot price or expiration date, cannot calculate');
+    if (!assetPrice || !values.expirationDate || !values.strikePrice || values.strikePrice === '') {
+      console.log('Missing spot price, expiration date, or strike price, cannot calculate');
       return;
     }
     
@@ -116,7 +151,7 @@ export function OptionLabForm() {
       const riskFreeRate = SOL_PH_RISK_FREE_RATE;
       const result = await calculateOption({
         isCall: values.optionType === 'call',
-        strikePrice: Number(values.strikePrice),
+        strikePrice: typeof values.strikePrice === 'string' ? Number(values.strikePrice) : values.strikePrice,
         spotPrice: assetPrice,
         timeUntilExpirySeconds: timeUntilExpiry,
         volatility,
@@ -147,10 +182,9 @@ export function OptionLabForm() {
       clearTimeout(debounceTimer.current);
     }
     const values = methods.getValues();
-    const strikePrice = values.strikePrice;
-    if (strikePrice) {
+    if (strikePrice && strikePrice !== '') {
       debounceTimer.current = setTimeout(() => {
-        if (!values.expirationDate) {
+        if (!expirationDate) {
           const tempValues = {...values};
           tempValues.expirationDate = new Date();
           calculateOptionPrice(tempValues);
@@ -164,7 +198,7 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [methods.watch('strikePrice'), methods.watch('expirationDate'), assetPrice]);
+  }, [strikePrice, expirationDate, assetPrice]);
 
   useEffect(() => {
     if (calculatedPrice !== null) {
@@ -178,12 +212,21 @@ export function OptionLabForm() {
 
   const addOptionToSummary = async () => {
     const values = methods.getValues();
-    if (!values.strikePrice || !values.expirationDate) {
+    if (!values.strikePrice || values.strikePrice === '' || !values.expirationDate) {
       methods.setError('root', { 
         message: 'Please fill in all required fields' 
       });
       return;
     }
+    
+    // Ensure quantity is at least 0.01
+    if (values.quantity < 0.01) {
+      methods.setError('quantity', {
+        message: 'Quantity must be at least 0.01 to create an option'
+      });
+      return;
+    }
+    
     if (isCalculatingPremium || calculatedPrice === null) {
       methods.setError('root', { 
         message: 'Please wait for premium calculation to complete' 
@@ -221,13 +264,23 @@ export function OptionLabForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!publicKey || pendingOptions.length === 0) return;
+    
+    // Ensure all options have valid quantities
+    const hasInvalidQuantity = pendingOptions.some(option => option.quantity < 0.01);
+    if (hasInvalidQuantity) {
+      methods.setError('quantity', {
+        message: 'All options must have a quantity of at least 0.01'
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       // Create options but don't add them to a store
       const createdOptions = pendingOptions.map(values => {
         const newOption: OptionOrder = {
           publicKey: new PublicKey(Keypair.generate().publicKey),
-          strike: Number(values.strikePrice),
+          strike: typeof values.strikePrice === 'string' ? Number(values.strikePrice) : Number(values.strikePrice),
           price: Number(values.premium),
           bidPrice: 0,
           askPrice: Number(values.premium),
@@ -242,14 +295,84 @@ export function OptionLabForm() {
         return newOption;
       });
       
-      // Log created options instead of adding to store (as requested, don't send data anywhere yet)
+      // Save options to localStorage for orders-view-open.tsx
+      try {
+        // Format option leg for the orders view
+        const formattedPositions = pendingOptions.map((option, index) => {
+          const currentAssetPrice = assetPrice || 0;
+          
+          // Create an AssetPosition object for each created option
+          return {
+            asset: option.asset,
+            marketPrice: currentAssetPrice,
+            id: `${option.asset}-${Date.now()}-${index}`,
+            legs: [{
+              type: option.optionType === 'call' ? 'Call' : 'Put',
+              strike: typeof option.strikePrice === 'string' ? Number(option.strikePrice) : Number(option.strikePrice),
+              expiry: format(option.expirationDate, 'yyyy-MM-dd'),
+              position: -1 * Number(option.quantity), // Negative to represent short position
+              marketPrice: Number(option.premium),
+              entryPrice: Number(option.premium),
+              underlyingEntryPrice: currentAssetPrice,
+              delta: 0, // Will be calculated in orders-view-open
+              theta: 0,
+              gamma: 0,
+              vega: 0,
+              rho: 0,
+              collateral: 0,
+              value: -1 * Number(option.premium) * 100 * Number(option.quantity), // Negative value for short
+              pnl: 0,
+              status: 'pending' // Add status field
+            }],
+            netDelta: 0,
+            netTheta: 0,
+            netGamma: 0,
+            netVega: 0,
+            netRho: 0,
+            totalCollateral: 0,
+            totalValue: -1 * Number(option.premium) * 100 * Number(option.quantity),
+            totalPnl: 0
+          };
+        });
+        
+        // Get existing open orders, if any
+        const existingOrdersJSON = localStorage.getItem('openOrders');
+        const existingOrders = existingOrdersJSON ? JSON.parse(existingOrdersJSON) : [];
+        
+        // Combine with new orders
+        const allOrders = [...existingOrders, ...formattedPositions];
+        
+        // Save to localStorage
+        localStorage.setItem('openOrders', JSON.stringify(allOrders));
+        
+        // Also save the mint data to a separate localStorage key for the option chain to access
+        const mintedOptions = pendingOptions.map(option => ({
+          asset: option.asset,
+          strike: typeof option.strikePrice === 'string' ? Number(option.strikePrice) : Number(option.strikePrice),
+          expiry: format(option.expirationDate, 'yyyy-MM-dd'),
+          price: Number(option.premium),
+          quantity: Number(option.quantity),
+          side: option.optionType,
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        }));
+        
+        const existingMintedJSON = localStorage.getItem('mintedOptions');
+        const existingMinted = existingMintedJSON ? JSON.parse(existingMintedJSON) : [];
+        localStorage.setItem('mintedOptions', JSON.stringify([...existingMinted, ...mintedOptions]));
+        
+      } catch (error) {
+        console.error('Error saving options to localStorage:', error);
+      }
+      
+      // Log created options 
       console.log('Options created:', createdOptions);
       
       // Clear pending options but keep the form values
       setPendingOptions([]);
       
-      // Remove navigation to trade page
-      // router.push("/trade");
+      // Navigate to trade page with query params to activate the orders tab and open positions
+      router.push("/trade?view=orders&tab=open");
     } catch (error) {
       console.error('Error minting options:', error);
     } finally {
@@ -260,7 +383,7 @@ export function OptionLabForm() {
   const manualRefresh = () => {
     console.log('Manual refresh triggered');
     const values = methods.getValues();
-    if (values.strikePrice && values.expirationDate) {
+    if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
@@ -343,8 +466,10 @@ export function OptionLabForm() {
                           disabled:hover:scale-100"
                         disabled={
                           !methods.getValues("strikePrice") || 
+                          methods.getValues("strikePrice") === "" ||
                           !methods.getValues("premium") ||
-                          !methods.getValues("expirationDate")
+                          !methods.getValues("expirationDate") ||
+                          methods.getValues("quantity") < 0.01
                         }
                       >
                         {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
@@ -409,7 +534,7 @@ export function OptionLabForm() {
                                 <div className="flex items-center justify-end gap-2">
                                   <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                                   <span className="text-xs sm:text-sm font-medium">
-                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(3)}
+                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(2)}
                                   </span>
                                 </div>
                               </div>

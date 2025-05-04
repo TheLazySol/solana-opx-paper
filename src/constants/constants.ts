@@ -72,7 +72,6 @@ export const SOL_PH_RISK_FREE_RATE = 0.08;
 export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
-export const OPTION_STRIKE_PRICES = [110,115,120,125,130,135,140,145,150];
 
 // Maximum number of option legs allowed in an order
 export const MAX_OPTION_LEGS = 4;

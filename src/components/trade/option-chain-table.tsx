@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useMemo } from 'react'
 import React from 'react'
 import {
   Table,
@@ -29,6 +29,7 @@ interface OptionChainTableProps {
   initialSelectedOptions?: SelectedOption[]
   useGreekSymbols?: boolean
   onOrderPlaced?: () => void
+  onSwitchToCreateOrder?: () => void
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -41,18 +42,26 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     vega: false,
     rho: false,
     oi: false,
+    oa: true,
     volume: true
   },
   onOptionsChange,
   initialSelectedOptions = [],
   useGreekSymbols = false,
-  onOrderPlaced
+  onOrderPlaced,
+  onSwitchToCreateOrder
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
   const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
   const [refreshVolume, setRefreshVolume] = useState(0); // Counter to force refresh
+
+  // Use useMemo to compute the shouldDisableOptionButtons flag
+  const shouldDisableOptionButtons = useMemo(
+    () => selectedOptions.length >= MAX_OPTION_LEGS,
+    [selectedOptions.length]
+  );
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -105,7 +114,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   // Get mock data using the generator function with the current spot price
   const mockData: OptionContract[] = React.useMemo(() => 
     generateMockOptionData(expirationDate || null, spotPrice || 0, refreshVolume),
-    [expirationDate, spotPrice, refreshVolume] // Add refreshVolume to dependencies
+    [expirationDate, refreshVolume, spotPrice]
   );
 
   // Calculate the position of the price indicator
@@ -173,6 +182,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         return [...filteredOptions, newOption]
       }
     })
+    
+    // Switch to the create order tab when a price is clicked
+    if (onSwitchToCreateOrder) {
+      onSwitchToCreateOrder();
+    }
   }
 
   const isOptionSelected = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
@@ -223,17 +237,45 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [selectedOptions, onOptionsChange]);
 
-  // Determine if option buttons should be disabled due to reaching the limit
-  const shouldDisableOptionButtons = selectedOptions.length >= MAX_OPTION_LEGS;
-
-  // Export the order placement handler for use by parent components
-  React.useEffect(() => {
-    // Register the handleOrderPlaced callback with the parent if onOrderPlaced is provided
-    if (onOrderPlaced) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      onOrderPlaced = handleOrderPlaced;
-    }
-  }, [onOrderPlaced]);
+  // Modified price column rendering to remove special handling for pending options
+  const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
+    return (
+      <div className="flex flex-col space-y-0.5">
+        <button
+          onClick={() => handlePriceClick(index, side, 'bid')}
+          onMouseEnter={() => setHoveredPrice({ index, side, type: 'bid' })}
+          onMouseLeave={() => setHoveredPrice(null)}
+          className={cn(
+            "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
+            (hoveredPrice?.index === index && 
+            hoveredPrice?.side === side && 
+            hoveredPrice?.type === 'bid') && "bg-green-500/10",
+            isOptionSelected(index, side, 'bid') && "bg-green-500/20",
+            shouldDisableOptionButtons && !isOptionSelected(index, side, 'bid') && "opacity-50 cursor-not-allowed"
+          )}
+          disabled={shouldDisableOptionButtons && !isOptionSelected(index, side, 'bid')}
+        >
+          {formatPrice(side === 'call' ? option.callBid : option.putBid)}
+        </button>
+        <button
+          onClick={() => handlePriceClick(index, side, 'ask')}
+          onMouseEnter={() => setHoveredPrice({ index, side, type: 'ask' })}
+          onMouseLeave={() => setHoveredPrice(null)}
+          className={cn(
+            "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
+            (hoveredPrice?.index === index && 
+            hoveredPrice?.side === side && 
+            hoveredPrice?.type === 'ask') && "bg-red-500/10",
+            isOptionSelected(index, side, 'ask') && "bg-red-500/20",
+            shouldDisableOptionButtons && !isOptionSelected(index, side, 'ask') && "opacity-50 cursor-not-allowed"
+          )}
+          disabled={shouldDisableOptionButtons && !isOptionSelected(index, side, 'ask')}
+        >
+          {formatPrice(side === 'call' ? option.callAsk : option.putAsk)}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div 
@@ -267,6 +309,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   (visibleGreeks.gamma ? 1 : 0) +
                   (visibleGreeks.theta ? 1 : 0) +
                   (visibleGreeks.delta ? 1 : 0) +
+                  (visibleGreeks.oa ? 1 : 0) +
                   1 // Price column
                 }
                 className="text-center font-bold text-lg text-[#4a85ff]"
@@ -284,6 +327,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   (visibleGreeks.gamma ? 1 : 0) +
                   (visibleGreeks.vega ? 1 : 0) +
                   (visibleGreeks.rho ? 1 : 0) +
+                  (visibleGreeks.oa ? 1 : 0) +
                   (visibleGreeks.oi ? 1 : 0) +
                   (visibleGreeks.volume ? 1 : 0)
                 }
@@ -328,6 +372,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                       </TooltipTrigger>
                       <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
                         Rho - Sensitivity to interest rate changes
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+              )}
+              {visibleGreeks.oa && (
+                <TableHead className="text-center w-[85px]">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
+                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                        Options Available - Quantity of options available to trade
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -490,6 +546,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   </TooltipProvider>
                 </TableHead>
               )}
+              {visibleGreeks.oa && (
+                <TableHead className="text-center w-[85px]">
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
+                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
+                        Options Available - Quantity of options available to trade
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+              )}
               {visibleGreeks.oi && (
                 <TableHead className="text-center w-[85px]">
                   <TooltipProvider delayDuration={0}>
@@ -532,6 +600,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     (visibleGreeks.gamma ? 1 : 0) +
                     (visibleGreeks.theta ? 1 : 0) +
                     (visibleGreeks.delta ? 1 : 0) +
+                    (visibleGreeks.oa ? 1 : 0) +
                     1 + // Price column
                     1 + // Strike column
                     1 + // Put price column
@@ -540,6 +609,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     (visibleGreeks.gamma ? 1 : 0) +
                     (visibleGreeks.vega ? 1 : 0) +
                     (visibleGreeks.rho ? 1 : 0) +
+                    (visibleGreeks.oa ? 1 : 0) +
                     (visibleGreeks.oi ? 1 : 0) +
                     (visibleGreeks.volume ? 1 : 0)
                   } className="text-center py-4">
@@ -560,6 +630,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.theta ? 1 : 0) +
                           (visibleGreeks.delta ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           1 + // Price column
                           1 + // Strike column
                           1 + // Put price column
@@ -568,6 +639,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.vega ? 1 : 0) +
                           (visibleGreeks.rho ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           (visibleGreeks.oi ? 1 : 0) +
                           (visibleGreeks.volume ? 1 : 0)
                         }
@@ -612,6 +684,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (visibleGreeks.gamma ? 1 : 0) +
                               (visibleGreeks.theta ? 1 : 0) +
                               (visibleGreeks.delta ? 1 : 0) +
+                              (visibleGreeks.oa ? 1 : 0) +
                               1 // Price column
                             }
                             className={cn(
@@ -635,6 +708,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                   {formatGreek(option.callGreeks.rho)}
                                 </div>
                               )}
+                              {visibleGreeks.oa && (
+                                <div className="text-center py-1 opacity-70">
+                                  {formatInteger(option.callOptionsAvailable)}
+                                </div>
+                              )}
                               {visibleGreeks.vega && (
                                 <div className="text-center py-1 opacity-70">
                                   {formatGreek(option.callGreeks.vega)}
@@ -656,45 +734,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 </div>
                               )}
                               <div className="text-center font-medium py-1">
-                                <div className="flex flex-col space-y-0.5">
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'call', 'bid')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'bid' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'call' && 
-                                      hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'call', 'bid') && "bg-green-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'bid')}
-                                  >
-                                    {formatPrice(option.callBid)}
-                                  </button>
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'call', 'ask')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'call', type: 'ask' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'call' && 
-                                      hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'call', 'ask') && "bg-red-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'call', 'ask')}
-                                  >
-                                    {formatPrice(option.callAsk)}
-                                  </button>
-                                </div>
+                                {renderPriceColumn(option, index, 'call')}
                               </div>
                             </div>
                           </TableCell>
                           
-                          {/* Strike price (center) */}
+                          {/* Strike price (center) - Remove highlighting for pending options */}
                           <TableCell className="text-center font-bold bg-muted/20">
                             ${formatPrice(option.strike)}
                           </TableCell>
@@ -708,6 +753,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                               (visibleGreeks.gamma ? 1 : 0) +
                               (visibleGreeks.vega ? 1 : 0) +
                               (visibleGreeks.rho ? 1 : 0) +
+                              (visibleGreeks.oa ? 1 : 0) +
                               (visibleGreeks.oi ? 1 : 0) +
                               (visibleGreeks.volume ? 1 : 0)
                             }
@@ -718,40 +764,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           >
                             <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
                               <div className="text-center font-medium py-1">
-                                <div className="flex flex-col space-y-0.5">
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'put', 'bid')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'bid' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-green-500 hover:text-green-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'put' && 
-                                      hoveredPrice?.type === 'bid') && "bg-green-500/10",
-                                      isOptionSelected(index, 'put', 'bid') && "bg-green-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'bid')}
-                                  >
-                                    {formatPrice(option.putBid)}
-                                  </button>
-                                  <button
-                                    onClick={() => handlePriceClick(index, 'put', 'ask')}
-                                    onMouseEnter={() => setHoveredPrice({ index, side: 'put', type: 'ask' })}
-                                    onMouseLeave={() => setHoveredPrice(null)}
-                                    className={cn(
-                                      "text-red-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded",
-                                      (hoveredPrice?.index === index && 
-                                      hoveredPrice?.side === 'put' && 
-                                      hoveredPrice?.type === 'ask') && "bg-red-500/10",
-                                      isOptionSelected(index, 'put', 'ask') && "bg-red-500/20",
-                                      shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask') && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    disabled={shouldDisableOptionButtons && !isOptionSelected(index, 'put', 'ask')}
-                                  >
-                                    {formatPrice(option.putAsk)}
-                                  </button>
-                                </div>
+                                {renderPriceColumn(option, index, 'put')}
                               </div>
                               {visibleGreeks.delta && (
                                 <div className="text-center py-1">
@@ -778,6 +791,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                   {formatGreek(option.putGreeks.rho)}
                                 </div>
                               )}
+                              {visibleGreeks.oa && (
+                                <div className="text-center py-1 opacity-70">
+                                  {formatInteger(option.putOptionsAvailable)}
+                                </div>
+                              )}
                               {visibleGreeks.oi && (
                                 <div className="text-center py-1 opacity-70">
                                   {formatInteger(option.putOpenInterest)}
@@ -802,6 +820,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 (visibleGreeks.gamma ? 1 : 0) +
                                 (visibleGreeks.theta ? 1 : 0) +
                                 (visibleGreeks.delta ? 1 : 0) +
+                                (visibleGreeks.oa ? 1 : 0) +
                                 1 + // Price column
                                 1 + // Strike column
                                 1 + // Put price column
@@ -810,6 +829,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                                 (visibleGreeks.gamma ? 1 : 0) +
                                 (visibleGreeks.vega ? 1 : 0) +
                                 (visibleGreeks.rho ? 1 : 0) +
+                                (visibleGreeks.oa ? 1 : 0) +
                                 (visibleGreeks.oi ? 1 : 0) +
                                 (visibleGreeks.volume ? 1 : 0)
                               }
@@ -841,6 +861,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.theta ? 1 : 0) +
                           (visibleGreeks.delta ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           1 + // Price column
                           1 + // Strike column
                           1 + // Put price column
@@ -849,6 +870,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                           (visibleGreeks.gamma ? 1 : 0) +
                           (visibleGreeks.vega ? 1 : 0) +
                           (visibleGreeks.rho ? 1 : 0) +
+                          (visibleGreeks.oa ? 1 : 0) +
                           (visibleGreeks.oi ? 1 : 0) +
                           (visibleGreeks.volume ? 1 : 0)
                         }

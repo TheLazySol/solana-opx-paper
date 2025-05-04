@@ -8,6 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
+import { optionsAvailabilityTracker } from './option-data'
+
+// Define minimum quantity constant
+const MIN_QTY = 0.1 // 1/10th contract
 
 interface CreateOrderProps {
   selectedOptions: SelectedOption[]
@@ -29,9 +33,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const [orderTypes, setOrderTypes] = useState<Record<LegKey, 'MKT' | 'LMT'>>({});
   const [inputValues, setInputValues] = useState<Record<LegKey, string>>({});
   const [quantityInputs, setQuantityInputs] = useState<Record<LegKey, string>>({});
+  const [maxAvailableOptions, setMaxAvailableOptions] = useState<Record<LegKey, number>>({});
 
   // Update all state when options change
   useEffect(() => {
+    // Create a new state object for max available options
+    const newMaxAvailable: Record<LegKey, number> = {};
+    
     // Update order types
     setOrderTypes(prev => {
       const newOrderTypes: Record<LegKey, 'MKT' | 'LMT'> = {};
@@ -53,17 +61,54 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       return newValues;
     });
 
-    // Update quantity inputs
+    // Update quantity inputs and check max available options
     setQuantityInputs(prev => {
-      const newValues = { ...prev };
+      const newQuantityInputs = { ...prev };
+      let needsUpdate = false;
+      
       selectedOptions.forEach((option) => {
         const legKey = option.index.toString();
-        // Always ensure there's a value
-        newValues[legKey] = prev[legKey] || option.quantity.toFixed(2);
+        
+        // Preserve existing quantity input or initialize with current option quantity
+        if (!newQuantityInputs[legKey]) {
+          const safeQuantity = option.quantity || MIN_QTY;
+          newQuantityInputs[legKey] = safeQuantity.toFixed(2);
+          needsUpdate = true;
+        }
+        
+        // If option type is 'bid', get the maximum available
+        if (option.type === 'bid') {
+          const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
+            option.strike, 
+            option.expiry, 
+            option.side
+          );
+          
+          // Store the max available (default to 0 if undefined)
+          const safeAvailableOptions = availableOptions ?? 0;
+          newMaxAvailable[legKey] = safeAvailableOptions;
+          
+          // If current quantity is more than available, cap it
+          const qtyRequested = option.quantity || MIN_QTY;
+          if (qtyRequested > safeAvailableOptions && safeAvailableOptions > 0) {
+            // Update the quantity in parent component
+            if (onUpdateQuantity) {
+              onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), safeAvailableOptions);
+              // Also update the local input value to match
+              newQuantityInputs[legKey] = safeAvailableOptions.toFixed(2);
+              needsUpdate = true;
+            }
+          }
+        }
       });
-      return newValues;
+      
+      // Set the max available options state
+      setMaxAvailableOptions(newMaxAvailable);
+      
+      // Only update if something changed
+      return needsUpdate ? newQuantityInputs : prev;
     });
-  }, [selectedOptions]);
+  }, [selectedOptions, onUpdateQuantity]);
 
   // Get unique assets from selected options
   const uniqueAssets = useMemo(() => {
@@ -109,12 +154,22 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (!onUpdateQuantity) return
     
     const option = selectedOptions[index]
-    const currentQuantity = option.quantity || 0.01
-    const newQuantity = Math.max(0.01, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below 0.01
+    const currentQuantity = option.quantity || MIN_QTY
+    let newQuantity = Math.max(MIN_QTY, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below MIN_QTY
+    
+    // If bidding (buying), check maximum available
+    const legKey = option.index.toString()
+    if (option.type === 'bid') {
+      const maxAvailable = maxAvailableOptions[legKey] ?? 0
+      if (maxAvailable > 0 && newQuantity > maxAvailable) {
+        newQuantity = maxAvailable
+      }
+    }
+    
+    // Important: Update only the EXACT option that was modified (by index)
     onUpdateQuantity(index, newQuantity)
     
     // Update quantity input field using the stable identifier
-    const legKey = option.index.toString()
     setQuantityInputs(prev => ({
       ...prev,
       [legKey]: newQuantity.toFixed(2)
@@ -131,14 +186,34 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
     // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
     if (inputValue === '' || /^\d*\.?\d{0,2}$/.test(inputValue)) {
-      setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue || '0.01' }));
-
-      // Only update the actual quantity if it's a valid number and at least 0.01
+      // Only update the actual quantity if it's a valid number and at least MIN_QTY
       if (inputValue !== '' && inputValue !== '.') {
-        const parsed = parseFloat(inputValue);
-        if (!isNaN(parsed) && parsed >= 0.01) {
+        let parsed = parseFloat(inputValue);
+        
+        if (!isNaN(parsed) && parsed >= MIN_QTY) {
+          // If bidding (buying), check maximum available
+          if (option.type === 'bid') {
+            const maxAvailable = maxAvailableOptions[legKey] ?? 0
+            if (maxAvailable > 0 && parsed > maxAvailable) {
+              parsed = maxAvailable
+              // Update the input field with the capped value
+              setQuantityInputs(prev => ({ ...prev, [legKey]: maxAvailable.toFixed(2) }));
+              // Update parent component with capped value - specifically for this leg only
+              onUpdateQuantity(index, parsed);
+              return; // Exit early since we've already updated everything
+            }
+          }
+          
+          // If we didn't hit the cap, update normally - this specific leg only
+          setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
           onUpdateQuantity(index, parsed);
+        } else {
+          // Still update the input field for usability
+          setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
         }
+      } else {
+        // Empty or just a decimal point - update input field only
+        setQuantityInputs(prev => ({ ...prev, [legKey]: inputValue }));
       }
     }
   }
@@ -204,6 +279,33 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     return quantityInputs[legKey] || option.quantity.toFixed(2);
   };
 
+  // Get available options warning if needed
+  const getAvailableOptionsWarning = (option: SelectedOption): string | null => {
+    const legKey = option.index.toString()
+    if (option.type === 'bid') {
+      const availableQty = maxAvailableOptions[legKey] ?? 0
+      if (availableQty === 0) {
+        return "No options available";
+      } else {
+        const qtyRequested = option.quantity || MIN_QTY;
+        if (qtyRequested > availableQty) {
+          return `Max available: ${availableQty.toFixed(2)}`;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Get available options display
+  const getOptionsAvailableDisplay = (option: SelectedOption): string => {
+    const legKey = option.index.toString()
+    if (option.type === 'bid') {
+      const availableQty = maxAvailableOptions[legKey] ?? 0
+      return availableQty.toFixed(2);
+    }
+    return "N/A"; // Not applicable for ask options
+  };
+
   return (
     <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
@@ -248,6 +350,9 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 
               // Get the stable leg key for this option
               const legKey = option.index.toString()
+
+              // Get availability warning
+              const availabilityWarning = getAvailableOptionsWarning(option)
               
               return (
                 <Card key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`} className="bg-black/10 border border-white/10">
@@ -350,39 +455,56 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, -0.01)}
-                              title="Decrease by 0.01"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleQuantityChange(index, -MIN_QTY)}
+                                title={`Decrease by ${MIN_QTY}`}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
 
-                            <div className="relative w-14">
-                              <Input
-                                type="text"
-                                value={getDisplayQuantity(option)}
-                                onChange={(e) => handleQuantityInputChange(e, index)}
-                                className="h-6 text-xs sm:text-sm text-center px-1"
-                                placeholder="Qty"
-                              />
+                              <div className="relative w-14">
+                                <Input
+                                  type="text"
+                                  value={getDisplayQuantity(option)}
+                                  onChange={(e) => handleQuantityInputChange(e, index)}
+                                  className="h-6 text-xs sm:text-sm text-center px-1"
+                                  placeholder="Qty"
+                                />
+                              </div>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleQuantityChange(index, MIN_QTY)}
+                                title={`Increase by ${MIN_QTY}`}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
                             </div>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleQuantityChange(index, 0.01)}
-                              title="Increase by 0.01"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
                           </div>
+                          
+                          {/* Display options available under quantity section */}
+                          {option.type === 'bid' && (
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              <span className="text-xs sm:text-sm text-muted-foreground">Options Available:</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
+                                {getOptionsAvailableDisplay(option)}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Display availability warning */}
+                          {availabilityWarning && (
+                            <p className="text-xs text-red-500 mt-1">{availabilityWarning}</p>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -29,6 +29,7 @@ interface MakerPnlChartProps {
   leverage: number
   riskFreeRate?: number // Optional risk-free rate for option calculations
   assetPrice?: number | null // Current asset price from AssetSelector
+  liquidationPrices?: { upward: number | null, downward: number | null } // External liquidation prices
 }
 
 interface PnLDataPoint {
@@ -94,7 +95,8 @@ export function MakerPnlChart({
   collateralProvided, 
   leverage,
   riskFreeRate = 0.05, // Default to 5% if not provided
-  assetPrice = null // Default to null if not provided
+  assetPrice = null, // Default to null if not provided
+  liquidationPrices // External liquidation prices from props
 }: MakerPnlChartProps) {
   const chartRef = useRef<HTMLDivElement>(null)
   // Always use expiration view - no toggle needed
@@ -119,8 +121,8 @@ export function MakerPnlChart({
     return () => window.removeEventListener('resize', checkIfMobile)
   }, [])
   
-  // Calculate liquidation prices but don't display them on chart
-  const liquidationPrices = useMemo(() => {
+  // Calculate internal liquidation prices if not provided externally
+  const computedLiquidationPrices = useMemo(() => {
     if (!assetPrice || assetPrice <= 0 || options.length === 0) {
       return { upward: null, downward: null };
     }
@@ -131,6 +133,9 @@ export function MakerPnlChart({
       assetPrice
     );
   }, [options, collateralProvided, leverage, assetPrice]);
+  
+  // Use provided liquidation prices if available, otherwise use calculated ones
+  const displayedLiquidationPrices = liquidationPrices || computedLiquidationPrices;
 
   const calculatePnLPoints = useMemo(() => {
     if (options.length === 0) return []
@@ -472,6 +477,45 @@ export function MakerPnlChart({
                 position: isMobile ? "top" : "insideTopLeft",
                 dy: isMobile ? -15 : 5,
                 dx: isMobile ? 0 : 5
+              }}
+              isFront={true}
+            />
+          )}
+          
+          {/* Liquidation Price Reference Lines */}
+          {displayedLiquidationPrices?.upward && (
+            <ReferenceLine
+              x={displayedLiquidationPrices.upward}
+              stroke="#9CA3AF" // Lighter grey color (gray-400)
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              label={{
+                value: `Liq: $${displayedLiquidationPrices.upward.toFixed(2)}`,
+                fill: "#9CA3AF",
+                fontSize: 10,
+                position: "insideBottomLeft",
+                dy: 0,
+                dx: 0,
+                angle: 0,
+              }}
+              isFront={true}
+            />
+          )}
+          
+          {displayedLiquidationPrices?.downward && (
+            <ReferenceLine
+              x={displayedLiquidationPrices.downward}
+              stroke="#9CA3AF" // Lighter grey color (gray-400)
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              label={{
+                value: `Liq: $${displayedLiquidationPrices.downward.toFixed(2)}`,
+                fill: "#9CA3AF",
+                fontSize: 10,
+                position: "insideBottomLeft",
+                dy: 0,
+                dx: 0,
+                angle: 0,
               }}
               isFront={true}
             />
