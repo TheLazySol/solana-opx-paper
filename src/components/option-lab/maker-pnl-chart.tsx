@@ -486,19 +486,17 @@ export function MakerPnlChart({
           {displayedLiquidationPrices?.upward && (
             <ReferenceLine
               x={displayedLiquidationPrices.upward}
-              stroke="#facc15" // Yellow color
-              strokeWidth={1.5}
-              strokeDasharray="5 5"
+              stroke="#9CA3AF" // Lighter grey color (gray-400)
+              strokeWidth={1}
+              strokeDasharray="3 3"
               label={{
-                value: isMobile ? 
-                  `Liq↑: $${displayedLiquidationPrices.upward.toFixed(0)}` : 
-                  `Liquidation: $${displayedLiquidationPrices.upward.toFixed(2)}`,
-                fill: '#facc15',
-                fontSize: isMobile ? 10 : 11,
-                position: "insideTopLeft",
-                dy: isMobile ? 5 : 15,
-                dx: isMobile ? -2 : -5,
-                fontWeight: 'normal'
+                value: `Liq: $${displayedLiquidationPrices.upward.toFixed(2)}`,
+                fill: "#9CA3AF",
+                fontSize: 10,
+                position: "insideBottomLeft",
+                dy: 0,
+                dx: 0,
+                angle: 0,
               }}
               isFront={true}
             />
@@ -507,19 +505,17 @@ export function MakerPnlChart({
           {displayedLiquidationPrices?.downward && (
             <ReferenceLine
               x={displayedLiquidationPrices.downward}
-              stroke="#facc15" // Yellow color
-              strokeWidth={1.5}
-              strokeDasharray="5 5"
+              stroke="#9CA3AF" // Lighter grey color (gray-400)
+              strokeWidth={1}
+              strokeDasharray="3 3"
               label={{
-                value: isMobile ? 
-                  `Liq↓: $${displayedLiquidationPrices.downward.toFixed(0)}` : 
-                  `Liquidation: $${displayedLiquidationPrices.downward.toFixed(2)}`,
-                fill: '#facc15',
-                fontSize: isMobile ? 10 : 11,
-                position: "insideTopLeft",
-                dy: isMobile ? 5 : 15,
-                dx: isMobile ? 2 : 5,
-                fontWeight: 'normal'
+                value: `Liq: $${displayedLiquidationPrices.downward.toFixed(2)}`,
+                fill: "#9CA3AF",
+                fontSize: 10,
+                position: "insideBottomLeft",
+                dy: 0,
+                dx: 0,
+                angle: 0,
               }}
               isFront={true}
             />
