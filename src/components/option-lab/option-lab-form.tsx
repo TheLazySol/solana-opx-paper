@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -126,6 +126,10 @@ export function OptionLabForm() {
     maxProfitPotential: 0
   });
 
+  // Use useWatch instead of methods.watch in dependency array
+  const strikePrice = useWatch({ control: methods.control, name: 'strikePrice' });
+  const expirationDate = useWatch({ control: methods.control, name: 'expirationDate' });
+
   const calculateOptionPrice = async (values: z.infer<typeof formSchema>) => {
     console.log('Calculating option price for values:', values);
     if (isCalculatingPremium) {
@@ -178,10 +182,9 @@ export function OptionLabForm() {
       clearTimeout(debounceTimer.current);
     }
     const values = methods.getValues();
-    const strikePrice = values.strikePrice;
     if (strikePrice && strikePrice !== '') {
       debounceTimer.current = setTimeout(() => {
-        if (!values.expirationDate) {
+        if (!expirationDate) {
           const tempValues = {...values};
           tempValues.expirationDate = new Date();
           calculateOptionPrice(tempValues);
@@ -195,7 +198,7 @@ export function OptionLabForm() {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [methods.watch('strikePrice'), methods.watch('expirationDate'), assetPrice]);
+  }, [strikePrice, expirationDate, assetPrice]);
 
   useEffect(() => {
     if (calculatedPrice !== null) {
