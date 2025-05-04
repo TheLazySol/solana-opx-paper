@@ -127,9 +127,14 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
         
         // Sort by date (earliest first)
         expiryDates.sort((a, b) => {
-          const dateA = new Date(a.value);
-          const dateB = new Date(b.value);
-          return dateA.getTime() - dateB.getTime();
+          // Parse dates using Date.UTC to avoid timezone issues
+          const [yearA, monthA, dayA] = a.value.split('-').map(Number);
+          const [yearB, monthB, dayB] = b.value.split('-').map(Number);
+          
+          const dateATime = Date.UTC(yearA, monthA - 1, dayA);
+          const dateBTime = Date.UTC(yearB, monthB - 1, dayB);
+          
+          return dateATime - dateBTime;
         });
         
         return expiryDates;
