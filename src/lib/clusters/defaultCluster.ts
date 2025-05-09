@@ -14,6 +14,11 @@ export const defaultClusters: Cluster[] = [
       endpoint: clusterApiUrl('devnet'),
       network: ClusterNetwork.Devnet,
     },
+    {
+      name: 'triton-devnet',
+      endpoint: 'https://epicentr-solanad-4efb.devnet.rpcpool.com',
+      network: ClusterNetwork.Custom,
+    },
     { 
       name: 'local', 
       endpoint: 'http://localhost:8899'
