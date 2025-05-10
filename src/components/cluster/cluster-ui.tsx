@@ -45,7 +45,7 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
     return (
       <div className="alert alert-warning text-warning-content/80 rounded-none flex justify-center">
         <span>
-          Error connecting to cluster <strong>{cluster.name}</strong>
+          Error connecting to cluster <strong>{cluster.name}</strong> 
         </span>
         <button className="btn btn-xs btn-neutral" onClick={() => query.refetch()}>
           Refresh

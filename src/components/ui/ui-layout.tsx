@@ -14,6 +14,7 @@ import { useCluster } from '../cluster/cluster-data-access'
 import {AccountChecker} from '../account/account-ui'
 import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
 import {WalletButton} from '../solana/solana-provider'
+import {WalletBalanceLogger} from '../wallet/wallet-balance'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()
@@ -74,6 +75,7 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
       </div>
       <ClusterChecker>
         <AccountChecker />
+        <WalletBalanceLogger />
       </ClusterChecker>
       <main className="container mx-auto py-6">
         <Suspense
