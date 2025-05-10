@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js'
+import { address, Address } from 'gill'
 
 /**
  * Defines the side of an option.
@@ -18,7 +18,7 @@ export type OrderType = 'buy' | 'sell'
  * 
  * @interface OptionOrder
  * 
- * @property {PublicKey} publicKey - The Solana account address for the order.
+ * @property {Address} publicKey - The Solana account address for the order.
  * @property {number} strike - The strike price of the option.
  * @property {number} price - The price at which the option is being traded.
  * @property {number} bidPrice - The highest bid price.
@@ -26,9 +26,9 @@ export type OrderType = 'buy' | 'sell'
  * @property {OrderType} type - The type of the order (buy or sell).
  * @property {OptionSide} optionSide - Whether the option is a 'call' or 'put'.
  * @property {Date} timestamp - The time at which the order was placed.
- * @property {PublicKey} owner - The wallet address of the order creator.
- * @property {PublicKey} [mint] - The mint address for the option token (optional).
- * @property {PublicKey} [optionMint] - The mint address for the option token (optional).
+ * @property {Address} owner - The wallet address of the order creator.
+ * @property {Address} [mint] - The mint address for the option token (optional).
+ * @property {Address} [optionMint] - The mint address for the option token (optional).
  * @property {number} [size] - The size (number of contracts) of the order (optional).
  * @property {'pending' | 'filled' | 'cancelled'} status - The current status of the order.
  * @property {string} expirationDate - The expiration date of the option.
@@ -36,7 +36,7 @@ export type OrderType = 'buy' | 'sell'
  * @property {number} [volume] - The volume of the order (optional).
  */
 export interface OptionOrder {
-  publicKey: PublicKey  // Solana account address for the order
+  publicKey: Address  // Solana account address for the order
   strike: number
   price: number
   bidPrice: number  // Add highest bid price
@@ -44,10 +44,10 @@ export interface OptionOrder {
   type: OrderType
   optionSide: OptionSide
   timestamp: Date
-  owner: PublicKey     // Wallet address of the order creator
+  owner: Address     // Wallet address of the order creator
   // Add other fields we'll need for Solana integration
-  mint?: PublicKey     // Token mint address for the option
-  optionMint?: PublicKey // The option token mint address
+  mint?: Address     // Token mint address for the option
+  optionMint?: Address // The option token mint address
   size?: number        // Number of contracts
   status: 'pending' | 'filled' | 'cancelled'
   expirationDate: string

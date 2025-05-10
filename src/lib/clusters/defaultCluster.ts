@@ -1,4 +1,5 @@
-import { clusterApiUrl, Connection } from '@solana/web3.js'
+import { createSolanaClient } from 'gill'
+import { Connection, clusterApiUrl } from '@solana/web3.js'
 import { Cluster, ClusterNetwork } from '@/types/solana/solanaClusters'
 /**
  * Default Solana clusters configuration.

@@ -4,11 +4,12 @@ import { defaultClusters } from '@/lib/clusters/defaultCluster'
 import { getClusterUrlParam } from '@/lib/clusters/getClusterUrlParam'
 import { Cluster, ClusterNetwork, ClusterProviderContext } from '@/types/solana/solanaClusters'
 
-import { clusterApiUrl, Connection } from '@solana/web3.js'
+import { Connection, clusterApiUrl } from '@solana/web3.js'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-import { createContext, ReactNode, useContext } from 'react'
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { createSolanaClient } from 'gill'
 
 
 

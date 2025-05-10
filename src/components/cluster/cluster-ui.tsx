@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
 import { AppModal } from '../ui/ui-layout'
 import { ClusterNetwork, useCluster } from './cluster-data-access'
-import { Connection } from '@solana/web3.js'
+import { createSolanaClient } from 'gill'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export function ExplorerLink({ path, label, className }: { path: string; label: string; className?: string }) {
   const { getExplorerUrl } = useCluster()
@@ -97,7 +104,9 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
       show={show}
       submit={() => {
         try {
-          new Connection(endpoint)
+          const { rpc, rpcSubscriptions, sendAndConfirmTransaction } = createSolanaClient({
+            urlOrMoniker: endpoint,
+          });
           if (name) {
             addCluster({ name, network, endpoint })
             hideModal()

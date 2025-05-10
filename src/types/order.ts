@@ -1,10 +1,10 @@
-import { PublicKey } from '@solana/web3.js'
+import { address, Address } from 'gill'
 
 export type OptionSide = 'call' | 'put'
 export type OrderType = 'buy' | 'sell'
 
 export interface OptionOrder {
-  publicKey: PublicKey  // Solana account address for the order
+  publicKey: Address  // Solana account address for the order
   strike: number
   price: number
   bidPrice: number  // Add highest bid price
@@ -12,10 +12,10 @@ export interface OptionOrder {
   type: OrderType
   optionSide: OptionSide
   timestamp: Date
-  owner: PublicKey     // Wallet address of the order creator
+  owner: Address     // Wallet address of the order creator
   // Add other fields we'll need for Solana integration
-  mint?: PublicKey     // Token mint address for the option
-  optionMint?: PublicKey // The option token mint address
+  mint?: Address     // Token mint address for the option
+  optionMint?: Address // The option token mint address
   size?: number        // Number of contracts
   status: 'pending' | 'filled' | 'cancelled'
   expirationDate: string

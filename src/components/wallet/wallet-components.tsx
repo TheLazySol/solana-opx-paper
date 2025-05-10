@@ -2,7 +2,7 @@
 
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from '../solana/solana-provider'
-import { PublicKey } from '@solana/web3.js'
+import { address } from 'gill'
 import { useGetBalance } from '../account/account-data-access'
 
 export function WalletStatus() {
@@ -31,7 +31,7 @@ export function WalletStatus() {
 export function WalletBalance() {
   const { publicKey } = useWallet()
   const balance = useGetBalance({ 
-    address: publicKey || new PublicKey("11111111111111111111111111111111") 
+    address: publicKey || address("11111111111111111111111111111111") 
   })
   
   if (!publicKey) return null
