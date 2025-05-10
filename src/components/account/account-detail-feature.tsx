@@ -1,11 +1,10 @@
 'use client'
 
 import { PublicKey } from '@solana/web3.js'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '../ui/button'
 
-import { useParams } from 'next/navigation'
 import { useWallet } from '@solana/wallet-adapter-react'
 
 import { ExplorerLink } from '../cluster/cluster-ui'
@@ -18,21 +17,9 @@ import { PortfolioValueChart } from './portfolio-value-chart'
 import { WalletButton } from '../wallet/wallet-button'
 
 export default function AccountDetailFeature() {
-  const params = useParams()
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { publicKey } = useWallet()
   
-  const address = useMemo(() => {
-    if (!params.address) {
-      return
-    }
-    try {
-      return new PublicKey(params.address)
-    } catch (e) {
-      console.log(`Invalid public key`, e)
-    }
-  }, [params])
-
   const handleRefreshPositions = () => {
     setIsRefreshing(true)
     console.log('Refreshing positions...')
@@ -56,15 +43,11 @@ export default function AccountDetailFeature() {
     )
   }
 
-  if (!address) {
-    return <div>Error loading account</div>
-  }
-
   return (
     <div className="max-w-[90%] mx-auto px-4">
       <div className="flex flex-col items-center justify-center mb-8">
         <AppHero
-          title={<AccountBalance address={address} />}
+          title={<AccountBalance address={publicKey} />}
           subtitle=""
         />
       </div>
@@ -102,7 +85,7 @@ export default function AccountDetailFeature() {
           <CardTitle className="text-xl font-semibold">Transaction History</CardTitle>
         </CardHeader>
         <CardContent>
-          <AccountTransactions address={address} />
+          <AccountTransactions address={publicKey} />
         </CardContent>
       </Card>
     </div>
