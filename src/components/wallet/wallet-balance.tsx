@@ -6,7 +6,7 @@ import { address } from 'gill'
 import { useEffect } from 'react'
 import { useCluster } from '../cluster/cluster-data-access'
 import { ClusterNetwork } from '../cluster/cluster-data-access'
-import { useGetBalance } from '../account/account-data-access'
+import { useGetBalance } from './data-access-hooks'
 
 export function WalletBalanceLogger() {
   const { connection } = useConnection()
