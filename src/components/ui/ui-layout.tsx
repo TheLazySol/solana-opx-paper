@@ -10,8 +10,6 @@ import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-react'
 import { useCluster } from '../cluster/cluster-data-access'
-
-import {AccountChecker} from '../account/account-ui'
 import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
 import {WalletButton} from '../solana/solana-provider'
 import {WalletBalanceLogger} from '../wallet/wallet-balance'
@@ -74,7 +72,6 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
         </div>
       </div>
       <ClusterChecker>
-        <AccountChecker />
         <WalletBalanceLogger />
       </ClusterChecker>
       <main className="container mx-auto py-6">
