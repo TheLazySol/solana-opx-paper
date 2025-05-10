@@ -9,10 +9,10 @@ import Image from 'next/image'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-react'
-import { useCluster } from '../cluster/cluster-data-access'
-import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
+import { useCluster } from '../solana/cluster/cluster-data-access'
+import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../solana/cluster/cluster-ui'
 import {WalletButton} from '../solana/solana-provider'
-import {WalletBalanceLogger} from '../wallet/wallet-balance'
+import {WalletBalanceLogger} from '../solana/wallet/wallet-balance'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()

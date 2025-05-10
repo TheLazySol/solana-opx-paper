@@ -14,7 +14,7 @@ import {
 import { address, Address } from 'gill'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import {useTransactionToast} from '../ui/ui-layout'
+import {useTransactionToast} from '../../ui/ui-layout'
 
 /**
  * Hook to fetch the SOL balance for a given address

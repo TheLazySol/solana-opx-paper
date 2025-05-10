@@ -1,7 +1,7 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/solana-provider'
+import { WalletButton } from '../solana-provider'
 import { address } from 'gill'
 import { useGetBalance } from './data-access-hooks'
 

@@ -1,5 +1,5 @@
 import './globals.css'
-import {ClusterProvider} from '@/components/cluster/cluster-data-access'
+import {ClusterProvider} from '@/components/solana/cluster/cluster-data-access'
 import {SolanaProvider} from '@/components/solana/solana-provider'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
