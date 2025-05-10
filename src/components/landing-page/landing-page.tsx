@@ -64,7 +64,7 @@ export default function DashboardFeature() {
         </div>
       </div>
       <h1 className="text-2xl text-white font-normal tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] -mt-4 -mb-4">
-       Trade Solana Options
+       Onchain Options Trading
       </h1>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
