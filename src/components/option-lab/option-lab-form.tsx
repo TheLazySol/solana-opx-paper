@@ -10,7 +10,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Address, address } from 'gill';
 import { Keypair } from '@solana/web3.js';
 import { format, addDays } from "date-fns";
-import { OptionOrder } from "@/types/order";
+import { OptionOrder } from "@/types/options/optionTypes";
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { AssetSelector } from './asset-selector';
 import { OptionTypeSelector } from './option-type-select';

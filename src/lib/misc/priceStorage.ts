@@ -1,4 +1,4 @@
-import { StoredPrice } from '@/types/misc'
+import { StoredPrice } from '@/types/market/priceMarketTypes'
 import { PRICE_STORAGE_KEY } from '@constants/constants'
 
 /**

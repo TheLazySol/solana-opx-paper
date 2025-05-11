@@ -60,4 +60,30 @@ export interface PriceState {
 export interface PricePoint {
   price: number;
   timestamp: number;
+}
+
+/**
+ * Represents a stored price record along with its metadata.
+ * Used for persisting price information.
+ * 
+ * @typedef {Object} StoredPrice
+ * @property {number} price - The recorded price value.
+ * @property {number} priceChange24h - The price change over the last 24 hours.
+ * @property {number} timestamp - The Unix timestamp when the price was recorded.
+ */
+export type StoredPrice = {
+  /**
+   * The recorded price value.
+   */
+  price: number;
+
+  /**
+   * The price change over the last 24 hours.
+   */
+  priceChange24h: number;
+
+  /**
+   * The Unix timestamp when the price was recorded.
+   */
+  timestamp: number;
 } 

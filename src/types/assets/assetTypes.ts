@@ -1,27 +1,9 @@
 /**
- * Represents a stored price record along with its metadata.
+ * Types related to underlying assets and tokens
  * 
- * @typedef {Object} StoredPrice
- * @property {number} price - The recorded price value.
- * @property {number} priceChange24h - The price change over the last 24 hours.
- * @property {number} timestamp - The Unix timestamp when the price was recorded.
+ * This file contains type definitions for assets, tokens, and related data structures
+ * used throughout the application.
  */
-export type StoredPrice = {
-  /**
-   * The recorded price value.
-   */
-  price: number;
-
-  /**
-   * The price change over the last 24 hours.
-   */
-  priceChange24h: number;
-
-  /**
-   * The Unix timestamp when the price was recorded.
-   */
-  timestamp: number;
-}
 
 /**
  * Represents an underlying asset with a value and label.
@@ -50,4 +32,4 @@ export interface UnderlyingAsset {
 export const underlyingAssets: UnderlyingAsset[] = [
   { value: "SOL", label: "Solana (SOL)" },
   { value: "LABS", label: "Epicentral Labs (LABS)" },
-]
+] 
