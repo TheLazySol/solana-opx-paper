@@ -13,7 +13,11 @@ export const SEEDS = {
 
 // Token mints for the supported assets in the OMLP
 export const TOKEN_MINTS = Object.entries(TOKENS).reduce((acc, [symbol, token]) => {
-  acc[symbol] = new PublicKey(token.address);
+  try {
+    acc[symbol] = new PublicKey(token.address);
+  } catch (e) {
+    console.error(`Invalid mint for ${symbol}:`, token.address);
+  }
   return acc;
 }, {} as Record<string, PublicKey>);
 
