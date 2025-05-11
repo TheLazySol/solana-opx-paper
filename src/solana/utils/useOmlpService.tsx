@@ -89,10 +89,10 @@ export function useOmlpService() {
       
       // Wait for confirmation
       const latestBlockhash = await connection.getLatestBlockhash()
-      await connection.confirmTransaction({
-        signature,
-        ...latestBlockhash,
-      })
+      await connection.confirmTransaction(
+        { signature, ...latestBlockhash },
+        'finalized'           // Use finalized commitment level for reliability
+      )
       
       return signature
     },
@@ -138,10 +138,10 @@ export function useOmlpService() {
       
       // Wait for confirmation
       const latestBlockhash = await connection.getLatestBlockhash()
-      await connection.confirmTransaction({
-        signature,
-        ...latestBlockhash,
-      })
+      await connection.confirmTransaction(
+        { signature, ...latestBlockhash },
+        'finalized'           // Use finalized commitment level for reliability
+      )
       
       return signature
     },
