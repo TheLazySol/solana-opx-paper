@@ -9,7 +9,7 @@ import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
+import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
 

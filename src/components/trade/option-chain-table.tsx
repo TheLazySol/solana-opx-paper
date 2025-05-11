@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/utils"
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +19,7 @@ import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { MAX_OPTION_LEGS } from '@/constants/constants'
-import { toast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/useToast"
 
 interface OptionChainTableProps {
   assetId?: string

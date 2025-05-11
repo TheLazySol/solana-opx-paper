@@ -1,79 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import {usePathname} from 'next/navigation'
 import * as React from 'react'
 import {ReactNode, Suspense, useEffect, useRef} from 'react'
 import toast, {Toaster} from 'react-hot-toast'
-import Image from 'next/image'
 import { useTheme } from 'next-themes'
-import { Button } from '@/components/ui/button'
-import { ChevronDown } from 'lucide-react'
-import { useCluster } from '../cluster/cluster-data-access'
-
-import {AccountChecker} from '../account/account-ui'
-import {ClusterChecker, ClusterUiSelect, ExplorerLink} from '../cluster/cluster-ui'
-import {WalletButton} from '../solana/solana-provider'
+import { useCluster } from '../../solana/clusters/clusterDataAccess'
+import {ClusterChecker, ExplorerLink} from '../solana/user-settings/rpc-dropdown-select'
+import {WalletBalanceLogger} from '../solana/user-wallet/wallet-balance'
+import { Navbar } from './navbar'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
-  const pathname = usePathname()
-  const { resolvedTheme, theme, systemTheme } = useTheme()
   const { cluster } = useCluster()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Always use the dark theme logo
-  const logoSrc = '/epicentral-logo-light.png'
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">
-          <div className="w-[200px]">
-            <Link href="/" className="block transition-transform hover:scale-105 duration-200">
-              {mounted ? (
-                <Image 
-                  src={logoSrc}
-                  alt="Epicentral Labs Logo"
-                  width={120}
-                  height={35}
-                  className="h-[35px] w-auto object-contain"
-                  priority
-                  onError={(e) => {
-                    console.error('Error loading image:', e);
-                  }}
-                />
-              ) : (
-                <div className="h-[35px] w-[120px]" />
-              )}
-            </Link>
-          </div>
-          <div className="flex-1 flex justify-center">
-            <nav className="flex items-center gap-8">
-              {links.map(({ label, path }) => (
-                <Link
-                  key={path}
-                  href={path}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    pathname.startsWith(path) ? 'text-foreground' : 'text-muted-foreground'
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="w-[200px] flex justify-end items-center space-x-4">
-            <WalletButton />
-            <ClusterUiSelect />
-          </div>
-        </div>
-      </div>
+      <Navbar links={links} />
       <ClusterChecker>
-        <AccountChecker />
+        <WalletBalanceLogger />
       </ClusterChecker>
       <main className="container mx-auto py-6">
         <Suspense

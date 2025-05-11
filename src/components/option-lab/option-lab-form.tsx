@@ -7,10 +7,11 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Keypair } from "@solana/web3.js";
+import { Address, address } from 'gill';
+import { Keypair } from '@solana/web3.js';
 import { format, addDays } from "date-fns";
-import { OptionOrder } from "@/types/order";
-import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
+import { OptionOrder } from "@/types/options/optionTypes";
+import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { AssetSelector } from './asset-selector';
 import { OptionTypeSelector } from './option-type-select';
 import { ExpirationDatePicker } from './expiration-date-select';
@@ -21,7 +22,7 @@ import { EDIT_REFRESH_INTERVAL } from '@/constants/constants';
 import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./maker-summary";
 import { CollateralProvider, CollateralState } from "./collateral-provider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
@@ -279,7 +280,7 @@ export function OptionLabForm() {
       // Create options but don't add them to a store
       const createdOptions = pendingOptions.map(values => {
         const newOption: OptionOrder = {
-          publicKey: new PublicKey(Keypair.generate().publicKey),
+          publicKey: address(new Keypair().publicKey.toString()),
           strike: typeof values.strikePrice === 'string' ? Number(values.strikePrice) : Number(values.strikePrice),
           price: Number(values.premium),
           bidPrice: 0,
@@ -287,7 +288,7 @@ export function OptionLabForm() {
           type: 'sell',
           optionSide: values.optionType,
           timestamp: new Date(),
-          owner: publicKey,
+          owner: address(publicKey.toString()),
           status: 'pending',
           size: Number(values.quantity),
           expirationDate: format(values.expirationDate, 'yyyy-MM-dd')

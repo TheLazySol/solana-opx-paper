@@ -1,6 +1,6 @@
 {
   "name": "solana-opx",
-  "version": "0.4.0",
+  "version": "0.7.0",
   "private": true,
   "scripts": {
     "anchor": "cd anchor && anchor",
@@ -95,7 +95,7 @@
     ],
     "versions": {
       "anchor": "0.30.1",
-      "solana": "1.18.0"
+      "solana": "2.1.21"
     }
   }
 }

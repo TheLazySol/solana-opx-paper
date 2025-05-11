@@ -4,7 +4,7 @@ import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-place-order'
 import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
-import { toast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 
 interface TradeViewProps {

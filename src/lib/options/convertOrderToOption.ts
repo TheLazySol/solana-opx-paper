@@ -1,5 +1,4 @@
-import { OptionOrder } from "@/types/options/orderTypes"
-import { Option } from "@/types/options/orderTypes"
+import { OptionOrder, Option } from "@/types/options/optionTypes"
 
 /**
  * Converts an array of OptionOrder objects into Option objects grouped by strike price.
