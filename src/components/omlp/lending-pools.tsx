@@ -280,7 +280,14 @@ export function LendingPools({
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleDeposit} disabled={!depositAmount || isProcessing}>
+            <Button
+              onClick={handleDeposit}
+              disabled={
+                isProcessing ||
+                !depositAmount ||            // empty
+                parseFloat(depositAmount) <= 0 || // non-positive
+                Number.isNaN(parseFloat(depositAmount))
+              }>
               {isProcessing ? "Processing..." : "Deposit"}
             </Button>
           </DialogFooter>
