@@ -35,21 +35,25 @@ export const formSchema = z.object({
    * The price at which the option can be exercised
    * Must be a non-empty string
    */
-  strikePrice: z.string().refine(val => val !== '', {
-    message: "Strike price is required",
-  }),
-  
+  strikePrice: z
+    .string()
+    .trim()
+    .refine((val) => {
+      const num = Number(val)
+      return !isNaN(num) && num > 0
+    }, { message: "Strike price must be a positive number" }),
+
   /**
    * The price paid for the option contract
    * Can be empty during form editing, but must be a valid non-negative number when provided
    */
-  premium: z.string().refine(
+  premium: z.string().trim().refine(
     (val) => {
       if (val === '') return true;
       const num = Number(val);
       return !isNaN(num) && num >= 0;
     },
-    { message: "Premium must be a valid number" }
+    { message: "Premium must be a valid non-negative number" }
   ),
   
   /**
