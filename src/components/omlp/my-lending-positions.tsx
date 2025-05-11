@@ -75,9 +75,18 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
   const handleWithdraw = async () => {
     try {
       setIsProcessing(true)
+      const numericAmount = parseFloat(amount)
+      // Find the current position to check the maximum available amount
+      const selectedPosition = positions.find(p => p.token === currentToken)
+      
+      // Validate withdrawal amount
+      if (!selectedPosition || numericAmount <= 0 || numericAmount > selectedPosition.amount) {
+        throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition?.amount ?? 0}`)
+      }
+      
       await withdraw({
         tokenSymbol: currentToken,
-        amount: parseFloat(amount),
+        amount: numericAmount,
       })
       setIsWithdrawDialogOpen(false)
       if (onRefresh) await onRefresh()
@@ -241,7 +250,15 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleWithdraw} disabled={!amount || isProcessing}>
+            <Button 
+              onClick={handleWithdraw} 
+              disabled={
+                !amount || 
+                isProcessing || 
+                parseFloat(amount) <= 0 || 
+                parseFloat(amount) > (positions.find(p => p.token === currentToken)?.amount ?? 0)
+              }
+            >
               {isProcessing ? "Processing..." : "Withdraw"}
             </Button>
           </DialogFooter>
