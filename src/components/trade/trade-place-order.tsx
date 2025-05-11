@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
-import { toast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/useToast"
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 import {
   Tooltip,
