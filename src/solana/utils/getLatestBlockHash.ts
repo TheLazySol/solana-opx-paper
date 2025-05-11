@@ -44,9 +44,10 @@ export const getSolanaData = async (
       case "getSlot":
         return await client.getSlot().send();
 
-      case "getLatestBlockhash":
+      case "getLatestBlockhash": {
         const { value: latestBlockhash } = await client.getLatestBlockhash().send();
         return latestBlockhash;
+      }
 
       default:
         throw new Error("Invalid method provided. Please use 'getSlot' or 'getLatestBlockhash'.");
