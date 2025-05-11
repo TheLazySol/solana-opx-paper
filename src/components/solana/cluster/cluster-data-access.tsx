@@ -72,6 +72,17 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const setCluster = useSetAtom(clusterAtom)
   const setClusters = useSetAtom(clustersAtom)
 
+  // Log detailed connection information whenever the active cluster changes
+  useEffect(() => {
+    console.log(`
+=== Solana Connection Details ===
+Cluster: ${cluster.name}
+Endpoint: ${cluster.endpoint}
+Network: ${cluster.network || 'custom'}
+===============================
+`);
+  }, [cluster]);
+
   const value: ClusterProviderContext = {
     cluster,
     clusters: clusters.sort((a, b) => (a.name > b.name ? 1 : -1)),

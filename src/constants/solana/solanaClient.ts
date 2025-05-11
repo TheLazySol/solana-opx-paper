@@ -1,36 +1,79 @@
 import { createSolanaClient } from "gill";
+import { defaultClusters } from "@/lib/clusters/defaultCluster";
+import { validateRpcConnection } from "@/utils/solana/validateRpcConnection";
+import { clusterApiUrl } from "@solana/web3.js";
 
 /**
- * Determine the Solana network or custom RPC URL based on the environment variables.
- * 
- * - If `process.env.CUSTOM_RPC` is 'TRUE' and `process.env.CUSTOM_RPC_URL` is defined, 
- *   it will use the `CUSTOM_RPC_URL`.
- * - If `process.env.CUSTOM_RPC` is 'FALSE' or not defined, it will fall back to `process.env.ENV`.
- * - If `process.env.ENV` is 'production', it will use the 'devnet'; otherwise, it defaults to 'mainnet'.
+ * Validates that the provided endpoint is a valid URL starting with http: or https:
+ * @param endpoint The endpoint to validate
+ * @returns A valid endpoint URL or Solana's devnet as fallback
  */
-let network: string | undefined;
-
-if (process.env.CUSTOM_RPC === "TRUE" && process.env.CUSTOM_RPC_URL) {
-  network = process.env.CUSTOM_RPC_URL;
-} else if (process.env.ENV) {
-  network = process.env.ENV === "production" ? "devnet" : "mainnet";
-} else {
-  throw new Error("Neither CUSTOM_RPC_URL nor ENV is defined. Please check your environment variables.");
-}
+const ensureValidEndpoint = (endpoint: string | undefined): string => {
+  if (!endpoint) {
+    console.warn('No RPC endpoint provided, falling back to devnet');
+    return clusterApiUrl('devnet');
+  }
+  
+  if (!endpoint.startsWith('http:') && !endpoint.startsWith('https:')) {
+    console.warn(`Invalid RPC endpoint format: ${endpoint}, falling back to devnet`);
+    return clusterApiUrl('devnet');
+  }
+  
+  return endpoint;
+};
 
 /**
- * Initialize the Solana client with the appropriate network settings.
+ * Initialize the Solana client with the Triton RPC URL.
  * 
- * `createSolanaClient` is used to create an instance of a Solana client
- * based on the selected network (devnet, mainnet, or custom RPC URL).
- * 
- * @param {Object} config - Configuration object for the Solana client.
- * @param {string} config.urlOrMoniker - The network to connect to (e.g., 'devnet', 'mainnet', or custom RPC URL).
+ * This function attempts to use the environment variable first, and if that fails,
+ * it falls back to the predefined Triton endpoint from defaultClusters.
  * 
  * @returns {Object} Returns the Solana client with methods for RPC, subscriptions, and transactions.
  */
+// Get the Triton endpoint from environment variable or defaultClusters
+const tritonEndpoint = ensureValidEndpoint(
+  process.env.NEXT_PUBLIC_TRITON_RPC_URL || 
+  defaultClusters.find(cluster => cluster.name === 'triton-devnet')?.endpoint || 
+  'https://api.devnet.solana.com'
+);
+
+// Validate the endpoint in non-browser environments
+if (typeof window === 'undefined') {
+  // Server-side initialization
+  validateRpcConnection(tritonEndpoint)
+    .then(result => {
+      if (!result.success) {
+        console.warn(`Warning: RPC validation failed: ${result.message}`);
+      }
+    })
+    .catch(err => {
+      console.error("Failed to validate RPC connection:", err);
+    });
+}
+
+// Create a Solana client with the endpoint
 const { rpc, rpcSubscriptions, sendAndConfirmTransaction } = createSolanaClient({
-  urlOrMoniker: network!,
+  urlOrMoniker: tritonEndpoint,
 });
+
+/**
+ * Get current RPC connection details for display or debugging purposes
+ * @returns Information about the current RPC connection
+ */
+export function getRpcConnectionDetails() {
+  return {
+    endpoint: tritonEndpoint,
+    isDevnet: tritonEndpoint.includes('devnet') || tritonEndpoint.includes('devnet'),
+    isLocal: tritonEndpoint.includes('localhost') || tritonEndpoint.includes('127.0.0.1'),
+    isMainnet: tritonEndpoint.includes('mainnet'),
+    isCustom: !(
+      tritonEndpoint.includes('devnet') || 
+      tritonEndpoint.includes('localhost') || 
+      tritonEndpoint.includes('127.0.0.1') || 
+      tritonEndpoint.includes('mainnet') || 
+      tritonEndpoint.includes('custom')
+    ),
+  };
+}
 
 export { rpc, rpcSubscriptions, sendAndConfirmTransaction, createSolanaClient };
