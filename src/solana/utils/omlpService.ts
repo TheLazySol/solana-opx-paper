@@ -1,8 +1,6 @@
-import { Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from '@solana/spl-token';
-import { OMLP_PROGRAM_ID, TOKEN_MINTS, derivePoolAddress, deriveUserPositionAddress, derivePoolAuthority } from '../constants/omlpProgram';
-import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list';
-import BN from 'bn.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from '@solana/spl-token';
+import { TOKEN_MINTS, derivePoolAddress, deriveUserPositionAddress, derivePoolAuthority } from '../constants/omlpProgram';
 
 // Pool data structure
 export interface PoolData {
