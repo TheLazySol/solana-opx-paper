@@ -2,6 +2,11 @@ import * as z from "zod";
 import { TOKENS } from "@/constants/token-list/token-list";
 
 /**
+ * Derive a type from the TOKENS constant to ensure type safety
+ */
+export type TokenSymbol = keyof typeof TOKENS;
+
+/**
  * Zod schema for option minting form validation
  * 
  * This schema defines the structure and validation rules for the option minting form,
@@ -11,7 +16,7 @@ export const formSchema = z.object({
   /**
    * The underlying asset for the option, must be one of the tokens defined in TOKENS constant
    */
-  asset: z.enum(Object.keys(TOKENS) as [string, ...string[]]),
+  asset: z.enum(Object.keys(TOKENS) as [TokenSymbol, ...TokenSymbol[]]),
   
   /**
    * The type of option - either "call" (right to buy) or "put" (right to sell)
