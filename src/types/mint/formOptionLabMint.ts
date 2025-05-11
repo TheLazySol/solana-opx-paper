@@ -23,8 +23,9 @@ export const formSchema = z.object({
    */
   expirationDate: z.date({
     required_error: "Expiration date is required",
+  }).min(new Date(), {
+    message: "Expiration must be in the future",
   }),
-  
   /**
    * The price at which the option can be exercised
    * Must be a non-empty string
