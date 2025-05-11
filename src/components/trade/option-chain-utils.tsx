@@ -4,7 +4,7 @@ import { FilterGreeks, GreekFilters } from './filter-greeks'
 import { ExpirationDate, EMPTY_EXPIRATION_DATES, formatOptionExpirationDate } from '@/constants/constants'
 import { Button } from '../ui/button'
 import { RefreshCw } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/utils'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
 import { TOKENS } from '@/constants/token-list/token-list'
 

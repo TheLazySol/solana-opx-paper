@@ -3,7 +3,7 @@
 import { Button } from '../ui/button'
 import { RefreshCw } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/utils'
 
 export type Position = {
   token: string

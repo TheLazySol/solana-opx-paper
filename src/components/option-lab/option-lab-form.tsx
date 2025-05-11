@@ -22,7 +22,7 @@ import { EDIT_REFRESH_INTERVAL } from '@/constants/constants';
 import { Button } from "@/components/ui/button";
 import { MakerSummary } from "./maker-summary";
 import { CollateralProvider, CollateralState } from "./collateral-provider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
