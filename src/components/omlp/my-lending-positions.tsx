@@ -59,9 +59,15 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
   const handleDeposit = async () => {
     try {
       setIsProcessing(true)
+      const numericAmount = parseFloat(amount)
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        console.warn('Invalid amount entered:', amount)
+        return
+      }
+
       await deposit({
         tokenSymbol: currentToken,
-        amount: parseFloat(amount),
+        amount: numericAmount,
       })
       setIsDepositDialogOpen(false)
       if (onRefresh) await onRefresh()
@@ -218,7 +224,15 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleDeposit} disabled={!amount || isProcessing}>
+            <Button 
+              onClick={handleDeposit} 
+              disabled={
+                !amount || 
+                isProcessing || 
+                !Number.isFinite(parseFloat(amount)) ||
+                parseFloat(amount) <= 0
+              }
+            >
               {isProcessing ? "Processing..." : "Deposit"}
             </Button>
           </DialogFooter>
