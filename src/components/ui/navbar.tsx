@@ -51,7 +51,9 @@ export function Navbar({ links }: NavbarProps) {
                 key={path}
                 href={path}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname.startsWith(path) ? 'text-foreground' : 'text-muted-foreground'
+                  (pathname === path || (path !== '/' && pathname.startsWith(path + '/'))) 
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground'
                 }`}
               >
                 {label}
