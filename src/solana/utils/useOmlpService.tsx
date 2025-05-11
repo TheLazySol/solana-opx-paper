@@ -65,6 +65,7 @@ export function useOmlpService() {
       tokenSymbol,
       amount,
     }: {
+    ({
       tokenSymbol: string
       amount: number
     }) => {
@@ -73,6 +74,16 @@ export function useOmlpService() {
       const tokenMint = TOKEN_MINTS[tokenSymbol as keyof typeof TOKEN_MINTS]
       if (!tokenMint) throw new Error(`Token ${tokenSymbol} not supported`)
       
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error('Deposit amount must be a positive number')
+      }
+
+      const transaction = await omlpService.createDepositTransaction(
+        publicKey,
+        tokenMint,
+        amount
+      )
+      // …rest of your logic
       // Create deposit transaction
       const transaction = await omlpService.createDepositTransaction(
         publicKey,
