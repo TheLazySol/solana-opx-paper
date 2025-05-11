@@ -4,8 +4,8 @@ import { useConnection } from '@solana/wallet-adapter-react'
 import { IconTrash } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
-import { AppModal } from '../../ui/ui-layout'
-import { ClusterNetwork, useCluster } from './cluster-data-access'
+import { AppModal } from '../ui/ui-layout'
+import { ClusterNetwork, useCluster } from '../../solana/clusters/cluster-data-access'
 import { createSolanaClient } from 'gill'
 import {
   DropdownMenu,
@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
 
+/**
+ * Creates a link to the Solana Explorer for a given path
+ * @param path - The path to link to in the explorer
+ * @param label - The text to display for the link
+ * @param className - Optional CSS class to apply to the link
+ * @returns A formatted link to the Solana Explorer
+ */
 export function ExplorerLink({ path, label, className }: { path: string; label: string; className?: string }) {
   const { getExplorerUrl } = useCluster()
   return (
@@ -29,6 +36,12 @@ export function ExplorerLink({ path, label, className }: { path: string; label: 
   )
 }
 
+/**
+ * Verifies connection to the selected Solana cluster
+ * Renders children only if connection is successful
+ * @param children - React components to render when connection is verified
+ * @returns Either the children components or an error/loading state
+ */
 export function ClusterChecker({ children }: { children: ReactNode }) {
   const { cluster } = useCluster()
   const { connection } = useConnection()
@@ -56,6 +69,10 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
   return children
 }
 
+/**
+ * Dropdown component for selecting a Solana cluster
+ * Displays the current cluster and allows switching between available clusters
+ */
 export function ClusterUiSelect() {
   const { clusters, setCluster, cluster } = useCluster()
   
@@ -84,6 +101,11 @@ export function ClusterUiSelect() {
   )
 }
 
+/**
+ * Modal for adding a new Solana cluster configuration
+ * @param hideModal - Function to close the modal
+ * @param show - Boolean to control modal visibility
+ */
 export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; show: boolean }) {
   const { addCluster } = useCluster()
   const [name, setName] = useState('')
@@ -97,6 +119,7 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
       show={show}
       submit={() => {
         try {
+          // Validate the endpoint by attempting to create a Solana client
           const { rpc, rpcSubscriptions, sendAndConfirmTransaction } = createSolanaClient({
             urlOrMoniker: endpoint,
           });
@@ -140,6 +163,10 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
   )
 }
 
+/**
+ * Table displaying all configured Solana clusters
+ * Allows selecting a cluster or deleting unused clusters
+ */
 export function ClusterUiTable() {
   const { clusters, setCluster, deleteCluster } = useCluster()
   return (

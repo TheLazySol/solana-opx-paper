@@ -1,6 +1,6 @@
 import { createSolanaClient } from 'gill'
 import { Connection, clusterApiUrl } from '@solana/web3.js'
-import { Cluster, ClusterNetwork } from '@/types/solana/solanaClusters'
+import { Cluster, ClusterNetwork } from '@/solana/types/solanaClusters'
 
 /**
  * Get the Triton RPC URL from environment variables or use a default.

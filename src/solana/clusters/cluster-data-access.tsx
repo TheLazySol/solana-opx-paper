@@ -1,8 +1,8 @@
 'use client'
 
-import { defaultClusters } from '@/lib/clusters/defaultCluster'
-import { getClusterUrlParam } from '@/lib/clusters/getClusterUrlParam'
-import { Cluster, ClusterNetwork, ClusterProviderContext } from '@/types/solana/solanaClusters'
+import { defaultClusters } from '@/solana/clusters/defaultCluster'
+import { getClusterUrlParam } from '@/solana/clusters/getClusterUrlParam'
+import { Cluster, ClusterNetwork, ClusterProviderContext } from '@/solana/types/solanaClusters'
 
 import { Connection, clusterApiUrl } from '@solana/web3.js'
 import { atom, useAtomValue, useSetAtom } from 'jotai'

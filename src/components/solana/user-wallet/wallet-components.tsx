@@ -1,9 +1,9 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana-provider'
+import { WalletButton } from './wallet-connect'
 import { address } from 'gill'
-import { useGetBalance } from './data-access-hooks'
+import { useGetBalance } from '../../../solana/lib/common-hooks'
 
 export function WalletStatus() {
   const { publicKey } = useWallet()

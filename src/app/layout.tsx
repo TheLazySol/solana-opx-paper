@@ -1,6 +1,6 @@
 import './globals.css'
-import {ClusterProvider} from '@/components/solana/cluster/cluster-data-access'
-import {SolanaProvider} from '@/components/solana/solana-provider'
+import {ClusterProvider} from '@/solana/clusters/cluster-data-access'
+import {SolanaProvider} from '@/components/solana/user-wallet/wallet-connect'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'

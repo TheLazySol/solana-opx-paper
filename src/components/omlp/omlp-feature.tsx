@@ -1,7 +1,7 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/wallet/wallet-button'
+import { WalletButton } from '../solana/user-wallet/wallet-button'
 import { MyLendingPositions, type Position } from './my-lending-positions'
 import { LendingPools, type Pool } from './lending-pools'
 import { type PoolHistoricalData } from './omlp-pool-chart'

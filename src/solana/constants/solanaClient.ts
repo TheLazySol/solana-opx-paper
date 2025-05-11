@@ -1,6 +1,6 @@
 import { createSolanaClient } from "gill";
-import { defaultClusters } from "@/lib/clusters/defaultCluster";
-import { validateRpcConnection } from "@/utils/solana/validateRpcConnection";
+import { defaultClusters } from "@/solana/clusters/defaultCluster";
+import { validateRpcConnection } from "@/solana/utils/validateRpcConnection";
 import { clusterApiUrl } from "@solana/web3.js";
 
 /**

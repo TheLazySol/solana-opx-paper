@@ -1,4 +1,4 @@
-import { Cluster, ClusterNetwork } from "@/types/solana/solanaClusters"
+import { Cluster, ClusterNetwork } from "@/solana/types/solanaClusters"
 /**
  * Generates a URL query parameter for a given Solana cluster based on its network type.
  *

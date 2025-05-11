@@ -5,9 +5,9 @@ import * as React from 'react'
 import {ReactNode, Suspense, useEffect, useRef} from 'react'
 import toast, {Toaster} from 'react-hot-toast'
 import { useTheme } from 'next-themes'
-import { useCluster } from '../solana/cluster/cluster-data-access'
-import {ClusterChecker, ExplorerLink} from '../solana/cluster/cluster-ui'
-import {WalletBalanceLogger} from '../solana/wallet/wallet-balance'
+import { useCluster } from '../../solana/clusters/cluster-data-access'
+import {ClusterChecker, ExplorerLink} from '../solana/rpc-dropdown-select'
+import {WalletBalanceLogger} from '../solana/user-wallet/wallet-balance'
 import { Navbar } from './navbar'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
