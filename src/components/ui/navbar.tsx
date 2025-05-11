@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import * as React from 'react'
 import { WalletButton } from '../solana/user-wallet/wallet-connect'
-import { ClusterUiSelect } from '../solana/rpc-dropdown-select'
+import { ClusterUiSelect } from '../solana/user-settings/rpc-dropdown-select'
 
 interface NavbarProps {
   links: { label: string; path: string }[]

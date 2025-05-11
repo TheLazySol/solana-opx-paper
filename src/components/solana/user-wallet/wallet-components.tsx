@@ -3,7 +3,7 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from './wallet-connect'
 import { address } from 'gill'
-import { useGetBalance } from '../../../solana/lib/common-hooks'
+import { useGetBalance } from '../../../solana/utils/commonHooks'
 
 export function WalletStatus() {
   const { publicKey } = useWallet()

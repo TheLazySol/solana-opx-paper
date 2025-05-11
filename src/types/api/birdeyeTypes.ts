@@ -7,7 +7,11 @@
  * @property {number} data.value - The price value.
  * @property {number} data.updateUnixTime - The Unix timestamp when the price was last updated.
  * @property {string} data.updateHumanTime - The human-readable string of the last update time.
- * @property {number} [data.priceChange24H] - The price change over the last 24 hours (optional).
+ * @property {number} data.priceChange24H - The price change over the last 24 hours.
+ * @property {number} [data.volumeUsd24h] - The USD trading volume over the last 24 hours (optional).
+ * @property {number} [data.volume24h] - The token trading volume over the last 24 hours (optional).
+ * @property {number} [data.marketCap] - The market capitalization of the token (optional).
+ * @property {number} [data.liquidity] - The liquidity of the token (optional).
  * @property {boolean} success - A flag indicating whether the API request was successful.
  * @property {string} [message] - An optional message describing the status of the request.
  */
@@ -16,7 +20,11 @@ export interface BirdeyePriceResponse {
     value: number;
     updateUnixTime: number;
     updateHumanTime: string;
-    priceChange24H?: number;
+    priceChange24H: number;
+    volumeUsd24h?: number;
+    volume24h?: number;
+    marketCap?: number;
+    liquidity?: number;
   };
   success: boolean;
   message?: string;

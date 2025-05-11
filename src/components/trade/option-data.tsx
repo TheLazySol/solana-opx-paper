@@ -27,7 +27,7 @@ export interface OptionContract {
 }
 
 // Import Black-Scholes model and constants
-import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model'
+import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { 
   SOL_PH_VOLATILITY, 
   SOL_PH_RISK_FREE_RATE,

@@ -2,7 +2,7 @@ import React from 'react';
 import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useFormContext } from 'react-hook-form';
-import type { FormData } from '@/types/mint/form';
+import type { FormData } from '@/types/mint/formOptionLabMint';
 import { cn } from "@/utils/utils";
 
 export const OptionTypeSelector = () => {

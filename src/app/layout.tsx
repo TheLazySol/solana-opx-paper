@@ -1,5 +1,5 @@
 import './globals.css'
-import {ClusterProvider} from '@/solana/clusters/cluster-data-access'
+import {ClusterProvider} from '@/solana/clusters/clusterDataAccess'
 import {SolanaProvider} from '@/components/solana/user-wallet/wallet-connect'
 import {UiLayout} from '@/components/ui/ui-layout'
 import {ReactQueryProvider} from './react-query-provider'

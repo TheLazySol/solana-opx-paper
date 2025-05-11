@@ -4,9 +4,9 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { LAMPORTS_PER_SOL } from 'gill'
 import { address } from 'gill'
 import { useEffect } from 'react'
-import { useCluster } from '../../../solana/clusters/cluster-data-access'
-import { ClusterNetwork } from '../../../solana/clusters/cluster-data-access'
-import { useGetBalance } from '../../../solana/lib/common-hooks'
+import { useCluster } from '../../../solana/clusters/clusterDataAccess'
+import { ClusterNetwork } from '../../../solana/clusters/clusterDataAccess'
+import { useGetBalance } from '../../../solana/utils/commonHooks'
 
 export function WalletBalanceLogger() {
   const { connection } = useConnection()

@@ -11,7 +11,7 @@ import { Address, address } from 'gill';
 import { Keypair } from '@solana/web3.js';
 import { format, addDays } from "date-fns";
 import { OptionOrder } from "@/types/order";
-import { calculateOption } from '@/lib/option-pricing-model/black-scholes-model';
+import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { AssetSelector } from './asset-selector';
 import { OptionTypeSelector } from './option-type-select';
 import { ExpirationDatePicker } from './expiration-date-select';

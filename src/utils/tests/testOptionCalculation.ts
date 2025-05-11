@@ -1,5 +1,5 @@
-import { calculateOption } from "@/lib/option-pricing-model/black-scholes-model";
-import { OptionCalculation } from "@/types/options/optionCalculation";
+import { calculateOption } from "@/lib/option-pricing-model/blackScholesModel";
+import { OptionCalculation } from "@/types/options/optionTypes";
 
 /**
  * Runs an option pricing calculation using the given parameters.

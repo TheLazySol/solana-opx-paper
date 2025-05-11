@@ -12,7 +12,7 @@ import {
 } from '@solana/wallet-adapter-react'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import { ReactNode, useCallback, useEffect, useMemo } from 'react'
-import { useCluster } from '../../../solana/clusters/cluster-data-access'
+import { useCluster } from '../../../solana/clusters/clusterDataAccess'
 import toast from 'react-hot-toast'
 import { validateRpcConnection } from '@/solana/utils/validateRpcConnection'
 import { clusterApiUrl } from '@solana/web3.js'
