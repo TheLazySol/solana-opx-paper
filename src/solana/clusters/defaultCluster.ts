@@ -1,6 +1,7 @@
 import { createSolanaClient } from 'gill'
 import { Connection, clusterApiUrl } from '@solana/web3.js'
 import { Cluster, ClusterNetwork } from '@/solana/types/solanaClusters'
+import { validateEndpointFormat } from '@/solana/utils/validateRpcConnection'
 
 /**
  * Get the Triton RPC URL from environment variables or use a default.
@@ -9,27 +10,8 @@ import { Cluster, ClusterNetwork } from '@/solana/types/solanaClusters'
 const getTritonRpcUrl = (): string => {
   // Use environment variable or fall back to the Solana public devnet
   const url = process.env.NEXT_PUBLIC_TRITON_RPC_URL || 'https://api.devnet.solana.com';
-  
-  // Validate URL format
-  if (!url.startsWith('http:') && !url.startsWith('https:')) {
-    console.warn('Invalid RPC URL format in environment variable, falling back to devnet');
-    return 'https://api.devnet.solana.com';
-  }
-  
-  return url;
-};
-
-/**
- * Validates that the provided endpoint starts with http:// or https://
- * @param endpoint The endpoint to validate
- * @returns A valid endpoint URL or Solana's devnet as fallback
- */
-const validateEndpoint = (endpoint: string): string => {
-  if (!endpoint.startsWith('http:') && !endpoint.startsWith('https:')) {
-    console.warn(`Invalid endpoint format: ${endpoint}, using default devnet`);
-    return clusterApiUrl('devnet');
-  }
-  return endpoint;
+  // Use the unified validation function
+  return validateEndpointFormat(url);
 };
 
 /**
@@ -53,7 +35,7 @@ export const defaultClusters: Cluster[] = [
     },
     { 
       name: 'local', 
-      endpoint: validateEndpoint('http://localhost:8899')
+      endpoint: validateEndpointFormat('http://localhost:8899')
     },
     {
       name: 'testnet',

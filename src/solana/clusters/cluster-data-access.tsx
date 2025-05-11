@@ -3,13 +3,14 @@
 import { defaultClusters } from '@/solana/clusters/defaultCluster'
 import { getClusterUrlParam } from '@/solana/clusters/getClusterUrlParam'
 import { Cluster, ClusterNetwork, ClusterProviderContext } from '@/solana/types/solanaClusters'
+import { validateRpcConnection, validateEndpointFormat } from '@/solana/utils/validateRpcConnection'
 
 import { Connection, clusterApiUrl } from '@solana/web3.js'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { createSolanaClient } from 'gill'
+
 
 
 
@@ -81,6 +82,18 @@ Endpoint: ${cluster.endpoint}
 Network: ${cluster.network || 'custom'}
 ===============================
 `);
+    
+    // Validate the current cluster's endpoint when it changes
+    validateRpcConnection(cluster.endpoint)
+      .then(result => {
+        if (!result.success) {
+          console.warn(`Warning: RPC connection validation failed for ${cluster.name}: ${result.message}`);
+          toast.error(`Warning: Connection to ${cluster.name} failed: ${result.message}`);
+        }
+      })
+      .catch(err => {
+        console.error(`Failed to validate connection to ${cluster.name}:`, err);
+      });
   }, [cluster]);
 
   const value: ClusterProviderContext = {
@@ -88,14 +101,24 @@ Network: ${cluster.network || 'custom'}
     clusters: clusters.sort((a, b) => (a.name > b.name ? 1 : -1)),
     addCluster: (cluster: Cluster) => {
       try {
-        new Connection(cluster.endpoint)
-        setClusters([...clusters, cluster])
+        // Validate endpoint format first
+        const validatedEndpoint = validateEndpointFormat(cluster.endpoint);
+        if (validatedEndpoint !== cluster.endpoint) {
+          toast.error(`Warning: Invalid endpoint format corrected: ${cluster.endpoint} → ${validatedEndpoint}`);
+          cluster.endpoint = validatedEndpoint;
+        }
+        
+        // Try creating a connection to validate further
+        new Connection(cluster.endpoint);
+        setClusters([...clusters, cluster]);
+        toast.success(`Added cluster: ${cluster.name}`);
       } catch (err) {
-        toast.error(`${err}`)
+        toast.error(`Failed to add cluster: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
     deleteCluster: (cluster: Cluster) => {
-      setClusters(clusters.filter((item) => item.name !== cluster.name))
+      setClusters(clusters.filter((item) => item.name !== cluster.name));
+      toast.success(`Removed cluster: ${cluster.name}`);
     },
     setCluster: (cluster: Cluster) => setCluster(cluster),
     getExplorerUrl: (path: string) => `https://explorer.solana.com/${path}${getClusterUrlParam(cluster)}`,

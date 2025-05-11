@@ -14,11 +14,12 @@ export async function validateRpcConnection(endpoint: string): Promise<{
   status?: number;
 }> {
   try {
-    // Validate endpoint format first - ensure it's a non-empty string with proper protocol
-    if (!endpoint || (!endpoint.startsWith('http:') && !endpoint.startsWith('https:'))) {
+    // Validate endpoint format first
+    const validatedEndpoint = validateEndpointFormat(endpoint);
+    if (validatedEndpoint !== endpoint) {
       return {
         success: false,
-        message: `Invalid RPC endpoint format: ${endpoint}. Must start with http: or https:`,
+        message: `Invalid RPC endpoint format: ${endpoint}. Using ${validatedEndpoint} instead.`,
       };
     }
 
@@ -66,4 +67,23 @@ export async function validateRpcConnection(endpoint: string): Promise<{
       message: `Failed to connect to RPC: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
+}
+
+/**
+ * Validates that the provided endpoint is a valid URL starting with http: or https:
+ * @param endpoint The endpoint to validate
+ * @returns A valid endpoint URL or Solana's devnet as fallback
+ */
+export function validateEndpointFormat(endpoint: string | undefined): string {
+  if (!endpoint) {
+    console.warn('No RPC endpoint provided, falling back to devnet');
+    return 'https://api.devnet.solana.com';
+  }
+  
+  if (!endpoint.startsWith('http:') && !endpoint.startsWith('https:')) {
+    console.warn(`Invalid RPC endpoint format: ${endpoint}, falling back to devnet`);
+    return 'https://api.devnet.solana.com';
+  }
+  
+  return endpoint;
 } 

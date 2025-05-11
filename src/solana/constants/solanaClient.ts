@@ -1,26 +1,7 @@
 import { createSolanaClient } from "gill";
 import { defaultClusters } from "@/solana/clusters/defaultCluster";
-import { validateRpcConnection } from "@/solana/utils/validateRpcConnection";
+import { validateRpcConnection, validateEndpointFormat } from "@/solana/utils/validateRpcConnection";
 import { clusterApiUrl } from "@solana/web3.js";
-
-/**
- * Validates that the provided endpoint is a valid URL starting with http: or https:
- * @param endpoint The endpoint to validate
- * @returns A valid endpoint URL or Solana's devnet as fallback
- */
-const ensureValidEndpoint = (endpoint: string | undefined): string => {
-  if (!endpoint) {
-    console.warn('No RPC endpoint provided, falling back to devnet');
-    return clusterApiUrl('devnet');
-  }
-  
-  if (!endpoint.startsWith('http:') && !endpoint.startsWith('https:')) {
-    console.warn(`Invalid RPC endpoint format: ${endpoint}, falling back to devnet`);
-    return clusterApiUrl('devnet');
-  }
-  
-  return endpoint;
-};
 
 /**
  * Initialize the Solana client with the Triton RPC URL.
@@ -31,7 +12,7 @@ const ensureValidEndpoint = (endpoint: string | undefined): string => {
  * @returns {Object} Returns the Solana client with methods for RPC, subscriptions, and transactions.
  */
 // Get the Triton endpoint from environment variable or defaultClusters
-const tritonEndpoint = ensureValidEndpoint(
+const tritonEndpoint = validateEndpointFormat(
   process.env.NEXT_PUBLIC_TRITON_RPC_URL || 
   defaultClusters.find(cluster => cluster.name === 'triton-devnet')?.endpoint || 
   'https://api.devnet.solana.com'
