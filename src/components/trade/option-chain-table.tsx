@@ -2,19 +2,16 @@ import { FC, useState, useEffect, useMemo } from 'react'
 import React from 'react'
 import {
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TableHeader,
+  TableBody,
+  TableColumn,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/utils/utils"
-import {
+  TableCell,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+  Card,
+  CardBody
+} from "@heroui/react"
+import { cn } from "@/utils/utils"
 import { GreekFilters } from './filter-greeks'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
@@ -237,7 +234,39 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   }, [selectedOptions, onOptionsChange]);
 
-  // Modified price column rendering to remove special handling for pending options
+  // Build table columns dynamically based on visible greeks
+  const buildColumns = () => {
+    const columns = [];
+    
+    // Call side columns
+    if (visibleGreeks.volume) columns.push({ key: 'call-volume', label: 'Vol' });
+    if (visibleGreeks.oi) columns.push({ key: 'call-oi', label: 'OI' });
+    if (visibleGreeks.rho) columns.push({ key: 'call-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
+    if (visibleGreeks.oa) columns.push({ key: 'call-oa', label: 'OA' });
+    if (visibleGreeks.vega) columns.push({ key: 'call-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
+    if (visibleGreeks.gamma) columns.push({ key: 'call-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
+    if (visibleGreeks.theta) columns.push({ key: 'call-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
+    if (visibleGreeks.delta) columns.push({ key: 'call-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
+    columns.push({ key: 'call-price', label: 'Price' });
+    
+    // Strike column
+    columns.push({ key: 'strike', label: 'Strike' });
+    
+    // Put side columns
+    columns.push({ key: 'put-price', label: 'Price' });
+    if (visibleGreeks.delta) columns.push({ key: 'put-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
+    if (visibleGreeks.theta) columns.push({ key: 'put-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
+    if (visibleGreeks.gamma) columns.push({ key: 'put-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
+    if (visibleGreeks.vega) columns.push({ key: 'put-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
+    if (visibleGreeks.rho) columns.push({ key: 'put-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
+    if (visibleGreeks.oa) columns.push({ key: 'put-oa', label: 'OA' });
+    if (visibleGreeks.oi) columns.push({ key: 'put-oi', label: 'OI' });
+    if (visibleGreeks.volume) columns.push({ key: 'put-volume', label: 'Vol' });
+    
+    return columns;
+  };
+
+  // Modified price column rendering 
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
     return (
       <div className="flex flex-col space-y-0.5">
@@ -277,621 +306,187 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     );
   };
 
+  const renderCellContent = (item: OptionContract, columnKey: string, index: number) => {
+    const callIsITM = isCallITM(item.strike);
+    const putIsITM = isPutITM(item.strike);
+
+    switch (columnKey) {
+      case 'call-volume':
+        return <div className="text-center">{formatInteger(item.callVolume)}</div>;
+      case 'call-oi':
+        return <div className="text-center opacity-70">{formatInteger(item.callOpenInterest)}</div>;
+      case 'call-rho':
+        return <div className="text-center opacity-70">{formatGreek(item.callGreeks.rho)}</div>;
+      case 'call-oa':
+        return <div className="text-center opacity-70">{formatInteger(item.callOptionsAvailable)}</div>;
+      case 'call-vega':
+        return <div className="text-center opacity-70">{formatGreek(item.callGreeks.vega)}</div>;
+      case 'call-gamma':
+        return <div className="text-center opacity-70">{formatGreek(item.callGreeks.gamma)}</div>;
+      case 'call-theta':
+        return <div className="text-center">{formatGreek(item.callGreeks.theta)}</div>;
+      case 'call-delta':
+        return <div className="text-center">{formatGreek(item.callGreeks.delta, 2)}</div>;
+      case 'call-price':
+        return (
+          <div className={cn("font-medium", callIsITM ? "bg-blue-300/5" : "bg-gray-500/1")}>
+            {renderPriceColumn(item, index, 'call')}
+          </div>
+        );
+      case 'strike':
+        return (
+          <div className="text-center font-bold bg-default-100">
+            ${formatPrice(item.strike)}
+          </div>
+        );
+      case 'put-price':
+        return (
+          <div className={cn("font-medium", putIsITM ? "bg-blue-300/5" : "bg-gray-500/1")}>
+            {renderPriceColumn(item, index, 'put')}
+          </div>
+        );
+      case 'put-delta':
+        return <div className="text-center">{formatGreek(item.putGreeks.delta, 2)}</div>;
+      case 'put-theta':
+        return <div className="text-center">{formatGreek(item.putGreeks.theta)}</div>;
+      case 'put-gamma':
+        return <div className="text-center opacity-70">{formatGreek(item.putGreeks.gamma)}</div>;
+      case 'put-vega':
+        return <div className="text-center opacity-70">{formatGreek(item.putGreeks.vega)}</div>;
+      case 'put-rho':
+        return <div className="text-center opacity-70">{formatGreek(item.putGreeks.rho)}</div>;
+      case 'put-oa':
+        return <div className="text-center opacity-70">{formatInteger(item.putOptionsAvailable)}</div>;
+      case 'put-oi':
+        return <div className="text-center opacity-70">{formatInteger(item.putOpenInterest)}</div>;
+      case 'put-volume':
+        return <div className="text-center">{formatInteger(item.putVolume)}</div>;
+      default:
+        return null;
+    }
+  };
+
+  const columns = buildColumns();
+
   return (
-    <div 
-      className={cn(
-        "card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30",
-        "border-[#e5e5e5]/20 dark:border-white/5",
-        "transition-all duration-300 hover:bg-transparent",
-        "overflow-hidden shadow-lg rounded-lg p-4"
-      )}
-    >
-      {/* Option legs counter */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="text-sm text-muted-foreground">
-          Selected: {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+    <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
+      <CardBody className="p-4">
+        {/* Option legs counter */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="text-sm text-default-500">
+            Selected: {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+          </div>
         </div>
-      </div>
 
-      <div className="relative">
-        {/* Fixed Header */}
-        <Table className="table-fixed w-full">
-          <TableHeader>
-            {/* Category Labels Row */}
-            <TableRow className="hover:bg-transparent border-b-0">
-              {/* Calculate colspan for CALLS section */}
-              <TableHead 
-                colSpan={
-                  (visibleGreeks.volume ? 1 : 0) +
-                  (visibleGreeks.oi ? 1 : 0) +
-                  (visibleGreeks.rho ? 1 : 0) +
-                  (visibleGreeks.vega ? 1 : 0) +
-                  (visibleGreeks.gamma ? 1 : 0) +
-                  (visibleGreeks.theta ? 1 : 0) +
-                  (visibleGreeks.delta ? 1 : 0) +
-                  (visibleGreeks.oa ? 1 : 0) +
-                  1 // Price column
-                }
-                className="text-center font-bold text-lg text-[#4a85ff]"
-              >
-                CALLS
-              </TableHead>
-              {/* Strike Price Column */}
-              <TableHead className="text-center font-bold bg-muted/20 w-[100px]" />
-              {/* Calculate colspan for PUTS section */}
-              <TableHead 
-                colSpan={
-                  1 + // Price column
-                  (visibleGreeks.delta ? 1 : 0) +
-                  (visibleGreeks.theta ? 1 : 0) +
-                  (visibleGreeks.gamma ? 1 : 0) +
-                  (visibleGreeks.vega ? 1 : 0) +
-                  (visibleGreeks.rho ? 1 : 0) +
-                  (visibleGreeks.oa ? 1 : 0) +
-                  (visibleGreeks.oi ? 1 : 0) +
-                  (visibleGreeks.volume ? 1 : 0)
-                }
-                className="text-center font-bold text-lg text-[#4a85ff]"
-              >
-                PUTS
-              </TableHead>
-            </TableRow>
-            {/* Existing Header Row */}
-            <TableRow className="hover:bg-transparent">
-              {/* Call side */}
-              {visibleGreeks.volume && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Volume - Contracts traded today (includes fractional contracts)
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.oi && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OI</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Open Interest - Total open contracts (includes fractional contracts)
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.rho && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "ρ" : "Rho"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Rho - Sensitivity to interest rate changes
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.oa && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Options Available - Quantity of options available to trade
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.vega && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "ν" : "Vega"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Vega - Sensitivity to volatility changes
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.gamma && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "γ" : "Gamma"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Gamma - Rate of change in Delta
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.theta && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "θ" : "Theta"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Theta - Time decay rate
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.delta && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "Δ" : "Delta"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Delta - Price change sensitivity
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Price</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      <div className="text-center">
-                        <div className="text-green-500">Bid</div>
-                        <div className="text-red-500">Ask</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-              
-              {/* Strike price (center) */}
-              <TableHead className="text-center font-bold bg-muted/20 w-[100px]">Strike</TableHead>
-              
-              {/* Put side */}
-              <TableHead className="text-center w-[85px]">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Price</TooltipTrigger>
-                    <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                      <div className="text-center">
-                        <div className="text-green-500">Bid</div>
-                        <div className="text-red-500">Ask</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableHead>
-              {visibleGreeks.delta && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "Δ" : "Delta"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Delta - Price change sensitivity
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.theta && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "θ" : "Theta"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Theta - Time decay rate
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.gamma && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "γ" : "Gamma"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Gamma - Rate of change in Delta
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.vega && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "ν" : "Vega"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Vega - Sensitivity to volatility changes
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.rho && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">
-                        {useGreekSymbols ? "ρ" : "Rho"}
-                      </TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Rho - Sensitivity to interest rate changes
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.oa && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OA</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Options Available - Quantity of options available to trade
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.oi && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">OI</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Open Interest - Total open contracts (includes fractional contracts)
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-              {visibleGreeks.volume && (
-                <TableHead className="text-center w-[85px]">
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger className="underline decoration-dotted decoration-neutral-400">Vol</TooltipTrigger>
-                      <TooltipContent className="backdrop-blur-sm bg-white/10 dark:bg-black/50 border border-white/20 text-white">
-                        Volume - Contracts traded today (includes fractional contracts)
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              )}
-            </TableRow>
-          </TableHeader>
-        </Table>
-
-        {/* Scrollable Body */}
-        <div className="max-h-[400px] overflow-y-scroll scrollbar-hide">
-          <Table className="table-fixed w-full">
-            <TableBody>
-              {mockData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={
-                    (visibleGreeks.volume ? 1 : 0) +
-                    (visibleGreeks.oi ? 1 : 0) +
-                    (visibleGreeks.rho ? 1 : 0) +
-                    (visibleGreeks.vega ? 1 : 0) +
-                    (visibleGreeks.gamma ? 1 : 0) +
-                    (visibleGreeks.theta ? 1 : 0) +
-                    (visibleGreeks.delta ? 1 : 0) +
-                    (visibleGreeks.oa ? 1 : 0) +
-                    1 + // Price column
-                    1 + // Strike column
-                    1 + // Put price column
-                    (visibleGreeks.delta ? 1 : 0) +
-                    (visibleGreeks.theta ? 1 : 0) +
-                    (visibleGreeks.gamma ? 1 : 0) +
-                    (visibleGreeks.vega ? 1 : 0) +
-                    (visibleGreeks.rho ? 1 : 0) +
-                    (visibleGreeks.oa ? 1 : 0) +
-                    (visibleGreeks.oi ? 1 : 0) +
-                    (visibleGreeks.volume ? 1 : 0)
-                  } className="text-center py-4">
-                    No option data available
-                  </TableCell>
+        <div className="relative">
+          <Table 
+            aria-label="Options chain table"
+            className="min-h-[400px]"
+            classNames={{
+              wrapper: "max-h-[400px] overflow-y-auto",
+              th: "bg-default-100 text-default-700 text-center",
+              td: "text-center",
+            }}
+          >
+            <TableHeader>
+              <TableRow>
+                {/* Category Labels Row */}
+                <TableColumn 
+                  colSpan={Math.floor(columns.length / 2)}
+                  className="text-center font-bold text-lg text-[#4a85ff] bg-transparent"
+                >
+                  CALLS
+                </TableColumn>
+                <TableColumn className="text-center font-bold bg-default-200 w-[100px]">
+                  Strike
+                </TableColumn>
+                <TableColumn 
+                  colSpan={Math.floor(columns.length / 2)}
+                  className="text-center font-bold text-lg text-[#4a85ff] bg-transparent"
+                >
+                  PUTS
+                </TableColumn>
+              </TableRow>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableColumn 
+                    key={column.key} 
+                    className="text-center w-[85px]"
+                  >
+                    {column.key === 'call-price' || column.key === 'put-price' ? (
+                      <Tooltip
+                        content={
+                          <div className="text-center">
+                            <div className="text-green-500">Bid</div>
+                            <div className="text-red-500">Ask</div>
+                          </div>
+                        }
+                        placement="top"
+                      >
+                        <span className="underline decoration-dotted decoration-default-400 cursor-help">
+                          {column.label}
+                        </span>
+                      </Tooltip>
+                    ) : column.key === 'strike' ? (
+                      column.label
+                    ) : (
+                      <Tooltip
+                        content={getTooltipContent(column.key)}
+                        placement="top"
+                      >
+                        <span className="underline decoration-dotted decoration-default-400 cursor-help">
+                          {column.label}
+                        </span>
+                      </Tooltip>
+                    )}
+                  </TableColumn>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody emptyContent="No option data available">
+              {mockData.map((option, index) => (
+                <TableRow 
+                  key={`option-${index}`}
+                  className={cn(
+                    "hover:bg-default-50 transition-colors",
+                    index % 2 === 0 ? "bg-transparent" : "bg-default-50/50"
+                  )}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={`${index}-${column.key}`}>
+                      {renderCellContent(option, column.key, index)}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ) : (
-                <>
-                  {/* Show price indicator at top if price is below lowest strike */}
-                  {spotPrice && mockData.length > 0 && spotPrice < mockData[0].strike && (
-                    <TableRow key="price-indicator-top" className="h-0.5 relative">
-                      <TableCell 
-                        colSpan={
-                          (visibleGreeks.volume ? 1 : 0) +
-                          (visibleGreeks.oi ? 1 : 0) +
-                          (visibleGreeks.rho ? 1 : 0) +
-                          (visibleGreeks.vega ? 1 : 0) +
-                          (visibleGreeks.gamma ? 1 : 0) +
-                          (visibleGreeks.theta ? 1 : 0) +
-                          (visibleGreeks.delta ? 1 : 0) +
-                          (visibleGreeks.oa ? 1 : 0) +
-                          1 + // Price column
-                          1 + // Strike column
-                          1 + // Put price column
-                          (visibleGreeks.delta ? 1 : 0) +
-                          (visibleGreeks.theta ? 1 : 0) +
-                          (visibleGreeks.gamma ? 1 : 0) +
-                          (visibleGreeks.vega ? 1 : 0) +
-                          (visibleGreeks.rho ? 1 : 0) +
-                          (visibleGreeks.oa ? 1 : 0) +
-                          (visibleGreeks.oi ? 1 : 0) +
-                          (visibleGreeks.volume ? 1 : 0)
-                        }
-                        className="p-0"
-                      >
-                        <div className="relative w-full h-0.5">
-                          <div className="absolute inset-0 bg-[#4a85ff]" />
-                          <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                            bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
-                            ${formatPrice(spotPrice)}
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-
-                  {mockData.map((option, index) => {
-                    const shouldShowPriceIndicator = spotPrice && 
-                      index < mockData.length - 1 && 
-                      option.strike < spotPrice && 
-                      mockData[index + 1].strike > spotPrice;
-                    
-                    const callIsITM = isCallITM(option.strike);
-                    const putIsITM = isPutITM(option.strike);
-
-                    return (
-                      <React.Fragment key={`option-group-${index}`}>
-                        <TableRow 
-                          key={`option-${index}`}
-                          className={cn(
-                            "hover:bg-muted/5 transition-colors",
-                            index % 2 === 0 ? "bg-transparent" : "bg-muted/5"
-                          )}
-                        >
-                          {/* Call side - Add ITM/OTM styling */}
-                          <TableCell 
-                            colSpan={
-                              (visibleGreeks.volume ? 1 : 0) +
-                              (visibleGreeks.oi ? 1 : 0) +
-                              (visibleGreeks.rho ? 1 : 0) +
-                              (visibleGreeks.vega ? 1 : 0) +
-                              (visibleGreeks.gamma ? 1 : 0) +
-                              (visibleGreeks.theta ? 1 : 0) +
-                              (visibleGreeks.delta ? 1 : 0) +
-                              (visibleGreeks.oa ? 1 : 0) +
-                              1 // Price column
-                            }
-                            className={cn(
-                              "p-0 transition-colors",
-                              callIsITM ? "bg-blue-300/5" : "bg-gray-500/1"
-                            )}
-                          >
-                            <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
-                              {visibleGreeks.volume && (
-                                <div className="text-center py-1">
-                                  {formatInteger(option.callVolume)}
-                                </div>
-                              )}
-                              {visibleGreeks.oi && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatInteger(option.callOpenInterest)}
-                                </div>
-                              )}
-                              {visibleGreeks.rho && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.callGreeks.rho)}
-                                </div>
-                              )}
-                              {visibleGreeks.oa && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatInteger(option.callOptionsAvailable)}
-                                </div>
-                              )}
-                              {visibleGreeks.vega && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.callGreeks.vega)}
-                                </div>
-                              )}
-                              {visibleGreeks.gamma && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.callGreeks.gamma)}
-                                </div>
-                              )}
-                              {visibleGreeks.theta && (
-                                <div className="text-center py-1">
-                                  {formatGreek(option.callGreeks.theta)}
-                                </div>
-                              )}
-                              {visibleGreeks.delta && (
-                                <div className="text-center py-1">
-                                  {formatGreek(option.callGreeks.delta, 2)}
-                                </div>
-                              )}
-                              <div className="text-center font-medium py-1">
-                                {renderPriceColumn(option, index, 'call')}
-                              </div>
-                            </div>
-                          </TableCell>
-                          
-                          {/* Strike price (center) - Remove highlighting for pending options */}
-                          <TableCell className="text-center font-bold bg-muted/20">
-                            ${formatPrice(option.strike)}
-                          </TableCell>
-                          
-                          {/* Put side - Add ITM/OTM styling */}
-                          <TableCell 
-                            colSpan={
-                              1 + // Price column
-                              (visibleGreeks.delta ? 1 : 0) +
-                              (visibleGreeks.theta ? 1 : 0) +
-                              (visibleGreeks.gamma ? 1 : 0) +
-                              (visibleGreeks.vega ? 1 : 0) +
-                              (visibleGreeks.rho ? 1 : 0) +
-                              (visibleGreeks.oa ? 1 : 0) +
-                              (visibleGreeks.oi ? 1 : 0) +
-                              (visibleGreeks.volume ? 1 : 0)
-                            }
-                            className={cn(
-                              "p-0 transition-colors",
-                              putIsITM ? "bg-blue-300/5" : "bg-gray-500/1"
-                            )}
-                          >
-                            <div className="grid grid-cols-[repeat(auto-fit,_minmax(0,_1fr))]">
-                              <div className="text-center font-medium py-1">
-                                {renderPriceColumn(option, index, 'put')}
-                              </div>
-                              {visibleGreeks.delta && (
-                                <div className="text-center py-1">
-                                  {formatGreek(option.putGreeks.delta, 2)}
-                                </div>
-                              )}
-                              {visibleGreeks.theta && (
-                                <div className="text-center py-1">
-                                  {formatGreek(option.putGreeks.theta)}
-                                </div>
-                              )}
-                              {visibleGreeks.gamma && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.putGreeks.gamma)}
-                                </div>
-                              )}
-                              {visibleGreeks.vega && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.putGreeks.vega)}
-                                </div>
-                              )}
-                              {visibleGreeks.rho && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatGreek(option.putGreeks.rho)}
-                                </div>
-                              )}
-                              {visibleGreeks.oa && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatInteger(option.putOptionsAvailable)}
-                                </div>
-                              )}
-                              {visibleGreeks.oi && (
-                                <div className="text-center py-1 opacity-70">
-                                  {formatInteger(option.putOpenInterest)}
-                                </div>
-                              )}
-                              {visibleGreeks.volume && (
-                                <div className="text-center py-1">
-                                  {formatInteger(option.putVolume)}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {shouldShowPriceIndicator && (
-                          <TableRow key={`price-indicator-${index}`} className="h-0.5 relative">
-                            <TableCell 
-                              colSpan={
-                                (visibleGreeks.volume ? 1 : 0) +
-                                (visibleGreeks.oi ? 1 : 0) +
-                                (visibleGreeks.rho ? 1 : 0) +
-                                (visibleGreeks.vega ? 1 : 0) +
-                                (visibleGreeks.gamma ? 1 : 0) +
-                                (visibleGreeks.theta ? 1 : 0) +
-                                (visibleGreeks.delta ? 1 : 0) +
-                                (visibleGreeks.oa ? 1 : 0) +
-                                1 + // Price column
-                                1 + // Strike column
-                                1 + // Put price column
-                                (visibleGreeks.delta ? 1 : 0) +
-                                (visibleGreeks.theta ? 1 : 0) +
-                                (visibleGreeks.gamma ? 1 : 0) +
-                                (visibleGreeks.vega ? 1 : 0) +
-                                (visibleGreeks.rho ? 1 : 0) +
-                                (visibleGreeks.oa ? 1 : 0) +
-                                (visibleGreeks.oi ? 1 : 0) +
-                                (visibleGreeks.volume ? 1 : 0)
-                              }
-                              className="p-0"
-                            >
-                              <div className="relative w-full h-0.5">
-                                <div className="absolute inset-0 bg-[#4a85ff]" />
-                                <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                                  bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
-                                  ${formatPrice(spotPrice)}
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-
-                  {/* Show price indicator at bottom if price is above highest strike */}
-                  {spotPrice && mockData.length > 0 && spotPrice > mockData[mockData.length - 1].strike && (
-                    <TableRow key="price-indicator-bottom" className="h-0.5 relative">
-                      <TableCell 
-                        colSpan={
-                          (visibleGreeks.volume ? 1 : 0) +
-                          (visibleGreeks.oi ? 1 : 0) +
-                          (visibleGreeks.rho ? 1 : 0) +
-                          (visibleGreeks.vega ? 1 : 0) +
-                          (visibleGreeks.gamma ? 1 : 0) +
-                          (visibleGreeks.theta ? 1 : 0) +
-                          (visibleGreeks.delta ? 1 : 0) +
-                          (visibleGreeks.oa ? 1 : 0) +
-                          1 + // Price column
-                          1 + // Strike column
-                          1 + // Put price column
-                          (visibleGreeks.delta ? 1 : 0) +
-                          (visibleGreeks.theta ? 1 : 0) +
-                          (visibleGreeks.gamma ? 1 : 0) +
-                          (visibleGreeks.vega ? 1 : 0) +
-                          (visibleGreeks.rho ? 1 : 0) +
-                          (visibleGreeks.oa ? 1 : 0) +
-                          (visibleGreeks.oi ? 1 : 0) +
-                          (visibleGreeks.volume ? 1 : 0)
-                        }
-                        className="p-0"
-                      >
-                        <div className="relative w-full h-0.5">
-                          <div className="absolute inset-0 bg-[#4a85ff]" />
-                          <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 
-                            bg-[#4a85ff] text-black text-xs px-1.5 py-0.5 rounded-sm whitespace-nowrap font-medium">
-                            ${formatPrice(spotPrice)}
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
-              )}
+              ))}
             </TableBody>
           </Table>
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
+};
+
+// Helper function for tooltip content
+const getTooltipContent = (columnKey: string) => {
+  const tooltips: Record<string, string> = {
+    'call-volume': 'Volume - Contracts traded today (includes fractional contracts)',
+    'call-oi': 'Open Interest - Total open contracts (includes fractional contracts)',
+    'call-rho': 'Rho - Sensitivity to interest rate changes',
+    'call-oa': 'Options Available - Quantity of options available to trade',
+    'call-vega': 'Vega - Sensitivity to volatility changes',
+    'call-gamma': 'Gamma - Rate of change in Delta',
+    'call-theta': 'Theta - Time decay rate',
+    'call-delta': 'Delta - Price change sensitivity',
+    'put-delta': 'Delta - Price change sensitivity',
+    'put-theta': 'Theta - Time decay rate',
+    'put-gamma': 'Gamma - Rate of change in Delta',
+    'put-vega': 'Vega - Sensitivity to volatility changes',
+    'put-rho': 'Rho - Sensitivity to interest rate changes',
+    'put-oa': 'Options Available - Quantity of options available to trade',
+    'put-oi': 'Open Interest - Total open contracts (includes fractional contracts)',
+    'put-volume': 'Volume - Contracts traded today (includes fractional contracts)',
+  };
+  
+  return tooltips[columnKey] || '';
 };

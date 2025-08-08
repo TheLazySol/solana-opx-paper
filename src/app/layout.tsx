@@ -6,7 +6,9 @@ import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
 import { BackgroundWrapper } from '@/components/ui/background-wrapper'
 import { AssetPriceProvider } from '@/context/asset-price-provider'
+
 import {HeroUIProvider} from '@heroui/react'
+
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
