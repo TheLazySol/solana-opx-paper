@@ -136,16 +136,54 @@ export default function DashboardFeature() {
                 </motion.p>
               </CardBody>
               <CardFooter className="p-6 pt-0">
-                <Button 
-                  variant="bordered"
-                  className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
-                    hover:bg-gray-900/50 hover:border-blue-500/50
-                    transition-all duration-300"
-                  size="md"
-                  radius="sm"
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className="w-full"
                 >
-                  {card.buttonText}
-                </Button>
+                  <Button 
+                    variant="bordered"
+                    className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
+                      hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20
+                      hover:border-blue-500/70 hover:shadow-lg hover:shadow-blue-500/25
+                      active:bg-gradient-to-r active:from-blue-600/30 active:to-purple-600/30
+                      active:border-blue-600/80 active:shadow-inner
+                      transition-all duration-200 ease-out
+                      group overflow-hidden relative"
+                    size="md"
+                    radius="sm"
+                    onPress={() => {
+                      // Add haptic feedback simulation with visual ripple effect
+                      console.log(`${card.buttonText} clicked!`);
+                    }}
+                  >
+                    <motion.span
+                      className="relative z-10"
+                      initial={{ y: 0 }}
+                      whileTap={{ y: 1 }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      {card.buttonText}
+                    </motion.span>
+                    
+                    {/* Animated background shimmer effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.6, ease: "easeInOut" }}
+                    />
+                    
+                    {/* Click ripple effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-blue-400/20 rounded-sm"
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileTap={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    />
+                  </Button>
+                </motion.div>
               </CardFooter>
             </Card>
           </motion.div>
@@ -184,8 +222,8 @@ export default function DashboardFeature() {
                 type: "spring",
                 stiffness: 200
               }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08, y: -3 }}
+              whileTap={{ scale: 0.92 }}
             >
               <Button
                 as="a"
@@ -198,12 +236,41 @@ export default function DashboardFeature() {
                 className="px-3 py-1.5 text-sm
                   backdrop-blur-sm bg-white/5 dark:bg-black/20
                   border border-[#4a85ff]/20 
-                  hover:border-[#4a85ff]/40
-                  hover:bg-[#4a85ff]/5
-                  transition-all duration-300
-                  hover:shadow-[0_0_15px_rgba(74,133,255,0.2)]"
+                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-purple-500/10
+                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-purple-500/20
+                  active:border-[#4a85ff]/80
+                  transition-all duration-200 ease-out
+                  hover:shadow-[0_0_20px_rgba(74,133,255,0.3)]
+                  active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2),0_0_25px_rgba(74,133,255,0.4)]
+                  relative overflow-hidden group"
+                onPress={() => {
+                  console.log(`${resource.title} link clicked!`);
+                }}
               >
-                {resource.title}
+                <motion.span
+                  className="relative z-10"
+                  initial={{ y: 0 }}
+                  whileTap={{ y: 0.5 }}
+                  transition={{ duration: 0.1 }}
+                >
+                  {resource.title}
+                </motion.span>
+                
+                {/* Shimmer effect on hover */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "100%" }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                />
+                
+                {/* Click pulse effect */}
+                <motion.div
+                  className="absolute inset-0 bg-[#4a85ff]/30 rounded-sm"
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileTap={{ scale: 1.2, opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                />
               </Button>
             </motion.div>
           ))}
