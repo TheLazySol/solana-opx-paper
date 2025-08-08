@@ -1,3 +1,5 @@
+const {heroui} = require("@heroui/theme");
+
 /** @type {import('tailwindcss').Config} */
 const { heroui } = require("@heroui/theme");
 
