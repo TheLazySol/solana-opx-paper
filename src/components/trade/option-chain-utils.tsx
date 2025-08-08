@@ -2,7 +2,7 @@ import { FC, useState, useEffect, useCallback } from 'react'
 import { ExpirationDateSelector } from './expiration-date'
 import { FilterGreeks, GreekFilters } from './filter-greeks'
 import { ExpirationDate, EMPTY_EXPIRATION_DATES, formatOptionExpirationDate } from '@/constants/constants'
-import { Button } from '../ui/button'
+import { Button } from '@heroui/react'
 import { RefreshCw } from 'lucide-react'
 import { cn } from '@/utils/utils'
 import { getTokenPrice } from '@/lib/api/getTokenPrice'
@@ -195,15 +195,16 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
         onFiltersChange={onGreekFiltersChange}
       />
       <Button
-        variant="ghost"
-        size="icon"
+        variant="light"
+        size="sm"
+        isIconOnly
         className="h-8 w-8 p-0"
-        onClick={handleRefresh}
-        disabled={isRefreshing}
+        onPress={handleRefresh}
+        isDisabled={isRefreshing}
       >
         <RefreshCw
           className={cn(
-            'h-4 w-4 text-muted-foreground',
+            'h-4 w-4 text-foreground-500',
             isRefreshing && 'animate-spin'
           )}
         />

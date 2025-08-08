@@ -1,13 +1,7 @@
 import { FC, useState, useCallback, memo, useRef, useEffect } from 'react'
 import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
 
@@ -81,9 +75,13 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
         )}
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base">
+      <Dropdown>
+        <DropdownTrigger>
+          <Button 
+            variant="bordered" 
+            className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base"
+            endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
+          >
             <div className="flex items-center">
               {selectedToken.symbol.toUpperCase() === 'SOL' && (
                 <Image 
@@ -105,15 +103,17 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
               )}
               {selectedToken.symbol}
             </div>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[140px] sm:w-[180px]">
+        </DropdownTrigger>
+        <DropdownMenu 
+          aria-label="Asset selection"
+          onAction={(key) => handleAssetChange(key as string)}
+          className="w-[140px] sm:w-[180px]"
+        >
           {assets.map((asset) => (
-            <DropdownMenuItem
+            <DropdownItem
               key={asset.id}
-              onClick={() => handleAssetChange(asset.id)}
-              className="cursor-pointer text-sm sm:text-base"
+              className="text-sm sm:text-base"
             >
               <div className="flex items-center">
                 {asset.name.toUpperCase() === 'SOL' && (
@@ -136,10 +136,10 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
                 )}
                 {asset.name}
               </div>
-            </DropdownMenuItem>
+            </DropdownItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+      </Dropdown>
     </div>
   )
 }

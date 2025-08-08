@@ -1,7 +1,6 @@
 {
   "name": "solana-opx-paper",
   "version": "1.0.0-beta",
-  
   "private": true,
   "scripts": {
     "anchor": "cd anchor && anchor",
@@ -20,6 +19,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@heroui/react": "^2.8.2",
+    "@heroui/theme": "^2.4.20",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-checkbox": "^1.2.3",
     "@radix-ui/react-dialog": "^1.1.11",
@@ -48,6 +49,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "framer-motion": "^12.23.12",
     "gill": "^0.8.2",
     "jotai": "^2.12.3",
     "lucide-react": "^0.474.0",
