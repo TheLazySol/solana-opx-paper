@@ -1,14 +1,6 @@
 import { FC, useState } from 'react'
 import { Filter, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react'
 
 export interface GreekFilters {
   delta: boolean
@@ -41,99 +33,67 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
 }) => {
   const [open, setOpen] = useState(false)
   
-  const toggleFilter = (greek: keyof GreekFilters, e: React.MouseEvent) => {
-    e.preventDefault()
+  const toggleFilter = (greek: keyof GreekFilters) => {
     onFiltersChange({
       ...filters,
       [greek]: !filters[greek]
     })
   }
 
+  const greekItems = [
+    { key: 'delta', label: 'Delta (Δ)', isSelected: filters.delta },
+    { key: 'theta', label: 'Theta (θ)', isSelected: filters.theta },
+    { key: 'gamma', label: 'Gamma (γ)', isSelected: filters.gamma },
+    { key: 'vega', label: 'Vega (ν)', isSelected: filters.vega },
+    { key: 'rho', label: 'Rho (ρ)', isSelected: filters.rho },
+  ]
+
+  const statsItems = [
+    { key: 'volume', label: 'Volume', isSelected: filters.volume },
+    { key: 'oa', label: 'Options Available', isSelected: filters.oa },
+    { key: 'oi', label: 'Open Interest', isSelected: filters.oi },
+  ]
+
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="default" className="w-10 p-0">
+    <Dropdown isOpen={open} onOpenChange={setOpen}>
+      <DropdownTrigger>
+        <Button 
+          variant="bordered" 
+          size="sm" 
+          isIconOnly
+          className="w-10 p-0"
+        >
           <Filter className="h-4 w-4" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuLabel>Toggle Greeks & Stats</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      </DropdownTrigger>
+      <DropdownMenu 
+        aria-label="Toggle Greeks & Stats"
+        closeOnSelect={false}
+        onAction={(key) => toggleFilter(key as keyof GreekFilters)}
+        className="w-[200px]"
+      >
+        <DropdownSection title="Greeks" showDivider>
+          {greekItems.map((item) => (
+            <DropdownItem 
+              key={item.key}
+              endContent={item.isSelected ? <Check className="h-4 w-4" /> : null}
+            >
+              {item.label}
+            </DropdownItem>
+          ))}
+        </DropdownSection>
         
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('delta', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Delta (Δ)</span>
-          {filters.delta && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('theta', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Theta (θ)</span>
-          {filters.theta && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('gamma', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Gamma (γ)</span>
-          {filters.gamma && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('vega', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Vega (ν)</span>
-          {filters.vega && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('rho', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Rho (ρ)</span>
-          {filters.rho && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('volume', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Volume</span>
-          {filters.volume && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('oa', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Options Available</span>
-          {filters.oa && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          onClick={(e) => toggleFilter('oi', e)} 
-          className="flex items-center justify-between cursor-pointer"
-          onSelect={(e) => e.preventDefault()}
-        >
-          <span>Open Interest</span>
-          {filters.oi && <Check className="h-4 w-4" />}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownSection title="Stats">
+          {statsItems.map((item) => (
+            <DropdownItem 
+              key={item.key}
+              endContent={item.isSelected ? <Check className="h-4 w-4" /> : null}
+            >
+              {item.label}
+            </DropdownItem>
+          ))}
+        </DropdownSection>
+      </DropdownMenu>
+    </Dropdown>
   )
 } 

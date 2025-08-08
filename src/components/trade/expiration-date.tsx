@@ -1,12 +1,6 @@
 import { FC, useState, useCallback, memo, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
 import { ExpirationDate, EMPTY_EXPIRATION_DATES, formatOptionExpirationDate } from '@/constants/constants'
 
 interface ExpirationDateSelectorProps {
@@ -47,34 +41,41 @@ const ExpirationDateSelectorComponent: FC<ExpirationDateSelectorProps> = ({
 
   return (
     <div className="flex items-center space-x-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-[180px] justify-between">
+      <Dropdown>
+        <DropdownTrigger>
+          <Button 
+            variant="bordered" 
+            className="w-[180px] justify-between"
+            endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
+          >
             {selectedExpiration 
               ? formatOptionExpirationDate(selectedExpiration)
               : "Expiration Date"}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[180px]" align="end">
+        </DropdownTrigger>
+        <DropdownMenu 
+          aria-label="Expiration date selection"
+          onAction={(key) => handleExpirationChange(key as string)}
+          className="w-[180px]"
+        >
           {expirationDates.length > 0 ? (
             expirationDates.map((date) => (
-              <DropdownMenuItem
-                key={date.value}
-                onClick={() => handleExpirationChange(date.value)}
-                className="cursor-pointer"
-              >
-                {formatOptionExpirationDate(date.value)}
-                {date.isMonthly && (
-                  <span className="ml-1 text-xs text-muted-foreground">(Monthly)</span>
-                )}
-              </DropdownMenuItem>
+              <DropdownItem key={date.value}>
+                <div className="flex items-center justify-between w-full">
+                  <span>{formatOptionExpirationDate(date.value)}</span>
+                  {date.isMonthly && (
+                    <span className="text-xs text-default-400">(Monthly)</span>
+                  )}
+                </div>
+              </DropdownItem>
             ))
           ) : (
-            <DropdownMenuItem disabled>No dates available</DropdownMenuItem>
+            <DropdownItem key="no-dates" isDisabled>
+              No dates available
+            </DropdownItem>
           )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+      </Dropdown>
     </div>
   )
 }

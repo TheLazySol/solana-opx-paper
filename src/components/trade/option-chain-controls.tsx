@@ -3,8 +3,7 @@ import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters } from './filter-greeks'
 import { SelectedOption } from './option-data'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { Switch } from '@heroui/react'
 
 interface OptionChainControlsProps {
   assetId: string
@@ -102,12 +101,13 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
           <div className="flex items-center space-x-2">
             <Switch
               id="greek-display-mode"
-              checked={useGreekSymbols}
-              onCheckedChange={setUseGreekSymbols}
+              isSelected={useGreekSymbols}
+              onValueChange={setUseGreekSymbols}
+              size="sm"
             />
-            <Label htmlFor="greek-display-mode" className="text-sm cursor-pointer">
+            <label htmlFor="greek-display-mode" className="text-sm cursor-pointer">
               {useGreekSymbols ? "Greek Symbols" : "Greek Symbols"}
-            </Label>
+            </label>
           </div>
         </div>
       </div>

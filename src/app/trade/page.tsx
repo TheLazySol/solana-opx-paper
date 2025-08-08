@@ -8,6 +8,7 @@ import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption } from '@/components/trade/option-data'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { Card, CardBody, Divider } from '@heroui/react'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
@@ -77,45 +78,54 @@ export default function TradePage() {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
       <div className="grid grid-cols-1 gap-2 sm:gap-4">
-        <div className="rounded-lg shadow-lg p-2 sm:p-4">
-          {/* Asset Type Selector */}
-          <div className="mb-2 sm:mb-4">
-            <AssetType 
-              selectedAsset={selectedAsset} 
-              onAssetChange={setSelectedAsset} 
-            />
-          </div>
-          
-          {/* Asset Chart */}
-          <div className="mb-2 sm:mb-4 overflow-x-auto">
-            <AssetChart selectedAsset={selectedAsset} />
-          </div>
-          
-          {/* Option Chain with Expiration Selector and Trade View */}
-          <div className="space-y-2 sm:space-y-4">
-            <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
-              <OptionChainControls 
-                key={`option-chain-controls-${volumeUpdateTrigger}`}
-                assetId={selectedAsset} 
-                onOptionsChange={handleOptionsChange}
-                selectedOptions={selectedOptions}
-                onOrderPlaced={handleOrderPlaced}
-                onSwitchToCreateOrder={handleSwitchToCreateOrder}
+        <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg">
+          <CardBody className="p-2 sm:p-4">
+            {/* Asset Type Selector */}
+            <div className="mb-2 sm:mb-4">
+              <AssetType 
+                selectedAsset={selectedAsset} 
+                onAssetChange={setSelectedAsset} 
               />
             </div>
-            <div className="overflow-x-auto -mx-2 px-2">
-              <TradeViewContainer 
-                selectedOptions={selectedOptions}
-                onOptionsChange={handleOptionsChange}
-                onOrderPlaced={handleOrderPlaced}
-                activeView={activeView}
-                setActiveView={setActiveView}
-                activeOrderTab={activeOrderTab}
-                setActiveOrderTab={setActiveOrderTab}
-              />
+            
+            <Divider className="my-2 sm:my-4" />
+            
+            {/* Asset Chart */}
+            <div className="mb-2 sm:mb-4 overflow-x-auto">
+              <AssetChart selectedAsset={selectedAsset} />
             </div>
-          </div>
-        </div>
+            
+            <Divider className="my-2 sm:my-4" />
+            
+            {/* Option Chain with Expiration Selector and Trade View */}
+            <div className="space-y-2 sm:space-y-4">
+              <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
+                <OptionChainControls 
+                  key={`option-chain-controls-${volumeUpdateTrigger}`}
+                  assetId={selectedAsset} 
+                  onOptionsChange={handleOptionsChange}
+                  selectedOptions={selectedOptions}
+                  onOrderPlaced={handleOrderPlaced}
+                  onSwitchToCreateOrder={handleSwitchToCreateOrder}
+                />
+              </div>
+              
+              <Divider className="my-2 sm:my-4" />
+              
+              <div className="overflow-x-auto -mx-2 px-2">
+                <TradeViewContainer 
+                  selectedOptions={selectedOptions}
+                  onOptionsChange={handleOptionsChange}
+                  onOrderPlaced={handleOrderPlaced}
+                  activeView={activeView}
+                  setActiveView={setActiveView}
+                  activeOrderTab={activeOrderTab}
+                  setActiveOrderTab={setActiveOrderTab}
+                />
+              </div>
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   )

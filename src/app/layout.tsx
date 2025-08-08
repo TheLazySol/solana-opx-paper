@@ -6,6 +6,7 @@ import {ReactQueryProvider} from './react-query-provider'
 import {ThemeProvider} from '@/components/theme-provider'
 import { BackgroundWrapper } from '@/components/ui/background-wrapper'
 import { AssetPriceProvider } from '@/context/asset-price-provider'
+import { HeroUIProvider } from '@heroui/react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -40,23 +41,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background antialiased dark:bg-gray-950">
         <div id="wallet-extension-root" />
         <BackgroundWrapper />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <ReactQueryProvider>
-            <ClusterProvider>
-              <SolanaProvider>
-                <AssetPriceProvider>
-                  <UiLayout links={links}>{children}</UiLayout>
-                </AssetPriceProvider>
-              </SolanaProvider>
-            </ClusterProvider>
-          </ReactQueryProvider>
-        </ThemeProvider>
+        <HeroUIProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            forcedTheme="dark"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
+            <ReactQueryProvider>
+              <ClusterProvider>
+                <SolanaProvider>
+                  <AssetPriceProvider>
+                    <UiLayout links={links}>{children}</UiLayout>
+                  </AssetPriceProvider>
+                </SolanaProvider>
+              </ClusterProvider>
+            </ReactQueryProvider>
+          </ThemeProvider>
+        </HeroUIProvider>
       </body>
     </html>
   )
