@@ -1,14 +1,12 @@
 'use client'
 
-import { ChevronDown, ChevronRight, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, X, Activity, TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '../ui/button'
+import { Button, Card, CardBody, CardHeader, Badge, Divider, Chip } from '@heroui/react'
 import React from 'react'
 import Image from 'next/image'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { motion, AnimatePresence } from 'framer-motion'
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
@@ -716,238 +714,397 @@ export const OrdersViewOpen = () => {
   };
 
   return (
-    <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-      border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-muted-foreground">
-          Open Positions
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {positions.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            No open positions
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {positions.map((position) => (
-              <div 
-                key={position.id}
-                className="rounded-lg border border-[#e5e5e5]/20 dark:border-[#393939] overflow-hidden"
-              >
-                {/* Position Header */}
-                <div 
-                  className="bg-white/5 dark:bg-black/20 p-2 sm:p-3 cursor-pointer hover:bg-white/10 dark:hover:bg-black/30
-                    transition-colors duration-200"
-                  onClick={() => toggleAsset(position.id)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <div className={`
-                        w-4 h-4 flex items-center justify-center 
-                        rounded-full border border-[#e5e5e5]/50 dark:border-[#393939]
-                        transition-all duration-200
-                        ${expandedAssets.includes(position.id) 
-                          ? 'bg-[#4a85ff]/10 border-[#4a85ff]/40' 
-                          : 'hover:border-[#4a85ff]/40 hover:bg-[#4a85ff]/10'
-                        }
-                      `}>
-                        <ChevronRight 
-                          size={12} 
-                          className={`
-                            text-muted-foreground
-                            transition-transform duration-200
-                            ${expandedAssets.includes(position.id) ? 'rotate-90' : ''}
-                          `}
-                        />
-                      </div>
-                      {position.asset.toUpperCase() === 'SOL' && (
-                        <Image 
-                          src="/token-logos/solana_logo.png" 
-                          alt="Solana Logo" 
-                          width={24} 
-                          height={24} 
-                          className="mr-1"
-                        />
-                      )}
-                      <Badge variant="grey" className="capitalize">
-                        {position.asset}
-                      </Badge>
-                    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative"
+    >
+      {/* Subtle background glow */}
+      <motion.div
+        className="absolute -inset-0.5 bg-gradient-to-r from-[#4a85ff]/15 via-[#4a85ff]/10 to-[#4a85ff]/15 rounded-xl blur-sm"
+        animate={{
+          opacity: [0.5, 0.7, 0.5],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      <Card className="relative bg-gradient-to-br from-white/10 via-white/5 to-transparent dark:from-black/40 dark:via-black/20 dark:to-transparent 
+        backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-[#4a85ff]/10
+        hover:shadow-[#4a85ff]/20 transition-all duration-500">
+        
+        <CardHeader className="pb-6 bg-gradient-to-r from-[#4a85ff]/10 to-[#4a85ff]/5 backdrop-blur-sm border-b border-white/10">
+          <motion.div 
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <div className="p-2 rounded-lg bg-[#4a85ff]/20 backdrop-blur-sm">
+              <Activity className="h-5 w-5 text-[#4a85ff]" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                Open Positions
+              </h3>
+              <p className="text-sm text-white/60 mt-0.5">
+                {positions.length} active position{positions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </motion.div>
+        </CardHeader>
 
-                    <div className="grid grid-cols-4 w-full sm:w-auto gap-x-4 sm:gap-x-12 text-xs sm:text-sm mt-2 sm:mt-0">
-                      <div className="text-center">
-                        <div className="text-muted-foreground">Current Price</div>
-                        <div className="text-foreground">${position.marketPrice.toFixed(2)}</div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-muted-foreground">(Filled / Open)</div>
-                        <div className="text-foreground">
-                          {(() => {
-                            const filled = position.legs.reduce((count, leg) => 
-                              count + (leg.filledQuantity ?? 0), 0);
-                            const pending = position.legs.reduce((count, leg) => 
-                              count + (leg.pendingQuantity ?? 0), 0);
-                            return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
-                          })()}
-                        </div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-muted-foreground">Total Value</div>
-                        <div className="font-medium">
-                          {(() => {
-                            const filledCount = position.legs.reduce((count, leg) => 
-                              count + (leg.filledQuantity ?? 0), 0);
-                            return filledCount > 0 ? `$${position.totalValue.toFixed(2)}` : '-';
-                          })()}
-                        </div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-muted-foreground">Total P/L</div>
-                        <div className={position.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {(() => {
-                            const filledCount = position.legs.reduce((count, leg) => 
-                              count + (leg.filledQuantity ?? 0), 0);
-                            return filledCount > 0 
-                              ? <>{position.totalPnl >= 0 ? '+$' : '-$'}{Math.abs(position.totalPnl).toFixed(2)}</>
-                              : '-';
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCloseAll(position.id)
-                      }}
-                      className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110 mt-2 sm:mt-0"
-                    >
-                      Close All
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Expanded Content */}
-                {expandedAssets.includes(position.id) && (
-                  <div className="p-2 sm:p-3 space-y-3">
-                    {/* Greeks Summary - Responsive grid that stacks on mobile */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 p-2 rounded-lg bg-white/5 dark:bg-black/20">
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Delta</div>
-                        <div className="font-medium text-sm">{position.netDelta.toFixed(2)}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Theta</div>
-                        <div className="font-medium text-sm">{position.netTheta.toFixed(3)}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Gamma</div>
-                        <div className="font-medium text-sm">{position.netGamma.toFixed(3)}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Vega</div>
-                        <div className="font-medium text-sm">{position.netVega.toFixed(3)}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Rho</div>
-                        <div className="font-medium text-sm">{position.netRho.toFixed(3)}</div>
-                      </div>
-                    </div>
-
-                    {/* Individual Legs */}
-                    <div className="space-y-2">
-                      {position.legs.map((leg, idx) => (
-                        <div 
-                          key={`${position.id}-leg-${idx}`}
-                          className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-2 rounded-lg bg-white/5 dark:bg-black/20
-                            border border-[#e5e5e5]/10 dark:border-[#393939]/50"
-                        >
-                          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
-                            <Badge variant={leg.position > 0 ? 'success' : 'destructive'}>
-                              {leg.position > 0 ? 'Long' : 'Short'}
-                            </Badge>
-                            <Badge variant={leg.type === 'Call' ? 'blue' : 'destructive'}>
-                              {leg.type}
-                            </Badge>
-                            <Badge variant="outline">
-                              ${leg.strike}
-                            </Badge>
-                            <Badge variant="outline">
-                              {leg.expiry.split('T')[0]}
-                            </Badge>
-                            <Badge variant="outline">
-                              Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
-                            </Badge>
-                          </div>
-                          
-                          <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-2 sm:gap-6">
-                            <div className="grid grid-cols-3 gap-x-3 text-xs sm:text-sm w-full sm:w-auto">
-                              <div className="text-right">
-                                <div className="text-muted-foreground">Avg Price</div>
-                                <div className="font-medium">
-                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-muted-foreground">Option Price</div>
-                                <div className="font-medium">
-                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.marketPrice.toFixed(2)}`}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-muted-foreground">Qty</div>
-                                <div className="font-medium">
-                                  {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
-                                </div>
-                              </div>
-                            </div>
-                          
-                            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-6 w-full sm:w-auto">
-                              <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6 text-xs sm:text-sm">
-                                <div className="text-right">
-                                  <div className="text-muted-foreground">Value</div>
-                                  <div className="font-medium">
-                                    {(leg.filledQuantity ?? 0) === 0
-                                      ? '-' 
-                                      : `$${(leg.marketPrice * 100 * (leg.filledQuantity ?? 0) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-muted-foreground">P/L</div>
-                                  <div className={leg.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                                    {(leg.filledQuantity ?? 0) === 0
-                                      ? '-' 
-                                      : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
-                                  </div>
-                                </div>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCloseLeg(position.id, idx)}
-                                className="text-red-500/50 hover:text-red-500 transition-all duration-200 hover:scale-110"
-                              >
-                                Close
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+        <CardBody className="p-6">
+          {positions.length === 0 ? (
+            <motion.div 
+              className="flex flex-col items-center justify-center min-h-[300px] space-y-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <div className="p-4 rounded-full bg-gradient-to-br from-[#4a85ff]/20 to-[#4a85ff]/10 backdrop-blur-sm">
+                <Activity className="h-8 w-8 text-[#4a85ff]/60" />
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <div className="text-center">
+                <p className="text-lg font-medium text-white/80 mb-2">No Open Positions</p>
+                <p className="text-sm text-white/50">Your active trades will appear here</p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <div className="space-y-4">
+                <AnimatePresence mode="popLayout">
+                  {positions.map((position, index) => (
+                    <motion.div 
+                      key={position.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1, duration: 0.4 }}
+                      className="group relative"
+                    >
+                      {/* Card glow effect */}
+                      <motion.div
+                        className="absolute -inset-0.5 bg-gradient-to-r from-[#4a85ff]/0 to-[#4a85ff]/0 rounded-xl blur-sm transition-all duration-300 group-hover:from-[#4a85ff]/10 group-hover:to-[#4a85ff]/10"
+                        layoutId={`glow-${position.id}`}
+                      />
+                      
+                      <div className="relative bg-gradient-to-br from-white/10 to-white/5 dark:from-black/30 dark:to-black/10 
+                        backdrop-blur-md rounded-xl border border-white/20 dark:border-white/10 
+                        hover:border-[#4a85ff]/30 transition-all duration-300 overflow-hidden">
+                        
+                        {/* Position Header */}
+                        <motion.div 
+                          className="p-4 cursor-pointer hover:bg-white/5 dark:hover:bg-black/20 transition-all duration-300"
+                          onClick={() => toggleAsset(position.id)}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            {/* Asset Info */}
+                            <div className="flex items-center gap-4">
+                              <motion.div
+                                animate={{ rotate: expandedAssets.includes(position.id) ? 90 : 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="p-2 rounded-lg bg-white/10 hover:bg-[#4a85ff]/20 transition-all duration-200"
+                              >
+                                <ChevronRight className="h-4 w-4 text-white/70" />
+                              </motion.div>
+                              
+                              <div className="flex items-center gap-3">
+                                {position.asset.toUpperCase() === 'SOL' && (
+                                  <div className="p-2 rounded-lg bg-[#4a85ff]/20 backdrop-blur-sm">
+                                    <Image 
+                                      src="/token-logos/solana_logo.png" 
+                                      alt="Solana Logo" 
+                                      width={24} 
+                                      height={24} 
+                                      className="drop-shadow-lg"
+                                    />
+                                  </div>
+                                )}
+                                <Chip 
+                                  variant="flat" 
+                                  className="bg-[#4a85ff]/20 text-[#4a85ff] border border-[#4a85ff]/30 capitalize font-medium"
+                                >
+                                  {position.asset}
+                                </Chip>
+                              </div>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                              <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  <span>Price</span>
+                                </div>
+                                <div className="text-white/90 font-semibold">${position.marketPrice.toFixed(2)}</div>
+                              </div>
+                              
+                              <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                                  <Target className="h-3 w-3" />
+                                  <span>Filled/Open</span>
+                                </div>
+                                <div className="text-white/90 font-semibold">
+                                  {(() => {
+                                    const filled = position.legs.reduce((count, leg) => 
+                                      count + (leg.filledQuantity ?? 0), 0);
+                                    const pending = position.legs.reduce((count, leg) => 
+                                      count + (leg.pendingQuantity ?? 0), 0);
+                                    return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
+                                  })()}
+                                </div>
+                              </div>
+                              
+                              <div className="text-center">
+                                <div className="text-white/60 text-sm mb-1">Total Value</div>
+                                <div className="font-semibold text-white/90">
+                                  {(() => {
+                                    const filledCount = position.legs.reduce((count, leg) => 
+                                      count + (leg.filledQuantity ?? 0), 0);
+                                    return filledCount > 0 ? `$${position.totalValue.toFixed(2)}` : '-';
+                                  })()}
+                                </div>
+                              </div>
+                              
+                              <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                                  {position.totalPnl >= 0 ? (
+                                    <TrendingUp className="h-3 w-3 text-green-400" />
+                                  ) : (
+                                    <TrendingDown className="h-3 w-3 text-red-400" />
+                                  )}
+                                  <span>P/L</span>
+                                </div>
+                                <div className={`font-semibold ${position.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {(() => {
+                                    const filledCount = position.legs.reduce((count, leg) => 
+                                      count + (leg.filledQuantity ?? 0), 0);
+                                    return filledCount > 0 
+                                      ? <>{position.totalPnl >= 0 ? '+$' : '-$'}{Math.abs(position.totalPnl).toFixed(2)}</>
+                                      : '-';
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <motion.div
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                            >
+                              <Button
+                                variant="flat"
+                                size="sm"
+                                onPress={() => handleCloseAll(position.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 
+                                  transition-all duration-200 relative overflow-hidden group"
+                              >
+                                <motion.span
+                                  className="relative z-10"
+                                  initial={{ y: 0 }}
+                                  whileTap={{ y: 0.5 }}
+                                  transition={{ duration: 0.1 }}
+                                >
+                                  Close All
+                                </motion.span>
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/20 to-transparent"
+                                  initial={{ x: "-100%" }}
+                                  whileHover={{ x: "100%" }}
+                                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                                />
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </motion.div>
+
+                        {/* Expanded Content */}
+                        <AnimatePresence>
+                          {expandedAssets.includes(position.id) && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.4, ease: "easeInOut" }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-4 pb-4 space-y-4 border-t border-white/10">
+                                {/* Greeks Summary */}
+                                <motion.div 
+                                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 rounded-lg 
+                                    bg-gradient-to-r from-[#4a85ff]/10 to-[#4a85ff]/5 backdrop-blur-sm border border-white/10 mt-4"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.1, duration: 0.3 }}
+                                >
+                                  <div className="text-center">
+                                    <div className="text-xs text-white/60 mb-2">Delta</div>
+                                    <div className="font-semibold text-white/90">{position.netDelta.toFixed(2)}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-white/60 mb-2">Theta</div>
+                                    <div className="font-semibold text-white/90">{position.netTheta.toFixed(3)}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-white/60 mb-2">Gamma</div>
+                                    <div className="font-semibold text-white/90">{position.netGamma.toFixed(3)}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-white/60 mb-2">Vega</div>
+                                    <div className="font-semibold text-white/90">{position.netVega.toFixed(3)}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-white/60 mb-2">Rho</div>
+                                    <div className="font-semibold text-white/90">{position.netRho.toFixed(3)}</div>
+                                  </div>
+                                </motion.div>
+
+                                {/* Individual Legs */}
+                                <div className="space-y-3">
+                                  {position.legs.map((leg, idx) => (
+                                    <motion.div 
+                                      key={`${position.id}-leg-${idx}`}
+                                      initial={{ opacity: 0, x: -20 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: idx * 0.1, duration: 0.3 }}
+                                      className="p-4 rounded-lg bg-gradient-to-r from-white/5 to-transparent 
+                                        dark:from-black/20 dark:to-transparent backdrop-blur-sm border border-white/10
+                                        hover:border-[#4a85ff]/30 transition-all duration-300"
+                                    >
+                                      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                                        {/* Leg Details */}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <Chip 
+                                            size="sm" 
+                                            variant="flat"
+                                            className={leg.position > 0 
+                                              ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                                            }
+                                          >
+                                            {leg.position > 0 ? 'Long' : 'Short'}
+                                          </Chip>
+                                          <Chip 
+                                            size="sm" 
+                                            variant="flat"
+                                            className={leg.type === 'Call' 
+                                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" 
+                                              : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                                            }
+                                          >
+                                            {leg.type}
+                                          </Chip>
+                                          <Chip size="sm" variant="flat" className="bg-[#4a85ff]/20 text-[#4a85ff] border border-[#4a85ff]/30">
+                                            ${leg.strike}
+                                          </Chip>
+                                          <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
+                                            {leg.expiry.split('T')[0]}
+                                          </Chip>
+                                          <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
+                                            Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
+                                          </Chip>
+                                        </div>
+                                        
+                                        {/* Pricing and Actions */}
+                                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
+                                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                            <div className="text-center">
+                                              <p className="text-white/60 mb-1">Avg Price</p>
+                                              <p className="font-semibold text-white/90">
+                                                {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
+                                              </p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="text-white/60 mb-1">Market</p>
+                                              <p className="font-semibold text-white/90">
+                                                {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.marketPrice.toFixed(2)}`}
+                                              </p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="text-white/60 mb-1">Value</p>
+                                              <p className="font-semibold text-white/90">
+                                                {(leg.filledQuantity ?? 0) === 0
+                                                  ? '-' 
+                                                  : `$${(leg.marketPrice * 100 * (leg.filledQuantity ?? 0) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
+                                              </p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="text-white/60 mb-1">P/L</p>
+                                              <div className="flex items-center justify-center gap-1">
+                                                {(leg.filledQuantity ?? 0) > 0 && (
+                                                  <>
+                                                    {leg.pnl >= 0 ? (
+                                                      <TrendingUp className="h-3 w-3 text-green-400" />
+                                                    ) : (
+                                                      <TrendingDown className="h-3 w-3 text-red-400" />
+                                                    )}
+                                                  </>
+                                                )}
+                                                <span className={`font-semibold ${leg.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                  {(leg.filledQuantity ?? 0) === 0
+                                                    ? '-' 
+                                                    : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          
+                                          <motion.div
+                                            whileTap={{ scale: 0.95 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                          >
+                                            <Button
+                                              variant="flat"
+                                              size="sm"
+                                              onPress={() => handleCloseLeg(position.id, idx)}
+                                              className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 
+                                                transition-all duration-200 relative overflow-hidden group"
+                                            >
+                                              <motion.span
+                                                className="relative z-10"
+                                                initial={{ y: 0 }}
+                                                whileTap={{ y: 0.5 }}
+                                                transition={{ duration: 0.1 }}
+                                              >
+                                                Close
+                                              </motion.span>
+                                              <motion.div
+                                                className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/20 to-transparent"
+                                                initial={{ x: "-100%" }}
+                                                whileHover={{ x: "100%" }}
+                                                transition={{ duration: 0.6, ease: "easeInOut" }}
+                                              />
+                                            </Button>
+                                          </motion.div>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </CardBody>
+      </Card>
+    </motion.div>
   )
 } 

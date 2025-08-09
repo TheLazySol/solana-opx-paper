@@ -1,18 +1,11 @@
 import { FC, useMemo, useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Button, Card, CardBody, CardHeader, Divider, Tooltip } from '@heroui/react'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/useToast"
 import { CheckCircle2, AlertCircle } from 'lucide-react'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { motion } from 'framer-motion'
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
@@ -348,11 +341,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
       hover:bg-transparent shadow-lg h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-muted-foreground">
+        <h3 className="text-base font-medium text-muted-foreground">
           Order Summary
-        </CardTitle>
+        </h3>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardBody className="space-y-4">
         <div className="space-y-3">
           {/* Order Details */}
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -382,7 +375,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <span className="text-muted-foreground">Transaction Cost:</span>
               <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
             </div>
-            <Separator className="my-1 bg-white/10" />
+            <Divider className="my-1 bg-white/10" />
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="font-medium">Total Fees:</span>
               <div className="text-right">
@@ -394,7 +387,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             </div>
           </div>
 
-          <Separator className="my-2 bg-white/10" />
+          <Divider className="my-2 bg-white/10" />
           
           {/* Premium Amount */}
           <div className="grid grid-cols-2 gap-2">
@@ -407,15 +400,32 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           </div>
         </div>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-full">
-                <Button 
-                  className="w-full bg-white/10 hover:bg-white/20 text-white border-0
-                    transition-all duration-300 relative"
-                  disabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
-                  onClick={handlePlaceOrder}
+        <Tooltip 
+          content={insufficientOptions ? "There are not enough options available to trade for the quantity selected." : undefined}
+          isDisabled={!insufficientOptions}
+        >
+          <div className="w-full">
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className="w-full"
+            >
+              <Button 
+                className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
+                  hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20
+                  hover:border-blue-500/70 hover:shadow-lg hover:shadow-blue-500/25
+                  active:bg-gradient-to-r active:from-blue-600/30 active:to-purple-600/30
+                  active:border-blue-600/80 active:shadow-inner
+                  transition-all duration-200 ease-out relative overflow-hidden group"
+                isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+                onPress={handlePlaceOrder}
+              >
+                <motion.span
+                  className="relative z-10"
+                  initial={{ y: 0 }}
+                  whileTap={{ y: 1 }}
+                  transition={{ duration: 0.1 }}
                 >
                   {isPlacingOrder ? (
                     <span className="flex items-center justify-center">
@@ -438,17 +448,28 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   ) : (
                     hasSelectedOptions ? 'Place Order' : 'No Options Selected'
                   )}
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {insufficientOptions && (
-              <TooltipContent className="bg-red-900/90 text-white border-red-600">
-                <p>There are not enough options available to trade for the quantity selected.</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </CardContent>
+                </motion.span>
+                
+                {/* Animated background shimmer effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "100%" }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                />
+                
+                {/* Click ripple effect */}
+                <motion.div
+                  className="absolute inset-0 bg-blue-400/20 rounded-sm"
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileTap={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                />
+              </Button>
+            </motion.div>
+          </div>
+        </Tooltip>
+      </CardBody>
     </Card>
   )
 } 

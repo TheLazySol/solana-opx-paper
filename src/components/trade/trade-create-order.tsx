@@ -1,12 +1,10 @@
 import { FC, useMemo, useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, Card, CardBody, Badge, Input } from '@heroui/react'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
 import { X, Plus, Minus } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { optionsAvailabilityTracker } from './option-data'
 
@@ -356,7 +354,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               
               return (
                 <Card key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`} className="bg-black/10 border border-white/10">
-                  <CardContent className="p-2 sm:p-3">
+                  <CardBody className="p-2 sm:p-3">
                     <div className="flex flex-col space-y-2 w-full">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -369,62 +367,106 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                              className="mr-1.5"
                            />
                          )}
-                         <Badge variant="grey" className="capitalize">
+                         <Badge variant="flat" color="default" className="capitalize">
                             {assetName}
                           </Badge>
-                          <Badge variant={option.type === 'bid' ? 'success' : 'destructive'} className="capitalize">
+                          <Badge variant="flat" color={option.type === 'bid' ? 'success' : 'danger'} className="capitalize">
                             {option.type === 'bid' ? 'Long' : 'Short'}
                           </Badge>
-                          <Badge variant="blue" className="capitalize">
+                          <Badge variant="flat" color="primary" className="capitalize">
                             {optionType}
                           </Badge>
-                          <Badge variant="blue" className="capitalize">
+                          <Badge variant="flat" color="primary" className="capitalize">
                             {strikePrice}
                           </Badge>
                         </div>
                         
                         <div className="flex items-center justify-between sm:justify-end gap-2">
-                          <Badge variant="blue" className="capitalize">
+                          <Badge variant="flat" color="primary" className="capitalize">
                             EXP: {expiryDate}
                           </Badge>
                           {onRemoveOption && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-7 w-7 text-muted-foreground hover:text-white"
-                              onClick={() => onRemoveOption(index)}
+                            <motion.div
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 10 }}
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
+                              <Button 
+                                variant="light" 
+                                isIconOnly
+                                className="h-7 w-7 min-w-7 text-muted-foreground hover:text-red-500 transition-all duration-200"
+                                onPress={() => onRemoveOption(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </motion.div>
                           )}
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={`h-6 w-16 px-2 py-0 text-xs ${
-                            orderTypes[legKey] === 'MKT' 
-                              ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
-                              : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
-                          } transition-all duration-200`}
-                          onClick={() => handleOrderTypeChange(index, 'MKT')}
+                        <motion.div
+                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                          MKT
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={`h-6 w-16 px-2 py-0 text-xs ${
-                            orderTypes[legKey] === 'LMT' 
-                              ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
-                              : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
-                          } transition-all duration-200`}
-                          onClick={() => handleOrderTypeChange(index, 'LMT')}
+                          <Button
+                            variant="bordered"
+                            size="sm"
+                            className={`h-6 w-16 px-2 py-0 text-xs ${
+                              orderTypes[legKey] === 'MKT' 
+                                ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
+                                : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
+                            } transition-all duration-200 relative overflow-hidden group`}
+                            onPress={() => handleOrderTypeChange(index, 'MKT')}
+                          >
+                            <motion.span
+                              className="relative z-10"
+                              initial={{ y: 0 }}
+                              whileTap={{ y: 0.5 }}
+                              transition={{ duration: 0.1 }}
+                            >
+                              MKT
+                            </motion.span>
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                              initial={{ x: "-100%" }}
+                              whileHover={{ x: "100%" }}
+                              transition={{ duration: 0.6, ease: "easeInOut" }}
+                            />
+                          </Button>
+                        </motion.div>
+                        <motion.div
+                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                          LMT
-                        </Button>
+                          <Button
+                            variant="bordered"
+                            size="sm"
+                            className={`h-6 w-16 px-2 py-0 text-xs ${
+                              orderTypes[legKey] === 'LMT' 
+                                ? 'bg-[#4a85ff]/10 border border-[#4a85ff]/40 hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60' 
+                                : 'bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] hover:bg-[#4a85ff]/10 hover:border-[#4a85ff]/40'
+                            } transition-all duration-200 relative overflow-hidden group`}
+                            onPress={() => handleOrderTypeChange(index, 'LMT')}
+                          >
+                            <motion.span
+                              className="relative z-10"
+                              initial={{ y: 0 }}
+                              whileTap={{ y: 0.5 }}
+                              transition={{ duration: 0.1 }}
+                            >
+                              LMT
+                            </motion.span>
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                              initial={{ x: "-100%" }}
+                              whileHover={{ x: "100%" }}
+                              transition={{ duration: 0.6, ease: "easeInOut" }}
+                            />
+                          </Button>
+                        </motion.div>
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -459,15 +501,21 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           <div className="flex items-center justify-end gap-2">
                             <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
                             <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => handleQuantityChange(index, -MIN_QTY)}
-                                title={`Decrease by ${MIN_QTY}`}
+                              <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
                               >
-                                <Minus className="h-3 w-3" />
-                              </Button>
+                                <Button
+                                  variant="light"
+                                  isIconOnly
+                                  className="h-6 w-6 min-w-6 hover:bg-[#4a85ff]/20 transition-all duration-200"
+                                  onPress={() => handleQuantityChange(index, -MIN_QTY)}
+                                  title={`Decrease by ${MIN_QTY}`}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                              </motion.div>
 
                               <div className="relative w-14">
                                 <Input
@@ -479,15 +527,21 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 />
                               </div>
 
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => handleQuantityChange(index, MIN_QTY)}
-                                title={`Increase by ${MIN_QTY}`}
+                              <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
                               >
-                                <Plus className="h-3 w-3" />
-                              </Button>
+                                <Button
+                                  variant="light"
+                                  isIconOnly
+                                  className="h-6 w-6 min-w-6 hover:bg-[#4a85ff]/20 transition-all duration-200"
+                                  onPress={() => handleQuantityChange(index, MIN_QTY)}
+                                  title={`Increase by ${MIN_QTY}`}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </motion.div>
                             </div>
                           </div>
                           
@@ -508,7 +562,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                         </div>
                       </div>
                     </div>
-                  </CardContent>
+                  </CardBody>
                 </Card>
               )
             })}

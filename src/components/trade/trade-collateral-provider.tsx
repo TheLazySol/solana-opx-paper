@@ -1,13 +1,8 @@
 import { FC, useState, useMemo, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardBody, CardHeader, Divider, Input, Slider, Button, Select, SelectItem, Tooltip } from '@heroui/react'
 import { SelectedOption } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { motion } from 'framer-motion'
 import { BASE_ANNUAL_INTEREST_RATE, MAX_LEVERAGE } from '@/constants/constants'
 
 const COLLATERAL_TYPES = [
@@ -147,29 +142,22 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
       hover:bg-transparent shadow-lg h-full
       ${(!hasSelectedOptions || (isDebit && externalCollateralNeeded === 0)) ? 'opacity-50 pointer-events-none select-none' : ''}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-muted-foreground">
+        <h3 className="text-base font-medium text-muted-foreground">
           Collateral Requirements
           {(!hasSelectedOptions || (isDebit && externalCollateralNeeded === 0)) && (
             <span className="ml-2 text-xs font-normal">(Not Required)</span>
           )}
-        </CardTitle>
+        </h3>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardBody className="space-y-4">
         <div className="space-y-4">
           {/* Collateral Details */}
           <div className="flex flex-col p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-xs text-muted-foreground cursor-help">
-                    <span className="border-b border-dotted border-slate-500">Collateral Needed:</span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>The remaining collateral needed after accounting for provided and borrowed amounts</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip content="The remaining collateral needed after accounting for provided and borrowed amounts">
+              <span className="text-xs text-muted-foreground cursor-help">
+                <span className="border-b border-dotted border-slate-500">Collateral Needed:</span>
+              </span>
+            </Tooltip>
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-lg">
                 ${hasSelectedOptions ? Math.max(0, calculateCollateralNeeded - (Number(collateralProvided) || 0) - borrowedAmount).toFixed(2) : '0.00'}
@@ -180,56 +168,44 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
           {/* Collateral Input */}
           <div className="w-full">
             <div className="flex items-center justify-between mb-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm font-medium cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>This is the amount of collateral you want to provide for this position.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip content="This is the amount of collateral you want to provide for this position.">
+                <span className="text-sm font-medium cursor-help">
+                  <span className="border-b border-dotted border-slate-500">Provide Collateral Amount</span>
+                </span>
+              </Tooltip>
               <div className="text-xs text-muted-foreground">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span 
-                        className="cursor-pointer hover:text-[#4a85ff] transition-colors duration-200"
-                        onClick={() => setCollateralProvided(minCollateralRequired.toFixed(2))}
-                      >
-                        <span className="border-b border-dotted border-slate-500">Min Required: ${minCollateralRequired.toFixed(2)}</span>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Click to auto-fill minimum collateral required with max leverage ({MAX_LEVERAGE}x)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip content={`Click to auto-fill minimum collateral required with max leverage (${MAX_LEVERAGE}x)`}>
+                  <span 
+                    className="cursor-pointer hover:text-[#4a85ff] transition-colors duration-200"
+                    onClick={() => setCollateralProvided(minCollateralRequired.toFixed(2))}
+                  >
+                    <span className="border-b border-dotted border-slate-500">Min Required: ${minCollateralRequired.toFixed(2)}</span>
+                  </span>
+                </Tooltip>
               </div>
             </div>
             <div className="flex items-center gap-2 w-full">
               <Select
-                value={collateralType}
-                onValueChange={setCollateralType}
-                disabled={isDebit && externalCollateralNeeded === 0}
+                selectedKeys={[collateralType]}
+                onSelectionChange={(selection) => {
+                  const selected = Array.from(selection)[0] as string;
+                  setCollateralType(selected);
+                }}
+                isDisabled={isDebit && externalCollateralNeeded === 0}
+                className="h-10 w-24"
+                classNames={{
+                  trigger: "bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40"
+                }}
               >
-                <SelectTrigger className="h-10 w-24 bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939] focus:ring-1 focus:ring-[#4a85ff]/40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COLLATERAL_TYPES.map((type) => (
-                    <SelectItem
-                      key={type.value}
-                      value={type.value}
-                      className="text-sm"
-                    >
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {COLLATERAL_TYPES.map((type) => (
+                  <SelectItem
+                    key={type.value}
+                    value={type.value}
+                    className="text-sm"
+                  >
+                    {type.label}
+                  </SelectItem>
+                ))}
               </Select>
               <Input
                 type="number"
@@ -255,61 +231,108 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
           {/* Leverage Controls */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm font-medium cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Leverage</span>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Multiply your buying power by borrowing additional capital.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip content="Multiply your buying power by borrowing additional capital.">
+                <span className="text-sm font-medium cursor-help">
+                  <span className="border-b border-dotted border-slate-500">Leverage</span>
+                </span>
+              </Tooltip>
               <div className="flex space-x-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const optimalLeverage = calculateOptimalLeverage()
-                    setLeverage([optimalLeverage])
-                  }}
-                  className="h-6 px-2 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
-                    hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
-                    transition-all duration-200"
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                  Auto-Size
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const newLeverage = Math.max(1, leverage[0] - 0.01)
-                    setLeverage([newLeverage])
-                  }}
-                  className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
-                    hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
-                    transition-all duration-200 flex items-center justify-center"
+                  <Button
+                    variant="bordered"
+                    size="sm"
+                    onPress={() => {
+                      const optimalLeverage = calculateOptimalLeverage()
+                      setLeverage([optimalLeverage])
+                    }}
+                    className="h-6 px-2 py-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
+                      hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
+                      transition-all duration-200 relative overflow-hidden group"
+                  >
+                    <motion.span
+                      className="relative z-10"
+                      initial={{ y: 0 }}
+                      whileTap={{ y: 0.5 }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      Auto-Size
+                    </motion.span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.6, ease: "easeInOut" }}
+                    />
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                  -
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const newLeverage = Math.min(MAX_LEVERAGE, leverage[0] + 0.01)
-                    setLeverage([newLeverage])
-                  }}
-                  className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
-                    hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
-                    transition-all duration-200 flex items-center justify-center"
+                  <Button
+                    variant="bordered"
+                    size="sm"
+                    onPress={() => {
+                      const newLeverage = Math.max(1, leverage[0] - 0.01)
+                      setLeverage([newLeverage])
+                    }}
+                    className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
+                      hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
+                      transition-all duration-200 flex items-center justify-center relative overflow-hidden group"
+                  >
+                    <motion.span
+                      className="relative z-10"
+                      initial={{ y: 0 }}
+                      whileTap={{ y: 0.5 }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      -
+                    </motion.span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.6, ease: "easeInOut" }}
+                    />
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                  +
-                </Button>
+                  <Button
+                    variant="bordered"
+                    size="sm"
+                    onPress={() => {
+                      const newLeverage = Math.min(MAX_LEVERAGE, leverage[0] + 0.01)
+                      setLeverage([newLeverage])
+                    }}
+                    className="h-6 w-6 p-0 text-xs bg-[#4a85ff]/10 border border-[#4a85ff]/40
+                      hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60
+                      transition-all duration-200 flex items-center justify-center relative overflow-hidden group"
+                  >
+                    <motion.span
+                      className="relative z-10"
+                      initial={{ y: 0 }}
+                      whileTap={{ y: 0.5 }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      +
+                    </motion.span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.6, ease: "easeInOut" }}
+                    />
+                  </Button>
+                </motion.div>
               </div>
             </div>
             
@@ -328,7 +351,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             </div>
           </div>
 
-          <Separator className="my-2 bg-white/10" />
+          <Divider className="my-2 bg-white/10" />
 
           {/* Borrow Summary */}
           <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
@@ -339,18 +362,11 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm text-muted-foreground cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Hourly Borrow Rate:</span>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{selectedAsset} APR: {(BASE_ANNUAL_INTEREST_RATE * 100).toFixed(2)}%</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip content={`${selectedAsset} APR: ${(BASE_ANNUAL_INTEREST_RATE * 100).toFixed(2)}%`}>
+                <span className="text-sm text-muted-foreground cursor-help">
+                  <span className="border-b border-dotted border-slate-500">Hourly Borrow Rate:</span>
+                </span>
+              </Tooltip>
               <span className="text-sm font-light text-orange-200">≈{(hourlyBorrowRate * 100).toFixed(4)}%</span>
             </div>
             <div className="flex justify-between items-center">
@@ -368,7 +384,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             </div>
           )}
         </div>
-      </CardContent>
+      </CardBody>
     </Card>
   )
 } 
