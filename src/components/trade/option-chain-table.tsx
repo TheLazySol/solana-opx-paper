@@ -378,6 +378,19 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           </div>
         </div>
 
+        {/* Add visual header for CALLS and PUTS */}
+        <div className="flex items-center justify-center mb-2">
+          <div className="flex-1 text-center">
+            <span className="text-lg font-bold text-[#4a85ff]">CALLS</span>
+          </div>
+          <div className="w-[100px] text-center">
+            <span className="text-sm font-medium text-default-600">Strike</span>
+          </div>
+          <div className="flex-1 text-center">
+            <span className="text-lg font-bold text-[#4a85ff]">PUTS</span>
+          </div>
+        </div>
+
         <div className="relative">
           <Table 
             aria-label="Options chain table"
@@ -389,59 +402,44 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             }}
           >
             <TableHeader>
-              <TableRow>
-                {/* Category Labels Row */}
+              {columns.map((column) => (
                 <TableColumn 
-                  colSpan={Math.floor(columns.length / 2)}
-                  className="text-center font-bold text-lg text-[#4a85ff] bg-transparent"
+                  key={column.key} 
+                  className={cn(
+                    "text-center w-[85px]",
+                    column.key.startsWith('call-') && column.key !== 'call-price' && "text-[#4a85ff]/80",
+                    column.key.startsWith('put-') && column.key !== 'put-price' && "text-[#4a85ff]/80",
+                    column.key === 'strike' && "bg-default-200 font-bold"
+                  )}
                 >
-                  CALLS
+                  {column.key === 'call-price' || column.key === 'put-price' ? (
+                    <Tooltip
+                      content={
+                        <div className="text-center">
+                          <div className="text-green-500">Bid</div>
+                          <div className="text-red-500">Ask</div>
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <span className="underline decoration-dotted decoration-default-400 cursor-help">
+                        {column.label}
+                      </span>
+                    </Tooltip>
+                  ) : column.key === 'strike' ? (
+                    column.label
+                  ) : (
+                    <Tooltip
+                      content={getTooltipContent(column.key)}
+                      placement="top"
+                    >
+                      <span className="underline decoration-dotted decoration-default-400 cursor-help">
+                        {column.label}
+                      </span>
+                    </Tooltip>
+                  )}
                 </TableColumn>
-                <TableColumn className="text-center font-bold bg-default-200 w-[100px]">
-                  Strike
-                </TableColumn>
-                <TableColumn 
-                  colSpan={Math.floor(columns.length / 2)}
-                  className="text-center font-bold text-lg text-[#4a85ff] bg-transparent"
-                >
-                  PUTS
-                </TableColumn>
-              </TableRow>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableColumn 
-                    key={column.key} 
-                    className="text-center w-[85px]"
-                  >
-                    {column.key === 'call-price' || column.key === 'put-price' ? (
-                      <Tooltip
-                        content={
-                          <div className="text-center">
-                            <div className="text-green-500">Bid</div>
-                            <div className="text-red-500">Ask</div>
-                          </div>
-                        }
-                        placement="top"
-                      >
-                        <span className="underline decoration-dotted decoration-default-400 cursor-help">
-                          {column.label}
-                        </span>
-                      </Tooltip>
-                    ) : column.key === 'strike' ? (
-                      column.label
-                    ) : (
-                      <Tooltip
-                        content={getTooltipContent(column.key)}
-                        placement="top"
-                      >
-                        <span className="underline decoration-dotted decoration-default-400 cursor-help">
-                          {column.label}
-                        </span>
-                      </Tooltip>
-                    )}
-                  </TableColumn>
-                ))}
-              </TableRow>
+              ))}
             </TableHeader>
             <TableBody emptyContent="No option data available">
               {mockData.map((option, index) => (
