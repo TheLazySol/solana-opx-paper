@@ -200,7 +200,6 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
                 {COLLATERAL_TYPES.map((type) => (
                   <SelectItem
                     key={type.value}
-                    value={type.value}
                     className="text-sm"
                   >
                     {type.label}
@@ -338,11 +337,11 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             
             <div className="flex items-center gap-2">
               <Slider
-                min={1}
-                max={MAX_LEVERAGE}
+                minValue={1}
+                maxValue={MAX_LEVERAGE}
                 step={0.01}
                 value={leverage}
-                onValueChange={setLeverage}
+                onChange={(value) => setLeverage(Array.isArray(value) ? value : [value])}
                 className="flex-1"
               />
               <span className="font-medium w-12 text-right">
