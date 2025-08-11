@@ -51,7 +51,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
-  const [visibleGreeks, setVisibleGreeks] = useState<GreekFilters>(greekFilters)
+  const visibleGreeks = useMemo(() => greekFilters, [greekFilters])
   const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
   const [refreshVolume, setRefreshVolume] = useState(0); // Counter to force refresh
 
@@ -73,12 +73,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     return spotPrice !== undefined && spotPrice < strike
   }
 
-  // Update visible greeks when the greekFilters prop changes
-  useEffect(() => {
-    if (greekFilters) {
-      setVisibleGreeks(greekFilters)
-    }
-  }, [greekFilters])
+
 
   // Sync with initialSelectedOptions when they change from the parent
   useEffect(() => {
@@ -236,36 +231,36 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   }, [selectedOptions, onOptionsChange]);
 
   // Build table columns dynamically based on visible greeks
-  const buildColumns = () => {
-    const columns = [];
+  const columns = useMemo(() => {
+    const cols = [];
     
     // Call side columns
-    if (visibleGreeks.volume) columns.push({ key: 'call-volume', label: 'Vol' });
-    if (visibleGreeks.oi) columns.push({ key: 'call-oi', label: 'OI' });
-    if (visibleGreeks.rho) columns.push({ key: 'call-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
-    if (visibleGreeks.oa) columns.push({ key: 'call-oa', label: 'OA' });
-    if (visibleGreeks.vega) columns.push({ key: 'call-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
-    if (visibleGreeks.gamma) columns.push({ key: 'call-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
-    if (visibleGreeks.theta) columns.push({ key: 'call-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
-    if (visibleGreeks.delta) columns.push({ key: 'call-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
-    columns.push({ key: 'call-price', label: 'Price' });
+    if (visibleGreeks.volume) cols.push({ key: 'call-volume', label: 'Vol' });
+    if (visibleGreeks.oi) cols.push({ key: 'call-oi', label: 'OI' });
+    if (visibleGreeks.rho) cols.push({ key: 'call-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
+    if (visibleGreeks.oa) cols.push({ key: 'call-oa', label: 'OA' });
+    if (visibleGreeks.vega) cols.push({ key: 'call-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
+    if (visibleGreeks.gamma) cols.push({ key: 'call-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
+    if (visibleGreeks.theta) cols.push({ key: 'call-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
+    if (visibleGreeks.delta) cols.push({ key: 'call-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
+    cols.push({ key: 'call-price', label: 'Price' });
     
     // Strike column
-    columns.push({ key: 'strike', label: 'Strike' });
+    cols.push({ key: 'strike', label: 'Strike' });
     
     // Put side columns
-    columns.push({ key: 'put-price', label: 'Price' });
-    if (visibleGreeks.delta) columns.push({ key: 'put-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
-    if (visibleGreeks.theta) columns.push({ key: 'put-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
-    if (visibleGreeks.gamma) columns.push({ key: 'put-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
-    if (visibleGreeks.vega) columns.push({ key: 'put-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
-    if (visibleGreeks.rho) columns.push({ key: 'put-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
-    if (visibleGreeks.oa) columns.push({ key: 'put-oa', label: 'OA' });
-    if (visibleGreeks.oi) columns.push({ key: 'put-oi', label: 'OI' });
-    if (visibleGreeks.volume) columns.push({ key: 'put-volume', label: 'Vol' });
+    cols.push({ key: 'put-price', label: 'Price' });
+    if (visibleGreeks.delta) cols.push({ key: 'put-delta', label: useGreekSymbols ? 'Δ' : 'Delta' });
+    if (visibleGreeks.theta) cols.push({ key: 'put-theta', label: useGreekSymbols ? 'θ' : 'Theta' });
+    if (visibleGreeks.gamma) cols.push({ key: 'put-gamma', label: useGreekSymbols ? 'γ' : 'Gamma' });
+    if (visibleGreeks.vega) cols.push({ key: 'put-vega', label: useGreekSymbols ? 'ν' : 'Vega' });
+    if (visibleGreeks.rho) cols.push({ key: 'put-rho', label: useGreekSymbols ? 'ρ' : 'Rho' });
+    if (visibleGreeks.oa) cols.push({ key: 'put-oa', label: 'OA' });
+    if (visibleGreeks.oi) cols.push({ key: 'put-oi', label: 'OI' });
+    if (visibleGreeks.volume) cols.push({ key: 'put-volume', label: 'Vol' });
     
-    return columns;
-  };
+    return cols;
+  }, [visibleGreeks, useGreekSymbols]);
 
   // Modified price column rendering 
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
@@ -373,7 +368,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     }
   };
 
-  const columns = buildColumns();
+
 
   return (
     <Card className="bg-background border border-border shadow-xl overflow-hidden">
@@ -404,7 +399,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             className="min-h-[400px] bg-background"
             classNames={{
               wrapper: "max-h-[400px] overflow-y-auto bg-background border border-border rounded-md",
-              th: "bg-muted text-foreground text-center border-b border-border",
+              th: "bg-muted text-foreground text-center",
               td: "text-center bg-background border-b border-border/50",
               table: "bg-background",
               tbody: "bg-background",
