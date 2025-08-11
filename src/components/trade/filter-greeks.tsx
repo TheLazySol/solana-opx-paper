@@ -37,6 +37,10 @@ const DEFAULT_FILTERS: GreekFilters = {
 // Helper functions for localStorage
 const saveFiltersToStorage = (filters: GreekFilters): void => {
   try {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return
+    }
     localStorage.setItem(GREEK_FILTERS_STORAGE_KEY, JSON.stringify(filters))
   } catch (error) {
     console.error('Failed to save filter preferences:', error)
@@ -45,6 +49,10 @@ const saveFiltersToStorage = (filters: GreekFilters): void => {
 
 const loadFiltersFromStorage = (): GreekFilters | null => {
   try {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return null
+    }
     const saved = localStorage.getItem(GREEK_FILTERS_STORAGE_KEY)
     if (saved) {
       return JSON.parse(saved)
