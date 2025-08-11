@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from 'react'
 import { Filter, Check, Save } from 'lucide-react'
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react'
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection, Switch } from '@heroui/react'
 import { toast } from "@/hooks/useToast"
 
 export interface GreekFilters {
@@ -19,8 +19,9 @@ interface FilterGreeksProps {
   onFiltersChange: (filters: GreekFilters) => void
 }
 
-// Local storage key for saved preferences
+// Local storage keys for saved preferences
 const GREEK_FILTERS_STORAGE_KEY = 'optionChainGreekFilters'
+const GREEK_SYMBOLS_STORAGE_KEY = 'optionChainGreekSymbols'
 
 // Default filter state
 const DEFAULT_FILTERS: GreekFilters = {
@@ -63,6 +64,34 @@ const loadFiltersFromStorage = (): GreekFilters | null => {
   return null
 }
 
+const saveGreekSymbolsToStorage = (showSymbols: boolean): void => {
+  try {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return
+    }
+    localStorage.setItem(GREEK_SYMBOLS_STORAGE_KEY, JSON.stringify(showSymbols))
+  } catch (error) {
+    console.error('Failed to save Greek symbols preference:', error)
+  }
+}
+
+const loadGreekSymbolsFromStorage = (): boolean => {
+  try {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return true // Default to showing symbols
+    }
+    const saved = localStorage.getItem(GREEK_SYMBOLS_STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Failed to load Greek symbols preference:', error)
+  }
+  return true // Default to showing symbols
+}
+
 // Export the helper functions for use in parent components
 export { loadFiltersFromStorage, DEFAULT_FILTERS }
 
@@ -71,6 +100,18 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
   onFiltersChange
 }) => {
   const [open, setOpen] = useState(false)
+  const [showGreekSymbols, setShowGreekSymbols] = useState(true)
+
+  // Load Greek symbols preference on mount
+  useEffect(() => {
+    const savedPreference = loadGreekSymbolsFromStorage()
+    setShowGreekSymbols(savedPreference)
+  }, [])
+
+  // Save Greek symbols preference when it changes
+  useEffect(() => {
+    saveGreekSymbolsToStorage(showGreekSymbols)
+  }, [showGreekSymbols])
   
   const toggleFilter = (greek: keyof GreekFilters) => {
     onFiltersChange({
@@ -90,11 +131,11 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
   }
 
   const greekItems = [
-    { key: 'delta', label: 'Delta (Δ)', isSelected: filters.delta },
-    { key: 'theta', label: 'Theta (θ)', isSelected: filters.theta },
-    { key: 'gamma', label: 'Gamma (γ)', isSelected: filters.gamma },
-    { key: 'vega', label: 'Vega (ν)', isSelected: filters.vega },
-    { key: 'rho', label: 'Rho (ρ)', isSelected: filters.rho },
+    { key: 'delta', label: showGreekSymbols ? 'Delta (Δ)' : 'Delta', isSelected: filters.delta },
+    { key: 'theta', label: showGreekSymbols ? 'Theta (θ)' : 'Theta', isSelected: filters.theta },
+    { key: 'gamma', label: showGreekSymbols ? 'Gamma (γ)' : 'Gamma', isSelected: filters.gamma },
+    { key: 'vega', label: showGreekSymbols ? 'Vega (ν)' : 'Vega', isSelected: filters.vega },
+    { key: 'rho', label: showGreekSymbols ? 'Rho (ρ)' : 'Rho', isSelected: filters.rho },
   ]
 
   const statsItems = [
@@ -142,6 +183,24 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
               {item.label}
             </DropdownItem>
           ))}
+        </DropdownSection>
+        
+        <DropdownSection title="Display Options" showDivider>
+          <DropdownItem 
+            key="greek-symbols-toggle"
+            textValue="Greek Symbols"
+            className="cursor-default"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span>Greek Symbols</span>
+              <Switch
+                size="sm"
+                isSelected={showGreekSymbols}
+                onValueChange={setShowGreekSymbols}
+                aria-label="Toggle Greek symbols display"
+              />
+            </div>
+          </DropdownItem>
         </DropdownSection>
         
         <DropdownSection title="Preferences">
