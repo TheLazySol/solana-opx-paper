@@ -77,6 +77,17 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     setUseGreekSymbols(useSymbols)
   }, [])
 
+  // Handle settings saved - reload preferences from localStorage
+  const handleSettingsSaved = useCallback(() => {
+    const savedFilters = loadFiltersFromStorage()
+    if (savedFilters) {
+      setGreekFilters(savedFilters)
+    }
+    
+    const savedSymbols = loadGreekSymbolsFromStorage()
+    setUseGreekSymbols(savedSymbols)
+  }, [])
+
   // Handle selected options change
   const handleOptionsChange = useCallback((options: SelectedOption[]) => {
     if (onOptionsChange) {
@@ -107,6 +118,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             useGreekSymbols={useGreekSymbols}
             onGreekSymbolsChange={handleGreekSymbolsChange}
             refreshExpirations={refreshExpirations}
+            onSettingsSaved={handleSettingsSaved}
           />
 
         </div>
