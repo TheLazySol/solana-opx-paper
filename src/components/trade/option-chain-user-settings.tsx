@@ -1,5 +1,6 @@
 import { FC, useState, useEffect } from 'react'
-import { Filter, Check, Save } from 'lucide-react'
+import { Check, Save } from 'lucide-react'
+import { Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection, Switch } from '@heroui/react'
 import { toast } from "@/hooks/useToast"
 
@@ -164,9 +165,9 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           size="sm" 
           isIconOnly
           className="w-10 p-0"
-          aria-label="Filter Greeks and Statistics"
+          aria-label="Settings for Greeks and Statistics"
         >
-          <Filter className="h-4 w-4" />
+          <Cog6ToothIcon className="h-4 w-4" />
         </Button>
       </DropdownTrigger>
       <DropdownMenu 
