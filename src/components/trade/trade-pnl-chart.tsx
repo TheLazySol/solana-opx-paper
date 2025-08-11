@@ -14,6 +14,9 @@ import {
 import type { SelectedOption } from './option-data'
 import { STANDARD_CONTRACT_SIZE } from '@/constants/constants'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { Card, CardBody, CardHeader, Chip } from '@heroui/react'
+import { TrendingUp, TrendingDown, Activity, Target } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 // Extend the base SelectedOption interface with order-specific fields
 interface TradePnLOption extends SelectedOption {
@@ -60,27 +63,25 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
       : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
-  const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
+  const valueColor = value >= 0 ? 'text-green-400' : 'text-red-400';
 
   return (
-    <div className="w-fit p-2 rounded-lg 
-      bg-opacity-80 backdrop-blur-sm bg-black/70 dark:bg-black/90 
-      shadow-lg border border-white/10 dark:border-white/5">
-      <div className="text-xs text-gray-300 mb-1">
-        Profit/Loss at Expiration
+    <div className="p-3 rounded-lg bg-black/90 backdrop-blur-md border border-white/20 shadow-2xl">
+      <div className="text-xs text-white/60 mb-2 font-medium">
+        P&L at Expiration
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">Asset Price:</span>
-          <span className="text-xs text-white font-medium">${data.price.toFixed(2)}</span>
+          <span className="text-xs text-white/60">Asset Price:</span>
+          <span className="text-xs text-white font-semibold">${data.price.toFixed(2)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
-          <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
+          <span className="text-xs text-white/60">Profit/Loss:</span>
+          <span className={`text-xs font-bold ${valueColor}`}>{formattedValue}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">Return:</span>
-          <span className={`text-xs font-medium ${valueColor}`}>{formattedPercentage}</span>
+          <span className="text-xs text-white/60">Return:</span>
+          <span className={`text-xs font-bold ${valueColor}`}>{formattedPercentage}</span>
         </div>
       </div>
     </div>
@@ -320,247 +321,278 @@ export const TradePnLChart: React.FC<TradePnLChartProps> = ({ selectedOptions = 
   // Early return if no options selected
   if (selectedOptions.length === 0) {
     return (
-      <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-        border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-        hover:bg-transparent shadow-lg rounded-lg p-4">
-        <div className="min-h-[300px] flex items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <p>Select options from the chain above to visualize potential P&L</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              The chart will update automatically as you build your position
-            </p>
-          </div>
-        </div>
-      </div>
+      <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+        <CardBody className="min-h-[400px] flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center space-y-3"
+          >
+            <Activity className="w-12 h-12 text-white/30 mx-auto" />
+            <div className="space-y-2">
+              <p className="text-white/60">Select options from the chain above to visualize P&L</p>
+              <p className="text-sm text-white/40">
+                The chart will update automatically as you build your position
+              </p>
+            </div>
+          </motion.div>
+        </CardBody>
+      </Card>
     )
   }
 
   // Early return if no PnL data calculated
   if (calculatePnLPoints.length === 0) {
     return (
-      <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-        border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-        hover:bg-transparent shadow-lg rounded-lg p-4">
-        <div className="min-h-[300px] flex items-center justify-center text-muted-foreground">
-          <div>Calculating PnL data...</div>
-        </div>
-      </div>
+      <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+        <CardBody className="min-h-[400px] flex items-center justify-center">
+          <div className="text-white/60">Calculating P&L data...</div>
+        </CardBody>
+      </Card>
     )
   }
 
   return (
-    <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-      border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg rounded-lg p-4">
-      <div 
-        className="w-full h-[300px]" 
-        ref={chartRef}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={calculatePnLPoints}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-          >
-            <defs>
-              {/* Green gradient for profit region */}
-              <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#22c55e" stopOpacity={0.4} />
-              </linearGradient>
-              
-              {/* Red gradient for loss region */}
-              <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.9} />
-              </linearGradient>
-            </defs>
-            
-            <XAxis
-              dataKey="price"
-              tickFormatter={formatXTick}
-              tick={{ fontSize: 11, fill: '#ffffff' }}
-              tickLine={{ stroke: '#ffffff' }}
-              axisLine={{ stroke: '#ffffff' }}
-              domain={['dataMin', 'dataMax']}
-              type="number"
-              label={{
-                value: 'Underlying Asset',
-                position: 'insideBottom',
-                offset: -10,
-                style: { textAnchor: 'middle' },
-                fontSize: 11,
-                fill: '#ffffff'
-              }}
-            />
-            
-            <YAxis
-              tickFormatter={formatYTick}
-              tick={{ fontSize: 11, fill: '#ffffff' }}
-              tickLine={{ stroke: '#ffffff' }}
-              axisLine={{ stroke: '#ffffff' }}
-              domain={yAxisDomain}
-              label={{
-                value: 'Return (%)', 
-                angle: -90, 
-                position: 'insideLeft',
-                style: { textAnchor: 'middle' },
-                fontSize: 11,
-                fill: '#ffffff'
-              }}
-            />
-
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{
-                stroke: '#666',
-                strokeDasharray: '3 3',
-                strokeWidth: 1
-              }}
-            />
-
-            <CartesianGrid strokeDasharray="2 2" opacity={0.1} />
-            
-            {/* Profit Area (green, only shows above 0) */}
-            <Area
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
-              stroke="none"
-              fillOpacity={0.4}
-              fill="url(#profitGradient)"
-              isAnimationActive={false}
-              activeDot={false}
-            />
-            
-            {/* Loss Area (red, only shows below 0) */}
-            <Area
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
-              stroke="none"
-              fillOpacity={0.4}
-              fill="url(#lossGradient)"
-              isAnimationActive={false}
-              activeDot={false}
-            />
-
-            {/* Positive value line */}
-            <Line
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : null)}
-              dot={false}
-              activeDot={{ 
-                r: 4, 
-                fill: "#22c55e", 
-                stroke: "white", 
-                strokeWidth: 2 
-              }}
-              strokeWidth={1.5}
-              stroke="#22c55e"
-              isAnimationActive={false}
-              connectNulls
-            />
-            
-            {/* Negative value line */}
-            <Line
-              type="monotone"
-              dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : null)}
-              dot={false}
-              activeDot={{ 
-                r: 4, 
-                fill: "#ef4444", 
-                stroke: "white", 
-                strokeWidth: 2 
-              }}
-              strokeWidth={1.5}
-              stroke="#ef4444"
-              isAnimationActive={false}
-              connectNulls
-            />
-
-            {/* Zero line */}
-            <ReferenceLine 
-              y={0} 
-              stroke="#666"
-              strokeDasharray="3 3"
-              isFront={true}
-            />
-            
-            {/* Break-even points */}
-            {breakEvenPoints.filter((price, index, self) => 
-              // Only keep unique break-even points with a small tolerance
-              self.findIndex(p => Math.abs(p - price) < 0.01) === index
-            ).map((price, index) => (
-              <ReferenceLine 
-                key={`breakeven-${index}`}
-                x={price}
-                stroke="#9ca3af"
-                strokeWidth={1.5}
-                isFront={true}
+    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Profit & Loss Analysis
+          </h3>
+          <div className="flex items-center gap-2">
+            <Chip
+              size="sm"
+              variant="flat"
+              className={maxProfit > Math.abs(maxLoss) ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+              startContent={maxProfit > Math.abs(maxLoss) ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            >
+              Max: {maxProfit > Math.abs(maxLoss) 
+                ? `+${maxProfitPercentage.toFixed(0)}%` 
+                : `-${Math.abs(maxLossPercentage).toFixed(0)}%`}
+            </Chip>
+            {breakEvenPoints.length > 0 && (
+              <Chip
+                size="sm"
+                variant="flat"
+                className="bg-white/10 text-white/70"
+                startContent={<Target className="w-3 h-3" />}
               >
-                <Label
-                  value={`BE: $${price.toFixed(2)}`}
-                  fill="#9ca3af"
-                  fontSize={11}
-                  fontWeight={600}
-                  position="right"
-                  offset={5}
-                  dy={(index * 20) - 20} // Move up by 20px
-                />
-              </ReferenceLine>
-            ))}
-            
-            {/* Current price reference line */}
-            {currentMarketPrice && (
-              <ReferenceLine
-                x={currentMarketPrice}
-                stroke="#4a85ff"
-                strokeWidth={1.5}
-                isFront={true}
+                BE: ${breakEvenPoints[0].toFixed(2)}
+              </Chip>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardBody>
+        <div 
+          className="w-full h-[350px]" 
+          ref={chartRef}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={calculatePnLPoints}
+              margin={{ top: 20, right: 20, bottom: 40, left: 50 }}
+            >
+              <defs>
+                {/* Enhanced green gradient for profit region */}
+                <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="50%" stopColor="#10b981" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
+                </linearGradient>
+                
+                {/* Enhanced red gradient for loss region */}
+                <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.1} />
+                  <stop offset="50%" stopColor="#ef4444" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.8} />
+                </linearGradient>
+              </defs>
+              
+              <XAxis
+                dataKey="price"
+                tickFormatter={formatXTick}
+                tick={{ fontSize: 11, fill: '#ffffff80' }}
+                tickLine={{ stroke: '#ffffff20' }}
+                axisLine={{ stroke: '#ffffff20' }}
+                domain={['dataMin', 'dataMax']}
+                type="number"
                 label={{
-                  value: `Current Price: $${currentMarketPrice.toFixed(2)}`,
-                  fill: '#4a85ff',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  position: 'insideBottomLeft',
-                  dy: -5,
-                  dx: 5
+                  value: 'Underlying Asset Price',
+                  position: 'insideBottom',
+                  offset: -5,
+                  style: { textAnchor: 'middle', fontSize: 12, fill: '#ffffff60' }
                 }}
               />
-            )}
-            
-            {/* Strike price reference lines */}
-            {selectedOptions.map((option, index) => {
-              const strike = Number(option.strike)
-              const isCall = option.side === 'call'
-              const isBuy = option.type === 'bid'
               
-              // Color based on option type and direction
-              const color = isBuy 
-                ? "#22c55e" // Green for long options
-                : "#ef4444" // Red for short options
+              <YAxis
+                tickFormatter={formatYTick}
+                tick={{ fontSize: 11, fill: '#ffffff80' }}
+                tickLine={{ stroke: '#ffffff20' }}
+                axisLine={{ stroke: '#ffffff20' }}
+                domain={yAxisDomain}
+                label={{
+                  value: 'Return (%)', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { textAnchor: 'middle', fontSize: 12, fill: '#ffffff60' }
+                }}
+              />
+
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{
+                  stroke: '#ffffff30',
+                  strokeDasharray: '3 3',
+                  strokeWidth: 1
+                }}
+              />
+
+              <CartesianGrid strokeDasharray="3 3" opacity={0.05} stroke="#ffffff" />
               
-              return (
+              {/* Profit Area (green, only shows above 0) */}
+              <Area
+                type="monotone"
+                dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : 0)}
+                stroke="none"
+                fillOpacity={1}
+                fill="url(#profitGradient)"
+                isAnimationActive={false}
+                activeDot={false}
+              />
+              
+              {/* Loss Area (red, only shows below 0) */}
+              <Area
+                type="monotone"
+                dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : 0)}
+                stroke="none"
+                fillOpacity={1}
+                fill="url(#lossGradient)"
+                isAnimationActive={false}
+                activeDot={false}
+              />
+
+              {/* Positive value line */}
+              <Line
+                type="monotone"
+                dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue >= 0 ? dataPoint.percentageValue : null)}
+                dot={false}
+                activeDot={{ 
+                  r: 5, 
+                  fill: "#10b981", 
+                  stroke: "#000000", 
+                  strokeWidth: 2 
+                }}
+                strokeWidth={2}
+                stroke="#10b981"
+                isAnimationActive={false}
+                connectNulls
+              />
+              
+              {/* Negative value line */}
+              <Line
+                type="monotone"
+                dataKey={(dataPoint: PnLDataPoint) => (dataPoint.percentageValue < 0 ? dataPoint.percentageValue : null)}
+                dot={false}
+                activeDot={{ 
+                  r: 5, 
+                  fill: "#ef4444", 
+                  stroke: "#000000", 
+                  strokeWidth: 2 
+                }}
+                strokeWidth={2}
+                stroke="#ef4444"
+                isAnimationActive={false}
+                connectNulls
+              />
+
+              {/* Zero line */}
+              <ReferenceLine 
+                y={0} 
+                stroke="#ffffff40"
+                strokeDasharray="5 5"
+                strokeWidth={1}
+                isFront={true}
+              />
+              
+              {/* Break-even points */}
+              {breakEvenPoints.filter((price, index, self) => 
+                // Only keep unique break-even points with a small tolerance
+                self.findIndex(p => Math.abs(p - price) < 0.01) === index
+              ).map((price, index) => (
                 <ReferenceLine 
-                  key={`strike-${index}`}
-                  x={strike}
-                  stroke={color}
-                  strokeDasharray="2 2"
+                  key={`breakeven-${index}`}
+                  x={price}
+                  stroke="#ffffff60"
                   strokeWidth={1.5}
-                  label={{ 
-                    value: `${isBuy ? "+" : "-"}${isCall ? "C" : "P"} $${strike.toFixed(2)}`,
-                    position: "right",
+                  strokeDasharray="3 3"
+                  isFront={true}
+                >
+                  <Label
+                    value={`BE: $${price.toFixed(2)}`}
+                    fill="#ffffff80"
+                    fontSize={11}
+                    fontWeight={600}
+                    position="top"
+                    offset={5}
+                  />
+                </ReferenceLine>
+              ))}
+              
+              {/* Current price reference line */}
+              {currentMarketPrice && (
+                <ReferenceLine
+                  x={currentMarketPrice}
+                  stroke="#60a5fa"
+                  strokeWidth={2}
+                  isFront={true}
+                  label={{
+                    value: `Current: $${currentMarketPrice.toFixed(2)}`,
+                    fill: '#60a5fa',
                     fontSize: 11,
                     fontWeight: 600,
-                    fill: color,
-                    offset: 5,
-                    dy: (index * 20) + 40 // Start after breakeven labels
+                    position: 'top',
+                    offset: 20
                   }}
-                  isFront={true}
                 />
-              )
-            })}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              )}
+              
+              {/* Strike price reference lines */}
+              {selectedOptions.map((option, index) => {
+                const strike = Number(option.strike)
+                const isCall = option.side === 'call'
+                const isBuy = option.type === 'bid'
+                
+                // Color based on option type and direction
+                const color = isBuy 
+                  ? "#10b981" // Green for long options
+                  : "#ef4444" // Red for short options
+                
+                return (
+                  <ReferenceLine 
+                    key={`strike-${index}`}
+                    x={strike}
+                    stroke={color}
+                    strokeDasharray="2 2"
+                    strokeWidth={1}
+                    strokeOpacity={0.5}
+                    label={{ 
+                      value: `${isBuy ? "+" : "-"}${isCall ? "C" : "P"} $${strike}`,
+                      position: "bottom",
+                      fontSize: 10,
+                      fontWeight: 500,
+                      fill: color,
+                      offset: 5 + (index * 15)
+                    }}
+                    isFront={false}
+                  />
+                )
+              })}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardBody>
+    </Card>
   )
-} 
+}

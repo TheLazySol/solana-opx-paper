@@ -53,6 +53,13 @@ export function AssetPriceProvider({
     try {
       const priceData = await getTokenPrice(asset)
       const token = TOKENS[asset as keyof typeof TOKENS]
+      
+      // Check if token exists before accessing its properties
+      if (!token) {
+        console.warn(`Token ${asset} not found in TOKENS configuration`)
+        return
+      }
+      
       const decimals = getTokenDisplayDecimals(token.symbol)
       
       const newPrice = Number(priceData.price)

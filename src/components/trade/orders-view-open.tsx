@@ -718,56 +718,38 @@ export const OrdersViewOpen = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative"
+      className="space-y-6"
     >
-      {/* Subtle background glow */}
-      <motion.div
-        className="absolute -inset-0.5 bg-gradient-to-r from-[#4a85ff]/15 via-[#4a85ff]/10 to-[#4a85ff]/15 rounded-xl blur-sm"
-        animate={{
-          opacity: [0.5, 0.7, 0.5],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      
-      <Card className="relative bg-gradient-to-br from-white/10 via-white/5 to-transparent dark:from-black/40 dark:via-black/20 dark:to-transparent 
-        backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl shadow-[#4a85ff]/10
-        hover:shadow-[#4a85ff]/20 transition-all duration-500">
+      {/* Header */}
+      <motion.div 
+        className="flex items-center gap-3 pb-4 border-b border-white/10"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
+          <Activity className="h-5 w-5 text-blue-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Open Positions
+          </h3>
+          <p className="text-sm text-white/60 mt-0.5">
+            {positions.length} active position{positions.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </motion.div>
         
-        <CardHeader className="pb-6 bg-gradient-to-r from-[#4a85ff]/10 to-[#4a85ff]/5 backdrop-blur-sm border-b border-white/10">
-          <motion.div 
-            className="flex items-center gap-3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <div className="p-2 rounded-lg bg-[#4a85ff]/20 backdrop-blur-sm">
-              <Activity className="h-5 w-5 text-[#4a85ff]" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                Open Positions
-              </h3>
-              <p className="text-sm text-white/60 mt-0.5">
-                {positions.length} active position{positions.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </motion.div>
-        </CardHeader>
-
-        <CardBody className="p-6">
-          {positions.length === 0 ? (
+      {/* Content */}
+        {positions.length === 0 ? (
             <motion.div 
               className="flex flex-col items-center justify-center min-h-[300px] space-y-4"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              <div className="p-4 rounded-full bg-gradient-to-br from-[#4a85ff]/20 to-[#4a85ff]/10 backdrop-blur-sm">
-                <Activity className="h-8 w-8 text-[#4a85ff]/60" />
+              <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm">
+                <Activity className="h-8 w-8 text-blue-400" />
               </div>
               <div className="text-center">
                 <p className="text-lg font-medium text-white/80 mb-2">No Open Positions</p>
@@ -792,15 +774,8 @@ export const OrdersViewOpen = () => {
                       transition={{ delay: index * 0.1, duration: 0.4 }}
                       className="group relative"
                     >
-                      {/* Card glow effect */}
-                      <motion.div
-                        className="absolute -inset-0.5 bg-gradient-to-r from-[#4a85ff]/0 to-[#4a85ff]/0 rounded-xl blur-sm transition-all duration-300 group-hover:from-[#4a85ff]/10 group-hover:to-[#4a85ff]/10"
-                        layoutId={`glow-${position.id}`}
-                      />
-                      
-                      <div className="relative bg-gradient-to-br from-white/10 to-white/5 dark:from-black/30 dark:to-black/10 
-                        backdrop-blur-md rounded-xl border border-white/20 dark:border-white/10 
-                        hover:border-[#4a85ff]/30 transition-all duration-300 overflow-hidden">
+                      <div className="relative bg-black/20 backdrop-blur-md rounded-xl border border-white/10 
+                        hover:border-blue-500/30 transition-all duration-300 overflow-hidden">
                         
                         {/* Position Header */}
                         <motion.div 
@@ -814,7 +789,7 @@ export const OrdersViewOpen = () => {
                               <motion.div
                                 animate={{ rotate: expandedAssets.includes(position.id) ? 90 : 0 }}
                                 transition={{ duration: 0.3, ease: "easeInOut" }}
-                                className="p-2 rounded-lg bg-white/10 hover:bg-[#4a85ff]/20 transition-all duration-200"
+                                className="p-2 rounded-lg bg-white/10 hover:bg-blue-500/20 transition-all duration-200"
                               >
                                 <ChevronRight className="h-4 w-4 text-white/70" />
                               </motion.div>
@@ -833,7 +808,7 @@ export const OrdersViewOpen = () => {
                                 )}
                                 <Chip 
                                   variant="flat" 
-                                  className="bg-[#4a85ff]/20 text-[#4a85ff] border border-[#4a85ff]/30 capitalize font-medium"
+                                  className="bg-blue-500/20 text-blue-400 border border-blue-500/30 capitalize font-medium"
                                 >
                                   {position.asset}
                                 </Chip>
@@ -943,7 +918,7 @@ export const OrdersViewOpen = () => {
                                 {/* Greeks Summary */}
                                 <motion.div 
                                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 rounded-lg 
-                                    bg-gradient-to-r from-[#4a85ff]/10 to-[#4a85ff]/5 backdrop-blur-sm border border-white/10 mt-4"
+                                    bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/10 mt-4"
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: 0.1, duration: 0.3 }}
@@ -978,9 +953,8 @@ export const OrdersViewOpen = () => {
                                       initial={{ opacity: 0, x: -20 }}
                                       animate={{ opacity: 1, x: 0 }}
                                       transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                      className="p-4 rounded-lg bg-gradient-to-r from-white/5 to-transparent 
-                                        dark:from-black/20 dark:to-transparent backdrop-blur-sm border border-white/10
-                                        hover:border-[#4a85ff]/30 transition-all duration-300"
+                                      className="p-4 rounded-lg bg-white/5 border border-white/10
+                                        hover:border-blue-500/30 transition-all duration-300"
                                     >
                                       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                                         {/* Leg Details */}
@@ -1005,7 +979,7 @@ export const OrdersViewOpen = () => {
                                           >
                                             {leg.type}
                                           </Chip>
-                                          <Chip size="sm" variant="flat" className="bg-[#4a85ff]/20 text-[#4a85ff] border border-[#4a85ff]/30">
+                                          <Chip size="sm" variant="flat" className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
                                             ${leg.strike}
                                           </Chip>
                                           <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
@@ -1103,8 +1077,6 @@ export const OrdersViewOpen = () => {
               </div>
             </motion.div>
           )}
-        </CardBody>
-      </Card>
     </motion.div>
   )
 } 

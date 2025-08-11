@@ -138,14 +138,14 @@ export function ClusterUiModal({ hideModal, show }: { hideModal: () => void; sho
       <input
         type="text"
         placeholder="Name"
-        className="input input-bordered w-full"
+        className="flex h-10 w-full rounded-lg bg-white/5 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-200 border border-transparent placeholder:text-white/40 hover:bg-white/8 focus:outline-none focus:bg-white/10"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <input
         type="text"
         placeholder="Endpoint"
-        className="input input-bordered w-full"
+        className="flex h-10 w-full rounded-lg bg-white/5 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-200 border border-transparent placeholder:text-white/40 hover:bg-white/8 focus:outline-none focus:bg-white/10"
         value={endpoint}
         onChange={(e) => setEndpoint(e.target.value)}
       />
