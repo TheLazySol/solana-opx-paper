@@ -79,7 +79,7 @@ export function ClusterUiSelect() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-sm 
-        bg-background hover:bg-accent transition-colors rounded-md border border-input">
+        bg-background hover:bg-accent transition-colors rounded-md border border-input border-[0.5px]">
         {cluster.name}
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </DropdownMenuTrigger>

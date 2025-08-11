@@ -60,37 +60,12 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
 
   return (
     <div className="flex flex-col items-start space-y-2 mb-4">
-      {/* Price Display */}
-      <div className="flex items-center space-x-2">
-        {price !== null && (
-          <div className="flex items-center space-x-2">
-            <motion.span
-              className="text-xl sm:text-2xl font-bold px-1 rounded"
-              animate={{
-                backgroundColor: highlightEffect === 'up' ? '#10b981' : 
-                                highlightEffect === 'down' ? '#ef4444' : 
-                                'transparent',
-                color: highlightEffect ? '#ffffff' : 'inherit',
-                boxShadow: highlightEffect === 'up' ? '0 0 15px rgba(16, 185, 129, 0.6)' : 
-                          highlightEffect === 'down' ? '0 0 15px rgba(239, 68, 68, 0.6)' : 
-                          '0 0 0px transparent'
-              }}
-              transition={{
-                duration: 0.1,
-                ease: "easeOut"
-              }}
-            >
-              ${price.toFixed(getTokenDisplayDecimals(selectedToken.symbol))}
-            </motion.span>
-          </div>
-        )}
-      </div>
-
+      {/* Asset Selection Dropdown */}
       <Dropdown>
         <DropdownTrigger>
           <Button 
             variant="bordered" 
-            className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base"
+            className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base dropdown-thin-border border-[0.5px]"
             endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
           >
             <div className="flex items-center">
@@ -151,6 +126,32 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
           ))}
         </DropdownMenu>
       </Dropdown>
+
+      {/* Price Display */}
+      <div className="flex items-center space-x-2">
+        {price !== null && (
+          <div className="flex items-center space-x-2">
+            <motion.span
+              className="text-xl sm:text-2xl font-bold px-1 rounded"
+              animate={{
+                backgroundColor: highlightEffect === 'up' ? '#10b981' : 
+                                highlightEffect === 'down' ? '#ef4444' : 
+                                'transparent',
+                color: highlightEffect ? '#ffffff' : 'inherit',
+                boxShadow: highlightEffect === 'up' ? '0 0 15px rgba(16, 185, 129, 0.6)' : 
+                          highlightEffect === 'down' ? '0 0 15px rgba(239, 68, 68, 0.6)' : 
+                          '0 0 0px transparent'
+              }}
+              transition={{
+                duration: 0.1,
+                ease: "easeOut"
+              }}
+            >
+              ${price.toFixed(getTokenDisplayDecimals(selectedToken.symbol))}
+            </motion.span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

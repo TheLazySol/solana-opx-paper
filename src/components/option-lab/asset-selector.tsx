@@ -60,7 +60,7 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
         <DropdownTrigger>
           <Button 
             variant="bordered" 
-            className="w-full justify-between bg-white/5 border-white/20 hover:border-white/30 h-10"
+            className="w-full justify-between bg-white/5 border-white/20 hover:border-white/30 h-10 dropdown-thin-border border-[0.5px]"
             endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
           >
             <div className="flex items-center">

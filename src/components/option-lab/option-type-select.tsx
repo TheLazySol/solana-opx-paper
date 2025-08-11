@@ -14,11 +14,11 @@ export const OptionTypeSelector = () => {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-white/80">Option Type</label>
-      <ButtonGroup variant="bordered" className="w-full">
+      <ButtonGroup variant="bordered" className="w-full dropdown-thin-border">
         <Button
           onPress={() => handleOptionTypeChange('call')}
           className={cn(
-            "flex-1 transition-all duration-300",
+            "flex-1 transition-all duration-300 border-[0.5px]",
             optionType === "call" 
               ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
               : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
@@ -29,7 +29,7 @@ export const OptionTypeSelector = () => {
         <Button
           onPress={() => handleOptionTypeChange('put')}
           className={cn(
-            "flex-1 transition-all duration-300",
+            "flex-1 transition-all duration-300 border-[0.5px]",
             optionType === "put" 
               ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
               : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
