@@ -7,6 +7,7 @@ import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { motion } from 'framer-motion'
+import { cn } from '@heroui/react'
 
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
@@ -167,6 +168,9 @@ export const TradeView: FC<TradeViewProps> = ({
     };
   }, [onOptionsUpdate]);
 
+  // Determine if collateral is required
+  const isCollateralRequired = selectedOptions.length > 0 && (!orderData.isDebit || orderData.collateralNeeded > 0)
+
   return (
     <div className="w-full space-y-6">
       {/* Main Trading Section */}
@@ -177,7 +181,11 @@ export const TradeView: FC<TradeViewProps> = ({
         className="grid grid-cols-1 lg:grid-cols-12 gap-6"
       >
         {/* Create Order - Takes more space */}
-        <div className="lg:col-span-7 xl:col-span-6">
+        <div className={cn(
+          isCollateralRequired 
+            ? "lg:col-span-7 xl:col-span-6" 
+            : "lg:col-span-12 xl:col-span-8"
+        )}>
           <CreateOrder 
             selectedOptions={selectedOptions}
             onRemoveOption={handleRemoveOption}
@@ -187,25 +195,33 @@ export const TradeView: FC<TradeViewProps> = ({
         </div>
         
         {/* Collateral and Order Summary - Side by side on smaller screens, stacked on larger */}
-        <div className="lg:col-span-5 xl:col-span-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <TradeCollateralProvider 
-              selectedOptions={selectedOptions}
-              selectedAsset={selectedOptions[0]?.asset || ''}
-              isDebit={orderData.isDebit}
-              externalCollateralNeeded={orderData.collateralNeeded}
-              onBorrowedAmountChange={handleBorrowedAmountChange}
-            />
-          </motion.div>
+        <div className={cn(
+          "grid gap-6",
+          isCollateralRequired 
+            ? "lg:col-span-5 xl:col-span-6 grid-cols-1 xl:grid-cols-2" 
+            : "lg:col-span-12 xl:col-span-4 grid-cols-1"
+        )}>
+          {/* Conditionally render TradeCollateralProvider */}
+          {isCollateralRequired && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <TradeCollateralProvider 
+                selectedOptions={selectedOptions}
+                selectedAsset={selectedOptions[0]?.asset || ''}
+                isDebit={orderData.isDebit}
+                externalCollateralNeeded={orderData.collateralNeeded}
+                onBorrowedAmountChange={handleBorrowedAmountChange}
+              />
+            </motion.div>
+          )}
           
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: isCollateralRequired ? 0.2 : 0.1 }}
           >
             <PlaceTradeOrder 
               selectedOptions={selectedOptions} 
