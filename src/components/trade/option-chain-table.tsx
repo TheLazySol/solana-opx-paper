@@ -418,7 +418,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   {column.key === 'call-price' || column.key === 'put-price' ? (
                     <Tooltip
                       content={
-                        <div className="text-center bg-gray-900 text-white p-2 rounded border border-gray-700">
+                        <div className="text-center">
                           <div className="text-green-400">Bid</div>
                           <div className="text-red-400">Ask</div>
                         </div>
@@ -433,11 +433,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                     <span className="text-white">{column.label}</span>
                   ) : (
                     <Tooltip
-                      content={
-                        <div className="bg-gray-900 text-white p-2 rounded border border-gray-700 max-w-xs">
-                          {getTooltipContent(column.key)}
-                        </div>
-                      }
+                      content={getTooltipContent(column.key)}
                       placement="top"
                     >
                       <span className="underline decoration-dotted decoration-gray-400 cursor-help text-gray-200">
