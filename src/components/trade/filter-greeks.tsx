@@ -17,6 +17,8 @@ export interface GreekFilters {
 interface FilterGreeksProps {
   filters: GreekFilters
   onFiltersChange: (filters: GreekFilters) => void
+  useGreekSymbols?: boolean
+  onGreekSymbolsChange?: (useSymbols: boolean) => void
 }
 
 // Local storage keys for saved preferences
@@ -97,21 +99,31 @@ export { loadFiltersFromStorage, DEFAULT_FILTERS }
 
 export const FilterGreeks: FC<FilterGreeksProps> = ({
   filters = DEFAULT_FILTERS,
-  onFiltersChange
+  onFiltersChange,
+  useGreekSymbols,
+  onGreekSymbolsChange
 }) => {
   const [open, setOpen] = useState(false)
-  const [showGreekSymbols, setShowGreekSymbols] = useState(true)
+  const [internalShowGreekSymbols, setInternalShowGreekSymbols] = useState(true)
 
-  // Load Greek symbols preference on mount
-  useEffect(() => {
-    const savedPreference = loadGreekSymbolsFromStorage()
-    setShowGreekSymbols(savedPreference)
-  }, [])
+  // Use external state if provided, otherwise use internal state
+  const showGreekSymbols = useGreekSymbols !== undefined ? useGreekSymbols : internalShowGreekSymbols
+  const setShowGreekSymbols = onGreekSymbolsChange || setInternalShowGreekSymbols
 
-  // Save Greek symbols preference when it changes
+  // Load Greek symbols preference on mount (only for internal state)
   useEffect(() => {
-    saveGreekSymbolsToStorage(showGreekSymbols)
-  }, [showGreekSymbols])
+    if (useGreekSymbols === undefined) {
+      const savedPreference = loadGreekSymbolsFromStorage()
+      setInternalShowGreekSymbols(savedPreference)
+    }
+  }, [useGreekSymbols])
+
+  // Save Greek symbols preference when it changes (only for internal state)
+  useEffect(() => {
+    if (useGreekSymbols === undefined) {
+      saveGreekSymbolsToStorage(internalShowGreekSymbols)
+    }
+  }, [internalShowGreekSymbols, useGreekSymbols])
   
   const toggleFilter = (greek: keyof GreekFilters) => {
     onFiltersChange({

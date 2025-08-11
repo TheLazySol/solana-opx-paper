@@ -77,6 +77,8 @@ interface OptionChainUtilsProps {
   expirationDates?: ExpirationDate[]
   greekFilters: GreekFilters
   onGreekFiltersChange: (filters: GreekFilters) => void
+  useGreekSymbols?: boolean
+  onGreekSymbolsChange?: (useSymbols: boolean) => void
   refreshExpirations?: number
 }
 
@@ -86,6 +88,8 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
   expirationDates: propExpirationDates,
   greekFilters,
   onGreekFiltersChange,
+  useGreekSymbols,
+  onGreekSymbolsChange,
   refreshExpirations = 0
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -193,6 +197,8 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
       <FilterGreeks 
         filters={greekFilters}
         onFiltersChange={onGreekFiltersChange}
+        useGreekSymbols={useGreekSymbols}
+        onGreekSymbolsChange={onGreekSymbolsChange}
       />
       <Button
         variant="light"

@@ -3,7 +3,7 @@ import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters, loadFiltersFromStorage, DEFAULT_FILTERS } from './filter-greeks'
 import { SelectedOption } from './option-data'
-import { Switch } from '@heroui/react'
+
 
 interface OptionChainControlsProps {
   assetId: string
@@ -64,6 +64,11 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     setGreekFilters(filters)
   }, [])
 
+  // Handle Greek symbols toggle change
+  const handleGreekSymbolsChange = useCallback((useSymbols: boolean) => {
+    setUseGreekSymbols(useSymbols)
+  }, [])
+
   // Handle selected options change
   const handleOptionsChange = useCallback((options: SelectedOption[]) => {
     if (onOptionsChange) {
@@ -91,20 +96,11 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             onExpirationChange={handleExpirationChange}
             greekFilters={greekFilters}
             onGreekFiltersChange={handleGreekFiltersChange}
+            useGreekSymbols={useGreekSymbols}
+            onGreekSymbolsChange={handleGreekSymbolsChange}
             refreshExpirations={refreshExpirations}
           />
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="greek-display-mode"
-              isSelected={useGreekSymbols}
-              onValueChange={setUseGreekSymbols}
-              size="sm"
-              aria-label="Toggle Greek symbol display mode"
-            />
-            <label htmlFor="greek-display-mode" className="text-sm cursor-pointer">
-              {useGreekSymbols ? "Greek Symbols" : "Greek Symbols"}
-            </label>
-          </div>
+
         </div>
       </div>
       <div className="w-full overflow-x-auto">
