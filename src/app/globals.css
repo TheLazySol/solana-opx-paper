@@ -39,9 +39,9 @@
     --destructive-foreground: 0 0% 98%;
 
     /* Border, input and ring colors */
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 0 0% 20%;
+    --input: 0 0% 8%;
+    --ring: 0 0% 0%;
  
     /* Border radius */
     --radius: 0.5rem;
@@ -60,6 +60,32 @@
   * {
     @apply border-border;
   }
+  
+  /* Remove focus styles only for input elements */
+  input:focus,
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    --tw-ring-offset-shadow: none !important;
+  }
+  
+  /* Override HeroUI focus styles for input wrappers only */
+  [data-slot="input-wrapper"][data-focus="true"],
+  [data-slot="input-wrapper"][data-focus-visible="true"],
+  .input-wrapper[data-focus="true"],
+  .input-wrapper[data-focus-visible="true"] {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: none !important;
+  }
+  
   body {
     @apply bg-background text-foreground;
     background-color: rgba(0, 0, 0, 0.95);

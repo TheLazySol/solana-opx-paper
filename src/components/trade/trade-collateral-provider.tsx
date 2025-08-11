@@ -274,11 +274,11 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               min="1"
               step="0.01"
               size="sm"
-              variant="bordered"
+              variant="flat"
               placeholder="0.00"
               classNames={{
-                input: "text-right font-medium",
-                inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 flex-1"
+                input: "text-right font-medium text-white",
+                inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none flex-1"
               }}
               startContent={<span className="text-white/40">$</span>}
             />

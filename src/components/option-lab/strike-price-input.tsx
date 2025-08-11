@@ -81,10 +81,10 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
         placeholder="Enter Strike Price"
         value={getValues('strikePrice')}
         onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
-        variant="bordered"
+        variant="flat"
         classNames={{
-          input: "font-medium",
-          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30"
+          input: "font-medium text-white",
+          inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none"
         }}
         startContent={<span className="text-white/40">$</span>}
       />

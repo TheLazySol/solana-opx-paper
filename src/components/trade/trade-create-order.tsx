@@ -478,13 +478,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                   value={inputValues[legKey] || option.price.toFixed(2)}
                                   onChange={(e) => handlePriceInputChange(e, index)}
                                   size="sm"
-                                  variant="bordered"
+                                  variant="flat"
                                   classNames={{
                                     input: cn(
                                       "text-sm font-semibold",
                                       option.type === 'bid' ? "text-green-400" : "text-red-400"
                                     ),
-                                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 w-24"
+                                    inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-24"
                                   }}
                                   startContent={<span className="text-white/40">$</span>}
                                 />
@@ -510,10 +510,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 value={getDisplayQuantity(option)}
                                 onChange={(e) => handleQuantityInputChange(e, index)}
                                 size="sm"
-                                variant="bordered"
+                                variant="flat"
                                 classNames={{
-                                  input: "text-sm text-center font-medium",
-                                  inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 w-20"
+                                  input: "text-sm text-center font-medium text-white",
+                                  inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-20"
                                 }}
                               />
                               <Button
