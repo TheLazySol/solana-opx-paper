@@ -267,8 +267,8 @@ export function OptionLabForm() {
     setPendingOptions(prev => prev.filter((_, i) => i !== index));
   };
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!publicKey || pendingOptions.length === 0) return;
     
     // Ensure all options have valid quantities

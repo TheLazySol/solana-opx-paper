@@ -70,7 +70,7 @@ export interface CollateralState {
 interface CollateralProviderProps {
   options: OptionPosition[];
   onStateChange?: (state: CollateralState) => void;
-  onMint?: (e: React.FormEvent) => void;
+  onMint?: (e?: React.FormEvent) => void;
   isSubmitting?: boolean;
   hasValidationError?: boolean;
   hasPendingOptions?: boolean;
@@ -469,7 +469,7 @@ export function CollateralProvider({
               ? "bg-white/10 text-white/40 border border-white/20"
               : "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98]"
           )}
-          onPress={() => onMint && onMint({} as React.FormEvent)}
+          onPress={() => onMint && onMint()}
           isDisabled={
             !isEnoughCollateral || 
             options.length === 0 || 
