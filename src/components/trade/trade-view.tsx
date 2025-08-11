@@ -6,7 +6,7 @@ import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@heroui/react'
 
 interface TradeViewProps {
@@ -234,14 +234,20 @@ export const TradeView: FC<TradeViewProps> = ({
         </div>
       </motion.div>
       
-      {/* PnL Chart - Full Width */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <TradePnLChart selectedOptions={selectedOptions} />
-      </motion.div>
+      {/* PnL Chart - Full Width - Only show when options are selected */}
+      <AnimatePresence>
+        {selectedOptions.length > 0 && (
+          <motion.div
+            key="pnl-chart"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <TradePnLChart selectedOptions={selectedOptions} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
