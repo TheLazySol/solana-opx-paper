@@ -6,6 +6,7 @@ import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
+import { motion } from 'framer-motion'
 
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
@@ -167,21 +168,31 @@ export const TradeView: FC<TradeViewProps> = ({
   }, [onOptionsUpdate]);
 
   return (
-    <div className="space-y-4">
-      {/* Create Order and Trade Details */}
-      <div className="grid grid-cols-1 gap-4">
-        {/* Create Order and Trade Details - 3 columns on 1600px+ screens */}
-        <div className="grid grid-cols-1 2xl:grid-cols-[2fr,1fr,1fr] gap-4">
-          {/* Create Order */}
+    <div className="w-full space-y-6">
+      {/* Main Trading Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+      >
+        {/* Create Order - Takes more space */}
+        <div className="lg:col-span-7 xl:col-span-6">
           <CreateOrder 
             selectedOptions={selectedOptions}
             onRemoveOption={handleRemoveOption}
             onUpdateQuantity={handleQuantityUpdate}
             onUpdateLimitPrice={handleLimitPriceUpdate}
           />
-          
-          {/* Collateral and Order Summary - Side by Side on md-2xl, separate columns on 2xl+ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-1 gap-4">
+        </div>
+        
+        {/* Collateral and Order Summary - Side by side on smaller screens, stacked on larger */}
+        <div className="lg:col-span-5 xl:col-span-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <TradeCollateralProvider 
               selectedOptions={selectedOptions}
               selectedAsset={selectedOptions[0]?.asset || ''}
@@ -189,19 +200,13 @@ export const TradeView: FC<TradeViewProps> = ({
               externalCollateralNeeded={orderData.collateralNeeded}
               onBorrowedAmountChange={handleBorrowedAmountChange}
             />
-            <div className="2xl:hidden">
-              <PlaceTradeOrder 
-                selectedOptions={selectedOptions} 
-                selectedAsset={selectedOptions[0]?.asset || ''} 
-                onOrderDataChange={setOrderData}
-                borrowedAmount={borrowedAmount}
-                onOrderPlaced={handleOrderPlaced}
-              />
-            </div>
-          </div>
-
-          {/* Order Summary - Only visible on 2xl screens as third column */}
-          <div className="hidden 2xl:block">
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <PlaceTradeOrder 
               selectedOptions={selectedOptions} 
               selectedAsset={selectedOptions[0]?.asset || ''} 
@@ -209,12 +214,18 @@ export const TradeView: FC<TradeViewProps> = ({
               borrowedAmount={borrowedAmount}
               onOrderPlaced={handleOrderPlaced}
             />
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
       
       {/* PnL Chart - Full Width */}
-      <TradePnLChart selectedOptions={selectedOptions} />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <TradePnLChart selectedOptions={selectedOptions} />
+      </motion.div>
     </div>
   )
-} 
+}

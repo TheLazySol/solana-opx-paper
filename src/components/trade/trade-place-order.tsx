@@ -1,10 +1,31 @@
 import { FC, useMemo, useEffect, useState } from 'react'
-import { Button, Card, CardBody, CardHeader, Divider, Tooltip } from '@heroui/react'
+import { 
+  Button, 
+  Card, 
+  CardBody, 
+  CardHeader, 
+  Divider, 
+  Tooltip,
+  Chip,
+  Progress,
+  cn
+} from '@heroui/react'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { toast } from "@/hooks/useToast"
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { 
+  CheckCircle2, 
+  AlertCircle, 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Receipt, 
+  Zap,
+  Loader2,
+  AlertTriangle,
+  Target
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface PlaceTradeOrderProps {
@@ -337,139 +358,206 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   };
 
   return (
-    <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-      border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-      hover:bg-transparent shadow-lg h-full">
-      <CardHeader className="pb-3">
-        <h3 className="text-base font-medium text-muted-foreground">
-          Order Summary
-        </h3>
+    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Order Summary
+          </h3>
+          {hasSelectedOptions && (
+            <Chip 
+              size="sm" 
+              variant="flat"
+              className={cn(
+                "font-medium",
+                isDebit 
+                  ? "bg-red-500/20 text-red-400" 
+                  : "bg-green-500/20 text-green-400"
+              )}
+              startContent={
+                isDebit ? 
+                  <TrendingDown className="w-3 h-3" /> : 
+                  <TrendingUp className="w-3 h-3" />
+              }
+            >
+              {isDebit ? 'Debit' : 'Credit'}
+            </Chip>
+          )}
+        </div>
       </CardHeader>
-      <CardBody className="space-y-4">
-        <div className="space-y-3">
-          {/* Order Details */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Total Quantity</span>
-            <span className="font-medium text-right">{hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}</span>
+      
+      <CardBody className="gap-4">
+        {/* Order Metrics */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-3"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+              <Target className="w-4 h-4 text-white/60 mb-1" />
+              <span className="text-xs text-white/60">Quantity</span>
+              <span className="text-sm font-semibold text-white">
+                {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
+              </span>
+            </div>
+            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+              <DollarSign className="w-4 h-4 text-white/60 mb-1" />
+              <span className="text-xs text-white/60">Volume</span>
+              <span className="text-sm font-semibold text-white">
+                {hasSelectedOptions ? `$${formattedVolume}` : '--'}
+              </span>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Order Type</span>
-            <span className={`font-medium capitalize text-right ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
-              {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Volume</span>
-            <span className="font-medium text-right">
-              {hasSelectedOptions ? `$${formattedVolume} USDC` : '--'}
-            </span>
+        </motion.div>
+
+        <Divider className="bg-white/10" />
+          
+        {/* Fees Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Receipt className="w-4 h-4 text-white/60" />
+            <span className="text-sm font-medium text-white/80">Fees & Costs</span>
           </div>
           
-          {/* Fees Section - Always visible */}
-          <div className="space-y-2 p-2 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="text-muted-foreground">Option Creation Fee:</span>
-              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/60">Option Creation</span>
+              <span className="text-xs font-medium text-white/80">
+                {hasSelectedOptions ? `-- SOL` : '--'}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="text-muted-foreground">Transaction Cost:</span>
-              <span className="text-right">{hasSelectedOptions ? `-- SOL` : '--'}</span>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/60">Transaction Cost</span>
+              <span className="text-xs font-medium text-white/80">
+                {hasSelectedOptions ? `-- SOL` : '--'}
+              </span>
             </div>
-            <Divider className="my-1 bg-white/10" />
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="font-medium">Total Fees:</span>
+            
+            {borrowedAmount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-white/60">Borrow Fee</span>
+                <span className="text-xs font-medium text-amber-400">
+                  ${fees.borrowFee.toFixed(2)}
+                </span>
+              </div>
+            )}
+            
+            <Divider className="bg-white/10" />
+            
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-white/80">Total Fees</span>
               <div className="text-right">
-                <div>{hasSelectedOptions ? `-- SOL` : '--'}</div>
+                <div className="text-sm font-semibold text-white">
+                  {hasSelectedOptions ? `-- SOL` : '--'}
+                </div>
                 {borrowedAmount > 0 && (
-                  <div>${fees.borrowFee.toFixed(2)} USDC</div>
+                  <div className="text-xs text-amber-400">
+                    +${fees.borrowFee.toFixed(2)} USDC
+                  </div>
                 )}
               </div>
             </div>
           </div>
+        </motion.div>
 
-          <Divider className="my-2 bg-white/10" />
-          
-          {/* Premium Amount */}
-          <div className="grid grid-cols-2 gap-2">
-            <span className={`text-sm ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
-              Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
-            </span>
-            <span className="text-lg font-semibold text-white text-right">
-              {hasSelectedOptions ? `$${formattedAmount} USDC` : '--'}
+        <Divider className="bg-white/10" />
+        
+        {/* Premium Amount */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="p-4 rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20"
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <DollarSign className={cn(
+                "w-5 h-5",
+                isDebit ? "text-red-400" : "text-green-400"
+              )} />
+              <span className={cn(
+                "text-sm font-medium",
+                isDebit ? "text-red-400" : "text-green-400"
+              )}>
+                Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : ''}
+              </span>
+            </div>
+            <span className={cn(
+              "text-xl font-bold",
+              isDebit ? "text-red-400" : "text-green-400"
+            )}>
+              {hasSelectedOptions ? `$${formattedAmount}` : '--'}
             </span>
           </div>
-        </div>
+        </motion.div>
 
+        {/* Place Order Button */}
         <Tooltip 
           content={insufficientOptions ? "There are not enough options available to trade for the quantity selected." : undefined}
           isDisabled={!insufficientOptions}
         >
-          <div className="w-full">
-            <motion.div
-              whileTap={{ scale: 0.98 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              className="w-full"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="w-full"
+          >
+            <Button 
+              className={cn(
+                "w-full h-12 font-semibold text-base transition-all duration-300",
+                !hasSelectedOptions || isPlacingOrder || insufficientOptions
+                  ? "bg-white/10 text-white/40 border border-white/20"
+                  : orderSuccess
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              )}
+              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+              onPress={handlePlaceOrder}
             >
-              <Button 
-                className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
-                  hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20
-                  hover:border-blue-500/70 hover:shadow-lg hover:shadow-blue-500/25
-                  active:bg-gradient-to-r active:from-blue-600/30 active:to-purple-600/30
-                  active:border-blue-600/80 active:shadow-inner
-                  transition-all duration-200 ease-out relative overflow-hidden group"
-                isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
-                onPress={handlePlaceOrder}
+              <motion.div
+                className="flex items-center justify-center gap-2"
+                initial={{ scale: 1 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.1 }}
               >
-                <motion.span
-                  className="relative z-10"
-                  initial={{ y: 0 }}
-                  whileTap={{ y: 1 }}
-                  transition={{ duration: 0.1 }}
-                >
-                  {isPlacingOrder ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : orderSuccess ? (
-                    <span className="flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Order Placed
-                    </span>
-                  ) : insufficientOptions ? (
-                    <span className="flex items-center justify-center">
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Insufficient Options
-                    </span>
-                  ) : (
-                    hasSelectedOptions ? 'Place Order' : 'No Options Selected'
-                  )}
-                </motion.span>
-                
-                {/* Animated background shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                />
-                
-                {/* Click ripple effect */}
-                <motion.div
-                  className="absolute inset-0 bg-blue-400/20 rounded-sm"
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileTap={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                />
-              </Button>
-            </motion.div>
-          </div>
+                {isPlacingOrder ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing Order...</span>
+                  </>
+                ) : orderSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Order Placed Successfully!</span>
+                  </>
+                ) : insufficientOptions ? (
+                  <>
+                    <AlertTriangle className="w-5 h-5" />
+                    <span>Insufficient Options</span>
+                  </>
+                ) : hasSelectedOptions ? (
+                  <>
+                    <Zap className="w-5 h-5" />
+                    <span>Place Order</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-5 h-5" />
+                    <span>No Options Selected</span>
+                  </>
+                )}
+              </motion.div>
+            </Button>
+          </motion.div>
         </Tooltip>
       </CardBody>
     </Card>
   )
-} 
+}

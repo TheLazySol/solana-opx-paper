@@ -1,9 +1,10 @@
 import { FC, useState, useCallback } from 'react'
-import { Tabs, Tab } from "@heroui/react"
-import { motion } from 'framer-motion'
+import { Card, Tabs, Tab, cn } from '@heroui/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { TradeView } from './trade-view'
 import { OrdersView } from './orders-view'
 import { SelectedOption } from './option-data'
+import { TrendingUp, FileText } from 'lucide-react'
 
 interface TradeViewContainerProps {
   selectedOptions: SelectedOption[]
@@ -49,162 +50,84 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   }, [onOrderPlaced])
 
   return (
-    <div className="space-y-2 sm:space-y-4">
-      <div className="w-full">
-        <div className="w-full sm:w-[300px] md:w-[400px] mx-auto mb-4">
-          <motion.div 
-            className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border border-[#e5e5e5]/20 dark:border-white/5 rounded-lg shadow-lg p-1"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            <div className="flex h-10 sm:h-12 items-center justify-center gap-1 relative">
-              {/* Animated background indicator */}
-              <motion.div
-                className="absolute h-8 sm:h-10 bg-gradient-to-r from-blue-500/30 to-purple-500/30 border border-blue-500/60 shadow-lg rounded-md"
-                initial={false}
-                animate={{
-                  x: activeView === 'trade' ? 0 : '100%',
-                  width: '50%'
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  duration: 0.6
-                }}
-              />
-              
-              <motion.button
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { type: "spring", stiffness: 400, damping: 15 }
-                }}
-                whileTap={{ 
-                  scale: 0.98,
-                  transition: { type: "spring", stiffness: 600, damping: 20 }
-                }}
-                onClick={() => setActiveView('trade')}
-                className="flex-1 h-8 sm:h-10 text-xs sm:text-sm font-medium transition-all duration-500 rounded-md relative overflow-hidden z-10"
-              >
-                <motion.span 
-                  className="relative z-20"
-                  animate={{
-                    color: activeView === 'trade' ? '#ffffff' : '#d1d5db',
-                    textShadow: activeView === 'trade' ? '0 0 8px rgba(74, 133, 255, 0.5)' : 'none'
-                  }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
-                  Trade
-                </motion.span>
-                
-                {/* Hover shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                  initial={{ x: "-100%", opacity: 0 }}
-                  whileHover={{ 
-                    x: "100%", 
-                    opacity: activeView !== 'trade' ? 1 : 0,
-                    transition: { duration: 0.8, ease: "easeInOut" }
-                  }}
-                />
-                
-                {/* Tap ripple effect */}
-                <motion.div
-                  className="absolute inset-0 bg-blue-400/20 rounded-md"
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileTap={{ 
-                    scale: 1, 
-                    opacity: [0, 0.6, 0],
-                    transition: { duration: 0.4, ease: "easeOut" }
-                  }}
-                />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { type: "spring", stiffness: 400, damping: 15 }
-                }}
-                whileTap={{ 
-                  scale: 0.98,
-                  transition: { type: "spring", stiffness: 600, damping: 20 }
-                }}
-                onClick={() => setActiveView('orders')}
-                className="flex-1 h-8 sm:h-10 text-xs sm:text-sm font-medium transition-all duration-500 rounded-md relative overflow-hidden z-10"
-              >
-                <motion.span 
-                  className="relative z-20"
-                  animate={{
-                    color: activeView === 'orders' ? '#ffffff' : '#d1d5db',
-                    textShadow: activeView === 'orders' ? '0 0 8px rgba(74, 133, 255, 0.5)' : 'none'
-                  }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
-                  Orders
-                </motion.span>
-                
-                {/* Hover shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                  initial={{ x: "-100%", opacity: 0 }}
-                  whileHover={{ 
-                    x: "100%", 
-                    opacity: activeView !== 'orders' ? 1 : 0,
-                    transition: { duration: 0.8, ease: "easeInOut" }
-                  }}
-                />
-                
-                {/* Tap ripple effect */}
-                <motion.div
-                  className="absolute inset-0 bg-blue-400/20 rounded-md"
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileTap={{ 
-                    scale: 1, 
-                    opacity: [0, 0.6, 0],
-                    transition: { duration: 0.4, ease: "easeOut" }
-                  }}
-                />
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-        
-        <motion.div 
-          className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4 overflow-hidden"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-        >
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ 
-              duration: 0.4, 
-              ease: "easeInOut",
-              opacity: { duration: 0.3 },
-              x: { duration: 0.4 }
+    <div className="w-full space-y-4">
+      {/* Tab Navigation */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full flex justify-center"
+      >
+        <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl p-1">
+          <Tabs
+            selectedKey={activeView}
+            onSelectionChange={(key) => setActiveView(key as string)}
+            variant="light"
+            classNames={{
+              tabList: "gap-2 w-full relative rounded-lg p-0",
+              cursor: "w-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-sm border border-blue-500/50",
+              tab: "max-w-fit px-8 h-10 data-[selected=true]:text-white text-white/60",
+              tabContent: "group-data-[selected=true]:text-white font-medium"
             }}
           >
-            {activeView === 'trade' && (
-              <TradeView 
-                initialSelectedOptions={selectedOptions} 
-                onOptionsUpdate={handleOptionsUpdate}
-                onTabChange={handleTabChange}
-              />
-            )}
-            {activeView === 'orders' && (
-              <OrdersView 
-                activeTab={activeOrderTab}
-                setActiveTab={setActiveOrderTab}
-              />
-            )}
-          </motion.div>
-        </motion.div>
-      </div>
-
+            <Tab
+              key="trade"
+              title={
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Trade</span>
+                </div>
+              }
+            />
+            <Tab
+              key="orders"
+              title={
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span>Orders</span>
+                </div>
+              }
+            />
+          </Tabs>
+        </Card>
+      </motion.div>
+      
+      {/* Content Area */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeView}
+              initial={{ opacity: 0, x: activeView === 'trade' ? -20 : 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: activeView === 'trade' ? 20 : -20 }}
+              transition={{ 
+                duration: 0.3,
+                ease: "easeInOut"
+              }}
+              className="p-4 md:p-6"
+            >
+              {activeView === 'trade' && (
+                <TradeView 
+                  initialSelectedOptions={selectedOptions} 
+                  onOptionsUpdate={handleOptionsUpdate}
+                  onTabChange={handleTabChange}
+                />
+              )}
+              {activeView === 'orders' && (
+                <OrdersView 
+                  activeTab={activeOrderTab}
+                  setActiveTab={setActiveOrderTab}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </Card>
+      </motion.div>
     </div>
   )
 }
