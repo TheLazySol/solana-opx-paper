@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface AssetTypeProps {
   selectedAsset: string
@@ -37,10 +38,10 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
       // Set the highlight effect
       setHighlightEffect(priceChange)
       
-      // Clear the effect after a brief moment
+      // Clear the effect after the flash animation completes
       timeoutRef.current = setTimeout(() => {
         setHighlightEffect(null)
-      }, 100)
+      }, 200)
     }
     
     // Cleanup on unmount
@@ -63,14 +64,24 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
       <div className="flex items-center space-x-2">
         {price !== null && (
           <div className="flex items-center space-x-2">
-            <span className={`text-xl sm:text-2xl font-bold transition-all duration-75 ${
-              highlightEffect === 'up' ? 'bg-green-500 text-white' : 
-              highlightEffect === 'down' ? 'bg-red-500 text-white' : 
-              'bg-transparent'
-            } px-1`}
+            <motion.span
+              className="text-xl sm:text-2xl font-bold px-1 rounded"
+              animate={{
+                backgroundColor: highlightEffect === 'up' ? '#10b981' : 
+                                highlightEffect === 'down' ? '#ef4444' : 
+                                'transparent',
+                color: highlightEffect ? '#ffffff' : 'inherit',
+                boxShadow: highlightEffect === 'up' ? '0 0 15px rgba(16, 185, 129, 0.6)' : 
+                          highlightEffect === 'down' ? '0 0 15px rgba(239, 68, 68, 0.6)' : 
+                          '0 0 0px transparent'
+              }}
+              transition={{
+                duration: 0.1,
+                ease: "easeOut"
+              }}
             >
               ${price.toFixed(getTokenDisplayDecimals(selectedToken.symbol))}
-            </span>
+            </motion.span>
           </div>
         )}
       </div>
