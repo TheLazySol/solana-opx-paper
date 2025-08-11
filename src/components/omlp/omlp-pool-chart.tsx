@@ -100,7 +100,7 @@ export function OmlpChart({
               {poolData.token} Pool Performance
             </DialogTitle>
             <DialogClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" aria-label="Close dialog">
                 <X className="h-4 w-4" />
               </Button>
             </DialogClose>

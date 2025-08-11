@@ -124,6 +124,7 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
               className="h-8 w-8 p-0"
               onClick={handleRefresh}
               disabled={isLoading}
+              aria-label="Refresh lending positions"
             >
               <RefreshCw
                 className={cn(

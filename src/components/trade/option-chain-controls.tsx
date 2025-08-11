@@ -99,6 +99,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
               isSelected={useGreekSymbols}
               onValueChange={setUseGreekSymbols}
               size="sm"
+              aria-label="Toggle Greek symbol display mode"
             />
             <label htmlFor="greek-display-mode" className="text-sm cursor-pointer">
               {useGreekSymbols ? "Greek Symbols" : "Greek Symbols"}

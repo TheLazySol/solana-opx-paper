@@ -396,6 +396,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 isIconOnly
                                 className="h-7 w-7 min-w-7 text-muted-foreground hover:text-red-500 transition-all duration-200"
                                 onPress={() => onRemoveOption(index)}
+                                aria-label="Remove option from order"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -512,6 +513,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                   className="h-6 w-6 min-w-6 hover:bg-[#4a85ff]/20 transition-all duration-200"
                                   onPress={() => handleQuantityChange(index, -MIN_QTY)}
                                   title={`Decrease by ${MIN_QTY}`}
+                                  aria-label={`Decrease quantity by ${MIN_QTY}`}
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
@@ -538,6 +540,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                   className="h-6 w-6 min-w-6 hover:bg-[#4a85ff]/20 transition-all duration-200"
                                   onPress={() => handleQuantityChange(index, MIN_QTY)}
                                   title={`Increase by ${MIN_QTY}`}
+                                  aria-label={`Increase quantity by ${MIN_QTY}`}
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>

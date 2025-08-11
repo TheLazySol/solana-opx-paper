@@ -518,6 +518,7 @@ export function OptionLabForm() {
                                     size="icon"
                                     onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
                                     className="h-7 w-7 text-muted-foreground hover:text-white"
+                                    aria-label="Remove last option from summary"
                                   >
                                     <X className="h-4 w-4" />
                                   </Button>

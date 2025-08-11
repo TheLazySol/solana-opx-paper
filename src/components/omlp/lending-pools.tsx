@@ -161,6 +161,7 @@ export function LendingPools({
               className="h-8 w-8 p-0"
               onClick={handleRefresh}
               disabled={isLoading}
+              aria-label="Refresh lending pools"
             >
               <RefreshCw
                 className={cn(
@@ -230,6 +231,7 @@ export function LendingPools({
                           size="icon" 
                           className="bg-black hover:bg-black/80"
                           onClick={() => handleOpenChart(pool)}
+                          aria-label="Open pool performance chart"
                         >
                           <BarChart className="h-4 w-4" />
                         </Button>

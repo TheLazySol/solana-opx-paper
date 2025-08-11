@@ -103,6 +103,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           size="sm" 
           isIconOnly
           className="w-10 p-0"
+          aria-label="Filter Greeks and Statistics"
         >
           <Filter className="h-4 w-4" />
         </Button>

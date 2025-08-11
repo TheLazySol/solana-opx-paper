@@ -365,6 +365,7 @@ export const OrdersViewHistory: FC = () => {
                       onPress={goToPreviousPage}
                       isDisabled={currentPage === 1}
                       isIconOnly
+                      aria-label="Go to previous page"
                       className="h-10 w-10 bg-white/10 border border-white/20 text-white/80
                         hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/40 hover:text-[#4a85ff]
                         disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300
@@ -404,6 +405,7 @@ export const OrdersViewHistory: FC = () => {
                       onPress={goToNextPage}
                       isDisabled={currentPage === totalPages}
                       isIconOnly
+                      aria-label="Go to next page"
                       className="h-10 w-10 bg-white/10 border border-white/20 text-white/80
                         hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/40 hover:text-[#4a85ff]
                         disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300

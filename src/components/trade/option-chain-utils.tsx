@@ -201,6 +201,7 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
         className="h-8 w-8 p-0"
         onPress={handleRefresh}
         isDisabled={isRefreshing}
+        aria-label="Refresh option chain data"
       >
         <RefreshCw
           className={cn(
