@@ -83,7 +83,7 @@ const loadGreekSymbolsFromStorage = (): boolean => {
   try {
     // Check if we're in the browser environment
     if (typeof window === 'undefined') {
-      return true // Default to showing symbols
+      return false // Default to false for SSR to prevent hydration mismatch
     }
     const saved = localStorage.getItem(GREEK_SYMBOLS_STORAGE_KEY)
     if (saved) {
@@ -92,11 +92,11 @@ const loadGreekSymbolsFromStorage = (): boolean => {
   } catch (error) {
     console.error('Failed to load Greek symbols preference:', error)
   }
-  return true // Default to showing symbols
+  return false // Default to false
 }
 
 // Export the helper functions for use in parent components
-export { loadFiltersFromStorage, DEFAULT_FILTERS }
+export { loadFiltersFromStorage, loadGreekSymbolsFromStorage, DEFAULT_FILTERS }
 
 export const FilterGreeks: FC<FilterGreeksProps> = ({
   filters = DEFAULT_FILTERS,
@@ -105,7 +105,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
   onGreekSymbolsChange
 }) => {
   const [open, setOpen] = useState(false)
-  const [internalShowGreekSymbols, setInternalShowGreekSymbols] = useState(true)
+  const [internalShowGreekSymbols, setInternalShowGreekSymbols] = useState(false)
 
   // Use external state if provided, otherwise use internal state
   const showGreekSymbols = useGreekSymbols !== undefined ? useGreekSymbols : internalShowGreekSymbols

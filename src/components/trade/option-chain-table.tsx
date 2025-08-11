@@ -39,8 +39,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     gamma: false,
     vega: false,
     rho: false,
+    oa: false,
     oi: false,
-    oa: true,
     volume: true
   },
   onOptionsChange,

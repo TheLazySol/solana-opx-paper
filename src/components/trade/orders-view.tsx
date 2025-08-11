@@ -52,15 +52,15 @@ export const OrdersView: FC<OrdersViewProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
         >
-          <div className="flex h-12 items-center justify-center gap-1 relative">
+          <div className="flex h-12 items-center justify-center relative">
             {/* Enhanced animated background indicator */}
             <motion.div
               className="absolute h-10 bg-gradient-to-r from-[#4a85ff]/80 via-[#4a85ff]/60 to-[#4a85ff]/80 
                 border border-[#4a85ff]/40 shadow-2xl shadow-[#4a85ff]/40 rounded-xl backdrop-blur-sm"
+              style={{ width: 'calc(50% - 1px)' }}
               initial={false}
               animate={{
-                x: activeOrderTab === 'open' ? '2px' : 'calc(50% - 2px)',
-                width: 'calc(50% - 2px)'
+                x: activeOrderTab === 'open' ? '1px' : 'calc(100% + 1px)'
               }}
               transition={{
                 type: "spring",

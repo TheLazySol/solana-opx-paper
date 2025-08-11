@@ -1,7 +1,7 @@
 import { FC, useState, useCallback, useRef, useEffect } from 'react'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
-import { GreekFilters, loadFiltersFromStorage, DEFAULT_FILTERS } from './option-chain-user-settings'
+import { GreekFilters, loadFiltersFromStorage, loadGreekSymbolsFromStorage, DEFAULT_FILTERS } from './option-chain-user-settings'
 import { SelectedOption } from './option-data'
 
 
@@ -21,15 +21,23 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   onSwitchToCreateOrder
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
-  const [greekFilters, setGreekFilters] = useState<GreekFilters>(() => {
-    // Load saved preferences on initial mount, fallback to defaults
-    const savedFilters = loadFiltersFromStorage()
-    return savedFilters || DEFAULT_FILTERS
-  })
+  const [greekFilters, setGreekFilters] = useState<GreekFilters>(DEFAULT_FILTERS)
   const [useGreekSymbols, setUseGreekSymbols] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [refreshExpirations, setRefreshExpirations] = useState(0)
   const optionChainTableRef = useRef<{ refreshVolumes: () => void } | null>(null)
+
+  // Load saved preferences after component mounts to avoid hydration mismatch
+  useEffect(() => {
+    const savedFilters = loadFiltersFromStorage()
+    if (savedFilters) {
+      setGreekFilters(savedFilters)
+    }
+    
+    // Load saved Greek symbols preference
+    const savedSymbols = loadGreekSymbolsFromStorage()
+    setUseGreekSymbols(savedSymbols)
+  }, [])
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
