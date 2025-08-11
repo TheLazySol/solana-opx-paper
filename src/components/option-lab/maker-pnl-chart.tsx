@@ -63,27 +63,25 @@ const CustomTooltip = ({ active, payload, label, showExpiration }: any) => {
       : `-${Math.abs(percentageValue).toFixed(2)}%`;
 
   // Determine color based on value
-  const valueColor = value >= 0 ? 'text-green-500' : 'text-red-500';
+  const valueColor = value >= 0 ? 'text-green-400' : 'text-red-400';
 
   return (
-    <div className="w-fit p-2 rounded-lg 
-      bg-opacity-80 backdrop-blur-sm bg-black/70 dark:bg-black/90 
-      shadow-lg border border-white/10 dark:border-white/5">
-      <div className="text-xs text-gray-300 mb-1">
+    <div className="p-3 rounded-lg bg-black/90 backdrop-blur-md border border-white/20 shadow-2xl">
+      <div className="text-xs text-white/60 mb-2 font-medium">
         {showExpiration ? 'Profit/Loss at Expiration' : 'Current Profit/Loss'}
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">Asset Price:</span>
-          <span className="text-xs text-white font-medium">${data.price.toFixed(2)}</span>
+          <span className="text-xs text-white/60">Asset Price:</span>
+          <span className="text-xs text-white font-semibold">${data.price.toFixed(2)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">PnL:</span>
-          <span className={`text-xs font-medium ${valueColor}`}>{formattedValue}</span>
+          <span className="text-xs text-white/60">PnL:</span>
+          <span className={`text-xs font-bold ${valueColor}`}>{formattedValue}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-300 min-w-[70px]">Return:</span>
-          <span className={`text-xs font-medium ${valueColor}`}>{formattedPercentage}</span>
+          <span className="text-xs text-white/60">Return:</span>
+          <span className={`text-xs font-bold ${valueColor}`}>{formattedPercentage}</span>
         </div>
       </div>
     </div>
@@ -347,7 +345,7 @@ export function MakerPnlChart({
 
   // Early return if no data yet
   if (calculatePnLPoints.length === 0) {
-    return <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+    return <div className="h-[300px] flex items-center justify-center text-sm text-white/60">
       No option data available for chart
     </div>
   }
@@ -368,34 +366,34 @@ export function MakerPnlChart({
           margin={chartMargins}
         >
           <defs>
-            {/* Green gradient for profit region */}
+            {/* Enhanced green gradient for profit region */}
             <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity={0.9} />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.4} />
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+              <stop offset="50%" stopColor="#10b981" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
             </linearGradient>
             
-            {/* Red gradient for loss region */}
+            {/* Enhanced red gradient for loss region */}
             <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.9} />
+              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.1} />
+              <stop offset="50%" stopColor="#ef4444" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.8} />
             </linearGradient>
           </defs>
           
           <XAxis
             dataKey="price"
             tickFormatter={formatXTick}
-            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff' }}
-            tickLine={{ stroke: '#ffffff' }}
-            axisLine={{ stroke: '#ffffff' }}
+            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff80' }}
+            tickLine={{ stroke: '#ffffff20' }}
+            axisLine={{ stroke: '#ffffff20' }}
             domain={['dataMin', 'dataMax']}
             type="number"
             label={isMobile ? undefined : {
-              value: 'Underlying Asset',
+              value: 'Underlying Asset Price',
               position: 'insideBottom',
-              offset: -10,
-              style: { textAnchor: 'middle' },
-              fontSize: 11,
-              fill: '#ffffff'
+              offset: -5,
+              style: { textAnchor: 'middle', fontSize: 12, fill: '#ffffff60' }
             }}
             // Reduce number of ticks on mobile
             interval={isMobile ? 'preserveStartEnd' : 0}
@@ -404,17 +402,15 @@ export function MakerPnlChart({
           
           <YAxis
             tickFormatter={formatYTick}
-            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff' }}
-            tickLine={{ stroke: '#ffffff' }}
-            axisLine={{ stroke: '#ffffff' }}
+            tick={{ fontSize: isMobile ? 10 : 11, fill: '#ffffff80' }}
+            tickLine={{ stroke: '#ffffff20' }}
+            axisLine={{ stroke: '#ffffff20' }}
             domain={yAxisDomain}
             label={isMobile ? undefined : {
               value: 'Return (%)', 
               angle: -90, 
               position: 'insideLeft',
-              style: { textAnchor: 'middle' },
-              fontSize: 11,
-              fill: '#ffffff'
+              style: { textAnchor: 'middle', fontSize: 12, fill: '#ffffff60' }
             }}
             // Reduce number of ticks on mobile
             tickCount={isMobile ? 5 : 10}
@@ -423,19 +419,19 @@ export function MakerPnlChart({
           <Tooltip
             content={<CustomTooltip showExpiration={showExpiration} />}
             cursor={{
-              stroke: '#666',
+              stroke: '#ffffff30',
               strokeDasharray: '3 3',
               strokeWidth: 1
             }}
           />
           <ReferenceLine 
             y={maxProfitPercentage} 
-            stroke="#22c55e"
+            stroke="#10b981"
             strokeDasharray="3 3"
           >
             <Label
               value={isMobile ? `+${maxProfitPercentage.toFixed(0)}%` : `Max Profit: +${maxProfitPercentage.toFixed(0)}%`}
-              fill="#22c55e"
+              fill="#10b981"
               fontSize={isMobile ? 12 : 11}
               position={maxProfitPosition}
               dy={isMobile ? -20 : undefined}
@@ -460,19 +456,20 @@ export function MakerPnlChart({
           {/* Add a reference line at $0 PnL */}
           <ReferenceLine 
             y={0} 
-            stroke="#666"
-            strokeDasharray="3 3"
+            stroke="#ffffff40"
+            strokeDasharray="5 5"
+            strokeWidth={1}
           />
           
           {/* Current Price Reference Line - with label at top */}
           {currentMarketPrice && (
             <ReferenceLine
               x={currentMarketPrice}
-              stroke="#4a85ff"
-              strokeWidth={1.5}
+              stroke="#60a5fa"
+              strokeWidth={2}
               label={{
                 value: isMobile ? `$${currentMarketPrice.toFixed(0)}` : `Current: $${currentMarketPrice.toFixed(2)}`,
-                fill: '#4a85ff',
+                fill: '#60a5fa',
                 fontSize: isMobile ? 12 : 11,
                 position: isMobile ? "top" : "insideTopLeft",
                 dy: isMobile ? -15 : 5,
@@ -542,6 +539,7 @@ export function MakerPnlChart({
                 stroke={isCall ? "#f97316" : "#06b6d4"} // Orange for calls, cyan for puts
                 strokeDasharray="2 2"
                 strokeWidth={1.5}
+                strokeOpacity={0.7}
                 label={shouldShowLabel ? { 
                   value: isMobile ? 
                     `${isCall ? "C" : "P"}:$${strike.toFixed(0)}` : 
@@ -551,12 +549,12 @@ export function MakerPnlChart({
                   fill: isCall ? "#f97316" : "#06b6d4",
                   dy: isMobile ? labelOffset : undefined
                 } : undefined}
-                isFront={true}
+                isFront={false}
               />
             )
           })}
           
-          <CartesianGrid strokeDasharray="2 2" opacity={0.1} />
+          <CartesianGrid strokeDasharray="3 3" opacity={0.05} stroke="#ffffff" />
           
           {/* Positive value line */}
           <Line
@@ -565,12 +563,12 @@ export function MakerPnlChart({
             dot={false}
             activeDot={{ 
               r: isMobile ? 4 : 4, 
-              fill: "#22c55e", 
-              stroke: "white", 
+              fill: "#10b981", 
+              stroke: "#000000", 
               strokeWidth: isMobile ? 2 : 2 
             }}
             strokeWidth={isMobile ? 2 : 1.5}
-            stroke="#22c55e"
+            stroke="#10b981"
             isAnimationActive={false}
             connectNulls
           />
@@ -583,7 +581,7 @@ export function MakerPnlChart({
             activeDot={{ 
               r: isMobile ? 4 : 4, 
               fill: "#ef4444", 
-              stroke: "white", 
+              stroke: "#000000", 
               strokeWidth: isMobile ? 2 : 2 
             }}
             strokeWidth={isMobile ? 2 : 1.5}

@@ -19,16 +19,21 @@ import { StrikePriceInput } from './strike-price-input';
 import { PremiumDisplay } from './premium-display';
 import { QuantityInput } from './quantity-input';
 import { EDIT_REFRESH_INTERVAL } from '@/constants/constants';
-import { Button } from "@/components/ui/button";
+import { 
+  Button, 
+  Card, 
+  CardBody, 
+  CardHeader, 
+  Chip,
+  cn
+} from "@heroui/react";
 import { MakerSummary } from "./maker-summary";
 import { CollateralProvider, CollateralState } from "./collateral-provider";
-import { cn } from "@/utils/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, Plus, TrendingDown } from "lucide-react";
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from "@/constants/constants";
 import { useAssetPriceInfo } from "@/context/asset-price-provider";
-import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { motion } from 'framer-motion';
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -410,7 +415,12 @@ export function OptionLabForm() {
       <FormProvider {...methods}>
         <form onSubmit={onSubmit} className="space-y-6">
           {/* Container for all components */}
-          <div className="flex flex-col space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col space-y-6"
+          >
             {/* 1. PnL Chart & Maker Summary at the top - Full width on all screens */}
             <div className="w-full">
               <MakerSummary 
@@ -421,19 +431,32 @@ export function OptionLabForm() {
                 assetPrice={assetPrice}
               />
               {pendingOptions.length === 0 && (
-                <p className="text-sm text-muted-foreground mt-4">
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-white/60 mt-4 text-center"
+                >
                   Please add at least 1 option contract to the summary before minting!
-                </p>
+                </motion.p>
               )}
             </div>
             
             {/* 2. Form Controls (Option inputs + Collateral Provider) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Option Form Inputs - Left side on desktop, top on mobile */}
-              <div className="col-span-1 lg:col-span-7">
-                <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-                  transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-                  <CardContent className="space-y-4 sm:space-y-6 py-4 sm:py-6">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="col-span-1 lg:col-span-7"
+              >
+                <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
+                  <CardHeader className="pb-2">
+                    <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      Option Configuration
+                    </h3>
+                  </CardHeader>
+                  <CardBody className="gap-4">
                     {/* Top row: Asset and Option Type */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <AssetSelector assetPrice={assetPrice} />
@@ -455,23 +478,25 @@ export function OptionLabForm() {
                     {/* Add/Update Option Button */}
                     <div className="flex flex-col justify-center mt-4">
                       <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={addOptionToSummary}
-                        className="px-6 bg-[#4a85ff]/10 border border-[#4a85ff]/40 dark:border-[#4a85ff]/40
-                          hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60 hover:scale-[0.98]
-                          backdrop-blur-sm
-                          transition-all duration-200
-                          disabled:opacity-50 disabled:cursor-not-allowed
-                          disabled:hover:bg-[#4a85ff]/10 disabled:hover:border-[#4a85ff]/40
-                          disabled:hover:scale-100"
-                        disabled={
+                        onPress={addOptionToSummary}
+                        className={cn(
+                          "w-full h-11 font-semibold transition-all duration-300",
+                          (!methods.getValues("strikePrice") || 
+                           methods.getValues("strikePrice") === "" ||
+                           !methods.getValues("premium") ||
+                           !methods.getValues("expirationDate") ||
+                           methods.getValues("quantity") < 0.01)
+                            ? "bg-white/10 text-white/40 border border-white/20"
+                            : "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                        )}
+                        isDisabled={
                           !methods.getValues("strikePrice") || 
                           methods.getValues("strikePrice") === "" ||
                           !methods.getValues("premium") ||
                           !methods.getValues("expirationDate") ||
                           methods.getValues("quantity") < 0.01
                         }
+                        startContent={<Plus className="w-4 h-4" />}
                       >
                         {pendingOptions.length > 0 ? "Update Option" : "Add Option"}
                       </Button>
@@ -479,78 +504,94 @@ export function OptionLabForm() {
 
                     {/* Option Contract Display - Only show when options exist */}
                     {pendingOptions.length > 0 && pendingOptions[pendingOptions.length - 1] && (
-                      <div>
-                        <div className="h-px w-full bg-[#e5e5e5]/20 dark:bg-[#393939]/50 my-3"></div>
-                        <Card className="bg-black/10 border border-white/10">
-                          <CardContent className="p-2 sm:p-3">
-                            <div className="flex flex-col space-y-2 w-full">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {pendingOptions[pendingOptions.length - 1].asset.toUpperCase() === 'SOL' && (
-                                    <Image 
-                                      src="/token-logos/solana_logo.png" 
-                                      alt="Solana Logo" 
-                                      width={20} 
-                                      height={20} 
-                                      className="mr-1.5"
-                                    />
-                                  )}
-                                  <Badge variant="grey" className="capitalize">
-                                    {pendingOptions[pendingOptions.length - 1].asset}
-                                  </Badge>
-                                  <Badge variant="destructive" className="capitalize">
-                                    Short
-                                  </Badge>
-                                  <Badge variant="blue" className="capitalize">
-                                    {pendingOptions[pendingOptions.length - 1].optionType}
-                                  </Badge>
-                                  <Badge variant="blue" className="capitalize">
-                                    ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)}
-                                  </Badge>
-                                </div>
-                                
-                                <div className="flex items-center justify-between sm:justify-end gap-2">
-                                  <Badge variant="blue" className="capitalize">
-                                    EXP: {format(pendingOptions[pendingOptions.length - 1].expirationDate, 'yyyy-MM-dd')}
-                                  </Badge>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeOptionFromSummary(pendingOptions.length - 1)}
-                                    className="h-7 w-7 text-muted-foreground hover:text-white"
-                                    aria-label="Remove last option from summary"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-200">
+                          <CardBody className="p-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {pendingOptions[pendingOptions.length - 1].asset.toUpperCase() === 'SOL' && (
+                                  <Image 
+                                    src="/token-logos/solana_logo.png" 
+                                    alt="Solana" 
+                                    width={24} 
+                                    height={24}
+                                    className="rounded-full"
+                                  />
+                                )}
+                                <Chip size="sm" variant="flat" className="bg-white/10">
+                                  {pendingOptions[pendingOptions.length - 1].asset}
+                                </Chip>
+                                <Chip 
+                                  size="sm" 
+                                  variant="flat"
+                                  className="bg-red-500/20 text-red-400 font-medium"
+                                  startContent={<TrendingDown className="w-3 h-3" />}
+                                >
+                                  Short {pendingOptions[pendingOptions.length - 1].optionType}
+                                </Chip>
+                                <Chip 
+                                  size="sm" 
+                                  variant="flat" 
+                                  className="bg-blue-500/20 text-blue-400"
+                                >
+                                  ${Number(pendingOptions[pendingOptions.length - 1].strikePrice).toFixed(2)}
+                                </Chip>
                               </div>
                               
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs sm:text-sm text-muted-foreground">Premium:</span>
-                                  <span className="text-xs sm:text-sm font-medium text-red-500">
-                                    ${Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
-                                  </span>
-                                </div>
-                                
-                                <div className="flex items-center justify-end gap-2">
-                                  <span className="text-xs sm:text-sm text-muted-foreground">Qty:</span>
-                                  <span className="text-xs sm:text-sm font-medium">
-                                    {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(2)}
-                                  </span>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <Chip 
+                                  size="sm" 
+                                  variant="flat" 
+                                  className="bg-purple-500/20 text-purple-400"
+                                >
+                                  EXP: {format(pendingOptions[pendingOptions.length - 1].expirationDate, 'yyyy-MM-dd')}
+                                </Chip>
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="light"
+                                  className="text-white/60 hover:text-red-400 hover:bg-red-500/10"
+                                  onPress={() => removeOptionFromSummary(pendingOptions.length - 1)}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
-                          </CardContent>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-white/60">Premium:</span>
+                                <span className="text-sm font-medium text-red-400">
+                                  ${Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-white/60">Qty:</span>
+                                <span className="text-sm font-medium text-white">
+                                  {Number(pendingOptions[pendingOptions.length - 1].quantity).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </CardBody>
                         </Card>
-                      </div>
+                      </motion.div>
                     )}
-                  </CardContent>
+                  </CardBody>
                 </Card>
-              </div>
+              </motion.div>
               
               {/* Collateral Provider - Right side on desktop, bottom on mobile */}
-              <div className="col-span-1 lg:col-span-5">
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="col-span-1 lg:col-span-5"
+              >
                 <CollateralProvider 
                   options={pendingOptions}
                   onStateChange={handleCollateralStateChange}
@@ -559,11 +600,11 @@ export function OptionLabForm() {
                   hasValidationError={!!methods.formState.errors.root}
                   hasPendingOptions={pendingOptions.length > 0}
                 />
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </form>
       </FormProvider>
     </div>
   );
-} 
+}

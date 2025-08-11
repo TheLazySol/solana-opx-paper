@@ -1,7 +1,7 @@
-import { InfoIcon } from "lucide-react";
+import { Info } from "lucide-react";
 
 export const TooltipIndicator = () => {
   return (
-    <InfoIcon className="h-2 w-2 inline-block ml-1 opacity-50" />
+    <Info className="h-3 w-3 inline-block ml-1 opacity-50" />
   );
-}; 
+};

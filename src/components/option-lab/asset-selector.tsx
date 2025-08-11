@@ -1,6 +1,5 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectItem } from '@heroui/react';
 import { TOKENS } from '@/lib/api/tokens';
 import { useFormContext } from 'react-hook-form';
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider';
@@ -8,7 +7,7 @@ import { getTokenDisplayDecimals } from '@/constants/token-list/token-list';
 
 export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: number | null }) => {
   const { setValue, getValues, watch } = useFormContext();
-  const selectedAsset = watch('asset');
+  const selectedAsset = watch('asset') || 'SOL'; // Default to SOL if undefined
   
   // Use the contextualized asset price
   const { setSelectedAsset } = useAssetPrice();
@@ -33,33 +32,37 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
   };
 
   return (
-    <FormItem>
-      <FormLabel className="pt-2 sm:pt-3 mb-1 sm:mb-2 flex items-center text-xs sm:text-sm">
-        <span>Current Price:</span>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-white/80">Asset</label>
         {assetPrice > 0 && (
-          <span className="ml-2 text-[#4a85ff] text-xs sm:text-sm font-normal">
-            ${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset))}
+          <span className="text-sm text-blue-400 font-medium">
+            ${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset) || 2)}
           </span>
         )}
-      </FormLabel>
-      <Select 
-        onValueChange={handleAssetChange}
-        defaultValue={getValues('asset')}
+      </div>
+      <Select
+        selectedKeys={[getValues('asset') || 'SOL']}
+        onSelectionChange={(selection) => {
+          const selected = Array.from(selection)[0] as string;
+          if (selected) {
+            handleAssetChange(selected);
+          }
+        }}
+        placeholder="Select asset"
+        variant="bordered"
+        classNames={{
+          trigger: "bg-white/5 border-white/20 hover:border-white/30 h-10",
+          value: "text-white",
+          popoverContent: "bg-black/90 border-white/10"
+        }}
       >
-        <FormControl>
-          <SelectTrigger className="h-9 sm:h-10 text-sm sm:text-base">
-            <SelectValue placeholder="Select asset" />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          {Object.entries(TOKENS).map(([symbol, token]) => (
-            <SelectItem key={symbol} value={symbol} className="text-sm">
-              {token.name} ({token.symbol})
-            </SelectItem>
-          ))}
-        </SelectContent>
+        {Object.entries(TOKENS).map(([symbol, token]) => (
+          <SelectItem key={symbol}>
+            {token.name} ({token.symbol})
+          </SelectItem>
+        ))}
       </Select>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+    </div>
   );
-}; 
+};

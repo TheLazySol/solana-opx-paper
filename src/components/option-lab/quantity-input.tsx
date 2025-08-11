@@ -1,9 +1,7 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Input, Tooltip } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./tooltip-icon";
+import { Info } from 'lucide-react';
 
 export const QuantityInput = () => {
   const { getValues, setValue, setError, clearErrors } = useFormContext();
@@ -30,32 +28,26 @@ export const QuantityInput = () => {
   };
 
   return (
-    <FormItem>
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
-              Quantity
-              <TooltipIndicator />
-            </FormLabel>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs sm:text-sm">The number of option contracts to sell. Fractional quantities are supported.</p>
-          </TooltipContent>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-white/80">Quantity</label>
+        <Tooltip content="The number of option contracts to sell. Fractional quantities are supported.">
+          <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
-      </TooltipProvider>
-      <FormControl>
-        <Input
-          type="number"
-          max="10000"
-          step="0.01"
-          placeholder="Min Qty: 0.01"
-          value={getValues('quantity')}
-          onChange={(e) => handleQuantityChange(e.target.value)}
-          className="h-9 sm:h-10 text-sm sm:text-base"
-        />
-      </FormControl>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+      </div>
+      <Input
+        type="number"
+        max="10000"
+        step="0.01"
+        placeholder="Min Qty: 0.01"
+        value={getValues('quantity')}
+        onChange={(e) => handleQuantityChange(e.target.value)}
+        variant="bordered"
+        classNames={{
+          input: "font-medium",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30"
+        }}
+      />
+    </div>
   );
-}; 
+};

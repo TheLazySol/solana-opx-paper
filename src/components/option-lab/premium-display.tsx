@@ -1,9 +1,7 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Input, Tooltip } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./tooltip-icon";
+import { Info } from 'lucide-react';
 
 export const PremiumDisplay = ({ 
   lastUpdated, 
@@ -17,34 +15,32 @@ export const PremiumDisplay = ({
   const { getValues } = useFormContext();
 
   return (
-    <FormItem>
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
-              Option Premium
-              <TooltipIndicator />
-            </FormLabel>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs sm:text-sm">The price paid by the buyer, this is the max profit for the option seller at expiration.</p>
-            {lastUpdated && getValues('premium') && (
-              <p className="text-[#4a85ff] mt-1 text-xs sm:text-sm">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</p>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <FormControl className="w-full">
-          <Input
-            disabled
-            placeholder="Calculated premium"
-            value={getValues('premium') ? `$${getValues('premium')}` : 'Calculating...'}
-            className="h-9 sm:h-10 w-full text-[#4a85ff] text-sm sm:text-base"
-          />
-        </FormControl>
+        <label className="text-sm font-medium text-white/80">Option Premium</label>
+        <Tooltip 
+          content={
+            <div className="max-w-xs">
+              <p className="text-xs">The price paid by the buyer, this is the max profit for the option seller at expiration.</p>
+              {lastUpdated && getValues('premium') && (
+                <p className="text-blue-400 mt-1 text-xs">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</p>
+              )}
+            </div>
+          }
+        >
+          <Info className="w-4 h-4 text-white/40 cursor-help" />
+        </Tooltip>
       </div>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+      <Input
+        isReadOnly
+        placeholder="Calculated premium"
+        value={getValues('premium') ? `$${getValues('premium')}` : 'Calculating...'}
+        variant="bordered"
+        classNames={{
+          input: "text-blue-400 font-medium",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30"
+        }}
+      />
+    </div>
   );
-}; 
+};

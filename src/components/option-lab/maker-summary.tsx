@@ -1,8 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardBody, CardHeader, Tooltip, Chip } from '@heroui/react'
 import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
 import { MakerPnlChart } from "./maker-pnl-chart"
 import { useMemo } from "react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Activity, Target, TrendingUp, TrendingDown } from 'lucide-react'
+import { motion } from 'framer-motion'
+
 export interface OptionPosition {
   quantity: number;
   strikePrice: string | number;
@@ -196,33 +198,65 @@ export function MakerSummary({
   }, [collateralProvided]);
 
   return (
-    <Card className="h-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 
-      transition-all duration-300 hover:bg-transparent overflow-hidden shadow-lg">
-      <CardContent className="px-2 sm:px-4 py-3 sm:py-4">
+    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Strategy Analysis
+          </h3>
+          {options.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Chip
+                size="sm"
+                variant="flat"
+                className={totalPremium > maxLoss ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                startContent={totalPremium > maxLoss ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              >
+                Max: {totalPremium > maxLoss 
+                  ? `+$${totalPremium.toFixed(2)}` 
+                  : `-$${maxLoss.toFixed(2)}`}
+              </Chip>
+              {(liquidationPrices.upward || liquidationPrices.downward) && (
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  className="bg-white/10 text-white/70"
+                  startContent={<Target className="w-3 h-3" />}
+                >
+                  Liq: ${(liquidationPrices.upward || liquidationPrices.downward)?.toFixed(2)}
+                </Chip>
+              )}
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardBody>
         {options.length === 0 ? (
-          <div className="flex items-center justify-center h-24 text-xs sm:text-sm text-muted-foreground 
-            border border-dashed border-[#e5e5e5]/50 dark:border-[#393939] rounded-lg">
-            Add options to see PnL projection at expiration
-          </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="min-h-[200px] flex items-center justify-center"
+          >
+            <div className="text-center space-y-3">
+              <Activity className="w-12 h-12 text-white/30 mx-auto" />
+              <div className="space-y-2">
+                <p className="text-white/60">Add options to see P&L projection at expiration</p>
+                <p className="text-sm text-white/40">
+                  Configure your option strategy using the form below
+                </p>
+              </div>
+            </div>
+          </motion.div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-4">
             {/* PnL Chart */}
-            <div className="w-full card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
-              border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 
-              hover:bg-transparent shadow-lg rounded-lg p-2 sm:p-4">
-              <TooltipProvider>
-                <Tooltip delayDuration={100}>
-                  <TooltipTrigger asChild>
-                    <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 cursor-help">
-                      <span className="border-b border-dotted border-slate-500">Profit & Loss Projection</span>
-                    </h3>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs" side="top">
-                    <p className="text-xs sm:text-sm">This chart shows your projected profit or loss at option expiration across different asset price points.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <div className="h-64 sm:h-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="h-[300px]">
                 <MakerPnlChart 
                   options={options}
                   collateralProvided={collateralProvided}
@@ -231,126 +265,93 @@ export function MakerSummary({
                   liquidationPrices={liquidationPrices}
                 />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Options List */}
-            <div className="space-y-2">
-              {/* Metrics Section - Redesigned with single row layout */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-white/5 dark:bg-black/20 border border-[#e5e5e5]/20 dark:border-[#393939]/50">
-                {/* Position Size */}
-                <div className="flex flex-col p-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-xs text-muted-foreground mb-1 cursor-help">
-                          <span className="border-b border-dotted border-muted-foreground">Position Size</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p className="text-xs">Total capital deployed (your collateral + borrowed funds with {leverage}x leverage)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className="font-bold text-sm sm:text-lg">
-                    ${positionSize.toFixed(2)}
+            {/* Metrics Section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+            >
+              {/* Position Size */}
+              <div className="flex flex-col items-center p-2">
+                <Tooltip content={`Total capital deployed (your collateral + borrowed funds with ${leverage}x leverage)`}>
+                  <span className="text-xs text-white/60 mb-1 cursor-help border-b border-dotted border-white/30">
+                    Position Size
                   </span>
-                </div>
-
-                {/* Max Potential Profit */}
-                <div className="flex flex-col p-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-xs text-muted-foreground mb-1 cursor-help">
-                          <span className="border-b border-dotted border-muted-foreground">Max Potential Profit</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p className="text-xs">Maximum profit potential before any transaction costs or fees</p>
-                        <p className="text-xs mt-1">For option sellers, the maximum profit is limited to the premium collected.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className="font-bold text-sm sm:text-lg text-green-500">
-                    ${totalPremium.toFixed(2)}
-                  </span>
-                </div>
-
-                {/* Max Potential Loss */}
-                <div className="flex flex-col p-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-xs text-muted-foreground mb-1 cursor-help">
-                          <span className="border-b border-dotted border-muted-foreground">Max Potential Loss</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p className="text-xs">Maximum amount you can lose on this position, limited to your provided collateral</p>
-                        <p className="text-xs mt-1">When your total losses approach this amount, your position may be liquidated.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className="font-bold text-sm sm:text-lg text-red-500">
-                    -${maxLoss.toFixed(2)}
-                  </span>
-                </div>
-
-                {/* Liquidation Threshold */}
-                <div className="flex flex-col p-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-xs text-muted-foreground mb-1 cursor-help">
-                          <span className="border-b border-dotted border-muted-foreground">Liquidation Price</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-xs">
-                        <p className="text-xs">
-                          Asset price at which you would lose 100% of your collateral, leading to liquidation with your current leverage ({leverage}x).
-                        </p>
-                        <p className="text-xs mt-1">
-                          This is calculated based on your total position, option premiums, and potential losses at expiration.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  {(liquidationPrices.upward || liquidationPrices.downward) ? (
-                    <div className="flex flex-col">
-                      {liquidationPrices.upward && (
-                        <div className="flex items-start">
-                          <span className="font-bold text-sm sm:text-lg">
-                            ${liquidationPrices.upward.toFixed(2)}
-                          </span>
-                          {assetPrice && (
-                            <span className="text-xs ml-1 font-normal opacity-75 mt-1">
-                              ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}% ↑)
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {liquidationPrices.downward && (
-                        <div className="flex items-start mt-1">
-                          <span className="font-bold text-sm sm:text-lg">
-                            ${liquidationPrices.downward.toFixed(2)}
-                          </span>
-                          {assetPrice && (
-                            <span className="text-xs ml-1 font-normal opacity-75 mt-1">
-                              ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}% ↓)
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="font-bold text-sm sm:text-lg text-muted-foreground">--</span>
-                  )}
-                </div>
+                </Tooltip>
+                <span className="font-bold text-sm text-white">
+                  ${positionSize.toFixed(2)}
+                </span>
               </div>
-            </div>
+
+              {/* Max Potential Profit */}
+              <div className="flex flex-col items-center p-2">
+                <Tooltip content="Maximum profit potential before any transaction costs or fees. For option sellers, the maximum profit is limited to the premium collected.">
+                  <span className="text-xs text-white/60 mb-1 cursor-help border-b border-dotted border-white/30">
+                    Max Profit
+                  </span>
+                </Tooltip>
+                <span className="font-bold text-sm text-green-400">
+                  ${totalPremium.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Max Potential Loss */}
+              <div className="flex flex-col items-center p-2">
+                <Tooltip content="Maximum amount you can lose on this position, limited to your provided collateral. When your total losses approach this amount, your position may be liquidated.">
+                  <span className="text-xs text-white/60 mb-1 cursor-help border-b border-dotted border-white/30">
+                    Max Loss
+                  </span>
+                </Tooltip>
+                <span className="font-bold text-sm text-red-400">
+                  -${maxLoss.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Liquidation Threshold */}
+              <div className="flex flex-col items-center p-2">
+                <Tooltip content={`Asset price at which you would lose 100% of your collateral, leading to liquidation with your current leverage (${leverage}x). This is calculated based on your total position, option premiums, and potential losses at expiration.`}>
+                  <span className="text-xs text-white/60 mb-1 cursor-help border-b border-dotted border-white/30">
+                    Liquidation Price
+                  </span>
+                </Tooltip>
+                {(liquidationPrices.upward || liquidationPrices.downward) ? (
+                  <div className="flex flex-col items-center">
+                    {liquidationPrices.upward && (
+                      <div className="flex items-center">
+                        <span className="font-bold text-sm text-white">
+                          ${liquidationPrices.upward.toFixed(2)}
+                        </span>
+                        {assetPrice && (
+                          <span className="text-xs ml-1 font-normal text-white/60">
+                            ({((liquidationPrices.upward / assetPrice - 1) * 100).toFixed(1)}% ↑)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {liquidationPrices.downward && (
+                      <div className="flex items-center mt-1">
+                        <span className="font-bold text-sm text-white">
+                          ${liquidationPrices.downward.toFixed(2)}
+                        </span>
+                        {assetPrice && (
+                          <span className="text-xs ml-1 font-normal text-white/60">
+                            ({((1 - liquidationPrices.downward / assetPrice) * 100).toFixed(1)}% ↓)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="font-bold text-sm text-white/40">--</span>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
-      </CardContent>
+      </CardBody>
     </Card>
   );
-} 
+}

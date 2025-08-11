@@ -1,9 +1,7 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Input, Tooltip } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./tooltip-icon";
+import { Info } from 'lucide-react';
 
 const getStepValue = (price: number | null): string => {
   if (!price) return "0.0001";
@@ -69,35 +67,27 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
   };
 
   return (
-    <FormItem>
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
-              Strike Price
-              <TooltipIndicator />
-            </FormLabel>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs sm:text-sm">The market price at which the option can be exercised by the buyer.</p>
-          </TooltipContent>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-white/80">Strike Price</label>
+        <Tooltip content="The market price at which the option can be exercised by the buyer.">
+          <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
-      </TooltipProvider>
-      <FormControl>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500">$</span>
-          <Input
-            type="text"
-            step={getStepValue(assetPrice)}
-            min="0"
-            placeholder="Enter Strike Price"
-            value={getValues('strikePrice')}
-            onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
-            className="h-9 sm:h-10 pl-7 text-sm sm:text-base"
-          />
-        </div>
-      </FormControl>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+      </div>
+      <Input
+        type="text"
+        step={getStepValue(assetPrice)}
+        min="0"
+        placeholder="Enter Strike Price"
+        value={getValues('strikePrice')}
+        onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
+        variant="bordered"
+        classNames={{
+          input: "font-medium",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30"
+        }}
+        startContent={<span className="text-white/40">$</span>}
+      />
+    </div>
   );
-}; 
+};

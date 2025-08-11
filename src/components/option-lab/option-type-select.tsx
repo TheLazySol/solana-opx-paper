@@ -1,9 +1,7 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonGroup, cn } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
 import type { FormData } from '@/types/mint/formOptionLabMint';
-import { cn } from "@/utils/utils";
 
 export const OptionTypeSelector = () => {
   const { setValue, watch } = useFormContext<FormData>();
@@ -14,41 +12,32 @@ export const OptionTypeSelector = () => {
   };
 
   return (
-    <FormItem>
-      <FormLabel className="mb-1 sm:mb-2 text-xs sm:text-sm">Option Type</FormLabel>
-      <FormControl>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOptionTypeChange('call')}
-            className={cn(
-              "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
-              "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
-              "text-xs sm:text-sm",
-              "transition-all duration-200",
-              optionType === "call" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
-            )}
-          >
-            Call
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOptionTypeChange('put')}
-            className={cn(
-              "flex-1 h-8 bg-[#4a85ff]/10 border border-[#4a85ff]/40",
-              "hover:bg-[#4a85ff]/20 hover:border-[#4a85ff]/60",
-              "text-xs sm:text-sm",
-              "transition-all duration-200",
-              optionType === "put" && "bg-[#4a85ff]/50 border-[#4a85ff]/60"
-            )}
-          >
-            Put
-          </Button>
-        </div>
-      </FormControl>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-white/80">Option Type</label>
+      <ButtonGroup variant="bordered" className="w-full">
+        <Button
+          onPress={() => handleOptionTypeChange('call')}
+          className={cn(
+            "flex-1 transition-all duration-300",
+            optionType === "call" 
+              ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
+              : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
+          )}
+        >
+          Call
+        </Button>
+        <Button
+          onPress={() => handleOptionTypeChange('put')}
+          className={cn(
+            "flex-1 transition-all duration-300",
+            optionType === "put" 
+              ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
+              : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
+          )}
+        >
+          Put
+        </Button>
+      </ButtonGroup>
+    </div>
   );
-}; 
+};

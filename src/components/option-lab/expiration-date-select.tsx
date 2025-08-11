@@ -1,14 +1,16 @@
 import React from 'react';
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { 
+  Button, 
+  Popover, 
+  PopoverTrigger, 
+  PopoverContent,
+  Tooltip
+} from '@heroui/react';
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Info } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipIndicator } from "./tooltip-icon";
 
 const startDate = new Date(2025, 0, 1); // January 1st, 2025
 const endDate = new Date(2026, 0, 1);   // January 1st, 2026
@@ -52,43 +54,32 @@ export const ExpirationDatePicker = () => {
   };
 
   return (
-    <FormItem>
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <FormLabel className="mb-1 sm:mb-2 cursor-help border-b border-dotted border-slate-500 text-xs">
-              Expiration Date
-              <TooltipIndicator />
-            </FormLabel>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs sm:text-sm">The date when the option expires. The option can only be exercised on or before this date.</p>
-          </TooltipContent>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-white/80">Expiration Date</label>
+        <Tooltip content="The date when the option expires. The option can only be exercised on or before this date.">
+          <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
-      </TooltipProvider>
-      <Popover>
-        <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-full pl-3 text-left font-normal h-9 sm:h-10",
-                "text-xs sm:text-sm",
-                "bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]",
-                "focus:border-[#4a85ff]/40 focus:ring-1 focus:ring-[#4a85ff]/40",
-                !getValues('expirationDate') && "text-muted-foreground"
-              )}
-            >
-              {getValues('expirationDate') ? (
-                format(getValues('expirationDate'), "PPP")
-              ) : (
-                <span>Pick a date</span>
-              )}
-              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-            </Button>
-          </FormControl>
+      </div>
+      <Popover placement="bottom">
+        <PopoverTrigger>
+          <Button
+            variant="bordered"
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              "bg-white/5 border-white/20 hover:border-white/30",
+              !getValues('expirationDate') && "text-white/40"
+            )}
+            endContent={<CalendarIcon className="h-4 w-4 opacity-50" />}
+          >
+            {getValues('expirationDate') ? (
+              format(getValues('expirationDate'), "PPP")
+            ) : (
+              <span>Pick a date</span>
+            )}
+          </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0">
           <Calendar
             mode="single"
             selected={getValues('expirationDate')}
@@ -106,11 +97,9 @@ export const ExpirationDatePicker = () => {
             defaultMonth={startDate}
             fromDate={new Date()}
             toDate={endDate}
-            className="text-xs sm:text-sm"
           />
         </PopoverContent>
       </Popover>
-      <FormMessage className="text-xs sm:text-sm" />
-    </FormItem>
+    </div>
   );
-}; 
+};
