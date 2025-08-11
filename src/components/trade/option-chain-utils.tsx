@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useCallback } from 'react'
 import { ExpirationDateSelector } from './expiration-date'
-import { FilterGreeks, GreekFilters } from './filter-greeks'
+import { FilterGreeks, GreekFilters } from './option-chain-user-settings'
 import { ExpirationDate, EMPTY_EXPIRATION_DATES, formatOptionExpirationDate } from '@/constants/constants'
 import { Button } from '@heroui/react'
 import { RefreshCw } from 'lucide-react'

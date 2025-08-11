@@ -1,7 +1,7 @@
 import { FC, useState, useCallback, useRef, useEffect } from 'react'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
-import { GreekFilters, loadFiltersFromStorage, DEFAULT_FILTERS } from './filter-greeks'
+import { GreekFilters, loadFiltersFromStorage, DEFAULT_FILTERS } from './option-chain-user-settings'
 import { SelectedOption } from './option-data'
 
 

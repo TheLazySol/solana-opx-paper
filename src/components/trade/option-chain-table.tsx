@@ -12,7 +12,7 @@ import {
   CardBody
 } from "@heroui/react"
 import { cn } from "@/utils/utils"
-import { GreekFilters } from './filter-greeks'
+import { GreekFilters } from './option-chain-user-settings'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { MAX_OPTION_LEGS } from '@/constants/constants'
