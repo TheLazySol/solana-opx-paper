@@ -1,7 +1,7 @@
 import { FC, useState, useCallback, useRef, useEffect } from 'react'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
-import { GreekFilters } from './filter-greeks'
+import { GreekFilters, loadFiltersFromStorage, DEFAULT_FILTERS } from './filter-greeks'
 import { SelectedOption } from './option-data'
 import { Switch } from '@heroui/react'
 
@@ -21,15 +21,10 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   onSwitchToCreateOrder
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
-  const [greekFilters, setGreekFilters] = useState<GreekFilters>({
-    delta: true,
-    theta: true,
-    gamma: false,
-    vega: false,
-    rho: false,
-    oa: true,
-    oi: true,
-    volume: true
+  const [greekFilters, setGreekFilters] = useState<GreekFilters>(() => {
+    // Load saved preferences on initial mount, fallback to defaults
+    const savedFilters = loadFiltersFromStorage()
+    return savedFilters || DEFAULT_FILTERS
   })
   const [useGreekSymbols, setUseGreekSymbols] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)

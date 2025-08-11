@@ -1,6 +1,7 @@
-import { FC, useState } from 'react'
-import { Filter, Check } from 'lucide-react'
+import { FC, useState, useEffect } from 'react'
+import { Filter, Check, Save } from 'lucide-react'
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react'
+import { toast } from "@/hooks/useToast"
 
 export interface GreekFilters {
   delta: boolean
@@ -18,17 +19,47 @@ interface FilterGreeksProps {
   onFiltersChange: (filters: GreekFilters) => void
 }
 
+// Local storage key for saved preferences
+const GREEK_FILTERS_STORAGE_KEY = 'optionChainGreekFilters'
+
+// Default filter state
+const DEFAULT_FILTERS: GreekFilters = {
+  delta: true,
+  theta: true,
+  gamma: false,
+  vega: false,
+  rho: false,
+  oa: false,
+  oi: false,
+  volume: true
+}
+
+// Helper functions for localStorage
+const saveFiltersToStorage = (filters: GreekFilters): void => {
+  try {
+    localStorage.setItem(GREEK_FILTERS_STORAGE_KEY, JSON.stringify(filters))
+  } catch (error) {
+    console.error('Failed to save filter preferences:', error)
+  }
+}
+
+const loadFiltersFromStorage = (): GreekFilters | null => {
+  try {
+    const saved = localStorage.getItem(GREEK_FILTERS_STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Failed to load filter preferences:', error)
+  }
+  return null
+}
+
+// Export the helper functions for use in parent components
+export { loadFiltersFromStorage, DEFAULT_FILTERS }
+
 export const FilterGreeks: FC<FilterGreeksProps> = ({
-  filters = {
-    delta: true,
-    theta: true,
-    gamma: false,
-    vega: false,
-    rho: false,
-    oa: false,
-    oi: false,
-    volume: true
-  },
+  filters = DEFAULT_FILTERS,
   onFiltersChange
 }) => {
   const [open, setOpen] = useState(false)
@@ -38,6 +69,16 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
       ...filters,
       [greek]: !filters[greek]
     })
+  }
+
+  const handleSavePreferences = () => {
+    saveFiltersToStorage(filters)
+    toast({
+      title: "Preferences saved",
+      description: "Your filter preferences have been saved successfully.",
+      variant: "default",
+    })
+    setOpen(false)
   }
 
   const greekItems = [
@@ -83,7 +124,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           ))}
         </DropdownSection>
         
-        <DropdownSection title="Stats">
+        <DropdownSection title="Stats" showDivider>
           {statsItems.map((item) => (
             <DropdownItem 
               key={item.key}
@@ -92,6 +133,17 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
               {item.label}
             </DropdownItem>
           ))}
+        </DropdownSection>
+        
+        <DropdownSection title="Preferences">
+          <DropdownItem 
+            key="save-preferences"
+            onPress={handleSavePreferences}
+            startContent={<Save className="h-4 w-4" />}
+            className="text-blue-400 hover:text-blue-300"
+          >
+            Save Current Settings
+          </DropdownItem>
         </DropdownSection>
       </DropdownMenu>
     </Dropdown>
