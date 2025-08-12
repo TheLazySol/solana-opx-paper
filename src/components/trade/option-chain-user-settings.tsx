@@ -172,7 +172,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           variant="bordered" 
           size="sm" 
           isIconOnly
-          className="w-10 p-0"
+          className="w-10 p-0 border-[0.5px]"
           aria-label="Settings for Greeks and Statistics"
         >
           <Cog6ToothIcon className="h-4 w-4" />
