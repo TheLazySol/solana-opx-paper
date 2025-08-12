@@ -331,7 +331,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         return <div className="text-center text-white">{formatGreek(item.callGreeks.delta, 2)}</div>;
       case 'call-price':
         return (
-          <div className={cn("font-medium", callIsITM ? "bg-blue-500/10" : "bg-white/5")}>
+          <div className="font-medium">
             {renderPriceColumn(item, index, 'call')}
           </div>
         );
@@ -343,7 +343,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         );
       case 'put-price':
         return (
-          <div className={cn("font-medium", putIsITM ? "bg-blue-500/10" : "bg-white/5")}>
+          <div className="font-medium">
             {renderPriceColumn(item, index, 'put')}
           </div>
         );
