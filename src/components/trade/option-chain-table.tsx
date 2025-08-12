@@ -10,7 +10,8 @@ import {
   Tooltip,
   Card,
   CardBody,
-  Button
+  Button,
+  ScrollShadow
 } from "@heroui/react"
 import { cn } from "@/utils/utils"
 import { GreekFilters } from './option-chain-user-settings'
@@ -399,27 +400,32 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         </div>
 
         <div className="relative">
-          <Table 
-            aria-label="Options chain table"
-            className="min-h-[400px] bg-transparent"
-            classNames={{
-              wrapper: "max-h-[400px] overflow-y-auto bg-transparent border border-white/10 rounded-md",
-              th: "bg-black/20 text-white text-center backdrop-blur-sm",
-              td: "text-center bg-transparent border-b border-white/10",
-              table: "bg-transparent",
-              tbody: "bg-transparent",
-              tr: "bg-transparent hover:bg-white/5",
-            }}
+          <ScrollShadow 
+            className="max-h-[400px]"
+            size={40}
+            visibility="both"
           >
+            <Table 
+              aria-label="Options chain table"
+              className="min-h-[400px] bg-transparent"
+              classNames={{
+                wrapper: "bg-transparent border border-white/10 rounded-md overflow-visible",
+                th: "bg-black text-white text-center backdrop-blur-md sticky top-0 z-20",
+                td: "text-center bg-transparent border-b border-white/10",
+                table: "bg-transparent",
+                tbody: "bg-transparent",
+                tr: "bg-transparent hover:bg-white/5",
+              }}
+            >
             <TableHeader>
               {columns.map((column) => (
                 <TableColumn 
                   key={column.key} 
                   className={cn(
-                    "text-center w-[85px] bg-black/20 text-white backdrop-blur-sm",
+                    "text-center w-[85px] bg-black text-white backdrop-blur-sm",
                     column.key.startsWith('call-') && column.key !== 'call-price' && "text-[#4a85ff]/80",
                     column.key.startsWith('put-') && column.key !== 'put-price' && "text-[#4a85ff]/80",
-                    column.key === 'strike' && "bg-black/30 font-bold text-white"
+                    column.key === 'strike' && "bg-black font-bold text-white"
                   )}
                 >
                   {column.key === 'call-price' || column.key === 'put-price' ? (
@@ -487,7 +493,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 </React.Fragment>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </ScrollShadow>
         </div>
       </CardBody>
     </Card>
