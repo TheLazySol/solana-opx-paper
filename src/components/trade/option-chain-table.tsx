@@ -15,6 +15,8 @@ import {
 import { cn } from "@/utils/utils"
 import { GreekFilters } from './option-chain-user-settings'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
+
+
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { toast } from "@/hooks/useToast"
@@ -110,24 +112,27 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     [expirationDate, refreshVolume, spotPrice]
   );
 
-  // Calculate the position of the price indicator
+  // Calculate the position for the price indicator line
   const getPriceIndicatorPosition = () => {
-    if (!spotPrice || !mockData.length) return 0;
+    if (!spotPrice || !mockData.length) return { showLine: false, insertAfterIndex: -1 };
     
-    // Find the closest strike price to the current spot price
-    const closestStrike = mockData.reduce((prev, curr) => {
-      return Math.abs(curr.strike - spotPrice) < Math.abs(prev.strike - spotPrice) ? curr : prev;
-    });
+    // Find the index after which to show the price line
+    for (let i = 0; i < mockData.length; i++) {
+      if (spotPrice <= mockData[i].strike) {
+        return { showLine: true, insertAfterIndex: i - 1 };
+      }
+    }
     
-    // Find the index of the closest strike
-    const strikeIndex = mockData.findIndex(option => option.strike === closestStrike.strike);
-    
-    // Calculate the percentage position (0 to 100)
-    return (strikeIndex / (mockData.length - 1)) * 100;
+    // If spot price is higher than all strikes, show after the last row
+    return { showLine: true, insertAfterIndex: mockData.length - 1 };
   };
 
+  const priceIndicatorPosition = useMemo(() => getPriceIndicatorPosition(), [spotPrice, mockData]);
+
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
-    const option = mockData[index]
+    const option = mockData[index];
+    if (!option) return;
+    
     const price = side === 'call' 
       ? (type === 'bid' ? option.callBid : option.callAsk)
       : (type === 'bid' ? option.putBid : option.putAsk)
@@ -264,6 +269,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Modified price column rendering 
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
+    
     return (
       <div className="flex flex-col space-y-0.5">
         <Button
@@ -309,6 +315,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   };
 
   const renderCellContent = (item: OptionContract, columnKey: string, index: number) => {
+
     const callIsITM = isCallITM(item.strike);
     const putIsITM = isPutITM(item.strike);
 
@@ -448,19 +455,41 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             </TableHeader>
             <TableBody emptyContent="No option data available">
               {mockData.map((option, index) => (
-                <TableRow 
-                  key={`option-${index}`}
-                  className={cn(
-                    "hover:bg-white/5 transition-colors text-white",
-                    index % 2 === 0 ? "bg-transparent" : "bg-white/5"
+                <React.Fragment key={`option-${index}`}>
+                  <TableRow 
+                    className={cn(
+                      "transition-colors text-white hover:bg-white/5",
+                      index % 2 === 0 ? "bg-transparent" : "bg-white/5"
+                    )}
+                  >
+                    {columns.map((column) => (
+                      <TableCell key={`${index}-${column.key}`}>
+                        {renderCellContent(option, column.key, index)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Price indicator line - show after this row if conditions are met */}
+                  {priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index && (
+                    <TableRow className="h-0 relative">
+                      <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
+                        <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
+                          <div className="flex items-center w-full max-w-4xl mx-auto px-4">
+                            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
+                            <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
+                              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                              <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
+                                ${formatPrice(spotPrice)}
+                              </span>
+                              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                            </div>
+                            <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   )}
-                >
-                  {columns.map((column) => (
-                    <TableCell key={`${index}-${column.key}`}>
-                      {renderCellContent(option, column.key, index)}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
