@@ -113,7 +113,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   );
 
   // Calculate the position for the price indicator line
-  const getPriceIndicatorPosition = () => {
+  const priceIndicatorPosition = useMemo(() => {
     if (!spotPrice || !mockData.length) return { showLine: false, insertAfterIndex: -1 };
     
     // Find the index after which to show the price line
@@ -125,9 +125,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     
     // If spot price is higher than all strikes, show after the last row
     return { showLine: true, insertAfterIndex: mockData.length - 1 };
-  };
-
-  const priceIndicatorPosition = useMemo(() => getPriceIndicatorPosition(), [spotPrice, mockData]);
+  }, [spotPrice, mockData]);
 
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
     const option = mockData[index];
