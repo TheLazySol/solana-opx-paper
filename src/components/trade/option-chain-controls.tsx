@@ -1,6 +1,6 @@
 import { FC, useState, useCallback, useRef, useEffect } from 'react'
-import { Button, Spinner } from '@heroui/react'
-import { RefreshCw } from 'lucide-react'
+import { Button, Spinner, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react'
+import { RefreshCw, Trash2, AlertTriangle } from 'lucide-react'
 import { cn } from '@/utils/utils'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
@@ -30,6 +30,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   const [refreshExpirations, setRefreshExpirations] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const optionChainTableRef = useRef<{ refreshVolumes: () => void } | null>(null)
+  const {isOpen: isClearModalOpen, onOpen: onClearModalOpen, onOpenChange: onClearModalOpenChange} = useDisclosure()
 
   // Load saved preferences after component mounts to avoid hydration mismatch
   useEffect(() => {
@@ -130,6 +131,40 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     }
   }, [onOrderPlaced])
 
+  // Handle showing clear confirmation dialog
+  const handleClearOptionData = useCallback(() => {
+    onClearModalOpen()
+  }, [onClearModalOpen])
+
+  // Handle confirmed clearing of all option chain data
+  const handleConfirmClear = useCallback(() => {
+    try {
+      // Clear all option-related localStorage data
+      localStorage.removeItem('mintedOptions')
+      localStorage.removeItem('openOrders')
+      localStorage.removeItem('closedOrders')
+      
+      console.log('Cleared all option chain data from localStorage')
+      
+      // Trigger refresh for expirations and table data
+      setRefreshExpirations(prev => prev + 1)
+      setRefreshTrigger(prev => prev + 1)
+      
+      // Reset selected expiration to null to force re-selection
+      setSelectedExpiration(null)
+      
+      // Dispatch events to notify all components
+      window.dispatchEvent(new CustomEvent('mintedOptionsUpdated'))
+      window.dispatchEvent(new CustomEvent('openOrdersUpdated'))
+      
+      // Close the modal
+      onClearModalOpenChange()
+      
+    } catch (error) {
+      console.error('Error clearing option data:', error)
+    }
+  }, [onClearModalOpenChange])
+
   return (
     <div className="space-y-1">
       <div className="w-full">
@@ -145,7 +180,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             onSettingsSaved={handleSettingsSaved}
           />
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <Button
               variant="bordered"
               size="sm"
@@ -174,6 +209,17 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
                 <RefreshCw className="h-4 w-4 text-foreground-500" />
               )}
             </Button>
+            
+            <Button
+              variant="bordered"
+              size="sm"
+              isIconOnly
+              className="w-10 p-0 border-[0.5px] hover:opacity-80 hover:scale-105 active:scale-95 transition-all duration-200 hover:border-red-500/50 hover:text-red-400"
+              onPress={handleClearOptionData}
+              aria-label="Clear all option chain data"
+            >
+              <Trash2 className="h-4 w-4 text-foreground-500" />
+            </Button>
           </div>
         </div>
       </div>
@@ -192,6 +238,71 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
           />
         </div>
       </div>
+
+      {/* Clear Data Confirmation Modal */}
+      <Modal 
+        isOpen={isClearModalOpen} 
+        onOpenChange={onClearModalOpenChange}
+        size="md"
+        classNames={{
+          base: "bg-black/90 backdrop-blur-md border border-red-500/20",
+          header: "border-b border-red-500/20",
+          body: "py-6",
+          footer: "border-t border-red-500/20"
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex items-center gap-2 text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+                Clear All Option Data
+              </ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <p className="text-white/90">
+                    This action will permanently delete all option chain data including:
+                  </p>
+                  <ul className="space-y-2 text-white/70 ml-4">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                      All minted option contracts
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                      All open trading positions
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                      All closed order history
+                    </li>
+                  </ul>
+                  <p className="text-yellow-400 font-medium">
+                    ⚠️ This action cannot be undone!
+                  </p>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  color="default" 
+                  variant="bordered" 
+                  onPress={onClose}
+                  className="border-white/20"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  color="danger" 
+                  onPress={handleConfirmClear}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Clear All Data
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   )
 } 
