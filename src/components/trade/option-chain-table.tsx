@@ -455,10 +455,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               {mockData.map((option, index) => (
                 <React.Fragment key={`option-${index}`}>
                   <TableRow 
-                    className={cn(
-                      "transition-colors text-white hover:bg-white/5",
-                      index % 2 === 0 ? "bg-transparent" : "bg-white/5"
-                    )}
+                    className="transition-colors text-white hover:bg-white/5 bg-transparent"
                   >
                     {columns.map((column) => (
                       <TableCell key={`${index}-${column.key}`}>
