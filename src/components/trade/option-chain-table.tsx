@@ -315,9 +315,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   const renderCellContent = (item: OptionContract, columnKey: string, index: number) => {
 
-    const callIsITM = isCallITM(item.strike);
-    const putIsITM = isPutITM(item.strike);
-
     switch (columnKey) {
       case 'call-volume':
         return <div className="text-center text-white">{formatInteger(item.callVolume)}</div>;
