@@ -4,8 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
-
+import { motion } from 'framer-motion'
 interface AssetTypeProps {
   selectedAsset: string
   onAssetChange: (asset: string) => void
