@@ -18,7 +18,8 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
     address: token.address
   }))
 
-  const selectedToken = TOKENS[selectedAsset as keyof typeof TOKENS]
+  const selectedToken = TOKENS[selectedAsset as keyof typeof TOKENS] || TOKENS.SOL
+  const priceDecimals = selectedToken ? getTokenDisplayDecimals(selectedToken.symbol) : 2
   
   // Use the price context instead of local state
   const { setSelectedAsset } = useAssetPrice()
@@ -65,7 +66,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
         <DropdownTrigger>
           <Button 
             variant="bordered" 
-            className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base dropdown-thin-border border-[0.5px]"
+            className="w-[140px] sm:w-[180px] justify-between text-sm sm:text-base dropdown-thin-border"
             endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
           >
             <div className="flex items-center">
@@ -133,6 +134,10 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
           <div className="flex items-center space-x-2">
             <motion.span
               className="text-xl sm:text-2xl font-bold px-1 rounded"
+              aria-live="polite"
+              aria-atomic="true"
+              role="status"
+              aria-label={`Current ${selectedToken.symbol} price`}
               animate={{
                 backgroundColor: highlightEffect === 'up' ? '#10b981' : 
                                 highlightEffect === 'down' ? '#ef4444' : 
@@ -147,7 +152,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
                 ease: "easeOut"
               }}
             >
-              ${price.toFixed(getTokenDisplayDecimals(selectedToken.symbol))}
+              ${price.toFixed(priceDecimals)}
             </motion.span>
           </div>
         )}
