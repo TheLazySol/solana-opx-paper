@@ -488,8 +488,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 mockData.forEach((option, index) => {
                   // Add the data row
                   rows.push(
-                    <TableRow 
-                      key={`option-${index}`}
+                    <TableRow
+                      key={`${option.expiry}-${option.strike}`}
                       className="transition-colors text-white hover:bg-white/5 bg-transparent"
                     >
                       {columns.map((column) => (
