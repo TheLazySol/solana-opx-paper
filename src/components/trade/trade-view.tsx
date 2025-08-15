@@ -7,8 +7,7 @@ import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@heroui/react'
-
+import { cn } from '@/utils/utils'
 interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
   onOptionsUpdate?: (options: SelectedOption[]) => void
