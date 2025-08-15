@@ -1,5 +1,4 @@
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from '@solana/spl-token';
 import { TOKEN_MINTS, derivePoolAddress, deriveUserPositionAddress, derivePoolAuthority } from '../constants/omlpProgram';
 
 // Pool data structure
@@ -217,55 +216,9 @@ export class OMLPService {
     try {
       const transaction = new Transaction();
       
-      // Derive necessary accounts
-      const [poolAddress] = derivePoolAddress(tokenMint);
-      const [userPositionAddress] = deriveUserPositionAddress(userWallet, tokenMint);
-      const [poolAuthority] = derivePoolAuthority(tokenMint);
-      
-      // Get user and pool token accounts
-      const userTokenAccount = await getAssociatedTokenAddress(tokenMint, userWallet);
-      const poolTokenAccount = await getAssociatedTokenAddress(tokenMint, poolAuthority, true);
-      
-      // Check if user token account exists, if not, create it
-      const userTokenAccountInfo = await this.connection.getAccountInfo(userTokenAccount);
-      if (!userTokenAccountInfo) {
-        transaction.add(
-          createAssociatedTokenAccountInstruction(
-            userWallet,
-            userTokenAccount,
-            userWallet,
-            tokenMint
-          )
-        );
-      }
-      
-      // Check if pool token account exists, if not, create it
-      const poolTokenAccountInfo = await this.connection.getAccountInfo(poolTokenAccount);
-      if (!poolTokenAccountInfo) {
-        transaction.add(
-          createAssociatedTokenAccountInstruction(
-            userWallet,
-            poolTokenAccount,
-            poolAuthority,
-            tokenMint
-          )
-        );
-      }
-      
-      // Create the deposit instruction
-      // In a real implementation, this would use a proper program instruction
-      // For now, we'll simply transfer tokens to the pool token account
-      transaction.add(
-        createTransferInstruction(
-          userTokenAccount,
-          poolTokenAccount,
-          userWallet,
-          amount
-        )
-      );
-      
-      // Add a dummy instruction that would create/update the user position account
-      // In a real implementation, this would be a proper program instruction
+      // TODO: Implement proper OMLP deposit instruction when available
+      // For now, this is a placeholder transaction for development
+      console.log('Creating deposit transaction:', { userWallet: userWallet.toString(), tokenMint: tokenMint.toString(), amount });
       
       return transaction;
     } catch (error) {
@@ -289,30 +242,9 @@ export class OMLPService {
     try {
       const transaction = new Transaction();
       
-      // Derive necessary accounts
-      const [poolAddress] = derivePoolAddress(tokenMint);
-      const [userPositionAddress] = deriveUserPositionAddress(userWallet, tokenMint);
-      const [poolAuthority] = derivePoolAuthority(tokenMint);
-      
-      // Get user and pool token accounts
-      const userTokenAccount = await getAssociatedTokenAddress(tokenMint, userWallet);
-      const poolTokenAccount = await getAssociatedTokenAddress(tokenMint, poolAuthority, true);
-      
-      // Check if user token account exists, if not, create it
-      const userTokenAccountInfo = await this.connection.getAccountInfo(userTokenAccount);
-      if (!userTokenAccountInfo) {
-        transaction.add(
-          createAssociatedTokenAccountInstruction(
-            userWallet,
-            userTokenAccount,
-            userWallet,
-            tokenMint
-          )
-        );
-      }
-      
-      // In a real implementation, this would have proper signed program instructions
-      // For now, this is just a placeholder for what would happen
+      // TODO: Implement proper OMLP withdraw instruction when available
+      // For now, this is a placeholder transaction for development
+      console.log('Creating withdraw transaction:', { userWallet: userWallet.toString(), tokenMint: tokenMint.toString(), amount });
       
       return transaction;
     } catch (error) {

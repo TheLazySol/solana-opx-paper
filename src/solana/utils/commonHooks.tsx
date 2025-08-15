@@ -1,6 +1,7 @@
 'use client'
 
-import {TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID} from '@solana/spl-token'
+// Note: Importing constants from @solana/spl-token package if needed
+// import {TOKEN_PROGRAM_ID} from '@solana/spl-token'
 import {useConnection, useWallet} from '@solana/wallet-adapter-react'
 import {
   Connection,
@@ -15,6 +16,10 @@ import { address, Address } from 'gill'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {useTransactionToast} from '../../components/ui/ui-layout'
+
+// SPL Token Program IDs
+const TOKEN_PROGRAM_ID = new SolanaPublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+const TOKEN_2022_PROGRAM_ID = new SolanaPublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb')
 
 // Helper function to convert gill Address to SolanaPublicKey
 function toSolanaPublicKey(addressOrPublicKey: SolanaPublicKey | Address): SolanaPublicKey {

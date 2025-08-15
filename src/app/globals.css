@@ -224,10 +224,7 @@ body:not(:hover)::-webkit-scrollbar-thumb {
     border-width: 0.5px !important;
   }
   
-  /* Fallback for all bordered buttons */
-  button[data-variant="bordered"] {
-    border-width: 0.5px !important;
-  }
+
   
   /* Custom class for consistent dropdown borders */
   .dropdown-thin-border {

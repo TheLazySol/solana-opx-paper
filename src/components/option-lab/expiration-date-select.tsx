@@ -66,7 +66,7 @@ export const ExpirationDatePicker = () => {
           <Button
             variant="bordered"
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal dropdown-thin-border",
               "bg-white/5 border-white/20 hover:border-white/30",
               !getValues('expirationDate') && "text-white/40"
             )}

@@ -18,10 +18,10 @@ export const OptionTypeSelector = () => {
         <Button
           onPress={() => handleOptionTypeChange('call')}
           className={cn(
-            "flex-1 transition-all duration-300 border-[0.5px]",
+            "flex-1 transition-all duration-300",
             optionType === "call" 
-              ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-              : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
+              ? "bg-blue-500/20 text-blue-400" 
+              : "bg-white/5 text-white/60 hover:bg-white/10"
           )}
         >
           Call
@@ -29,10 +29,10 @@ export const OptionTypeSelector = () => {
         <Button
           onPress={() => handleOptionTypeChange('put')}
           className={cn(
-            "flex-1 transition-all duration-300 border-[0.5px]",
+            "flex-1 transition-all duration-300",
             optionType === "put" 
-              ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-              : "bg-white/5 text-white/60 border-white/20 hover:bg-white/10 hover:border-white/30"
+              ? "bg-blue-500/20 text-blue-400" 
+              : "bg-white/5 text-white/60 hover:bg-white/10"
           )}
         >
           Put
