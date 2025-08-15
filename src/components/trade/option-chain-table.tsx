@@ -128,6 +128,27 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     return { showLine: true, insertAfterIndex: mockData.length - 1 };
   }, [spotPrice, mockData]);
 
+  // Renderer function for price indicator row
+  const renderPriceIndicatorRow = (key: string) => (
+    <TableRow key={key} className="h-0 relative">
+      <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
+        <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
+          <div className="flex items-center w-full max-w-4xl mx-auto px-4">
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
+            <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
+              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+              <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
+                ${formatPrice(spotPrice)}
+              </span>
+              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+            </div>
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
     const option = mockData[index];
     if (!option) return;
@@ -460,25 +481,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 
                 // Add price indicator before first row if insertAfterIndex is -1
                 if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === -1) {
-                  rows.push(
-                    <TableRow key="price-indicator-before" className="h-0 relative">
-                      <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
-                        <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
-                          <div className="flex items-center w-full max-w-4xl mx-auto px-4">
-                            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
-                            <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
-                              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
-                              <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
-                                ${formatPrice(spotPrice)}
-                              </span>
-                              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
-                            </div>
-                            <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
+                  rows.push(renderPriceIndicatorRow('price-indicator-before'));
                 }
                 
                 // Add data rows with conditional price indicators after each row
@@ -499,25 +502,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   
                   // Add price indicator after this row if conditions are met
                   if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index) {
-                    rows.push(
-                      <TableRow key={`price-indicator-${index}`} className="h-0 relative">
-                        <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
-                          <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
-                            <div className="flex items-center w-full max-w-4xl mx-auto px-4">
-                              <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
-                              <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
-                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
-                                <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
-                                  ${formatPrice(spotPrice)}
-                                </span>
-                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
-                              </div>
-                              <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
+                    rows.push(renderPriceIndicatorRow(`price-indicator-after-${index}`));
                   }
                 });
                 
