@@ -115,7 +115,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Calculate the position for the price indicator line
   const priceIndicatorPosition = useMemo(() => {
-    if (!spotPrice || !mockData.length) return { showLine: false, insertAfterIndex: -1 };
+    if (spotPrice == null || !mockData.length) return { showLine: false, insertAfterIndex: -1 };
     
     // Find the index after which to show the price line
     for (let i = 0; i < mockData.length; i++) {
@@ -458,21 +458,13 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               ))}
             </TableHeader>
             <TableBody emptyContent="No option data available">
-              {mockData.map((option, index) => (
-                <React.Fragment key={`option-${index}`}>
-                  <TableRow 
-                    className="transition-colors text-white hover:bg-white/5 bg-transparent"
-                  >
-                    {columns.map((column) => (
-                      <TableCell key={`${index}-${column.key}`}>
-                        {renderCellContent(option, column.key, index)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                  
-                  {/* Price indicator line - show after this row if conditions are met */}
-                  {priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index && (
-                    <TableRow className="h-0 relative">
+              {(() => {
+                const rows = [];
+                
+                // Add price indicator before first row if insertAfterIndex is -1
+                if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === -1) {
+                  rows.push(
+                    <TableRow key="price-indicator-before" className="h-0 relative">
                       <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
                         <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
                           <div className="flex items-center w-full max-w-4xl mx-auto px-4">
@@ -489,9 +481,51 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                         </div>
                       </TableCell>
                     </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
+                  );
+                }
+                
+                // Add data rows with conditional price indicators after each row
+                mockData.forEach((option, index) => {
+                  // Add the data row
+                  rows.push(
+                    <TableRow 
+                      key={`option-${index}`}
+                      className="transition-colors text-white hover:bg-white/5 bg-transparent"
+                    >
+                      {columns.map((column) => (
+                        <TableCell key={`${index}-${column.key}`}>
+                          {renderCellContent(option, column.key, index)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                  
+                  // Add price indicator after this row if conditions are met
+                  if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index) {
+                    rows.push(
+                      <TableRow key={`price-indicator-${index}`} className="h-0 relative">
+                        <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
+                          <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
+                            <div className="flex items-center w-full max-w-4xl mx-auto px-4">
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
+                              <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
+                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                                <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
+                                  ${formatPrice(spotPrice)}
+                                </span>
+                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                              </div>
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+                });
+                
+                return rows;
+              })()}
             </TableBody>
             </Table>
           </ScrollShadow>
