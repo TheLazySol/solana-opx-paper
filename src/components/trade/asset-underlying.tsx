@@ -129,7 +129,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
 
       {/* Price Display */}
       <div className="flex items-center space-x-2">
-        {price !== null && (
+        {price != null && Number.isFinite(price) && (
           <div className="flex items-center space-x-2">
             <motion.span
               className="text-xl sm:text-2xl font-bold px-1 rounded"
@@ -138,20 +138,22 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
               role="status"
               aria-label={`Current ${selectedToken.symbol} price`}
               animate={{
-                backgroundColor: highlightEffect === 'up' ? '#10b981' : 
-                                highlightEffect === 'down' ? '#ef4444' : 
+                backgroundColor: highlightEffect === 'up' ? '#10b981' :
+                                highlightEffect === 'down' ? '#ef4444' :
                                 'transparent',
                 color: highlightEffect ? '#ffffff' : 'inherit',
-                boxShadow: highlightEffect === 'up' ? '0 0 15px rgba(16, 185, 129, 0.6)' : 
-                          highlightEffect === 'down' ? '0 0 15px rgba(239, 68, 68, 0.6)' : 
-                          '0 0 0px transparent'
+                boxShadow: highlightEffect === 'up'
+                  ? '0 0 15px rgba(16, 185, 129, 0.6)'
+                  : highlightEffect === 'down'
+                    ? '0 0 15px rgba(239, 68, 68, 0.6)'
+                    : '0 0 0px transparent'
               }}
               transition={{
                 duration: 0.1,
                 ease: "easeOut"
               }}
             >
-              ${price.toFixed(priceDecimals)}
+              ${Number(price).toFixed(priceDecimals)}
             </motion.span>
           </div>
         )}
