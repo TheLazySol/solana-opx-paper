@@ -1,9 +1,9 @@
 'use client'
 
 import { FC, useEffect, useState } from 'react'
-import { Card, CardBody, CardHeader, Badge, Button, Chip } from '@heroui/react'
+import { Card, CardBody, CardHeader, Badge, Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react'
 import Image from 'next/image'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Calendar, TrendingUp, TrendingDown } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Calendar, TrendingUp, TrendingDown, Trash2, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // Helper for formatting quantity with 2 decimal places, hiding .00 when whole numbers
@@ -40,6 +40,9 @@ export const OrdersViewHistory: FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({})
   const positionsPerPage = 10
+  
+  // Modal for clear history confirmation
+  const {isOpen, onOpen, onOpenChange} = useDisclosure()
   
   // Load closed positions from localStorage
   useEffect(() => {
@@ -85,6 +88,18 @@ export const OrdersViewHistory: FC = () => {
     }))
   }
 
+  // Clear trade history
+  const handleClearHistory = () => {
+    try {
+      localStorage.removeItem('closedOrders')
+      setClosedPositions([])
+      setCurrentPage(1)
+      setExpandedOrders({})
+    } catch (error) {
+      console.error('Error clearing trade history:', error)
+    }
+  }
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -100,22 +115,46 @@ export const OrdersViewHistory: FC = () => {
     >
       {/* Header */}
       <motion.div 
-        className="flex items-center gap-3 pb-4 border-b border-white/10"
+        className="flex items-center justify-between pb-4 border-b border-white/10"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-          <Calendar className="h-5 w-5 text-blue-400" />
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
+            <Calendar className="h-5 w-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Order History
+            </h3>
+            <p className="text-sm text-white/60 mt-0.5">
+              {closedPositions.length} closed position{closedPositions.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Order History
-          </h3>
-          <p className="text-sm text-white/60 mt-0.5">
-            {closedPositions.length} closed position{closedPositions.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+        
+        {/* Clear History Button */}
+        {closedPositions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
+            <Button
+              size="sm"
+              variant="flat"
+              color="danger"
+              onPress={onOpen}
+              startContent={<Trash2 className="h-4 w-4" />}
+              className="bg-red-500/10 border border-red-500/30 text-red-400 
+                hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-300
+                transition-all duration-300 backdrop-blur-sm"
+            >
+              Clear History
+            </Button>
+          </motion.div>
+        )}
       </motion.div>
         
       {/* Content */}
@@ -405,6 +444,75 @@ export const OrdersViewHistory: FC = () => {
               )}
             </motion.div>
           )}
+          
+      {/* Clear History Confirmation Modal */}
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange}
+        size="md"
+        classNames={{
+          backdrop: "bg-black/50 backdrop-blur-sm",
+          base: "border border-red-500/20 bg-black/80 backdrop-blur-md",
+          header: "border-b border-red-500/20",
+          body: "py-6",
+          footer: "border-t border-red-500/20"
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-500/20 backdrop-blur-sm">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                </div>
+                <span className="text-red-400 font-semibold">Confirm Clear History</span>
+              </ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <p className="text-white/80">
+                    Are you sure you want to permanently delete all your trade history? 
+                  </p>
+                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p className="text-red-400 text-sm font-medium">
+                      ⚠️ This action cannot be undone
+                    </p>
+                    <p className="text-white/60 text-sm mt-1">
+                      All {closedPositions.length} closed position{closedPositions.length !== 1 ? 's' : ''} will be permanently removed.
+                    </p>
+                  </div>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="flat" 
+                    onPress={onClose}
+                    className="bg-white/10 border border-white/20 text-white/80
+                      hover:bg-white/20 hover:border-white/30 hover:text-white
+                      transition-all duration-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    color="danger" 
+                    variant="flat"
+                    onPress={() => {
+                      handleClearHistory()
+                      onClose()
+                    }}
+                    startContent={<Trash2 className="h-4 w-4" />}
+                    className="bg-red-500/20 border border-red-500/30 text-red-400
+                      hover:bg-red-500/30 hover:border-red-500/50 hover:text-red-300
+                      transition-all duration-300"
+                  >
+                    Clear History
+                  </Button>
+                </div>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </motion.div>
   )
 } 

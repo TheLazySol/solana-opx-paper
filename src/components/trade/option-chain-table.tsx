@@ -10,11 +10,14 @@ import {
   Tooltip,
   Card,
   CardBody,
-  Button
+  Button,
+  ScrollShadow
 } from "@heroui/react"
 import { cn } from "@/utils/utils"
 import { GreekFilters } from './option-chain-user-settings'
 import { OptionContract, SelectedOption, generateMockOptionData } from './option-data'
+
+
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { toast } from "@/hooks/useToast"
@@ -110,24 +113,46 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     [expirationDate, refreshVolume, spotPrice]
   );
 
-  // Calculate the position of the price indicator
-  const getPriceIndicatorPosition = () => {
-    if (!spotPrice || !mockData.length) return 0;
+  // Calculate the position for the price indicator line
+  const priceIndicatorPosition = useMemo(() => {
+    if (spotPrice == null || !mockData.length) return { showLine: false, insertAfterIndex: -1 };
     
-    // Find the closest strike price to the current spot price
-    const closestStrike = mockData.reduce((prev, curr) => {
-      return Math.abs(curr.strike - spotPrice) < Math.abs(prev.strike - spotPrice) ? curr : prev;
-    });
+    // Find the index after which to show the price line
+    for (let i = 0; i < mockData.length; i++) {
+      if (spotPrice <= mockData[i].strike) {
+        return { showLine: true, insertAfterIndex: i - 1 };
+      }
+    }
     
-    // Find the index of the closest strike
-    const strikeIndex = mockData.findIndex(option => option.strike === closestStrike.strike);
-    
-    // Calculate the percentage position (0 to 100)
-    return (strikeIndex / (mockData.length - 1)) * 100;
-  };
+    // If spot price is higher than all strikes, show after the last row
+    return { showLine: true, insertAfterIndex: mockData.length - 1 };
+  }, [spotPrice, mockData]);
+
+  // Renderer function for price indicator row
+  const renderPriceIndicatorRow = (key: string) => (
+    <TableRow key={key} className="h-0 relative">
+      <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
+        <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
+          <div className="flex items-center w-full max-w-4xl mx-auto px-4">
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
+            <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
+              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+              <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
+                ${formatPrice(spotPrice)}
+              </span>
+              <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+            </div>
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 
   const handlePriceClick = (index: number, side: 'call' | 'put', type: 'bid' | 'ask') => {
-    const option = mockData[index]
+    const option = mockData[index];
+    if (!option) return;
+    
     const price = side === 'call' 
       ? (type === 'bid' ? option.callBid : option.callAsk)
       : (type === 'bid' ? option.putBid : option.putAsk)
@@ -264,6 +289,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Modified price column rendering 
   const renderPriceColumn = (option: OptionContract, index: number, side: 'call' | 'put') => {
+    
     return (
       <div className="flex flex-col space-y-0.5">
         <Button
@@ -309,60 +335,58 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   };
 
   const renderCellContent = (item: OptionContract, columnKey: string, index: number) => {
-    const callIsITM = isCallITM(item.strike);
-    const putIsITM = isPutITM(item.strike);
 
     switch (columnKey) {
       case 'call-volume':
-        return <div className="text-center text-foreground">{formatInteger(item.callVolume)}</div>;
+        return <div className="text-center text-white">{formatInteger(item.callVolume)}</div>;
       case 'call-oi':
-        return <div className="text-center text-muted-foreground">{formatInteger(item.callOpenInterest)}</div>;
+        return <div className="text-center text-white/60">{formatInteger(item.callOpenInterest)}</div>;
       case 'call-rho':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.callGreeks.rho)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.callGreeks.rho)}</div>;
       case 'call-oa':
-        return <div className="text-center text-muted-foreground">{formatInteger(item.callOptionsAvailable)}</div>;
+        return <div className="text-center text-white/60">{formatInteger(item.callOptionsAvailable)}</div>;
       case 'call-vega':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.callGreeks.vega)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.callGreeks.vega)}</div>;
       case 'call-gamma':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.callGreeks.gamma)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.callGreeks.gamma)}</div>;
       case 'call-theta':
-        return <div className="text-center text-foreground">{formatGreek(item.callGreeks.theta)}</div>;
+        return <div className="text-center text-white">{formatGreek(item.callGreeks.theta)}</div>;
       case 'call-delta':
-        return <div className="text-center text-foreground">{formatGreek(item.callGreeks.delta, 2)}</div>;
+        return <div className="text-center text-white">{formatGreek(item.callGreeks.delta, 2)}</div>;
       case 'call-price':
         return (
-          <div className={cn("font-medium", callIsITM ? "bg-blue-500/10" : "bg-muted/20")}>
+          <div className="font-medium">
             {renderPriceColumn(item, index, 'call')}
           </div>
         );
       case 'strike':
         return (
-          <div className="text-center font-bold bg-muted/50 text-foreground py-1 px-2 rounded">
+          <div className="text-center font-bold bg-white/10 text-white py-1 px-2 rounded">
             ${formatPrice(item.strike)}
           </div>
         );
       case 'put-price':
         return (
-          <div className={cn("font-medium", putIsITM ? "bg-blue-500/10" : "bg-muted/20")}>
+          <div className="font-medium">
             {renderPriceColumn(item, index, 'put')}
           </div>
         );
       case 'put-delta':
-        return <div className="text-center text-foreground">{formatGreek(item.putGreeks.delta, 2)}</div>;
+        return <div className="text-center text-white">{formatGreek(item.putGreeks.delta, 2)}</div>;
       case 'put-theta':
-        return <div className="text-center text-foreground">{formatGreek(item.putGreeks.theta)}</div>;
+        return <div className="text-center text-white">{formatGreek(item.putGreeks.theta)}</div>;
       case 'put-gamma':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.putGreeks.gamma)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.putGreeks.gamma)}</div>;
       case 'put-vega':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.putGreeks.vega)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.putGreeks.vega)}</div>;
       case 'put-rho':
-        return <div className="text-center text-muted-foreground">{formatGreek(item.putGreeks.rho)}</div>;
+        return <div className="text-center text-white/60">{formatGreek(item.putGreeks.rho)}</div>;
       case 'put-oa':
-        return <div className="text-center text-muted-foreground">{formatInteger(item.putOptionsAvailable)}</div>;
+        return <div className="text-center text-white/60">{formatInteger(item.putOptionsAvailable)}</div>;
       case 'put-oi':
-        return <div className="text-center text-muted-foreground">{formatInteger(item.putOpenInterest)}</div>;
+        return <div className="text-center text-white/60">{formatInteger(item.putOpenInterest)}</div>;
       case 'put-volume':
-        return <div className="text-center text-foreground">{formatInteger(item.putVolume)}</div>;
+        return <div className="text-center text-white">{formatInteger(item.putVolume)}</div>;
       default:
         return null;
     }
@@ -371,11 +395,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
 
   return (
-    <Card className="bg-background border border-border shadow-xl overflow-hidden">
-      <CardBody className="p-4 bg-background">
+    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
+      <CardBody className="p-4 bg-transparent">
         {/* Option legs counter */}
         <div className="flex justify-between items-center mb-2">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-white/70">
             Selected: {selectedOptions.length}/{MAX_OPTION_LEGS} legs
           </div>
         </div>
@@ -386,7 +410,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             <span className="text-lg font-bold text-[#4a85ff]">CALLS</span>
           </div>
           <div className="w-[100px] text-center">
-            <span className="text-sm font-medium text-muted-foreground">Strike</span>
+            <span className="text-sm font-medium text-white/70">Strike</span>
           </div>
           <div className="flex-1 text-center">
             <span className="text-lg font-bold text-[#4a85ff]">PUTS</span>
@@ -394,27 +418,32 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         </div>
 
         <div className="relative">
-          <Table 
-            aria-label="Options chain table"
-            className="min-h-[400px] bg-background"
-            classNames={{
-              wrapper: "max-h-[400px] overflow-y-auto bg-background border border-border rounded-md",
-              th: "bg-muted text-foreground text-center",
-              td: "text-center bg-background border-b border-border/50",
-              table: "bg-background",
-              tbody: "bg-background",
-              tr: "bg-background hover:bg-muted/50",
-            }}
+          <ScrollShadow 
+            className="max-h-[400px]"
+            size={40}
+            visibility="both"
           >
+            <Table 
+              aria-label="Options chain table"
+              className="min-h-[400px] bg-transparent"
+              classNames={{
+                wrapper: "bg-transparent border border-white/10 rounded-md overflow-visible",
+                th: "bg-black text-white text-center backdrop-blur-md sticky top-0 z-20",
+                td: "text-center bg-transparent border-b border-white/10",
+                table: "bg-transparent",
+                tbody: "bg-transparent",
+                tr: "bg-transparent hover:bg-white/5",
+              }}
+            >
             <TableHeader>
               {columns.map((column) => (
                 <TableColumn 
                   key={column.key} 
                   className={cn(
-                    "text-center w-[85px] bg-muted text-foreground",
+                    "text-center w-[85px] bg-black text-white backdrop-blur-sm",
                     column.key.startsWith('call-') && column.key !== 'call-price' && "text-[#4a85ff]/80",
                     column.key.startsWith('put-') && column.key !== 'put-price' && "text-[#4a85ff]/80",
-                    column.key === 'strike' && "bg-muted/80 font-bold text-foreground"
+                    column.key === 'strike' && "bg-black font-bold text-white"
                   )}
                 >
                   {column.key === 'call-price' || column.key === 'put-price' ? (
@@ -427,18 +456,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                       }
                       placement="top"
                     >
-                      <span className="underline decoration-dotted decoration-muted-foreground cursor-help text-foreground">
+                      <span className="underline decoration-dotted decoration-white/50 cursor-help text-white">
                         {column.label}
                       </span>
                     </Tooltip>
                   ) : column.key === 'strike' ? (
-                    <span className="text-foreground">{column.label}</span>
+                    <span className="text-white">{column.label}</span>
                   ) : (
                     <Tooltip
                       content={getTooltipContent(column.key)}
                       placement="top"
                     >
-                      <span className="underline decoration-dotted decoration-muted-foreground cursor-help text-foreground">
+                      <span className="underline decoration-dotted decoration-white/50 cursor-help text-white">
                         {column.label}
                       </span>
                     </Tooltip>
@@ -447,23 +476,41 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               ))}
             </TableHeader>
             <TableBody emptyContent="No option data available">
-              {mockData.map((option, index) => (
-                <TableRow 
-                  key={`option-${index}`}
-                  className={cn(
-                    "hover:bg-muted/30 transition-colors text-foreground",
-                    index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                  )}
-                >
-                  {columns.map((column) => (
-                    <TableCell key={`${index}-${column.key}`}>
-                      {renderCellContent(option, column.key, index)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              {(() => {
+                const rows = [];
+                
+                // Add price indicator before first row if insertAfterIndex is -1
+                if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === -1) {
+                  rows.push(renderPriceIndicatorRow('price-indicator-before'));
+                }
+                
+                // Add data rows with conditional price indicators after each row
+                mockData.forEach((option, index) => {
+                  // Add the data row
+                  rows.push(
+                    <TableRow
+                      key={`${option.expiry}-${option.strike}`}
+                      className="transition-colors text-white hover:bg-white/5 bg-transparent"
+                    >
+                      {columns.map((column) => (
+                        <TableCell key={`${index}-${column.key}`}>
+                          {renderCellContent(option, column.key, index)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                  
+                  // Add price indicator after this row if conditions are met
+                  if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index) {
+                    rows.push(renderPriceIndicatorRow(`price-indicator-after-${index}`));
+                  }
+                });
+                
+                return rows;
+              })()}
             </TableBody>
-          </Table>
+            </Table>
+          </ScrollShadow>
         </div>
       </CardBody>
     </Card>

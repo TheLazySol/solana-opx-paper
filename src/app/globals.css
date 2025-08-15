@@ -217,6 +217,21 @@ body:not(:hover)::-webkit-scrollbar-thumb {
   font-weight: 500 !important;
 }
 
+/* Dropdown border consistency - thin borders across all dropdown types */
+@layer components {
+  /* HeroUI/NextUI Button with bordered variant - more specific targeting */
+  .nextui-button[data-variant="bordered"] {
+    border-width: 0.5px !important;
+  }
+  
+
+  
+  /* Custom class for consistent dropdown borders */
+  .dropdown-thin-border {
+    border-width: 0.5px !important;
+  }
+}
+
 /* Custom utility classes */
 @layer utilities {
   /* Modern scrollbar styling for custom elements */

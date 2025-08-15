@@ -45,7 +45,7 @@ const ExpirationDateSelectorComponent: FC<ExpirationDateSelectorProps> = ({
         <DropdownTrigger>
           <Button 
             variant="bordered" 
-            className="w-[180px] justify-between"
+            className="w-[180px] justify-between dropdown-thin-border border-[0.5px]"
             endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
           >
             {selectedExpiration 

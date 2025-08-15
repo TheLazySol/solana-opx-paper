@@ -248,7 +248,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               isDisabled={isDisabled}
               size="sm"
               variant="bordered"
-              className="w-28"
+              className="w-28 dropdown-thin-border"
               classNames={{
                 trigger: "bg-white/5 border-white/20 hover:border-white/30",
                 value: "text-white/80"

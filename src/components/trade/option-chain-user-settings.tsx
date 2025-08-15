@@ -20,6 +20,7 @@ interface FilterGreeksProps {
   onFiltersChange: (filters: GreekFilters) => void
   useGreekSymbols?: boolean
   onGreekSymbolsChange?: (useSymbols: boolean) => void
+  onSettingsSaved?: () => void
 }
 
 // Local storage keys for saved preferences
@@ -102,7 +103,8 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
   filters = DEFAULT_FILTERS,
   onFiltersChange,
   useGreekSymbols,
-  onGreekSymbolsChange
+  onGreekSymbolsChange,
+  onSettingsSaved
 }) => {
   const [open, setOpen] = useState(false)
   const [internalShowGreekSymbols, setInternalShowGreekSymbols] = useState(false)
@@ -135,12 +137,18 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
 
   const handleSavePreferences = () => {
     saveFiltersToStorage(filters)
+    saveGreekSymbolsToStorage(showGreekSymbols)
     toast({
       title: "Preferences saved",
       description: "Your filter preferences have been saved successfully.",
       variant: "default",
     })
     setOpen(false)
+    
+    // Notify parent component that settings were saved
+    if (onSettingsSaved) {
+      onSettingsSaved()
+    }
   }
 
   const greekItems = [
@@ -164,7 +172,7 @@ export const FilterGreeks: FC<FilterGreeksProps> = ({
           variant="bordered" 
           size="sm" 
           isIconOnly
-          className="w-10 p-0"
+          className="w-10 p-0 dropdown-thin-border"
           aria-label="Settings for Greeks and Statistics"
         >
           <Cog6ToothIcon className="h-4 w-4" />
