@@ -38,17 +38,67 @@ export async function POST(request: NextRequest) {
       console.log('Found existing user for walletId:', walletId)
     }
 
-    // Create or get session
+    // Get or create session with proper reuse logic
     let sessionId = validatedData.sessionId
+    
     if (!sessionId) {
-      const session = await prisma.userSession.create({
-        data: {
-          sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          userAgent: validatedData.userAgent || userAgent,
-          userId: user.walletId, // Associate session with user
+      // Check for existing active session for this user
+      const activeSession = await prisma.userSession.findFirst({
+        where: {
+          userId: user.walletId,
+          expiresAt: {
+            gt: new Date() // Session hasn't expired yet
+          }
         },
+        orderBy: {
+          createdAt: 'desc'
+        }
       })
-      sessionId = session.sessionId
+      
+      if (activeSession) {
+        // Reuse existing active session
+        sessionId = activeSession.sessionId
+        console.log('Reusing existing session:', sessionId)
+      } else {
+        // Create new session with 24-hour expiration
+        const expiresAt = new Date()
+        expiresAt.setHours(expiresAt.getHours() + 24)
+        
+        const session = await prisma.userSession.create({
+          data: {
+            sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userAgent: validatedData.userAgent || userAgent,
+            userId: user.walletId,
+            expiresAt,
+          },
+        })
+        sessionId = session.sessionId
+        console.log('Created new session:', sessionId)
+      }
+    }
+    
+    // Check for duplicate actions within the last 5 seconds
+    const fiveSecondsAgo = new Date(Date.now() - 5000)
+    const recentDuplicate = await prisma.userAction.findFirst({
+      where: {
+        sessionId,
+        actionType: validatedData.actionType,
+        actionName: validatedData.actionName,
+        pagePath: validatedData.pagePath,
+        timestamp: {
+          gte: fiveSecondsAgo
+        }
+      }
+    })
+    
+    if (recentDuplicate) {
+      console.log('Duplicate action detected, skipping:', validatedData.actionName)
+      return NextResponse.json({ 
+        success: true, 
+        sessionId,
+        actionId: recentDuplicate.id,
+        message: 'Duplicate action skipped'
+      })
     }
     
     // Create action record
