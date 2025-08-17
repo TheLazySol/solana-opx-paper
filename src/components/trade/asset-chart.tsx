@@ -18,7 +18,7 @@ const AssetChartComponent: FC<AssetChartProps> = ({ selectedAsset }) => {
   }
 
   return (
-    <div className="w-full h-[300px] sm:h-[300px] md:h-[400px] lg:h-[500px] relative card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
+    <div className="w-full h-[250px] sm:h-[280px] md:h-[320px] lg:h-[360px] relative card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 
       border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 overflow-hidden shadow-lg rounded-lg">
       <iframe 
         className="w-full h-full absolute inset-0"

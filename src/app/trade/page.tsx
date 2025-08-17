@@ -78,9 +78,9 @@ export default function TradePage() {
   return (
     <div className="py-2 sm:py-4">
       {/* Desktop: Two-column layout | Mobile: Stacked single column */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 sm:gap-4">
-        {/* Left Column: Main content (Chart + Option Chain) - 3/4 width */}
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 sm:gap-4">
+        {/* Left Column: Main content (Chart + Option Chain) - 4/5 width */}
+        <div className="lg:col-span-4">
           <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
             <CardBody className="p-2 sm:p-4">
               {/* Asset Type Selector */}
@@ -94,11 +94,11 @@ export default function TradePage() {
               <Divider className="my-2 sm:my-4" />
               
               {/* Asset Chart */}
-              <div className="mb-2 sm:mb-4 overflow-x-auto">
+              <div className="mb-3 sm:mb-4 overflow-x-auto">
                 <AssetChart selectedAsset={selectedAsset} />
               </div>
               
-              <Divider className="my-2 sm:my-4" />
+              <Divider className="my-3 sm:my-4" />
               
               {/* Option Chain with Expiration Selector */}
               <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
@@ -115,9 +115,9 @@ export default function TradePage() {
           </Card>
         </div>
         
-        {/* Right Column: Trading Controls Panel - 1/4 width */}
+        {/* Right Column: Trading Controls Panel - 1/5 width */}
         <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-4 h-full lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+          <div className="lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             <TradeViewContainer 
               selectedOptions={selectedOptions}
               onOptionsChange={handleOptionsChange}
