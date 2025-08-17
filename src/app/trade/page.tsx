@@ -85,7 +85,7 @@ export default function TradePage() {
           <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
             <CardBody className="p-2 sm:p-4">
               {/* Asset Type Selector and Token Info Panel */}
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
                 <AssetType 
                   selectedAsset={selectedAsset} 
                   onAssetChange={setSelectedAsset} 
