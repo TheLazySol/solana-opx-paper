@@ -37,12 +37,18 @@ export interface BirdeyePriceResponse {
  * 
  * @property {number} price - The current price of the token.
  * @property {number} priceChange24h - The price change over the last 24 hours.
+ * @property {number} volumeUsd24h - The USD trading volume over the last 24 hours.
+ * @property {number} liquidity - The total liquidity of the token.
+ * @property {number} marketCap - The market capitalization of the token.
  * @property {number} timestamp - The Unix timestamp when the price was recorded.
  * @property {string} humanTime - The human-readable string of the timestamp.
  */
 export interface TokenPriceData {
   price: number;
   priceChange24h: number;
+  volumeUsd24h: number;
+  liquidity: number;
+  marketCap: number;
   timestamp: number;
   humanTime: string;
 }

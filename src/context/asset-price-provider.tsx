@@ -10,6 +10,10 @@ interface AssetPriceContextType {
   prices: Record<string, {
     price: number;
     priceChange: 'up' | 'down' | null;
+    priceChange24h: number;
+    volumeUsd24h: number;
+    liquidity: number;
+    marketCap: number;
     lastUpdate: number;
   }>;
   selectedAsset: string;
@@ -41,6 +45,10 @@ export function AssetPriceProvider({
   const [prices, setPrices] = useState<Record<string, {
     price: number;
     priceChange: 'up' | 'down' | null;
+    priceChange24h: number;
+    volumeUsd24h: number;
+    liquidity: number;
+    marketCap: number;
     lastUpdate: number;
   }>>({})
   const [selectedAsset, setSelectedAsset] = useState(initialSelectedAsset)
@@ -74,6 +82,10 @@ export function AssetPriceProvider({
         [asset]: {
           price: newPrice,
           priceChange,
+          priceChange24h: priceData.priceChange24h || 0,
+          volumeUsd24h: priceData.volumeUsd24h || 0,
+          liquidity: priceData.liquidity || 0,
+          marketCap: priceData.marketCap || 0,
           lastUpdate: Date.now()
         }
       }))
@@ -121,6 +133,10 @@ export function useAssetPriceInfo(asset: string) {
   return {
     price: assetPrice?.price || 0,
     priceChange: assetPrice?.priceChange || null,
+    priceChange24h: assetPrice?.priceChange24h || 0,
+    volumeUsd24h: assetPrice?.volumeUsd24h || 0,
+    liquidity: assetPrice?.liquidity || 0,
+    marketCap: assetPrice?.marketCap || 0,
     lastUpdate: assetPrice?.lastUpdate || 0,
     refreshPrice: () => refreshPrice(asset)
   }

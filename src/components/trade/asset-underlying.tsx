@@ -1,10 +1,9 @@
-import { FC, useState, useCallback, memo, useRef, useEffect } from 'react'
-import { TOKENS, getTokenDisplayDecimals } from '@/constants/token-list/token-list'
+import { FC, useCallback, memo } from 'react'
+import { TOKENS } from '@/constants/token-list/token-list'
 import { ChevronDown } from 'lucide-react'
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
-import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider'
+import { useAssetPrice } from '@/context/asset-price-provider'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 interface AssetTypeProps {
   selectedAsset: string
   onAssetChange: (asset: string) => void
@@ -18,39 +17,9 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
   }))
 
   const selectedToken = TOKENS[selectedAsset as keyof typeof TOKENS] || TOKENS.SOL
-  const priceDecimals = selectedToken ? getTokenDisplayDecimals(selectedToken.symbol) : 2
   
   // Use the price context instead of local state
   const { setSelectedAsset } = useAssetPrice()
-  const { price, priceChange } = useAssetPriceInfo(selectedAsset)
-  const [highlightEffect, setHighlightEffect] = useState<'up' | 'down' | null>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
-
-  // Update highlight effect when price changes
-  useEffect(() => {
-    // Only proceed if there's an actual price change
-    if (priceChange !== undefined && priceChange !== null) {
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      
-      // Set the highlight effect
-      setHighlightEffect(priceChange)
-      
-      // Clear the effect after the flash animation completes
-      timeoutRef.current = setTimeout(() => {
-        setHighlightEffect(null)
-      }, 200)
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [priceChange])
 
   // Handle asset selection change
   const handleAssetChange = useCallback((asset: string) => {
@@ -59,7 +28,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
   }, [onAssetChange, setSelectedAsset])
 
   return (
-    <div className="flex flex-col items-start space-y-2 mb-4">
+    <div>
       {/* Asset Selection Dropdown */}
       <Dropdown>
         <DropdownTrigger>
@@ -127,37 +96,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
         </DropdownMenu>
       </Dropdown>
 
-      {/* Price Display */}
-      <div className="flex items-center space-x-2">
-        {price != null && Number.isFinite(price) && (
-          <div className="flex items-center space-x-2">
-            <motion.span
-              className="text-xl sm:text-2xl font-bold px-1 rounded"
-              aria-live="polite"
-              aria-atomic="true"
-              role="status"
-              aria-label={`Current ${selectedToken.symbol} price`}
-              animate={{
-                backgroundColor: highlightEffect === 'up' ? '#10b981' :
-                                highlightEffect === 'down' ? '#ef4444' :
-                                'transparent',
-                color: highlightEffect ? '#ffffff' : 'hsl(0 0% 98%)',
-                boxShadow: highlightEffect === 'up'
-                  ? '0 0 15px rgba(16, 185, 129, 0.6)'
-                  : highlightEffect === 'down'
-                    ? '0 0 15px rgba(239, 68, 68, 0.6)'
-                    : '0 0 0px transparent'
-              }}
-              transition={{
-                duration: 0.1,
-                ease: "easeOut"
-              }}
-            >
-              ${Number(price).toFixed(priceDecimals)}
-            </motion.span>
-          </div>
-        )}
-      </div>
+
     </div>
   )
 }

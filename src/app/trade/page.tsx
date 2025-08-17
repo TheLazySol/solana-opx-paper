@@ -4,6 +4,7 @@ import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { AssetChart } from '@/components/trade/asset-chart'
 import { AssetType } from '@/components/trade/asset-underlying'
+import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption } from '@/components/trade/option-data'
@@ -83,15 +84,14 @@ export default function TradePage() {
         <div className="lg:col-span-4">
           <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
             <CardBody className="p-2 sm:p-4">
-              {/* Asset Type Selector */}
-              <div className="mb-2 sm:mb-4">
+              {/* Asset Type Selector and Token Info Panel */}
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <AssetType 
                   selectedAsset={selectedAsset} 
                   onAssetChange={setSelectedAsset} 
                 />
+                <TokenInfoPanel selectedAsset={selectedAsset} />
               </div>
-              
-              <Divider className="my-2 sm:my-4" />
               
               {/* Asset Chart */}
               <div className="mb-3 sm:mb-4 overflow-x-auto">
