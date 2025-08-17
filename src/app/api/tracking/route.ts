@@ -10,6 +10,7 @@ const trackingSchema = z.object({
   pagePath: z.string().optional(),
   metadata: z.record(z.any()).optional(),
   userAgent: z.string().optional(),
+  walletId: z.string(), // Add walletId to schema
 })
 
 export async function POST(request: NextRequest) {
@@ -17,9 +18,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = trackingSchema.parse(body)
     
+    console.log('Received tracking request:', validatedData)
+
     // Get user agent
     const userAgent = request.headers.get('user-agent') || 'unknown'
     
+    // Extract walletId from request (assuming it's sent in the body)
+    const { walletId } = validatedData
+    console.log('Processing walletId:', walletId)
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { walletId } })
+    if (!user) {
+      console.log('Creating new user for walletId:', walletId)
+      user = await prisma.user.create({
+        data: { walletId },
+      })
+    } else {
+      console.log('Found existing user for walletId:', walletId)
+    }
+
     // Create or get session
     let sessionId = validatedData.sessionId
     if (!sessionId) {
@@ -27,6 +45,7 @@ export async function POST(request: NextRequest) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: validatedData.userAgent || userAgent,
+          userId: user.id, // Associate session with user
         },
       })
       sessionId = session.sessionId

@@ -2,9 +2,42 @@
 
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from './wallet-connect'
+import { useEffect } from 'react'
 
 export default function AccountListFeature() {
   const { publicKey } = useWallet()
+
+  useEffect(() => {
+    if (publicKey) {
+      const walletId = publicKey.toString()
+      console.log('Wallet connected:', walletId)
+
+      // Send walletId to the server
+      fetch('/api/tracking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletId,
+          actionType: 'wallet_connect',
+          actionName: 'connect_wallet',
+        }),
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to track wallet connection')
+          }
+          return response.json()
+        })
+        .then(data => {
+          console.log('Tracking response:', data)
+        })
+        .catch(error => {
+          console.error('Error tracking wallet connection:', error)
+        })
+    }
+  }, [publicKey])
 
   return (
     <div className="hero py-[64px]">

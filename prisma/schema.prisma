@@ -13,6 +13,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Model for tracking unique users (wallet connections)
+model User {
+  id        String   @id @default(cuid())
+  walletId  String   @unique(map: "unique_wallet_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions UserSession[]
+
+  @@map("users")
+}
+
 // Model for tracking user sessions
 model UserSession {
   id        String   @id @default(cuid())
@@ -24,6 +37,7 @@ model UserSession {
 
   // Relations
   actions UserAction[]
+  user    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_sessions")
 }
