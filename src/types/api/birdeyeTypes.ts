@@ -17,14 +17,16 @@
  */
 export interface BirdeyePriceResponse {
   data: {
+    isScaledUiToken: boolean;
     value: number;
     updateUnixTime: number;
     updateHumanTime: string;
-    priceChange24H: number;
+    priceChange24h: number;
+    priceInNative: number;
+    liquidity: number;
     volumeUsd24h?: number;
     volume24h?: number;
     marketCap?: number;
-    liquidity?: number;
   };
   success: boolean;
   message?: string;
