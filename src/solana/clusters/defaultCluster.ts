@@ -27,11 +27,6 @@ export const defaultClusters: Cluster[] = [
       endpoint: clusterApiUrl('devnet'),
       network: ClusterNetwork.Devnet,
     },
-    {
-      name: 'triton-devnet',
-      endpoint: getTritonRpcUrl(),
-      network: ClusterNetwork.Custom,
-    },
     { 
       name: 'local', 
       endpoint: validateEndpointFormat('http://localhost:8899')

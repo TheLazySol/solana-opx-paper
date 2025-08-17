@@ -2,11 +2,9 @@
 
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { LAMPORTS_PER_SOL } from 'gill'
-import { address } from 'gill'
 import { useEffect } from 'react'
 import { useCluster } from '../../../solana/clusters/clusterDataAccess'
 import { ClusterNetwork } from '../../../solana/clusters/clusterDataAccess'
-import { useGetBalance } from '../../../solana/utils/commonHooks'
 
 export function WalletBalanceLogger() {
   const { connection } = useConnection()
@@ -32,13 +30,10 @@ export function WalletBalanceLogger() {
           
           console.log('Connected wallet address:', publicKey.toString())
           console.log('Wallet SOL balance:', solBalance, 'SOL')
-          console.log('Wallet lamports balance:', balance, 'lamports')
           console.log('Current network:', cluster.network || 'custom')
         } catch (error) {
           console.error('Error fetching wallet balance:', error)
         }
-      } else {
-        console.log('Wallet not connected')
       }
     }
 

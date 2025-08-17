@@ -141,7 +141,7 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
                 backgroundColor: highlightEffect === 'up' ? '#10b981' :
                                 highlightEffect === 'down' ? '#ef4444' :
                                 'transparent',
-                color: highlightEffect ? '#ffffff' : 'inherit',
+                color: highlightEffect ? '#ffffff' : 'hsl(0 0% 98%)',
                 boxShadow: highlightEffect === 'up'
                   ? '0 0 15px rgba(16, 185, 129, 0.6)'
                   : highlightEffect === 'down'

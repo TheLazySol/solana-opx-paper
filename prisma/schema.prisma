@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model for tracking unique users (wallet connections)
+model UserWallet {
+  walletId  String   @id @unique(map: "unique_wallet_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions UserSession[]
+
+  @@map("users")
+}
+
+// Model for tracking user sessions
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String?  // Optional for anonymous sessions (walletId when connected)
+  sessionId String   @unique
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  actions UserAction[]
+  user    UserWallet?      @relation(fields: [userId], references: [walletId], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// Model for tracking frontend actions
+model UserAction {
+  id          String   @id @default(cuid())
+  sessionId   String
+  actionType  String   // e.g., "button_click", "form_submit", "page_view"
+  actionName  String   // e.g., "trade_button", "connect_wallet"
+  pagePath    String?  // Current page path
+  metadata    Json?    // Additional data as JSON
+  timestamp   DateTime @default(now())
+  
+  // Relations
+  session UserSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@map("user_actions")
+}
+
+// Model for tracking errors
+model ErrorLog {
+  id        String   @id @default(cuid())
+  sessionId String?
+  errorType String   // e.g., "validation_error", "api_error", "wallet_error"
+  message   String
+  stack     String?
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  @@map("error_logs")
+}
