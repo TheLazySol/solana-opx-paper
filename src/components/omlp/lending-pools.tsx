@@ -356,12 +356,15 @@ export function LendingPools({
               <ModalBody>
                 <div className="space-y-4">
                   <Input
+                  <Input
                     type="number"
                     label="Deposit Amount"
                     value={depositAmount}
                     onValueChange={setDepositAmount}
                     variant="flat"
                     placeholder={`0.00 ${selectedPool?.token}`}
+                    min="0"
+                    step="any"
                     classNames={{
                       label: "text-white/80",
                       input: "text-white",
@@ -369,7 +372,7 @@ export function LendingPools({
                     }}
                     startContent={
                       <div className="pointer-events-none flex items-center">
-                        <span className="text-white/40 text-sm">$</span>
+                        <span className="text-white/60 text-xs">{selectedPool?.token}</span>
                       </div>
                     }
                   />
