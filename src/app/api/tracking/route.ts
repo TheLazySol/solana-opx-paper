@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
     console.log('Processing walletId:', walletId)
 
     // Find or create user
-    let user = await prisma.user.findUnique({ where: { walletId } })
+    let user = await prisma.userWallet.findUnique({ where: { walletId } })
     if (!user) {
       console.log('Creating new user for walletId:', walletId)
-      user = await prisma.user.create({
+      user = await prisma.userWallet.create({
         data: { walletId },
       })
     } else {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: validatedData.userAgent || userAgent,
-          userId: user.id, // Associate session with user
+          userId: user.walletId, // Associate session with user
         },
       })
       sessionId = session.sessionId
