@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import * as React from 'react'
 import { WalletButton } from '../solana/user-wallet/wallet-connect'
 import { ClusterUiSelect } from '../solana/user-settings/rpc-dropdown-select'
+import { useTracking } from '@/hooks/useTracking'
 
 interface NavbarProps {
   links: { label: string; path: string }[]
@@ -14,6 +15,7 @@ interface NavbarProps {
 export function Navbar({ links }: NavbarProps) {
   const pathname = usePathname()
   const [mounted, setMounted] = React.useState(false)
+  const { trackButtonClick, trackPageView, isConnected } = useTracking()
 
   React.useEffect(() => {
     setMounted(true)
@@ -21,6 +23,24 @@ export function Navbar({ links }: NavbarProps) {
 
   // Always use the dark theme logo
   const logoSrc = '/epicentral-logo-light.png'
+
+  // Track navigation clicks
+  const handleNavClick = (label: string, path: string) => {
+    // Track specific important navigation items
+    const trackedItems = ['trade', 'option lab', 'omlp']
+    const normalizedLabel = label.toLowerCase()
+    
+    if (trackedItems.some(item => normalizedLabel.includes(item))) {
+      trackButtonClick(`nav_${normalizedLabel.replace(/\s+/g, '_')}`, {
+        navigationTo: path,
+        fromPath: pathname,
+        timestamp: new Date().toISOString(),
+        walletConnected: isConnected,
+      })
+      
+      console.log(`Navigation tracked: ${label} -> ${path}`)
+    }
+  }
 
   return (
     <div className="border-b">
@@ -50,6 +70,7 @@ export function Navbar({ links }: NavbarProps) {
               <Link
                 key={path}
                 href={path}
+                onClick={() => handleNavClick(label, path)}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   (pathname === path || (path !== '/' && pathname.startsWith(path + '/'))) 
                     ? 'text-foreground' 

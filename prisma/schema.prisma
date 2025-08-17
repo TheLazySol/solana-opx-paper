@@ -14,9 +14,8 @@ datasource db {
 }
 
 // Model for tracking unique users (wallet connections)
-model User {
-  id        String   @id @default(cuid())
-  walletId  String   @unique(map: "unique_wallet_id")
+model UserWallet {
+  walletId  String   @id @unique(map: "unique_wallet_id")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -29,7 +28,7 @@ model User {
 // Model for tracking user sessions
 model UserSession {
   id        String   @id @default(cuid())
-  userId    String?  // Optional for anonymous sessions
+  userId    String?  // Optional for anonymous sessions (walletId when connected)
   sessionId String   @unique
   userAgent String?
   createdAt DateTime @default(now())
@@ -37,7 +36,7 @@ model UserSession {
 
   // Relations
   actions UserAction[]
-  user    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    UserWallet?      @relation(fields: [userId], references: [walletId], onDelete: Cascade)
 
   @@map("user_sessions")
 }

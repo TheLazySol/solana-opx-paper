@@ -85,9 +85,45 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Get basic stats (you can expand this based on your needs)
+    // Check if requesting navigation stats specifically
+    const { searchParams } = new URL(request.url)
+    const statsType = searchParams.get('type')
+    
+    if (statsType === 'navigation') {
+      // Get navigation-specific stats
+      const navActions = await prisma.userAction.findMany({
+        where: {
+          actionType: 'button_click',
+          actionName: {
+            startsWith: 'nav_'
+          }
+        },
+        select: {
+          actionName: true,
+          metadata: true,
+          timestamp: true,
+        },
+        orderBy: {
+          timestamp: 'desc'
+        }
+      })
+      
+      const stats = {
+        trade: navActions.filter(a => a.actionName.includes('trade')).length,
+        optionLab: navActions.filter(a => a.actionName.includes('option_lab')).length,
+        omlp: navActions.filter(a => a.actionName.includes('omlp')).length,
+        total: navActions.length
+      }
+      
+      return NextResponse.json({
+        navigationStats: stats,
+        recentNavigations: navActions.slice(0, 10)
+      })
+    }
+    
+    // Default: Get basic stats
     const [totalSessions, totalActions, recentActions] = await Promise.all([
       prisma.userSession.count(),
       prisma.userAction.count(),
