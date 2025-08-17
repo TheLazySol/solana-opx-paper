@@ -14,7 +14,7 @@ export const OptionTypeSelector = () => {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-white/80">Option Type</label>
-      <ButtonGroup variant="bordered" className="w-full dropdown-thin-border">
+      <ButtonGroup variant="bordered" className="w-full border-white/20 [&>button]:border-white/20 [&>button]:border-[0.5px]">
         <Button
           onPress={() => handleOptionTypeChange('call')}
           className={cn(

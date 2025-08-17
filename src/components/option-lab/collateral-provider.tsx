@@ -296,10 +296,10 @@ export function CollateralProvider({
                 setCollateralType(selected);
               }}
               size="sm"
-              variant="bordered"
-              className="w-28 dropdown-thin-border"
+              variant="flat"
+              className="w-28"
               classNames={{
-                trigger: "bg-white/5 border-white/20 hover:border-white/30",
+                trigger: "bg-white/5 border border-white/20 hover:border-white/30 border-[0.5px]",
                 value: "text-white/80"
               }}
             >
@@ -326,7 +326,7 @@ export function CollateralProvider({
               placeholder="0.00"
               classNames={{
                 input: "text-right font-medium text-white",
-                inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none flex-1"
+                inputWrapper: "bg-white/5 border border-white/20 rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none flex-1 border-[0.5px] hover:border-white/30"
               }}
               startContent={<span className="text-white/40">$</span>}
             />
