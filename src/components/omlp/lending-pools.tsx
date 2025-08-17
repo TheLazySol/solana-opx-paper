@@ -64,6 +64,7 @@ export function LendingPools({
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
   const [depositAmount, setDepositAmount] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   const tvl = pools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -75,8 +76,18 @@ export function LendingPools({
   }
 
   const handleRefresh = async () => {
-    if (onRefresh) {
-      await onRefresh()
+    setIsRefreshing(true)
+    
+    try {
+      if (onRefresh) {
+        await onRefresh()
+      }
+      // Add a small delay for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch (error) {
+      console.error('Error during refresh:', error)
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -190,16 +201,23 @@ export function LendingPools({
                 isIconOnly
                 size="sm"
                 variant="flat"
+                color="default"
                 onPress={handleRefresh}
-                isDisabled={isLoading}
-                aria-label="Refresh lending pools"
-                className="bg-white/5 hover:bg-white/10 transition-all duration-200"
+                isLoading={isRefreshing}
+                spinner={
+                  <Spinner 
+                    size="sm" 
+                    color="current"
+                    classNames={{
+                      circle1: "border-b-current",
+                      circle2: "border-b-current",
+                    }}
+                  />
+                }
+                aria-label={isRefreshing ? "Refreshing lending pools..." : "Refresh lending pools"}
+                className="w-10 h-10 min-w-10 bg-white/5 hover:bg-white/10 data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
               >
-                {isLoading ? (
-                  <Spinner size="sm" color="primary" className="h-4 w-4" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 text-white/60" />
-                )}
+                {!isRefreshing && <RefreshCw className="h-4 w-4 text-foreground-500" />}
               </Button>
             </div>
           </div>

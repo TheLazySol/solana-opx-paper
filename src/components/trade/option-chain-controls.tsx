@@ -185,29 +185,23 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
               variant="bordered"
               size="sm"
               isIconOnly
-              className={cn(
-                "w-10 p-0 border-[0.5px]",
-                isRefreshing 
-                  ? "cursor-not-allowed opacity-80" 
-                  : "hover:opacity-80 hover:scale-105 active:scale-95 transition-all duration-200"
-              )}
+              color="default"
               onPress={handleRefresh}
-              isDisabled={isRefreshing}
-              aria-label={isRefreshing ? "Refreshing option chain data..." : "Refresh option chain data"}
-            >
-              {isRefreshing ? (
+              isLoading={isRefreshing}
+              spinner={
                 <Spinner 
                   size="sm" 
-                  color="primary"
-                  className="h-4 w-4"
+                  color="current"
                   classNames={{
-                    circle1: "border-b-primary",
-                    circle2: "border-b-primary",
+                    circle1: "border-b-current",
+                    circle2: "border-b-current",
                   }}
                 />
-              ) : (
-                <RefreshCw className="h-4 w-4 text-foreground-500" />
-              )}
+              }
+              aria-label={isRefreshing ? "Refreshing option chain data..." : "Refresh option chain data"}
+              className="w-10 h-10 min-w-10 border-[0.5px] data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
+            >
+              {!isRefreshing && <RefreshCw className="h-4 w-4 text-foreground-500" />}
             </Button>
             
             <Button
