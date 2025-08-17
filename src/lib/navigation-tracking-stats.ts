@@ -90,7 +90,7 @@ export async function getNavigationStats() {
  */
 export async function getWalletNavigationHistory(walletId: string) {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.userWallet.findUnique({
       where: { walletId },
       include: {
         sessions: {

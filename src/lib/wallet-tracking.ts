@@ -21,10 +21,10 @@ export async function trackWalletConnection(options: WalletTrackingOptions) {
     const { walletId, sessionId, userAgent, metadata } = options
     
     // Find or create user
-    let user = await prisma.user.findUnique({ where: { walletId } })
+    let user = await prisma.userWallet.findUnique({ where: { walletId } })
     if (!user) {
       console.log('Creating new user for walletId:', walletId)
-      user = await prisma.user.create({
+      user = await prisma.userWallet.create({
         data: { walletId },
       })
     }
@@ -36,7 +36,7 @@ export async function trackWalletConnection(options: WalletTrackingOptions) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
-          userId: user.id,
+          userId: user.walletId,
         },
       })
       currentSessionId = session.sessionId
@@ -76,7 +76,7 @@ export async function trackWalletDisconnection(options: WalletTrackingOptions) {
     const { walletId, sessionId, userAgent, metadata } = options
     
     // Find user
-    const user = await prisma.user.findUnique({ where: { walletId } })
+    const user = await prisma.userWallet.findUnique({ where: { walletId } })
     if (!user) {
       console.warn('Attempting to track disconnection for non-existent wallet:', walletId)
       return { success: false, error: 'User not found' }
@@ -89,7 +89,7 @@ export async function trackWalletDisconnection(options: WalletTrackingOptions) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
-          userId: user.id,
+          userId: user.walletId,
         },
       })
       currentSessionId = session.sessionId
@@ -129,9 +129,9 @@ export async function trackWalletAction(options: TrackActionOptions) {
     const { walletId, actionType, actionName, pagePath, sessionId, userAgent, metadata } = options
     
     // Find or create user
-    let user = await prisma.user.findUnique({ where: { walletId } })
+    let user = await prisma.userWallet.findUnique({ where: { walletId } })
     if (!user) {
-      user = await prisma.user.create({
+      user = await prisma.userWallet.create({
         data: { walletId },
       })
     }
@@ -143,7 +143,7 @@ export async function trackWalletAction(options: TrackActionOptions) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
-          userId: user.id,
+          userId: user.walletId,
         },
       })
       currentSessionId = session.sessionId
@@ -187,7 +187,7 @@ export async function getWalletStats() {
       uniqueConnectionsToday,
       recentConnections,
     ] = await Promise.all([
-      prisma.user.count(),
+      prisma.userWallet.count(),
       prisma.userAction.count({
         where: { actionName: 'wallet_connected' },
       }),
@@ -228,7 +228,7 @@ export async function getWalletStats() {
  */
 export async function getWalletHistory(walletId: string) {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.userWallet.findUnique({
       where: { walletId },
       include: {
         sessions: {
