@@ -10,6 +10,7 @@ import { AssetPriceProvider } from '@/context/asset-price-provider'
 import {HeroUIProvider} from '@heroui/react'
 
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'Solana OPX | Epicentral Labs',
@@ -54,9 +55,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ReactQueryProvider>
               <ClusterProvider>
                 <SolanaProvider>
-                  <AssetPriceProvider>
-                    <UiLayout links={links}>{children}</UiLayout>
-                  </AssetPriceProvider>
+                  <Suspense fallback={
+                    <div className="flex justify-center items-center min-h-screen">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  }>
+                    <AssetPriceProvider>
+                      <UiLayout links={links}>{children}</UiLayout>
+                    </AssetPriceProvider>
+                  </Suspense>
                 </SolanaProvider>
               </ClusterProvider>
             </ReactQueryProvider>
