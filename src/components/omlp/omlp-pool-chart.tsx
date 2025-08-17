@@ -1,18 +1,18 @@
 'use client'
 
 import { 
-  Dialog, 
-  DialogContent as ShadcnDialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogClose,
-  DialogPortal,
-  DialogOverlay
-} from '@/components/ui/dialog'
-import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Card,
+  CardBody,
+  Chip,
+  Spinner
+} from '@heroui/react'
+import { X, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react'
 import { 
   LineChart, 
   Line, 
@@ -24,28 +24,8 @@ import {
   ResponsiveContainer 
 } from 'recharts'
 import { cn } from '@/utils/utils'
+import { motion } from 'framer-motion'
 import React from 'react'
-
-// Custom DialogContent without the default close button
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay className='bg-black/40'/>
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 shadow-lg duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
-DialogContent.displayName = DialogPrimitive.Content.displayName
 
 export type PoolHistoricalData = {
   timestamp: number // Unix timestamp
@@ -92,118 +72,178 @@ export function OmlpChart({
   }))
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 rounded-lg shadow">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">
-              {poolData.token} Pool Performance
-            </DialogTitle>
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" aria-label="Close dialog">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
-          </div>
-          <DialogDescription>
-            Historical APY and utilization rates for the {poolData.token} pool
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="h-[400px] w-full mt-4">
-          {isLoading ? (
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-              Loading historical data...
-            </div>
-          ) : chartData.length === 0 ? (
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-              No historical data available
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={chartData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 30,
-                }}
+    <Modal 
+      isOpen={open} 
+      onOpenChange={onOpenChange}
+      size="5xl"
+      classNames={{
+        base: "bg-black/90 backdrop-blur-md border border-white/10",
+        header: "border-b border-white/10",
+        body: "py-6",
+        footer: "border-t border-white/10"
+      }}
+    >
+      <ModalContent>
+        {(onClose) => (
+          <>
+            <ModalHeader className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20 backdrop-blur-sm">
+                    <BarChart3 className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      {poolData.token} Pool Performance
+                    </h3>
+                    <p className="text-sm text-white/60 mt-1">
+                      Historical APY and utilization rates
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ModalHeader>
+            <ModalBody>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-4"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis 
-                  orientation="left"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}%`}
-                  domain={[0, 100]}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#111', 
-                    border: '1px solid #333',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  formatter={(value) => [`${value}%`, '']}
-                />
-                <Legend />
-                <Line 
-                  type="monotone"
-                  dataKey="supplyApy" 
-                  name="Supply APY" 
-                  stroke="#4ade80" 
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone"
-                  dataKey="borrowApy" 
-                  name="Borrow APY" 
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone"
-                  dataKey="utilization" 
-                  name="Utilization" 
-                  stroke="#4a85ff" 
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-        
-        <div className="mt-4 grid grid-cols-3 gap-4">
-          <div className="rounded-lg bg-black/20 p-4 text-center">
-            <div className="text-sm text-muted-foreground">Current Supply APY</div>
-            <div className="text-xl font-semibold text-green-500">{poolData.supplyApy}%</div>
-          </div>
-          <div className="rounded-lg bg-black/20 p-4 text-center">
-            <div className="text-sm text-muted-foreground">Current Borrow APY</div>
-            <div className="text-xl font-semibold text-red-500">{poolData.borrowApy}%</div>
-          </div>
-          <div className="rounded-lg bg-black/20 p-4 text-center">
-            <div className="text-sm text-muted-foreground">Current Utilization</div>
-            <div className="text-xl font-semibold text-blue-500">{poolData.utilization}%</div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                <div className="h-[400px] w-full">
+                  {isLoading ? (
+                    <div className="h-full w-full flex flex-col items-center justify-center gap-4">
+                      <Spinner size="lg" color="primary" />
+                      <span className="text-white/60">Loading historical data...</span>
+                    </div>
+                  ) : chartData.length === 0 ? (
+                    <div className="h-full w-full flex flex-col items-center justify-center gap-4">
+                      <div className="p-4 rounded-full bg-white/5">
+                        <BarChart3 className="h-8 w-8 text-white/40" />
+                      </div>
+                      <span className="text-white/60">No historical data available</span>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={chartData}
+                        margin={{
+                          top: 20,
+                          right: 30,
+                          left: 20,
+                          bottom: 30,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke="rgba(255,255,255,0.5)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          orientation="left"
+                          stroke="rgba(255,255,255,0.5)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `${value}%`}
+                          domain={[0, 100]}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)', 
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            backdropFilter: 'blur(10px)'
+                          }}
+                          formatter={(value) => [`${value}%`, '']}
+                        />
+                        <Legend 
+                          wrapperStyle={{ color: 'rgba(255,255,255,0.8)' }}
+                        />
+                        <Line 
+                          type="monotone"
+                          dataKey="supplyApy" 
+                          name="Supply APY" 
+                          stroke="#4ade80" 
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line 
+                          type="monotone"
+                          dataKey="borrowApy" 
+                          name="Borrow APY" 
+                          stroke="#ef4444" 
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line 
+                          type="monotone"
+                          dataKey="utilization" 
+                          name="Utilization" 
+                          stroke="#4a85ff" 
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Card className="bg-white/5 backdrop-blur-sm border border-green-500/20">
+                    <CardBody className="text-center p-4">
+                      <div className="flex flex-col items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-green-400" />
+                        <div className="text-sm text-white/60">Current Supply APY</div>
+                        <Chip size="lg" variant="flat" className="bg-green-500/20 text-green-400 font-semibold">
+                          {poolData.supplyApy}%
+                        </Chip>
+                      </div>
+                    </CardBody>
+                  </Card>
+                  <Card className="bg-white/5 backdrop-blur-sm border border-red-500/20">
+                    <CardBody className="text-center p-4">
+                      <div className="flex flex-col items-center gap-2">
+                        <TrendingDown className="h-5 w-5 text-red-400" />
+                        <div className="text-sm text-white/60">Current Borrow APY</div>
+                        <Chip size="lg" variant="flat" className="bg-red-500/20 text-red-400 font-semibold">
+                          {poolData.borrowApy}%
+                        </Chip>
+                      </div>
+                    </CardBody>
+                  </Card>
+                  <Card className="bg-white/5 backdrop-blur-sm border border-blue-500/20">
+                    <CardBody className="text-center p-4">
+                      <div className="flex flex-col items-center gap-2">
+                        <BarChart3 className="h-5 w-5 text-blue-400" />
+                        <div className="text-sm text-white/60">Current Utilization</div>
+                        <Chip size="lg" variant="flat" className="bg-blue-500/20 text-blue-400 font-semibold">
+                          {poolData.utilization}%
+                        </Chip>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </div>
+              </motion.div>
+            </ModalBody>
+            <ModalFooter>
+              <Button 
+                variant="flat" 
+                onPress={onClose}
+                className="bg-white/10 text-white/80 hover:bg-white/20"
+              >
+                Close
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </ModalContent>
+    </Modal>
   )
 } 
