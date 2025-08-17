@@ -285,23 +285,26 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
               <ModalBody>
                 <div className="space-y-4">
                   <Input
-                    type="number"
-                    label="Amount"
-                    value={amount}
-                    onValueChange={setAmount}
-                    variant="flat"
-                    placeholder={`0.00 ${currentToken}`}
-                    classNames={{
-                      label: "text-white/80",
-                      input: "text-white",
-                      inputWrapper: "bg-white/5 border border-white/10 hover:bg-white/10"
-                    }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span className="text-white/40 text-sm">$</span>
-                      </div>
-                    }
-                  />
+                    <Input
+                      type="number"
+                      label="Amount"
+                      value={amount}
+                      onValueChange={setAmount}
+                      variant="flat"
+                      placeholder={`0.00 ${currentToken}`}
+                      min="0"
+                      step="any"
+                      classNames={{
+                        label: "text-white/80",
+                        input: "text-white",
+                        inputWrapper: "bg-white/5 border border-white/10 hover:bg-white/10"
+                      }}
+                      startContent={
+                        <div className="pointer-events-none flex items-center">
+                          <span className="text-white/60 text-xs">{currentToken}</span>
+                        </div>
+                      }
+                    />
                 </div>
               </ModalBody>
               <ModalFooter>
