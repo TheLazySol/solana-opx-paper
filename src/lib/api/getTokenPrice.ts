@@ -25,7 +25,7 @@ interface PriceCache {
 
 const priceCache: PriceCache = {};
 // Cache expiration time in milliseconds
-const CACHE_EXPIRATION = 5000; // 5 seconds
+const CACHE_EXPIRATION = 3000; // 3 seconds
 
 /**
  * Clears the price cache for all tokens or a specific token
