@@ -73,7 +73,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
 
 
   return (
-    <div className="flex items-center space-x-4 sm:space-x-6 lg:space-x-8 text-sm">
+    <div className="flex items-center justify-center space-x-6 sm:space-x-8 lg:space-x-12 text-sm">
       {/* Price */}
       <div className="text-center">
         <div className="text-neutral-400 text-xs mb-1">{selectedToken.symbol} Price</div>
