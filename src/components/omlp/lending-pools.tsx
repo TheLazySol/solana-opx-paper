@@ -140,7 +140,7 @@ export function LendingPools({
         tokenSymbol: selectedPool.token,
         amount: parseFloat(depositAmount),
       })
-      onDepositModalOpenChange()
+      onDepositModalOpenChange(false)
       if (onRefresh) await onRefresh()
     } catch (error) {
       console.error('Error depositing:', error)
