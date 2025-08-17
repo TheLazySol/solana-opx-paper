@@ -10,7 +10,6 @@ const trackingSchema = z.object({
   pagePath: z.string().optional(),
   metadata: z.record(z.any()).optional(),
   userAgent: z.string().optional(),
-  ipAddress: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -18,10 +17,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = trackingSchema.parse(body)
     
-    // Get client IP and user agent
-    const ipAddress = request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
-                     'unknown'
+    // Get user agent
     const userAgent = request.headers.get('user-agent') || 'unknown'
     
     // Create or get session
@@ -31,7 +27,6 @@ export async function POST(request: NextRequest) {
         data: {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: validatedData.userAgent || userAgent,
-          ipAddress: validatedData.ipAddress || ipAddress,
         },
       })
       sessionId = session.sessionId
