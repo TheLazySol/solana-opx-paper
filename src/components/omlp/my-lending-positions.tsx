@@ -91,7 +91,7 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
         tokenSymbol: currentToken,
         amount: numericAmount,
       })
-      onDepositModalOpenChange()
+      onDepositModalOpenChange(false)
       if (onRefresh) await onRefresh()
     } catch (error) {
       console.error('Error depositing:', error)
