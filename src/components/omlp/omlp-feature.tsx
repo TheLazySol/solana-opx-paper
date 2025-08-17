@@ -89,16 +89,6 @@ export function OMLPFeature() {
         <p className="text-white/60 max-w-2xl mx-auto">
           Lend tokens to provide liquidity for option market makers and earn competitive yields.
         </p>
-        <div className="flex items-center justify-center gap-2 text-sm">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/30">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-green-400">Live</span>
-          </div>
-          <div className="flex items-center gap-1 text-white/40">
-            <span>Powered by Solana</span>
-            <ArrowUpRight className="w-3 h-3" />
-          </div>
-        </div>
       </motion.div>
       
       <motion.div
