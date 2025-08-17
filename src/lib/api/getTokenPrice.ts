@@ -120,23 +120,18 @@ export async function getTokenPrice(tokenSymbol: string) {
   lastFetchTime = Date.now();
   
   try {
-    const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token?.address}&include_liquidity=true`, options)
+    const response = await fetch(`${BIRDEYE_API_URL}/token_overview?address=${token?.address}&frames=24h&ui_amount_mode=scaled`, options)
     const data = await response.json() as BirdeyePriceResponse
     
-    // Debug log to see what data we're receiving
-    console.log(`[${tokenSymbol}] API Response:`, data)
-    
     const priceData = {
-      price: data.data?.value ?? 0,
-      priceChange24h: data.data?.priceChange24h ?? 0,
-      volumeUsd24h: 0, // Not provided by this endpoint
+      price: data.data?.price ?? 0,
+      priceChange24h: data.data?.priceChange24hPercent ?? 0,
+      volumeUsd24h: data.data?.v24hUSD ?? 0,
       liquidity: data.data?.liquidity ?? 0,
-      marketCap: 0, // Not provided by this endpoint
+      marketCap: data.data?.marketCap ?? 0,
       timestamp: data.data?.updateUnixTime ?? Date.now(),
       humanTime: data.data?.updateHumanTime ?? new Date().toISOString()
     };
-    
-    console.log(`[${tokenSymbol}] Processed data:`, priceData);
     
     // Update cache
     priceCache[tokenSymbol] = {

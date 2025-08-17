@@ -111,7 +111,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       <div className="text-center">
         <div className="text-neutral-400 text-xs mb-1">24h Volume</div>
         <div className="font-bold text-white">
-          {volumeUsd24h > 0 ? formatCurrency(volumeUsd24h) : 'N/A'}
+          {formatCurrency(volumeUsd24h)}
         </div>
       </div>
 
@@ -119,7 +119,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       <div className="text-center hidden sm:block">
         <div className="text-neutral-400 text-xs mb-1">Market Cap</div>
         <div className="font-bold text-white">
-          {marketCap > 0 ? formatCurrency(marketCap) : 'N/A'}
+          {formatCurrency(marketCap)}
         </div>
       </div>
 

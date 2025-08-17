@@ -1,32 +1,32 @@
 /**
- * Represents the response structure from the BirdEye API for a price request.
+ * Represents the response structure from the BirdEye API for a token overview request.
  *
  * @interface BirdeyePriceResponse
  * 
- * @property {Object} data - The data object containing price information.
- * @property {number} data.value - The price value.
- * @property {number} data.updateUnixTime - The Unix timestamp when the price was last updated.
+ * @property {Object} data - The data object containing token overview information.
+ * @property {string} data.name - The name of the token.
+ * @property {string} data.logoURI - The logo URI of the token.
+ * @property {number} data.price - The current price of the token.
+ * @property {number} data.priceChange24hPercent - The price change percentage over the last 24 hours.
+ * @property {number} data.marketCap - The market capitalization of the token.
+ * @property {number} data.v24hUSD - The USD trading volume over the last 24 hours.
+ * @property {number} data.liquidity - The liquidity of the token.
+ * @property {number} data.updateUnixTime - The Unix timestamp when the data was last updated.
  * @property {string} data.updateHumanTime - The human-readable string of the last update time.
- * @property {number} data.priceChange24H - The price change over the last 24 hours.
- * @property {number} [data.volumeUsd24h] - The USD trading volume over the last 24 hours (optional).
- * @property {number} [data.volume24h] - The token trading volume over the last 24 hours (optional).
- * @property {number} [data.marketCap] - The market capitalization of the token (optional).
- * @property {number} [data.liquidity] - The liquidity of the token (optional).
  * @property {boolean} success - A flag indicating whether the API request was successful.
  * @property {string} [message] - An optional message describing the status of the request.
  */
 export interface BirdeyePriceResponse {
   data: {
-    isScaledUiToken: boolean;
-    value: number;
+    name: string;
+    logoURI: string;
+    price: number;
+    priceChange24hPercent: number;
+    marketCap: number;
+    v24hUSD: number;
+    liquidity: number;
     updateUnixTime: number;
     updateHumanTime: string;
-    priceChange24h: number;
-    priceInNative: number;
-    liquidity: number;
-    volumeUsd24h?: number;
-    volume24h?: number;
-    marketCap?: number;
   };
   success: boolean;
   message?: string;
