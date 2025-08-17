@@ -40,3 +40,55 @@ tmp
 # prisma
 /generated/prisma
 /prisma/migrations
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Solana/Anchor specific
+target/
+.anchor/
+test-ledger/
+.DS_Store?
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor backup files
+*~
+.#*
+#*#
+
+# Cursor specific (as per your rules)
+.cursorrules
