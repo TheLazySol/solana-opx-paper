@@ -171,77 +171,68 @@ export const TradeView: FC<TradeViewProps> = ({
   const isCollateralRequired = selectedOptions.length > 0 && (!orderData.isDebit || orderData.collateralNeeded > 0)
 
   return (
-    <div className="w-full space-y-6">
-      {/* Main Trading Section */}
+    <div className="w-full space-y-4">
+      {/* All components stacked vertically */}
+      
+      {/* Create Order */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+        transition={{ duration: 0.3 }}
       >
-        {/* Create Order - Takes more space */}
-        <div className={cn(
-          isCollateralRequired 
-            ? "lg:col-span-7 xl:col-span-6" 
-            : "lg:col-span-12 xl:col-span-8"
-        )}>
-          <CreateOrder 
-            selectedOptions={selectedOptions}
-            onRemoveOption={handleRemoveOption}
-            onUpdateQuantity={handleQuantityUpdate}
-            onUpdateLimitPrice={handleLimitPriceUpdate}
-          />
-        </div>
-        
-        {/* Collateral and Order Summary - Side by side on smaller screens, stacked on larger */}
-        <div className={cn(
-          "grid gap-6",
-          isCollateralRequired 
-            ? "lg:col-span-5 xl:col-span-6 grid-cols-1 xl:grid-cols-2" 
-            : "lg:col-span-12 xl:col-span-4 grid-cols-1"
-        )}>
-          {/* Conditionally render TradeCollateralProvider */}
-          {isCollateralRequired && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <TradeCollateralProvider 
-                selectedOptions={selectedOptions}
-                selectedAsset={selectedOptions[0]?.asset || ''}
-                isDebit={orderData.isDebit}
-                externalCollateralNeeded={orderData.collateralNeeded}
-                onBorrowedAmountChange={handleBorrowedAmountChange}
-              />
-            </motion.div>
-          )}
-          
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: isCollateralRequired ? 0.2 : 0.1 }}
-          >
-            <PlaceTradeOrder 
-              selectedOptions={selectedOptions} 
-              selectedAsset={selectedOptions[0]?.asset || ''} 
-              onOrderDataChange={setOrderData}
-              borrowedAmount={borrowedAmount}
-              onOrderPlaced={handleOrderPlaced}
-            />
-          </motion.div>
-        </div>
+        <CreateOrder 
+          selectedOptions={selectedOptions}
+          onRemoveOption={handleRemoveOption}
+          onUpdateQuantity={handleQuantityUpdate}
+          onUpdateLimitPrice={handleLimitPriceUpdate}
+        />
       </motion.div>
       
-      {/* PnL Chart - Full Width - Only show when options are selected */}
+      {/* Place Order Summary */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <PlaceTradeOrder 
+          selectedOptions={selectedOptions} 
+          selectedAsset={selectedOptions[0]?.asset || ''} 
+          onOrderDataChange={setOrderData}
+          borrowedAmount={borrowedAmount}
+          onOrderPlaced={handleOrderPlaced}
+        />
+      </motion.div>
+      
+      {/* Collateral Provider - Only show when required */}
+      <AnimatePresence>
+        {isCollateralRequired && (
+          <motion.div
+            key="collateral"
+            initial={{ opacity: 0, y: 10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <TradeCollateralProvider 
+              selectedOptions={selectedOptions}
+              selectedAsset={selectedOptions[0]?.asset || ''}
+              isDebit={orderData.isDebit}
+              externalCollateralNeeded={orderData.collateralNeeded}
+              onBorrowedAmountChange={handleBorrowedAmountChange}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* PnL Chart - Only show when options are selected */}
       <AnimatePresence>
         {selectedOptions.length > 0 && (
           <motion.div
             key="pnl-chart"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
           >
             <TradePnLChart selectedOptions={selectedOptions} />
           </motion.div>

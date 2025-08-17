@@ -44,7 +44,7 @@ export function Navbar({ links }: NavbarProps) {
 
   return (
     <div className="border-b">
-      <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">
+      <div className="flex h-16 items-center px-4 max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto">
         <div className="w-[200px]">
           <Link href="/" className="block transition-transform hover:scale-105 duration-200">
             {mounted ? (

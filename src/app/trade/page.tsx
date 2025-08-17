@@ -76,29 +76,31 @@ export default function TradePage() {
   }, [])
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
-      <div className="grid grid-cols-1 gap-2 sm:gap-4">
-        <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg">
-          <CardBody className="p-2 sm:p-4">
-            {/* Asset Type Selector */}
-            <div className="mb-2 sm:mb-4">
-              <AssetType 
-                selectedAsset={selectedAsset} 
-                onAssetChange={setSelectedAsset} 
-              />
-            </div>
-            
-            <Divider className="my-2 sm:my-4" />
-            
-            {/* Asset Chart */}
-            <div className="mb-2 sm:mb-4 overflow-x-auto">
-              <AssetChart selectedAsset={selectedAsset} />
-            </div>
-            
-            <Divider className="my-2 sm:my-4" />
-            
-            {/* Option Chain with Expiration Selector and Trade View */}
-            <div className="space-y-2 sm:space-y-4">
+    <div className="py-2 sm:py-4">
+      {/* Desktop: Two-column layout | Mobile: Stacked single column */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 sm:gap-4">
+        {/* Left Column: Main content (Chart + Option Chain) - 3/4 width */}
+        <div className="lg:col-span-3">
+          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
+            <CardBody className="p-2 sm:p-4">
+              {/* Asset Type Selector */}
+              <div className="mb-2 sm:mb-4">
+                <AssetType 
+                  selectedAsset={selectedAsset} 
+                  onAssetChange={setSelectedAsset} 
+                />
+              </div>
+              
+              <Divider className="my-2 sm:my-4" />
+              
+              {/* Asset Chart */}
+              <div className="mb-2 sm:mb-4 overflow-x-auto">
+                <AssetChart selectedAsset={selectedAsset} />
+              </div>
+              
+              <Divider className="my-2 sm:my-4" />
+              
+              {/* Option Chain with Expiration Selector */}
               <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
                 <OptionChainControls 
                   key={`option-chain-controls-${volumeUpdateTrigger}`}
@@ -109,23 +111,24 @@ export default function TradePage() {
                   onSwitchToCreateOrder={handleSwitchToCreateOrder}
                 />
               </div>
-              
-              <Divider className="my-2 sm:my-4" />
-              
-              <div className="overflow-x-auto -mx-2 px-2">
-                <TradeViewContainer 
-                  selectedOptions={selectedOptions}
-                  onOptionsChange={handleOptionsChange}
-                  onOrderPlaced={handleOrderPlaced}
-                  activeView={activeView}
-                  setActiveView={setActiveView}
-                  activeOrderTab={activeOrderTab}
-                  setActiveOrderTab={setActiveOrderTab}
-                />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
+        
+        {/* Right Column: Trading Controls Panel - 1/4 width */}
+        <div className="lg:col-span-1">
+          <div className="lg:sticky lg:top-4 h-full lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+            <TradeViewContainer 
+              selectedOptions={selectedOptions}
+              onOptionsChange={handleOptionsChange}
+              onOrderPlaced={handleOrderPlaced}
+              activeView={activeView}
+              setActiveView={setActiveView}
+              activeOrderTab={activeOrderTab}
+              setActiveOrderTab={setActiveOrderTab}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

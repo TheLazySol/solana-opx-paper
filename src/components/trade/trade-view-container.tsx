@@ -50,13 +50,13 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   }, [onOrderPlaced])
 
   return (
-    <div className="w-full space-y-4">
-      {/* Tab Navigation */}
+    <div className="w-full space-y-3">
+      {/* Tab Navigation - Compact for sidebar */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full flex justify-center"
+        transition={{ duration: 0.4 }}
+        className="w-full"
       >
         <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl p-1">
           <Tabs
@@ -64,17 +64,17 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
             onSelectionChange={(key) => setActiveView(key as string)}
             variant="light"
             classNames={{
-              tabList: "gap-2 w-full relative rounded-lg p-0",
+              tabList: "gap-1 w-full relative rounded-lg p-0",
               cursor: "w-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-sm border border-blue-500/50",
-              tab: "max-w-fit px-8 h-10 data-[selected=true]:text-white text-white/60",
-              tabContent: "group-data-[selected=true]:text-white font-medium"
+              tab: "flex-1 px-4 h-9 data-[selected=true]:text-white text-white/60",
+              tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
             }}
           >
             <Tab
               key="trade"
               title={
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5" />
                   <span>Trade</span>
                 </div>
               }
@@ -82,8 +82,8 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
             <Tab
               key="orders"
               title={
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
                   <span>Orders</span>
                 </div>
               }
@@ -92,42 +92,35 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
         </Card>
       </motion.div>
       
-      {/* Content Area */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeView}
-              initial={{ opacity: 0, x: activeView === 'trade' ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: activeView === 'trade' ? 20 : -20 }}
-              transition={{ 
-                duration: 0.3,
-                ease: "easeInOut"
-              }}
-              className="p-4 md:p-6"
-            >
-              {activeView === 'trade' && (
-                <TradeView 
-                  initialSelectedOptions={selectedOptions} 
-                  onOptionsUpdate={handleOptionsUpdate}
-                  onTabChange={handleTabChange}
-                />
-              )}
-              {activeView === 'orders' && (
-                <OrdersView 
-                  activeTab={activeOrderTab}
-                  setActiveTab={setActiveOrderTab}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </Card>
-      </motion.div>
+      {/* Content Area - Transparent background for vertical layout */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeView}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ 
+            duration: 0.2,
+            ease: "easeInOut"
+          }}
+        >
+          {activeView === 'trade' && (
+            <TradeView 
+              initialSelectedOptions={selectedOptions} 
+              onOptionsUpdate={handleOptionsUpdate}
+              onTabChange={handleTabChange}
+            />
+          )}
+          {activeView === 'orders' && (
+            <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+              <OrdersView 
+                activeTab={activeOrderTab}
+                setActiveTab={setActiveOrderTab}
+              />
+            </Card>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

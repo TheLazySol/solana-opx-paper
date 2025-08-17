@@ -75,7 +75,7 @@ export function OMLPFeature() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="container max-w-6xl mx-auto py-10 space-y-8"
+      className="py-10 space-y-8"
     >
       <motion.div
         initial={{ opacity: 0, y: -20 }}

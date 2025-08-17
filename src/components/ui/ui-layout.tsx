@@ -19,7 +19,7 @@ export function UiLayout({ children, links }: { children: ReactNode; links: { la
       <ClusterChecker>
         <WalletBalanceLogger />
       </ClusterChecker>
-      <main className="container mx-auto py-6">
+      <main className="mx-auto py-6 px-2 sm:px-4 max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px]">
         <Suspense
           fallback={
             <div className="flex justify-center my-32">
