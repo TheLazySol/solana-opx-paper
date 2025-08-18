@@ -23,15 +23,15 @@ const additionalResources = [
 const stats = [
   {
     label: "Volume",
-    value: "$17.5B"
+    value: "-"
   },
   {
     label: "TVL", 
-    value: "$122.8M"
+    value: "-"
   },
   {
     label: "Trades",
-    value: "2.84M"
+    value: "-"
   }
 ]
 
@@ -213,7 +213,7 @@ export default function DashboardFeature() {
                 hover:bg-transparent hover:shadow-2xl hover:shadow-blue-500/10
                 overflow-hidden h-full group"
             >
-              <CardHeader className="p-6 pb-2">
+              <CardHeader className="p-6 pb-2 flex items-center justify-center">
                 <motion.h3 
                   className="text-lg font-semibold text-center transition-all duration-300
                     bg-gradient-to-r from-[#4a85ff] to-[#5829f2] 
