@@ -65,7 +65,7 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
             variant="light"
             classNames={{
               tabList: "gap-1 w-full relative rounded-lg p-0",
-              cursor: "w-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-sm border border-blue-500/50",
+              cursor: "w-full bg-gradient-to-r from-[#4a85ff]/30 to-[#5829f2]/30 backdrop-blur-sm border border-[#4a85ff]/50",
               tab: "flex-1 px-4 h-9 data-[selected=true]:text-white text-white/60",
               tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
             }}

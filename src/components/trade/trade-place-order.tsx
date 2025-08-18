@@ -361,9 +361,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Order Summary
-          </h3>
+                      <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+              Order Summary
+            </h3>
           {hasSelectedOptions && (
             <Chip 
               size="sm" 
@@ -516,7 +516,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   ? "bg-white/10 text-white/40 border border-white/20"
                   : orderSuccess
                     ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                    : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
               )}
               isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
               onPress={handlePlaceOrder}

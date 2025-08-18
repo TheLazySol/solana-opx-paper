@@ -162,7 +162,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
             Collateral Requirements
           </h3>
           {isDisabled && (
@@ -324,7 +324,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             className="flex-1"
             classNames={{
               track: "bg-white/10",
-              filler: "bg-gradient-to-r from-blue-400 to-purple-400"
+              filler: "bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
             }}
           />
         </div>

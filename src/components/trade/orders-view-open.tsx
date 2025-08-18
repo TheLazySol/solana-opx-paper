@@ -718,42 +718,45 @@ export const OrdersViewOpen = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="space-y-6"
     >
-      {/* Header */}
-      <motion.div 
-        className="flex items-center gap-3 pb-4 border-b border-white/10"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
-        <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-          <Activity className="h-5 w-5 text-blue-400" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Open Positions
-          </h3>
-          <p className="text-sm text-white/60 mt-0.5">
-            {positions.length} active position{positions.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-      </motion.div>
+      {/* Header - Only show detailed header when there are positions */}
+      {positions.length > 0 && (
+        <motion.div 
+          className="flex items-center gap-3 px-4 py-4 mb-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
+            <Activity className="h-5 w-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+              Open Positions
+            </h3>
+            <p className="text-sm text-white/60 mt-0.5">
+              {positions.length} active position{positions.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </motion.div>
+      )}
         
       {/* Content */}
         {positions.length === 0 ? (
             <motion.div 
-              className="flex flex-col items-center justify-center min-h-[300px] space-y-4"
+              className="flex flex-col items-center justify-center min-h-[450px] px-6 py-12"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm">
-                <Activity className="h-8 w-8 text-blue-400" />
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-medium text-white/80 mb-2">No Open Positions</p>
-                <p className="text-sm text-white/50">Your active trades will appear here</p>
+              <div className="flex flex-col items-center space-y-6">
+                <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/20">
+                  <Activity className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-semibold text-white/90">No Open Positions</p>
+                  <p className="text-sm text-white/60 max-w-sm">Your active trades will appear here once you place orders</p>
+                </div>
               </div>
             </motion.div>
           ) : (
