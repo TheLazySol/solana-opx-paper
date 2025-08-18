@@ -84,11 +84,13 @@ export default function DashboardFeature() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-tight"
             >
-              Experience Solana
+              Experience
               <br />
-              <span className="text-[#4a85ff]">DeFi Options</span>
+              <span className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent font-bold">
+                DeFi Options
+              </span>
               <br />
               Like Never Before
             </motion.h1>
@@ -100,7 +102,7 @@ export default function DashboardFeature() {
               transition={{ duration: 0.8, delay: 0.8 }}
               className="text-lg md:text-xl text-gray-400 max-w-lg leading-relaxed"
             >
-              OPX is a decentralized options trading protocol built on Solana,
+              <strong>OPX</strong> is a decentralized options trading protocol built on Solana,
               allowing users to experience derivatives like never before.
             </motion.p>
 
@@ -110,16 +112,18 @@ export default function DashboardFeature() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.2 }}
             >
-              <Button
-                size="lg"
-                className="bg-[#4a85ff] hover:bg-[#336bdd] text-white font-semibold px-8 py-3 text-lg
-                  transition-all duration-200 hover:scale-105 active:scale-95"
-                onPress={() => {
-                  console.log("Deposit Now clicked!");
-                }}
-              >
-                TRADE OPTIONS
-              </Button>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white font-semibold px-8 py-3 text-xl
+                transition-all duration-200 hover:scale-105 active:scale-95
+                hover:shadow-2xl hover:shadow-[#4a85ff]/40
+                active:shadow-inner active:shadow-[#4a85ff]/60"
+              onPress={() => {
+                console.log("Trade Options clicked!");
+              }}
+            >
+              Trade
+            </Button>
             </motion.div>
           </motion.div>
 
@@ -128,14 +132,14 @@ export default function DashboardFeature() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
-            className="flex flex-col lg:items-end space-y-12"
+            className="flex flex-col items-center space-y-12"
           >
-            {/* OPX Logo on Right */}
+            {/* OPX Logo Centered */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 1.2 }}
-              className="flex justify-center lg:justify-end"
+              className="flex justify-center"
             >
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -144,8 +148,8 @@ export default function DashboardFeature() {
                 <Image
                   src="/OPX_LOGO_Chrome.png"
                   alt="Solana OPX Logo"
-                  width={350}
-                  height={87}
+                  width={450}
+                  height={112}
                   className="transition-all duration-300"
                 />
               </motion.div>
@@ -164,7 +168,7 @@ export default function DashboardFeature() {
                     type: "spring",
                     stiffness: 100
                   }}
-                  className="text-center lg:text-right"
+                  className="text-center"
                 >
                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
                     {stat.label}
@@ -180,7 +184,7 @@ export default function DashboardFeature() {
       </div>
 
       {/* Feature Cards Section */}
-      <div className="max-w-7xl mx-auto mt-32">
+      <div className="max-w-7xl mx-auto mt-20">
         <motion.div 
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,11 +211,13 @@ export default function DashboardFeature() {
               className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
                 transition-all duration-300
                 hover:bg-transparent hover:shadow-2xl hover:shadow-blue-500/10
-                overflow-hidden h-full"
+                overflow-hidden h-full group"
             >
               <CardHeader className="p-6 pb-2">
                 <motion.h3 
-                  className="text-lg font-normal text-center"
+                  className="text-lg font-semibold text-center transition-all duration-300
+                    bg-gradient-to-r from-[#4a85ff] to-[#5829f2] 
+                    bg-clip-text text-transparent"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.8 + index * 0.1 }}
@@ -238,11 +244,11 @@ export default function DashboardFeature() {
                 >
                   <Button 
                     variant="bordered"
-                    className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
-                      hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20
-                      hover:border-blue-500/70 hover:shadow-lg hover:shadow-blue-500/25
-                      active:bg-gradient-to-r active:from-blue-600/30 active:to-purple-600/30
-                      active:border-blue-600/80 active:shadow-inner
+                    className="w-full bg-transparent border border-[#4a85ff]/30 
+                      hover:bg-gradient-to-r hover:from-[#4a85ff]/20 hover:to-[#5829f2]/20
+                      hover:border-[#4a85ff]/70 hover:shadow-lg hover:shadow-[#4a85ff]/25
+                      active:bg-gradient-to-r active:from-[#4a85ff]/30 active:to-[#5829f2]/30
+                      active:border-[#4a85ff]/80 active:shadow-inner
                       transition-all duration-200 ease-out
                       group overflow-hidden relative"
                     size="md"
@@ -263,7 +269,7 @@ export default function DashboardFeature() {
                     
                     {/* Animated background shimmer effect */}
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-[#4a85ff]/20 to-transparent"
                       initial={{ x: "-100%" }}
                       whileHover={{ x: "100%" }}
                       transition={{ duration: 0.6, ease: "easeInOut" }}
@@ -271,7 +277,7 @@ export default function DashboardFeature() {
                     
                     {/* Click ripple effect */}
                     <motion.div
-                      className="absolute inset-0 bg-blue-400/20 rounded-sm"
+                      className="absolute inset-0 bg-[#4a85ff]/20 rounded-sm"
                       initial={{ scale: 0, opacity: 0 }}
                       whileTap={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
@@ -332,8 +338,8 @@ export default function DashboardFeature() {
                 className="px-3 py-1.5 text-sm
                   backdrop-blur-sm bg-white/5 dark:bg-black/20
                   border border-[#4a85ff]/20 
-                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-purple-500/10
-                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-purple-500/20
+                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-[#5829f2]/10
+                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-[#5829f2]/20
                   active:border-[#4a85ff]/80
                   transition-all duration-200 ease-out
                   hover:shadow-[0_0_20px_rgba(74,133,255,0.3)]
@@ -354,7 +360,7 @@ export default function DashboardFeature() {
                 
                 {/* Shimmer effect on hover */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-[#4a85ff]/20 to-transparent"
                   initial={{ x: "-100%" }}
                   whileHover={{ x: "100%" }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
