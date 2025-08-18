@@ -300,10 +300,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           onMouseEnter={() => setHoveredPrice({ index, side, type: 'bid' })}
           onMouseLeave={() => setHoveredPrice(null)}
           className={cn(
-            "text-green-400 hover:text-green-300 transition-colors min-w-0 h-7 border-[0.5px]",
+            "text-green-400 hover:text-green-300 transition-colors min-w-0 h-7",
             (hoveredPrice?.index === index && 
             hoveredPrice?.side === side && 
-            hoveredPrice?.type === 'bid') && "bg-green-500/20 border-green-500/50",
+            hoveredPrice?.type === 'bid') && "bg-green-500/20",
             isOptionSelected(index, side, 'bid') && "text-green-300",
             shouldDisableOptionButtons && !isOptionSelected(index, side, 'bid') && "opacity-50"
           )}
@@ -319,10 +319,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           onMouseEnter={() => setHoveredPrice({ index, side, type: 'ask' })}
           onMouseLeave={() => setHoveredPrice(null)}
           className={cn(
-            "text-red-400 hover:text-red-300 transition-colors min-w-0 h-7 border-[0.5px]",
+            "text-red-400 hover:text-red-300 transition-colors min-w-0 h-7",
             (hoveredPrice?.index === index && 
             hoveredPrice?.side === side && 
-            hoveredPrice?.type === 'ask') && "bg-red-500/20 border-red-500/50",
+            hoveredPrice?.type === 'ask') && "bg-red-500/20",
             isOptionSelected(index, side, 'ask') && "text-red-300",
             shouldDisableOptionButtons && !isOptionSelected(index, side, 'ask') && "opacity-50"
           )}
@@ -395,7 +395,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
 
   return (
-    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
+    <Card className="bg-black/40 backdrop-blur-md shadow-2xl overflow-hidden">
       <CardBody className="p-4 bg-transparent">
         {/* Option legs counter */}
         <div className="flex justify-between items-center mb-2">
@@ -410,7 +410,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
             <span className="text-lg font-bold text-[#4a85ff]">CALLS</span>
           </div>
           <div className="w-[100px] text-center">
-            <span className="text-sm font-medium text-white/70">Strike</span>
           </div>
           <div className="flex-1 text-center">
             <span className="text-lg font-bold text-[#4a85ff]">PUTS</span>
@@ -427,9 +426,9 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               aria-label="Options chain table"
               className="min-h-[400px] bg-transparent"
               classNames={{
-                wrapper: "bg-transparent border border-white/10 rounded-md overflow-visible",
+                wrapper: "bg-transparent rounded-md overflow-visible",
                 th: "bg-black text-white text-center backdrop-blur-md sticky top-0 z-20",
-                td: "text-center bg-transparent border-b border-white/10",
+                td: "text-center bg-transparent",
                 table: "bg-transparent",
                 tbody: "bg-transparent",
                 tr: "bg-transparent hover:bg-white/5",

@@ -30,7 +30,11 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
   return (
     <div>
       {/* Asset Selection Dropdown */}
-      <Dropdown>
+      <Dropdown
+        classNames={{
+          content: "bg-[#010101] p-0 border-none shadow-none"
+        }}
+      >
         <DropdownTrigger>
           <Button 
             variant="bordered" 
@@ -64,6 +68,10 @@ const AssetTypeComponent: FC<AssetTypeProps> = ({ selectedAsset, onAssetChange }
           aria-label="Asset selection"
           onAction={(key) => handleAssetChange(key as string)}
           className="w-[140px] sm:w-[180px]"
+          classNames={{
+            base: "bg-[#010101] p-0 border-none",
+            list: "bg-[#010101] p-1 border-none"
+          }}
         >
           {assets.map((asset) => (
             <DropdownItem
