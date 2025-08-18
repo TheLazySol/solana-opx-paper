@@ -49,11 +49,11 @@ export function OMLPFeature() {
         <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl max-w-md">
           <CardBody className="p-8">
             <div className="flex flex-col items-center gap-6">
-              <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm">
-                <Wallet className="h-8 w-8 text-blue-400" />
+              <div className="p-4 rounded-full bg-gradient-to-br from-[#4a85ff]/20 to-[#5829f2]/20 backdrop-blur-sm">
+                <Wallet className="h-8 w-8 text-[#4a85ff]" />
               </div>
               <div className="text-center space-y-2">
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
                   Wallet Connection Required
                 </h2>
                 <p className="text-white/60">
@@ -75,7 +75,7 @@ export function OMLPFeature() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="container max-w-6xl mx-auto py-10 space-y-8"
+      className="py-10 space-y-8"
     >
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -83,7 +83,7 @@ export function OMLPFeature() {
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-center space-y-3"
       >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
           Option Margin Liquidity Pool
         </h1>
         <p className="text-white/60 max-w-2xl mx-auto">

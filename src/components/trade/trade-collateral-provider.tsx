@@ -162,7 +162,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
             Collateral Requirements
           </h3>
           {isDisabled && (
@@ -250,7 +250,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               variant="bordered"
               className="w-28 dropdown-thin-border"
               classNames={{
-                trigger: "bg-white/5 border-white/20 hover:border-white/30",
+                trigger: "bg-black/40 border-white/20 hover:border-white/30 backdrop-blur-md",
                 value: "text-white/80"
               }}
             >
@@ -278,7 +278,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
               placeholder="0.00"
               classNames={{
                 input: "text-right font-medium text-white",
-                inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none flex-1"
+                inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none flex-1"
               }}
               startContent={<span className="text-white/40">$</span>}
             />
@@ -324,7 +324,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
             className="flex-1"
             classNames={{
               track: "bg-white/10",
-              filler: "bg-gradient-to-r from-blue-400 to-purple-400"
+              filler: "bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
             }}
           />
         </div>
@@ -335,7 +335,7 @@ export const TradeCollateralProvider: FC<TradeCollateralProviderProps> = ({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+          className="space-y-3 p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
         >
           <div className="flex items-center gap-2 mb-2">
             <Info className="w-4 h-4 text-blue-400" />

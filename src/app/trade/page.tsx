@@ -4,6 +4,7 @@ import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { AssetChart } from '@/components/trade/asset-chart'
 import { AssetType } from '@/components/trade/asset-underlying'
+import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption } from '@/components/trade/option-data'
@@ -76,29 +77,28 @@ export default function TradePage() {
   }, [])
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-[1920px]">
-      <div className="grid grid-cols-1 gap-2 sm:gap-4">
-        <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg">
-          <CardBody className="p-2 sm:p-4">
-            {/* Asset Type Selector */}
-            <div className="mb-2 sm:mb-4">
-              <AssetType 
-                selectedAsset={selectedAsset} 
-                onAssetChange={setSelectedAsset} 
-              />
-            </div>
-            
-            <Divider className="my-2 sm:my-4" />
-            
-            {/* Asset Chart */}
-            <div className="mb-2 sm:mb-4 overflow-x-auto">
-              <AssetChart selectedAsset={selectedAsset} />
-            </div>
-            
-            <Divider className="my-2 sm:my-4" />
-            
-            {/* Option Chain with Expiration Selector and Trade View */}
-            <div className="space-y-2 sm:space-y-4">
+    <div className="py-2 sm:py-4">
+      {/* Desktop: Two-column layout | Mobile: Stacked single column */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 sm:gap-4">
+        {/* Left Column: Main content (Chart + Option Chain) - 4/5 width */}
+        <div className="lg:col-span-4">
+          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
+            <CardBody className="p-2 sm:p-4">
+              {/* Asset Type Selector and Token Info Panel */}
+              <div className="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+                <AssetType 
+                  selectedAsset={selectedAsset} 
+                  onAssetChange={setSelectedAsset} 
+                />
+                <TokenInfoPanel selectedAsset={selectedAsset} />
+              </div>
+              
+              {/* Asset Chart */}
+              <div className="mb-3 sm:mb-4 overflow-x-auto">
+                <AssetChart selectedAsset={selectedAsset} />
+              </div>
+              
+              {/* Option Chain with Expiration Selector */}
               <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
                 <OptionChainControls 
                   key={`option-chain-controls-${volumeUpdateTrigger}`}
@@ -109,23 +109,24 @@ export default function TradePage() {
                   onSwitchToCreateOrder={handleSwitchToCreateOrder}
                 />
               </div>
-              
-              <Divider className="my-2 sm:my-4" />
-              
-              <div className="overflow-x-auto -mx-2 px-2">
-                <TradeViewContainer 
-                  selectedOptions={selectedOptions}
-                  onOptionsChange={handleOptionsChange}
-                  onOrderPlaced={handleOrderPlaced}
-                  activeView={activeView}
-                  setActiveView={setActiveView}
-                  activeOrderTab={activeOrderTab}
-                  setActiveOrderTab={setActiveOrderTab}
-                />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
+        
+        {/* Right Column: Trading Controls Panel - 1/5 width */}
+        <div className="lg:col-span-1">
+          <div className="lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+            <TradeViewContainer 
+              selectedOptions={selectedOptions}
+              onOptionsChange={handleOptionsChange}
+              onOrderPlaced={handleOrderPlaced}
+              activeView={activeView}
+              setActiveView={setActiveView}
+              activeOrderTab={activeOrderTab}
+              setActiveOrderTab={setActiveOrderTab}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

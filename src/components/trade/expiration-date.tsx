@@ -41,7 +41,11 @@ const ExpirationDateSelectorComponent: FC<ExpirationDateSelectorProps> = ({
 
   return (
     <div className="flex items-center space-x-2">
-      <Dropdown>
+      <Dropdown
+        classNames={{
+          content: "bg-[#010101] p-0 border-none shadow-none"
+        }}
+      >
         <DropdownTrigger>
           <Button 
             variant="bordered" 
@@ -57,6 +61,10 @@ const ExpirationDateSelectorComponent: FC<ExpirationDateSelectorProps> = ({
           aria-label="Expiration date selection"
           onAction={(key) => handleExpirationChange(key as string)}
           className="w-[180px]"
+          classNames={{
+            base: "bg-[#010101] p-0 border-none",
+            list: "bg-[#010101] p-1 border-none"
+          }}
         >
           {expirationDates.length > 0 ? (
             expirationDates.map((date) => (

@@ -10,7 +10,7 @@ const trackingSchema = z.object({
   pagePath: z.string().optional(),
   metadata: z.record(z.any()).optional(),
   userAgent: z.string().optional(),
-  walletId: z.string(), // Add walletId to schema
+  walletId: z.string().optional(), // Make walletId optional for anonymous tracking
 })
 
 export async function POST(request: NextRequest) {
@@ -27,33 +27,39 @@ export async function POST(request: NextRequest) {
     const { walletId } = validatedData
     console.log('Processing walletId:', walletId)
 
-    // Find or create user
-    let user = await prisma.userWallet.findUnique({ where: { walletId } })
-    if (!user) {
-      console.log('Creating new user for walletId:', walletId)
-      user = await prisma.userWallet.create({
-        data: { walletId },
-      })
-    } else {
-      console.log('Found existing user for walletId:', walletId)
+    // Find or create user (only if walletId is provided)
+    let user = null
+    if (walletId) {
+      user = await prisma.userWallet.findUnique({ where: { walletId } })
+      if (!user) {
+        console.log('Creating new user for walletId:', walletId)
+        user = await prisma.userWallet.create({
+          data: { walletId },
+        })
+      } else {
+        console.log('Found existing user for walletId:', walletId)
+      }
     }
 
     // Get or create session with proper reuse logic
     let sessionId = validatedData.sessionId
     
     if (!sessionId) {
-      // Check for existing active session for this user
-      const activeSession = await prisma.userSession.findFirst({
-        where: {
-          userId: user.walletId,
-          expiresAt: {
-            gt: new Date() // Session hasn't expired yet
+      // Check for existing active session for this user (if user exists)
+      let activeSession = null
+      if (user) {
+        activeSession = await prisma.userSession.findFirst({
+          where: {
+            userId: user.walletId,
+            expiresAt: {
+              gt: new Date() // Session hasn't expired yet
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
           }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
+        })
+      }
       
       if (activeSession) {
         // Reuse existing active session
@@ -68,7 +74,7 @@ export async function POST(request: NextRequest) {
           data: {
             sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             userAgent: validatedData.userAgent || userAgent,
-            userId: user.walletId,
+            userId: user?.walletId || null, // Allow null for anonymous sessions
             expiresAt,
           },
         })

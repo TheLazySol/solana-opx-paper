@@ -37,6 +37,7 @@ export async function trackWalletConnection(options: WalletTrackingOptions) {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
           userId: user.walletId,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
         },
       })
       currentSessionId = session.sessionId
@@ -90,6 +91,7 @@ export async function trackWalletDisconnection(options: WalletTrackingOptions) {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
           userId: user.walletId,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
         },
       })
       currentSessionId = session.sessionId
@@ -144,6 +146,7 @@ export async function trackWalletAction(options: TrackActionOptions) {
           sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userAgent: userAgent || 'unknown',
           userId: user.walletId,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
         },
       })
       currentSessionId = session.sessionId

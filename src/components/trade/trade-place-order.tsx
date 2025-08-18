@@ -361,9 +361,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Order Summary
-          </h3>
+                      <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+              Order Summary
+            </h3>
           {hasSelectedOptions && (
             <Chip 
               size="sm" 
@@ -394,14 +394,14 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           className="space-y-3"
         >
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
               <Target className="w-4 h-4 text-white/60 mb-1" />
               <span className="text-xs text-white/60">Quantity</span>
               <span className="text-sm font-semibold text-white">
                 {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
               </span>
             </div>
-            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
               <DollarSign className="w-4 h-4 text-white/60 mb-1" />
               <span className="text-xs text-white/60">Volume</span>
               <span className="text-sm font-semibold text-white">
@@ -418,7 +418,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="space-y-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+          className="space-y-3 p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
         >
           <div className="flex items-center gap-2 mb-2">
             <Receipt className="w-4 h-4 text-white/60" />
@@ -474,7 +474,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-4 rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20"
+          className="p-4 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
         >
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -516,7 +516,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   ? "bg-white/10 text-white/40 border border-white/20"
                   : orderSuccess
                     ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                    : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
               )}
               isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
               onPress={handlePlaceOrder}

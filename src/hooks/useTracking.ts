@@ -123,6 +123,8 @@ export function useTracking() {
         },
       }
 
+      console.log('Sending tracking data:', trackingData)
+
       const response = await fetch('/api/tracking', {
         method: 'POST',
         headers: {
@@ -132,10 +134,17 @@ export function useTracking() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to track action')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Tracking API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        })
+        throw new Error(`Failed to track action (${response.status}): ${errorData.error || response.statusText}`)
       }
 
       const result = await response.json()
+      console.log('Tracking success:', result)
       
       // Store session ID if it's new
       if (result.sessionId && !session.sessionId) {
@@ -145,7 +154,13 @@ export function useTracking() {
 
       return result
     } catch (error) {
-      console.error('Tracking error:', error)
+      console.error('Tracking error details:', {
+        error: error instanceof Error ? error.message : error,
+        data,
+        session: session.sessionId,
+        connected,
+        walletId: publicKey?.toString()
+      })
       throw error
     } finally {
       setIsLoading(false)

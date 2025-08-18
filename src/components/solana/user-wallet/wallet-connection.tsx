@@ -20,15 +20,21 @@ export default function AccountListFeature() {
     trackPageView('/wallet-connection', {
       componentName: 'AccountListFeature',
       loadTime: new Date().toISOString(),
+    }).catch(error => {
+      console.warn('Failed to track page view:', error)
     })
   }, [trackPageView])
 
   // Handle wallet connect button click tracking
-  const handleConnectClick = () => {
-    trackButtonClick('connect_wallet_button', {
-      buttonLocation: 'account_list_feature',
-      userIntent: 'wallet_connection',
-    })
+  const handleConnectClick = async () => {
+    try {
+      await trackButtonClick('connect_wallet_button', {
+        buttonLocation: 'account_list_feature',
+        userIntent: 'wallet_connection',
+      })
+    } catch (error) {
+      console.warn('Failed to track connect wallet click:', error)
+    }
   }
 
   return (
@@ -65,19 +71,19 @@ export default function AccountListFeature() {
                 <h3 className="text-sm font-medium">Test Tracking (click these!):</h3>
                 <div className="flex gap-2 justify-center">
                   <button
-                    onClick={() => trackButtonClick('airdrop_button', { amount: '1 SOL' })}
+                    onClick={() => trackButtonClick('airdrop_button', { amount: '1 SOL' }).catch(console.warn)}
                     className="text-xs px-3 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
                   >
                     Request Airdrop
                   </button>
                   <button
-                    onClick={() => trackButtonClick('swap_button', { from: 'SOL', to: 'USDC' })}
+                    onClick={() => trackButtonClick('swap_button', { from: 'SOL', to: 'USDC' }).catch(console.warn)}
                     className="text-xs px-3 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
                   >
                     Swap Tokens
                   </button>
                   <button
-                    onClick={() => trackButtonClick('settings_button', { section: 'rpc_settings' })}
+                    onClick={() => trackButtonClick('settings_button', { section: 'rpc_settings' }).catch(console.warn)}
                     className="text-xs px-3 py-1 bg-purple-100 text-purple-800 rounded hover:bg-purple-200"
                   >
                     Open Settings

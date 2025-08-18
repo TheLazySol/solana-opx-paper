@@ -14,6 +14,9 @@ interface PriceCache {
   [tokenSymbol: string]: {
     price: number;
     priceChange24h: number;
+    volumeUsd24h: number;
+    liquidity: number;
+    marketCap: number;
     timestamp: number;
     humanTime: string;
     fetchedAt: number;
@@ -22,7 +25,7 @@ interface PriceCache {
 
 const priceCache: PriceCache = {};
 // Cache expiration time in milliseconds
-const CACHE_EXPIRATION = 5000; // 5 seconds
+const CACHE_EXPIRATION = 3000; // 3 seconds
 
 /**
  * Clears the price cache for all tokens or a specific token
@@ -40,21 +43,21 @@ export function clearPriceCache(tokenSymbol?: string) {
  * Fetches the price of a token from the Birdeye API.
  * 
  * This function makes a request to the Birdeye API to get the price of a token
- * on the Solana blockchain. It also retrieves the 24-hour price change and
- * the timestamp of the last update.
+ * on the Solana blockchain. It retrieves the current price, 24-hour price change,
+ * trading volume, liquidity, market cap, and timestamp information.
  * 
  * Rate limiting is implemented to prevent hitting API limits, with a minimum delay
  * between requests defined by MIN_API_CALL_INTERVAL.
  * 
  * @param tokenSymbol - The symbol of the token (e.g., 'SOL', 'USDC').
- * @returns {Promise<{ price: number, priceChange24h: number, timestamp: number, humanTime: string } | null>} 
- * - The price data if the request is successful, otherwise `null`.
+ * @returns {Promise<{ price: number, priceChange24h: number, volumeUsd24h: number, liquidity: number, marketCap: number, timestamp: number, humanTime: string } | null>} 
+ * - The complete price data if the request is successful, otherwise default values.
  * 
  * @throws {Error} - Throws an error if the API request fails or if the API key is not configured.
  * 
  * @example
  * const tokenPrice = await getTokenPrice('SOL');
- * console.log(tokenPrice); // { price, priceChange24h, timestamp, humanTime }
+ * console.log(tokenPrice); // { price, priceChange24h, volumeUsd24h, liquidity, marketCap, timestamp, humanTime }
  */
 export async function getTokenPrice(tokenSymbol: string) {
   // Check if we have a recent cached price
@@ -66,6 +69,9 @@ export async function getTokenPrice(tokenSymbol: string) {
     return {
       price: cachedData.price,
       priceChange24h: cachedData.priceChange24h,
+      volumeUsd24h: cachedData.volumeUsd24h,
+      liquidity: cachedData.liquidity,
+      marketCap: cachedData.marketCap,
       timestamp: cachedData.timestamp,
       humanTime: cachedData.humanTime
     };
@@ -83,9 +89,20 @@ export async function getTokenPrice(tokenSymbol: string) {
   // Return cached data or default values if token doesn't exist or no API key is available
   if (!token || !apiKey) {
     console.warn(`Cannot fetch price for ${tokenSymbol}: ${!token ? 'Token not found' : 'No API key available'}`);
-    return cachedData || {
+    return cachedData ? {
+      price: cachedData.price,
+      priceChange24h: cachedData.priceChange24h,
+      volumeUsd24h: cachedData.volumeUsd24h,
+      liquidity: cachedData.liquidity,
+      marketCap: cachedData.marketCap,
+      timestamp: cachedData.timestamp,
+      humanTime: cachedData.humanTime
+    } : {
       price: 0,
       priceChange24h: 0,
+      volumeUsd24h: 0,
+      liquidity: 0,
+      marketCap: 0,
       timestamp: Date.now(),
       humanTime: new Date().toISOString()
     };
@@ -103,12 +120,15 @@ export async function getTokenPrice(tokenSymbol: string) {
   lastFetchTime = Date.now();
   
   try {
-    const response = await fetch(`${BIRDEYE_API_URL}/price?address=${token?.address}`, options)
+    const response = await fetch(`${BIRDEYE_API_URL}/token_overview?address=${token?.address}&frames=24h&ui_amount_mode=scaled`, options)
     const data = await response.json() as BirdeyePriceResponse
     
     const priceData = {
-      price: data.data?.value ?? 0,
-      priceChange24h: data.data?.priceChange24H ?? 0,
+      price: data.data?.price ?? 0,
+      priceChange24h: data.data?.priceChange24hPercent ?? 0,
+      volumeUsd24h: data.data?.v24hUSD ?? 0,
+      liquidity: data.data?.liquidity ?? 0,
+      marketCap: data.data?.marketCap ?? 0,
       timestamp: data.data?.updateUnixTime ?? Date.now(),
       humanTime: data.data?.updateHumanTime ?? new Date().toISOString()
     };
@@ -127,6 +147,9 @@ export async function getTokenPrice(tokenSymbol: string) {
       return {
         price: cachedData.price,
         priceChange24h: cachedData.priceChange24h,
+        volumeUsd24h: cachedData.volumeUsd24h,
+        liquidity: cachedData.liquidity,
+        marketCap: cachedData.marketCap,
         timestamp: cachedData.timestamp,
         humanTime: cachedData.humanTime
       };
@@ -135,6 +158,9 @@ export async function getTokenPrice(tokenSymbol: string) {
     return {
       price: 0,
       priceChange24h: 0,
+      volumeUsd24h: 0,
+      liquidity: 0,
+      marketCap: 0,
       timestamp: Date.now(),
       humanTime: new Date().toISOString()
     };

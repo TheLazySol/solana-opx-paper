@@ -107,35 +107,35 @@ export const OrdersViewHistory: FC = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <motion.div 
-        className="flex items-center justify-between pb-4 border-b border-white/10"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-            <Calendar className="h-5 w-5 text-blue-400" />
+      {/* Header - Only show detailed header when there are positions */}
+      {closedPositions.length > 0 && (
+        <motion.div 
+          className="flex items-center justify-between px-4 py-4 mb-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
+              <Calendar className="h-5 w-5 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+                Order History
+              </h3>
+              <p className="text-sm text-white/60 mt-0.5">
+                {closedPositions.length} closed position{closedPositions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Order History
-            </h3>
-            <p className="text-sm text-white/60 mt-0.5">
-              {closedPositions.length} closed position{closedPositions.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        </div>
-        
-        {/* Clear History Button */}
-        {closedPositions.length > 0 && (
+          
+          {/* Clear History Button */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -154,23 +154,25 @@ export const OrdersViewHistory: FC = () => {
               Clear History
             </Button>
           </motion.div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
         
       {/* Content */}
         {closedPositions.length === 0 ? (
             <motion.div 
-              className="flex flex-col items-center justify-center min-h-[300px] space-y-4"
+              className="flex flex-col items-center justify-center min-h-[450px] px-6 py-12"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm">
-                <Calendar className="h-8 w-8 text-blue-400" />
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-medium text-white/80 mb-2">No History Yet</p>
-                <p className="text-sm text-white/50">Your closed positions will appear here</p>
+              <div className="flex flex-col items-center space-y-6">
+                <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/20">
+                  <Calendar className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-semibold text-white/90">No History Yet</p>
+                  <p className="text-sm text-white/60 max-w-sm">Your closed positions will appear here after you close trades</p>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -362,7 +364,7 @@ export const OrdersViewHistory: FC = () => {
               {/* Enhanced Pagination */}
               {totalPages > 1 && (
                 <motion.div 
-                  className="flex items-center justify-center gap-4 mt-8"
+                  className="flex items-center justify-center gap-4 mt-8 pb-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
@@ -444,6 +446,7 @@ export const OrdersViewHistory: FC = () => {
               )}
             </motion.div>
           )}
+    </motion.div>
           
       {/* Clear History Confirmation Modal */}
       <Modal 
@@ -513,6 +516,6 @@ export const OrdersViewHistory: FC = () => {
           )}
         </ModalContent>
       </Modal>
-    </motion.div>
+    </>
   )
 } 

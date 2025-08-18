@@ -56,7 +56,11 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
         )}
       </div>
       
-      <Dropdown>
+      <Dropdown
+        classNames={{
+          content: "bg-[#010101] p-0 border-none shadow-none"
+        }}
+      >
         <DropdownTrigger>
           <Button 
             variant="bordered" 
@@ -90,6 +94,10 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
           aria-label="Asset selection"
           onAction={(key) => handleAssetChange(key as string)}
           className="w-full"
+          classNames={{
+            base: "bg-[#010101] p-0 border-none",
+            list: "bg-[#010101] p-1 border-none"
+          }}
         >
           {assets.map((asset) => (
             <DropdownItem key={asset.id}>
