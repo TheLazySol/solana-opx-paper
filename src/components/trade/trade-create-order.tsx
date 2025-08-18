@@ -341,7 +341,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
             className="min-h-[120px] flex items-center justify-center"
           >
             <div className="text-center space-y-2">
-              <p className="text-white/60">Select options from the chain above to build your order</p>
+              <p className="text-white/60">Select from the option chain to build your order</p>
               <p className="text-sm text-white/40">Start adding options to create your strategy</p>
             </div>
           </motion.div>

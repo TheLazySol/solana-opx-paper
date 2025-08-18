@@ -402,12 +402,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
         {/* Add visual header for CALLS and PUTS */}
         <div className="flex items-center justify-center mb-2">
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold text-[#4a85ff]">CALLS</span>
+            <span className="text-lg font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">CALLS</span>
           </div>
           <div className="w-[100px] text-center">
           </div>
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold text-[#4a85ff]">PUTS</span>
+            <span className="text-lg font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">PUTS</span>
           </div>
         </div>
 

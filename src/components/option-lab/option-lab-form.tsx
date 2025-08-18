@@ -452,7 +452,7 @@ export function OptionLabForm() {
               >
                 <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
                   <CardHeader className="pb-2">
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
                       Option Configuration
                     </h3>
                   </CardHeader>
@@ -487,7 +487,7 @@ export function OptionLabForm() {
                            !methods.getValues("expirationDate") ||
                            methods.getValues("quantity") < 0.01)
                             ? "bg-white/10 text-white/40 border border-white/20"
-                            : "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                            : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
                         )}
                         isDisabled={
                           !methods.getValues("strikePrice") || 
