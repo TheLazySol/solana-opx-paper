@@ -424,7 +424,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           >
             <Table 
               aria-label="Options chain table"
-              className="min-h-[400px] bg-transparent"
+              className="bg-transparent"
               classNames={{
                 wrapper: "bg-transparent rounded-md overflow-visible",
                 th: "bg-black text-white text-center backdrop-blur-md sticky top-0 z-20",
