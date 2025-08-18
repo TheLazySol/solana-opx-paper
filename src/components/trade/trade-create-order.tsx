@@ -363,7 +363,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-200">
+                    <Card className="bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200">
                       <CardBody className="p-4 space-y-3">
                         {/* Header Row */}
                         <div className="flex items-center justify-between">
@@ -437,10 +437,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           <ButtonGroup size="sm" variant="flat">
                             <Button
                               className={cn(
-                                "transition-all",
+                                "transition-all backdrop-blur-md",
                                 orderTypes[legKey] === 'MKT' 
                                   ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                                  : "bg-black/40 text-white/60 hover:bg-black/50"
                               )}
                               onPress={() => handleOrderTypeChange(index, 'MKT')}
                             >
@@ -448,10 +448,10 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             </Button>
                             <Button
                               className={cn(
-                                "transition-all",
+                                "transition-all backdrop-blur-md",
                                 orderTypes[legKey] === 'LMT' 
                                   ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                                  : "bg-black/40 text-white/60 hover:bg-black/50"
                               )}
                               onPress={() => handleOrderTypeChange(index, 'LMT')}
                             >
@@ -484,7 +484,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                       "text-sm font-semibold",
                                       option.type === 'bid' ? "text-green-400" : "text-red-400"
                                     ),
-                                    inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-24"
+                                    inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-24"
                                   }}
                                   startContent={<span className="text-white/40">$</span>}
                                 />
@@ -500,7 +500,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             <ButtonGroup size="sm" variant="flat">
                               <Button
                                 isIconOnly
-                                className="bg-white/5 hover:bg-white/10"
+                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
                                 onPress={() => handleQuantityChange(index, -MIN_QTY)}
                               >
                                 <Minus className="w-3 h-3" />
@@ -513,12 +513,12 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 variant="flat"
                                 classNames={{
                                   input: "text-sm text-center font-medium text-white",
-                                  inputWrapper: "bg-white/5 border border-transparent rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-20"
+                                  inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-20"
                                 }}
                               />
                               <Button
                                 isIconOnly
-                                className="bg-white/5 hover:bg-white/10"
+                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
                                 onPress={() => handleQuantityChange(index, MIN_QTY)}
                               >
                                 <Plus className="w-3 h-3" />

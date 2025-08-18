@@ -397,12 +397,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   return (
     <Card className="bg-black/40 backdrop-blur-md shadow-2xl overflow-hidden">
       <CardBody className="p-4 bg-transparent">
-        {/* Option legs counter */}
-        <div className="flex justify-between items-center mb-2">
-          <div className="text-sm text-white/70">
-            Selected: {selectedOptions.length}/{MAX_OPTION_LEGS} legs
-          </div>
-        </div>
+
 
         {/* Add visual header for CALLS and PUTS */}
         <div className="flex items-center justify-center mb-2">

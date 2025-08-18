@@ -394,14 +394,14 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           className="space-y-3"
         >
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
               <Target className="w-4 h-4 text-white/60 mb-1" />
               <span className="text-xs text-white/60">Quantity</span>
               <span className="text-sm font-semibold text-white">
                 {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
               </span>
             </div>
-            <div className="flex flex-col items-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
               <DollarSign className="w-4 h-4 text-white/60 mb-1" />
               <span className="text-xs text-white/60">Volume</span>
               <span className="text-sm font-semibold text-white">
@@ -418,7 +418,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="space-y-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+          className="space-y-3 p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
         >
           <div className="flex items-center gap-2 mb-2">
             <Receipt className="w-4 h-4 text-white/60" />
@@ -474,7 +474,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-4 rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20"
+          className="p-4 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
         >
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
