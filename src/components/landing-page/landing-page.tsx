@@ -22,7 +22,7 @@ const additionalResources = [
 
 const stats = [
   {
-    label: "Volume",
+    label: "Notional Volume",
     value: "-"
   },
   {
