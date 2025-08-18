@@ -98,8 +98,6 @@ export default function TradePage() {
                 <AssetChart selectedAsset={selectedAsset} />
               </div>
               
-              <Divider className="my-3 sm:my-4" />
-              
               {/* Option Chain with Expiration Selector */}
               <div className="overflow-x-auto -mx-2 px-2" ref={optionChainControlsRef}>
                 <OptionChainControls 
