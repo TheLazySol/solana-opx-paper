@@ -25,20 +25,25 @@ export function Navbar({ links }: NavbarProps) {
   const logoSrc = '/epicentral-logo-light.png'
 
   // Track navigation clicks
-  const handleNavClick = (label: string, path: string) => {
+  const handleNavClick = async (label: string, path: string) => {
     // Track specific important navigation items
     const trackedItems = ['trade', 'option lab', 'omlp']
     const normalizedLabel = label.toLowerCase()
     
     if (trackedItems.some(item => normalizedLabel.includes(item))) {
-      trackButtonClick(`nav_${normalizedLabel.replace(/\s+/g, '_')}`, {
-        navigationTo: path,
-        fromPath: pathname,
-        timestamp: new Date().toISOString(),
-        walletConnected: isConnected,
-      })
-      
-      console.log(`Navigation tracked: ${label} -> ${path}`)
+      try {
+        await trackButtonClick(`nav_${normalizedLabel.replace(/\s+/g, '_')}`, {
+          navigationTo: path,
+          fromPath: pathname,
+          timestamp: new Date().toISOString(),
+          walletConnected: isConnected,
+        })
+        
+        console.log(`Navigation tracked: ${label} -> ${path}`)
+      } catch (error) {
+        console.warn(`Failed to track navigation to ${label}:`, error)
+        // Don't prevent navigation if tracking fails
+      }
     }
   }
 
