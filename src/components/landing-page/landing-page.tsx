@@ -20,6 +20,21 @@ const additionalResources = [
   }
 ]
 
+const stats = [
+  {
+    label: "Volume",
+    value: "-"
+  },
+  {
+    label: "TVL", 
+    value: "-"
+  },
+  {
+    label: "Trades",
+    value: "-"
+  }
+]
+
 export default function DashboardFeature() {
   const cards = [
     {
@@ -49,50 +64,133 @@ export default function DashboardFeature() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="flex flex-col items-center justify-center 
-        min-h-screen py-32 gap-8 
-        px-4 sm:px-6 lg:px-8
-        scrollbar-hide-delay"
+      className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 scrollbar-hide-delay"
     >
-      <motion.div 
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative"
-      >
-        <div className="absolute inset-0 -z-10">
-        </div>
-        <div className="flex justify-center items-center w-full">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      {/* Main Container with Horizontal Layout */}
+      <div className="max-w-7xl mx-auto">
+
+
+        {/* Hero Content - Horizontal Layout */}
+        <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[60vh]">
+          {/* Left Side - Content */}
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="space-y-8"
           >
-            <Image
-              src="/OPX_LOGO_Chrome.png"
-              alt="Solana OPX Logo"
-              width={300}
-              height={75}
-              className="transition-all duration-300"
-              priority
-            />
+            {/* Main Headline */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-tight"
+            >
+              Experience
+              <br />
+              <span className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent font-bold">
+                DeFi Options
+              </span>
+              <br />
+              Like Never Before
+            </motion.h1>
+
+            {/* Description */}
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="text-lg md:text-xl text-gray-400 max-w-lg leading-relaxed"
+            >
+              <strong>OPX</strong> is a decentralized options trading protocol built on Solana,
+              allowing users to experience derivatives like never before.
+            </motion.p>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+            >
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white font-semibold px-8 py-3 text-xl
+                transition-all duration-200 hover:scale-105 active:scale-95
+                hover:shadow-2xl hover:shadow-[#4a85ff]/40
+                active:shadow-inner active:shadow-[#4a85ff]/60"
+              onPress={() => {
+                console.log("Trade Options clicked!");
+              }}
+            >
+              Trade
+            </Button>
+            </motion.div>
+          </motion.div>
+
+          {/* Right Side - Image and Statistics */}
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 1.0 }}
+            className="flex flex-col items-center space-y-12"
+          >
+            {/* OPX Logo Centered */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+              className="flex justify-center"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Image
+                  src="/OPX_LOGO_Chrome.png"
+                  alt="Solana OPX Logo"
+                  width={450}
+                  height={112}
+                  className="transition-all duration-300"
+                />
+              </motion.div>
+            </motion.div>
+
+            {/* Statistics Grid */}
+            <div className="grid grid-cols-3 gap-8 lg:gap-12">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: 1.4 + index * 0.1,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  className="text-center"
+                >
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                    {stat.label}
+                  </div>
+                  <div className="text-2xl md:text-3xl font-bold text-white">
+                    {stat.value}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
-      </motion.div>
-      <motion.h1 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
-        className="text-2xl text-white font-normal tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] -mt-4 -mb-4"
-      >
-       Onchain Options Trading
-      </motion.h1>
+      </div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-        className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16"
-      >
+      {/* Feature Cards Section */}
+      <div className="max-w-7xl mx-auto mt-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.6 }}
+          className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+        >
         <div className="absolute inset-0 -z-10">
         </div>
         {cards.map((card, index) => (
@@ -102,7 +200,7 @@ export default function DashboardFeature() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ 
               duration: 0.6, 
-              delay: 0.8 + index * 0.1,
+              delay: 1.6 + index * 0.1,
               type: "spring",
               stiffness: 100
             }}
@@ -113,14 +211,16 @@ export default function DashboardFeature() {
               className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
                 transition-all duration-300
                 hover:bg-transparent hover:shadow-2xl hover:shadow-blue-500/10
-                overflow-hidden h-full"
+                overflow-hidden h-full group"
             >
-              <CardHeader className="p-6 pb-2">
+              <CardHeader className="p-6 pb-2 flex items-center justify-center">
                 <motion.h3 
-                  className="text-lg font-normal text-center"
+                  className="text-lg font-semibold text-center transition-all duration-300
+                    bg-gradient-to-r from-[#4a85ff] to-[#5829f2] 
+                    bg-clip-text text-transparent"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1 + index * 0.1 }}
+                  transition={{ delay: 1.8 + index * 0.1 }}
                 >
                   {card.title}
                 </motion.h3>
@@ -130,7 +230,7 @@ export default function DashboardFeature() {
                   className="text-sm text-muted-foreground text-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1.1 + index * 0.1 }}
+                  transition={{ delay: 1.9 + index * 0.1 }}
                 >
                   {card.description}
                 </motion.p>
@@ -144,11 +244,11 @@ export default function DashboardFeature() {
                 >
                   <Button 
                     variant="bordered"
-                    className="w-full bg-transparent border border-[#e5e5e5]/50 dark:border-[#393939]
-                      hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20
-                      hover:border-blue-500/70 hover:shadow-lg hover:shadow-blue-500/25
-                      active:bg-gradient-to-r active:from-blue-600/30 active:to-purple-600/30
-                      active:border-blue-600/80 active:shadow-inner
+                    className="w-full bg-transparent border border-[#4a85ff]/30 
+                      hover:bg-gradient-to-r hover:from-[#4a85ff]/20 hover:to-[#5829f2]/20
+                      hover:border-[#4a85ff]/70 hover:shadow-lg hover:shadow-[#4a85ff]/25
+                      active:bg-gradient-to-r active:from-[#4a85ff]/30 active:to-[#5829f2]/30
+                      active:border-[#4a85ff]/80 active:shadow-inner
                       transition-all duration-200 ease-out
                       group overflow-hidden relative"
                     size="md"
@@ -169,7 +269,7 @@ export default function DashboardFeature() {
                     
                     {/* Animated background shimmer effect */}
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-[#4a85ff]/20 to-transparent"
                       initial={{ x: "-100%" }}
                       whileHover={{ x: "100%" }}
                       transition={{ duration: 0.6, ease: "easeInOut" }}
@@ -177,7 +277,7 @@ export default function DashboardFeature() {
                     
                     {/* Click ripple effect */}
                     <motion.div
-                      className="absolute inset-0 bg-blue-400/20 rounded-sm"
+                      className="absolute inset-0 bg-[#4a85ff]/20 rounded-sm"
                       initial={{ scale: 0, opacity: 0 }}
                       whileTap={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
@@ -188,19 +288,21 @@ export default function DashboardFeature() {
             </Card>
           </motion.div>
         ))}
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Additional Resources */}
+      <div className="max-w-7xl mx-auto">
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 1.4 }}
-        className="flex flex-col items-center gap-4 mt-48"
+        transition={{ duration: 0.8, delay: 2.2 }}
+        className="flex flex-col items-center gap-4 mt-32"
       >
         <motion.h2 
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
-          transition={{ duration: 0.8, delay: 1.6 }}
+          transition={{ duration: 0.8, delay: 2.4 }}
           className="text-xl font-medium"
         >
           Additional Resources
@@ -209,7 +311,7 @@ export default function DashboardFeature() {
           className="flex gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.8 }}
+          transition={{ duration: 0.8, delay: 2.6 }}
         >
           {additionalResources.map((resource, index) => (
             <motion.div
@@ -218,7 +320,7 @@ export default function DashboardFeature() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ 
                 duration: 0.4, 
-                delay: 2 + index * 0.1,
+                delay: 2.8 + index * 0.1,
                 type: "spring",
                 stiffness: 200
               }}
@@ -236,8 +338,8 @@ export default function DashboardFeature() {
                 className="px-3 py-1.5 text-sm
                   backdrop-blur-sm bg-white/5 dark:bg-black/20
                   border border-[#4a85ff]/20 
-                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-purple-500/10
-                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-purple-500/20
+                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-[#5829f2]/10
+                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-[#5829f2]/20
                   active:border-[#4a85ff]/80
                   transition-all duration-200 ease-out
                   hover:shadow-[0_0_20px_rgba(74,133,255,0.3)]
@@ -258,7 +360,7 @@ export default function DashboardFeature() {
                 
                 {/* Shimmer effect on hover */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-[#4a85ff]/20 to-transparent"
                   initial={{ x: "-100%" }}
                   whileHover={{ x: "100%" }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -276,6 +378,7 @@ export default function DashboardFeature() {
           ))}
         </motion.div>
       </motion.div>
+      </div>
     </motion.div>
   )
 }

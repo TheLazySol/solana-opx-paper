@@ -76,10 +76,10 @@ export function Navbar({ links }: NavbarProps) {
                 key={path}
                 href={path}
                 onClick={() => handleNavClick(label, path)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-lg font-medium transition-all duration-300 ${
                   (pathname === path || (path !== '/' && pathname.startsWith(path + '/'))) 
-                    ? 'text-foreground' 
-                    : 'text-muted-foreground'
+                    ? 'bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent' 
+                    : 'text-muted-foreground hover:bg-gradient-to-r hover:from-[#4a85ff] hover:to-[#5829f2] hover:bg-clip-text hover:text-transparent'
                 }`}
               >
                 {label}
