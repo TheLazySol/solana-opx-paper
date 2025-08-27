@@ -57,12 +57,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   const visibleGreeks = useMemo(() => greekFilters, [greekFilters])
   const prevInitialOptionsRef = React.useRef<SelectedOption[]>([]);
   const [refreshVolume, setRefreshVolume] = useState(0); // Counter to force refresh
+  const [isVisible, setIsVisible] = useState(false) // Animation state
 
   // Use useMemo to compute the shouldDisableOptionButtons flag
   const shouldDisableOptionButtons = useMemo(
     () => selectedOptions.length >= MAX_OPTION_LEGS,
     [selectedOptions.length]
   );
+
+  // Trigger animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 300) // Delay after chart animation
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')
@@ -130,7 +140,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
   // Renderer function for price indicator row
   const renderPriceIndicatorRow = (key: string) => (
-    <TableRow key={key} className="h-0 relative">
+    <TableRow key={key} className={`h-0 relative 
+      transform transition-all duration-500 ease-out delay-700 ${
+        isVisible 
+          ? 'translate-y-0 opacity-100 scale-100' 
+          : 'translate-y-2 opacity-0 scale-95'
+      }`}>
       <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
         <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
           <div className="flex items-center w-full max-w-4xl mx-auto px-4">
@@ -395,12 +410,22 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
 
   return (
-    <Card className="bg-black/40 backdrop-blur-md shadow-2xl overflow-hidden">
+    <Card className={`bg-black/40 backdrop-blur-md shadow-2xl overflow-hidden 
+      transform transition-all duration-700 ease-out delay-150 ${
+        isVisible 
+          ? 'translate-y-0 opacity-100 scale-100' 
+          : 'translate-y-12 opacity-0 scale-98'
+      }`}>
       <CardBody className="p-4 bg-transparent">
 
 
         {/* Add visual header for CALLS and PUTS */}
-        <div className="flex items-center justify-center mb-2">
+        <div className={`flex items-center justify-center mb-2 
+          transform transition-all duration-500 ease-out delay-300 ${
+            isVisible 
+              ? 'translate-y-0 opacity-100' 
+              : 'translate-y-4 opacity-0'
+          }`}>
           <div className="flex-1 text-center">
             <span className="text-lg font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">CALLS</span>
           </div>
@@ -411,11 +436,20 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           </div>
         </div>
 
-        <div className="relative">
+        <div className={`relative 
+          transform transition-all duration-600 ease-out delay-500 ${
+            isVisible 
+              ? 'translate-y-0 opacity-100' 
+              : 'translate-y-8 opacity-0'
+          }`}>
           <ScrollShadow 
-            className="max-h-[400px]"
+            className={`max-h-[400px] ${
+              isVisible 
+                ? '' 
+                : 'overflow-hidden'
+            }`}
             size={40}
-            visibility="both"
+            visibility={isVisible ? "both" : "none"}
           >
             <Table 
               aria-label="Options chain table"
@@ -430,15 +464,25 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               }}
             >
             <TableHeader>
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <TableColumn 
                   key={column.key} 
                   className={cn(
                     "text-center w-[85px] bg-black text-white backdrop-blur-sm",
                     column.key.startsWith('call-') && column.key !== 'call-price' && "text-[#4a85ff]/80",
                     column.key.startsWith('put-') && column.key !== 'put-price' && "text-[#4a85ff]/80",
-                    column.key === 'strike' && "bg-black font-bold text-white"
+                    column.key === 'strike' && "bg-black font-bold text-white",
+                    `transform transition-all duration-300 ease-out ${
+                      isVisible 
+                        ? 'translate-y-0 opacity-100' 
+                        : 'translate-y-2 opacity-0'
+                    }`,
+                    // Staggered animation delay for each column
+                    `delay-[${600 + index * 30}ms]`
                   )}
+                  style={{
+                    transitionDelay: `${600 + index * 30}ms`
+                  }}
                 >
                   {column.key === 'call-price' || column.key === 'put-price' ? (
                     <Tooltip
@@ -484,7 +528,14 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   rows.push(
                     <TableRow
                       key={`${option.expiry}-${option.strike}`}
-                      className="transition-colors text-white hover:bg-white/5 bg-transparent"
+                      className={`transition-all duration-400 ease-out text-white hover:bg-white/5 bg-transparent ${
+                        isVisible 
+                          ? 'translate-y-0 opacity-100' 
+                          : 'translate-y-4 opacity-0'
+                      }`}
+                      style={{
+                        transitionDelay: `${800 + index * 50}ms`
+                      }}
                     >
                       {columns.map((column) => (
                         <TableCell key={`${index}-${column.key}`}>
@@ -496,7 +547,30 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   
                   // Add price indicator after this row if conditions are met
                   if (priceIndicatorPosition.showLine && priceIndicatorPosition.insertAfterIndex === index) {
-                    rows.push(renderPriceIndicatorRow(`price-indicator-after-${index}`));
+                    rows.push(
+                      <TableRow key={`price-indicator-after-${index}`} className={`h-0 relative 
+                        transform transition-all duration-500 ease-out delay-700 ${
+                          isVisible 
+                            ? 'translate-y-0 opacity-100 scale-100' 
+                            : 'translate-y-2 opacity-0 scale-95'
+                        }`}>
+                        <TableCell colSpan={columns.length} className="p-0 h-0 border-none">
+                          <div className="absolute inset-x-0 top-0 flex items-center justify-center z-10">
+                            <div className="flex items-center w-full max-w-4xl mx-auto px-4">
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#4a85ff]/80 to-[#4a85ff]/80"></div>
+                              <div className="flex items-center space-x-1.5 bg-gradient-to-r from-[#4a85ff]/20 via-[#4a85ff]/30 to-[#4a85ff]/20 border border-[#4a85ff]/60 rounded-full px-2 py-0.5 backdrop-blur-sm mx-2">
+                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                                <span className="text-[#4a85ff] font-bold text-xs whitespace-nowrap">
+                                  ${formatPrice(spotPrice)}
+                                </span>
+                                <div className="w-1.5 h-1.5 bg-[#4a85ff] rounded-full animate-pulse"></div>
+                              </div>
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-[#4a85ff]/80 to-transparent"></div>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
                   }
                 });
                 
