@@ -42,6 +42,20 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
     return () => clearTimeout(timer)
   }, [])
 
+  // Additional timer to ensure scrollbars only appear after all animations complete
+  const [allowScrollbars, setAllowScrollbars] = useState(false)
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        setAllowScrollbars(true)
+      }, 1200) // Wait for all table animations to complete
+      
+      return () => clearTimeout(timer)
+    } else {
+      setAllowScrollbars(false)
+    }
+  }, [isVisible])
+
   // Load saved preferences after component mounts to avoid hydration mismatch
   useEffect(() => {
     const savedFilters = loadFiltersFromStorage()
@@ -242,7 +256,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
         </div>
       </div>
       <div className={`w-full ${
-        isVisible 
+        allowScrollbars 
           ? 'overflow-x-auto' 
           : 'overflow-hidden'
       }`}>
@@ -257,6 +271,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             useGreekSymbols={useGreekSymbols}
             onOrderPlaced={handleOrderPlaced}
             onSwitchToCreateOrder={onSwitchToCreateOrder}
+            isParentVisible={isVisible}
           />
         </div>
       </div>

@@ -31,6 +31,7 @@ interface OptionChainTableProps {
   useGreekSymbols?: boolean
   onOrderPlaced?: () => void
   onSwitchToCreateOrder?: () => void
+  isParentVisible?: boolean
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -50,7 +51,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   initialSelectedOptions = [],
   useGreekSymbols = false,
   onOrderPlaced,
-  onSwitchToCreateOrder
+  onSwitchToCreateOrder,
+  isParentVisible = true
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
@@ -65,14 +67,18 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     [selectedOptions.length]
   );
 
-  // Trigger animation on mount
+  // Trigger animation on mount, but only if parent is visible
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true)
-    }, 300) // Delay after chart animation
-    
-    return () => clearTimeout(timer)
-  }, [])
+    if (isParentVisible) {
+      const timer = setTimeout(() => {
+        setIsVisible(true)
+      }, 300) // Delay after chart animation
+      
+      return () => clearTimeout(timer)
+    } else {
+      setIsVisible(false)
+    }
+  }, [isParentVisible])
 
   // Get the current spot price from the asset price context
   const { price: spotPrice } = useAssetPriceInfo(assetId || '')

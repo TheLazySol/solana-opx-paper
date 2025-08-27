@@ -33,6 +33,20 @@ export default function TradePage() {
     return () => clearTimeout(timer)
   }, [])
 
+  // Additional timer to control when scrollbars can appear
+  const [allowScrollbars, setAllowScrollbars] = useState(false)
+  useEffect(() => {
+    if (isPageVisible) {
+      const timer = setTimeout(() => {
+        setAllowScrollbars(true)
+      }, 1500) // Wait for all animations to complete
+      
+      return () => clearTimeout(timer)
+    } else {
+      setAllowScrollbars(false)
+    }
+  }, [isPageVisible])
+
   // On component mount, check for view and tab params
   useEffect(() => {
     const view = searchParams.get('view')
@@ -100,8 +114,16 @@ export default function TradePage() {
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
         }`}>
-          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
-            <CardBody className="p-2 sm:p-4">
+          <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full ${
+            isPageVisible 
+              ? '' 
+              : 'overflow-hidden'
+          }`}>
+            <CardBody className={`p-2 sm:p-4 ${
+              isPageVisible 
+                ? '' 
+                : 'overflow-hidden'
+            }`}>
               {/* Asset Type Selector and Token Info Panel */}
               <div className={`flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 
                 transform transition-all duration-500 ease-out delay-100 ${
@@ -118,7 +140,7 @@ export default function TradePage() {
               
               {/* Asset Chart */}
               <div className={`mb-3 sm:mb-4 ${
-                isPageVisible 
+                allowScrollbars 
                   ? 'overflow-x-auto' 
                   : 'overflow-hidden'
               }`}>
@@ -127,7 +149,7 @@ export default function TradePage() {
               
               {/* Option Chain with Expiration Selector */}
               <div className={`-mx-2 px-2 ${
-                isPageVisible 
+                allowScrollbars 
                   ? 'overflow-x-auto' 
                   : 'overflow-hidden'
               }`} ref={optionChainControlsRef}>
@@ -151,7 +173,7 @@ export default function TradePage() {
             : 'translate-x-8 opacity-0'
         }`}>
           <div className={`lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] ${
-            isPageVisible 
+            allowScrollbars 
               ? 'lg:overflow-y-auto' 
               : 'overflow-hidden'
           }`}>
