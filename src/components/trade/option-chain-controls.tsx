@@ -29,8 +29,32 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [refreshExpirations, setRefreshExpirations] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
   const optionChainTableRef = useRef<{ refreshVolumes: () => void } | null>(null)
   const {isOpen: isClearModalOpen, onOpen: onClearModalOpen, onOpenChange: onClearModalOpenChange} = useDisclosure()
+
+  // Trigger animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 200) // Small delay after chart loads
+    
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Additional timer to ensure scrollbars only appear after all animations complete
+  const [allowScrollbars, setAllowScrollbars] = useState(false)
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        setAllowScrollbars(true)
+      }, 1200) // Wait for all table animations to complete
+      
+      return () => clearTimeout(timer)
+    } else {
+      setAllowScrollbars(false)
+    }
+  }, [isVisible])
 
   // Load saved preferences after component mounts to avoid hydration mismatch
   useEffect(() => {
@@ -166,21 +190,35 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   }, [onClearModalOpenChange])
 
   return (
-    <div className="space-y-1">
+    <div className={`space-y-1 transform transition-all duration-500 ease-out ${
+      isVisible 
+        ? 'translate-y-0 opacity-100' 
+        : 'translate-y-4 opacity-0'
+    }`}>
       <div className="w-full">
         <div className="flex items-center justify-between">
-          <OptionChainUtils
-            selectedExpiration={selectedExpiration}
-            onExpirationChange={handleExpirationChange}
-            greekFilters={greekFilters}
-            onGreekFiltersChange={handleGreekFiltersChange}
-            useGreekSymbols={useGreekSymbols}
-            onGreekSymbolsChange={handleGreekSymbolsChange}
-            refreshExpirations={refreshExpirations}
-            onSettingsSaved={handleSettingsSaved}
-          />
+          <div className={`transform transition-all duration-400 ease-out delay-100 ${
+            isVisible 
+              ? 'translate-x-0 opacity-100' 
+              : '-translate-x-4 opacity-0'
+          }`}>
+            <OptionChainUtils
+              selectedExpiration={selectedExpiration}
+              onExpirationChange={handleExpirationChange}
+              greekFilters={greekFilters}
+              onGreekFiltersChange={handleGreekFiltersChange}
+              useGreekSymbols={useGreekSymbols}
+              onGreekSymbolsChange={handleGreekSymbolsChange}
+              refreshExpirations={refreshExpirations}
+              onSettingsSaved={handleSettingsSaved}
+            />
+          </div>
           
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 transform transition-all duration-400 ease-out delay-200 ${
+            isVisible 
+              ? 'translate-x-0 opacity-100 scale-100' 
+              : 'translate-x-4 opacity-0 scale-95'
+          }`}>
             <Button
               variant="bordered"
               size="sm"
@@ -217,7 +255,11 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
           </div>
         </div>
       </div>
-      <div className="w-full overflow-x-auto">
+      <div className={`w-full ${
+        allowScrollbars 
+          ? 'overflow-x-auto' 
+          : 'overflow-hidden'
+      }`}>
         <div className="min-w-[800px]">
           <OptionChainTable 
             key={`option-chain-${refreshTrigger}`}
@@ -229,6 +271,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             useGreekSymbols={useGreekSymbols}
             onOrderPlaced={handleOrderPlaced}
             onSwitchToCreateOrder={onSwitchToCreateOrder}
+            isParentVisible={isVisible}
           />
         </div>
       </div>
