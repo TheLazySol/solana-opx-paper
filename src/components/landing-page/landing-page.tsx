@@ -4,6 +4,7 @@ import { Card, CardBody, CardHeader, CardFooter } from "@heroui/react"
 import { Button } from "@heroui/react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 const additionalResources = [
   {
@@ -36,6 +37,8 @@ const stats = [
 ]
 
 export default function DashboardFeature() {
+  const router = useRouter()
+  
   const cards = [
     {
       title: "Trade More for Less",
@@ -86,7 +89,7 @@ export default function DashboardFeature() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-tight"
             >
-              Experience
+              Trade
               <br />
               <span className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent font-bold">
                 DeFi Options
@@ -102,8 +105,8 @@ export default function DashboardFeature() {
               transition={{ duration: 0.8, delay: 0.8 }}
               className="text-lg md:text-xl text-gray-400 max-w-lg leading-relaxed"
             >
-              <strong>OPX</strong> is a decentralized options trading protocol built on Solana,
-              allowing users to experience derivatives like never before.
+              <strong>OPX</strong> is an options trading protocol built on Solana.
+              Experience the next chapter of decentralized finance.
             </motion.p>
 
             {/* CTA Button */}
@@ -119,7 +122,7 @@ export default function DashboardFeature() {
                 hover:shadow-2xl hover:shadow-[#4a85ff]/40
                 active:shadow-inner active:shadow-[#4a85ff]/60"
               onPress={() => {
-                console.log("Trade Options clicked!");
+                router.push('/trade')
               }}
             >
               Trade
