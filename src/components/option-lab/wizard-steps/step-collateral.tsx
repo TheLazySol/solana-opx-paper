@@ -15,6 +15,7 @@ import {
   Tooltip,
   cn 
 } from '@heroui/react';
+import type { SliderValue } from "@heroui/react";
 import { useFormContext } from 'react-hook-form';
 import { CollateralState } from '../collateral-provider';
 import {
@@ -56,7 +57,8 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const formValues = methods.watch();
   
   const [collateralProvided, setCollateralProvided] = useState<string>("0");
-  const [leverage, setLeverage] = useState<number>(1);
+  const [leverage, setLeverage] = useState<SliderValue>(1);
+  const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
   
   // Calculate derived values
@@ -78,7 +80,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const hourlyInterestRate = BASE_ANNUAL_INTEREST_RATE / (365 * 24);
   
   // Calculate amount borrowed (collateral * (leverage - 1))
-  const amountBorrowed = Number(collateralProvided || 0) * (leverage - 1);
+  const amountBorrowed = Number(collateralProvided || 0) * (Number(leverage) - 1);
   
   // Calculate time until expiration (in hours)
   const getTimeUntilExpiration = () => {
@@ -100,14 +102,14 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const borrowFee = calculateBorrowFee(amountBorrowed);
   const transactionCost = TRANSACTION_COST_SOL;
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
-  const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), leverage);
+  const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), Number(leverage));
 
   // Update parent state
   useEffect(() => {
     const state: CollateralState = {
       hasEnoughCollateral: hasEnough,
       collateralProvided,
-      leverage,
+      leverage: Number(leverage),
       collateralType,
       borrowCost,
       optionCreationFee,
@@ -156,7 +158,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   };
 
   const collateralPercentage = requiredCollateral > 0 
-    ? Math.min((Number(collateralProvided) * leverage / requiredCollateral) * 100, 100)
+    ? Math.min((Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100, 100)
     : 0;
 
   return (
@@ -221,7 +223,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 "font-medium",
                 hasEnough ? "text-green-400" : "text-red-400"
               )}>
-                ${(requiredCollateral / leverage).toFixed(2)} needed
+                ${(requiredCollateral / Number(leverage)).toFixed(2)} needed
               </span>
             </div>
           </CardBody>
@@ -285,7 +287,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
           {/* Quick Select Buttons */}
           <div className="flex gap-2">
             <span className="text-xs text-white/40 mr-2">Quick:</span>
-            {[minCollateralRequired / leverage, requiredCollateral / leverage, requiredCollateral / leverage * 1.5].map((amount, index) => (
+            {[minCollateralRequired / Number(leverage), requiredCollateral / Number(leverage), requiredCollateral / Number(leverage) * 1.5].map((amount, index) => (
               <Button
                 key={index}
                 size="sm"
@@ -310,52 +312,52 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
           
           {/* Leverage Slider */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/60">Leverage Amount</span>
-              <div className="flex items-center gap-2">
-                <Chip
-                  size="sm"
-                  variant="flat"
-                  className={cn(
-                    "font-bold",
-                    leverage === 1 ? "bg-green-500/20 text-green-400" :
-                    leverage <= 5 ? "bg-yellow-500/20 text-yellow-400" :
-                    "bg-red-500/20 text-red-400"
-                  )}
-                >
-                  {leverage}x
-                </Chip>
-                {leverage > 1 && (
-                  <Tooltip content="Higher leverage increases risk but reduces collateral needed">
-                    <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                  </Tooltip>
-                )}
-              </div>
-            </div>
-            
             <Slider
-              value={leverage}
-              onChange={(value) => setLeverage(value as number)}
-              minValue={1}
-              maxValue={MAX_LEVERAGE}
-              step={0.5}
-              className="w-full"
+              showTooltip
+              getTooltipValue={(value: SliderValue) => `${value}x`}
               classNames={{
-                track: "bg-white/10",
-                filler: cn(
-                  leverage === 1 ? "bg-gradient-to-r from-green-400 to-green-500" :
-                  leverage <= 5 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
-                  "bg-gradient-to-r from-red-400 to-red-500"
-                ),
-                thumb: "bg-white border-2 border-white/20"
+                base: "w-full",
+                label: "text-medium",
+                filler: "bg-[#4a85ff]",
               }}
-              renderValue={() => (
-                <div className="flex justify-between w-full px-1 mt-2">
-                  <span className="text-xs text-white/40">1x</span>
-                  <span className="text-xs text-white/40">{MAX_LEVERAGE / 2}x</span>
-                  <span className="text-xs text-white/40">{MAX_LEVERAGE}x</span>
-                </div>
+              color="foreground"
+              label="Leverage"
+              maxValue={10}
+              minValue={1}
+              // eslint-disable-next-line no-unused-vars
+              renderValue={({children, ...props}) => (
+                <output {...props}>
+                  <Tooltip
+                    className="text-tiny text-default-500 rounded-md"
+                    content="Press Enter to confirm"
+                    placement="left"
+                  >
+                    <input
+                      aria-label="Leverage value"
+                      className="px-1 py-0.5 w-12 text-right text-small text-default-700 font-medium bg-default-100 outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent hover:border-primary focus:border-primary"
+                      type="text"
+                      value={leverageInputValue}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const v = e.target.value;
+                        setLeverageInputValue(v);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
+                          setLeverage(Number(leverageInputValue));
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                </output>
               )}
+              size="sm"
+              step={0.01}
+              value={leverage}
+              onChange={(value: SliderValue) => {
+                if (isNaN(Number(value))) return;
+                setLeverage(value);
+                setLeverageInputValue(value.toString());
+              }}
             />
           </div>
           
@@ -368,17 +370,17 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                   size="sm"
                   variant="flat"
                   className={cn(
-                    leverage === 1 ? "bg-green-500/20 text-green-400" :
-                    leverage <= 3 ? "bg-blue-500/20 text-blue-400" :
-                    leverage <= 5 ? "bg-yellow-500/20 text-yellow-400" :
-                    leverage <= 7 ? "bg-orange-500/20 text-orange-400" :
+                    Number(leverage) === 1 ? "bg-green-500/20 text-green-400" :
+                    Number(leverage) <= 3 ? "bg-blue-500/20 text-blue-400" :
+                    Number(leverage) <= 5 ? "bg-yellow-500/20 text-yellow-400" :
+                    Number(leverage) <= 7 ? "bg-orange-500/20 text-orange-400" :
                     "bg-red-500/20 text-red-400"
                   )}
                 >
-                  {leverage === 1 ? 'Minimal' :
-                   leverage <= 3 ? 'Low' :
-                   leverage <= 5 ? 'Medium' :
-                   leverage <= 7 ? 'High' :
+                  {Number(leverage) === 1 ? 'Minimal' :
+                   Number(leverage) <= 3 ? 'Low' :
+                   Number(leverage) <= 5 ? 'Medium' :
+                   Number(leverage) <= 7 ? 'High' :
                    'Very High'}
                 </Chip>
               </div>
@@ -453,7 +455,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 <div>
                   <p className="text-xs text-white/40 mb-1">Collateralization Ratio</p>
                   <p className="text-sm font-medium text-white">
-                    {requiredCollateral > 0 ? ((Number(collateralProvided) * leverage / requiredCollateral) * 100).toFixed(1) : '0'}%
+                    {requiredCollateral > 0 ? ((Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100).toFixed(1) : '0'}%
                   </p>
                 </div>
                 <div>
@@ -469,7 +471,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 <div>
                   <p className="text-xs text-white/40 mb-1">Borrowed Amount</p>
                   <p className="text-sm font-medium text-white">
-                    ${Math.max(0, requiredCollateral - Number(collateralProvided) * leverage).toFixed(2)}
+                    ${Math.max(0, requiredCollateral - Number(collateralProvided) * Number(leverage)).toFixed(2)}
                   </p>
                 </div>
                 <div>
