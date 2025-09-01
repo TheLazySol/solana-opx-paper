@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardBody, Button, Progress, Switch, cn } from '@heroui/react';
-import { ChevronLeft, ChevronRight, Check, Sparkles, Rocket } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Circle, DollarSign, FileCheck } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { StepConfigure, StepCollateral, StepReview } from './wizard-steps';
 import { CollateralState } from './collateral-provider';
@@ -20,19 +20,31 @@ const steps: WizardStep[] = [
     id: 'configure',
     title: 'Configure Option',
     subtitle: 'Set your option parameters',
-    icon: <Sparkles className="w-5 h-5" />
+    icon: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
+      </svg>
+    )
   },
   {
     id: 'collateral',
     title: 'Provide Collateral',
     subtitle: 'Set leverage and collateral',
-    icon: <Rocket className="w-5 h-5" />
+    icon: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+      </svg>
+    )
   },
   {
     id: 'review',
     title: 'Review & Mint',
     subtitle: 'Confirm and create your option',
-    icon: <Check className="w-5 h-5" />
+    icon: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+      </svg>
+    )
   }
 ];
 
@@ -169,16 +181,16 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
               >
                 <div
                   className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all",
+                    "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
                     index === currentStep
-                      ? "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] border-transparent text-white shadow-lg shadow-[#4a85ff]/30"
+                      ? "bg-white/10 border-white text-white"
                       : index < currentStep
                       ? "bg-green-500/20 border-green-500 text-green-400"
                       : "bg-white/5 border-white/20 text-white/60"
                   )}
                 >
                   {index < currentStep ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4" />
                   ) : (
                     step.icon
                   )}
@@ -329,7 +341,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
                 ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
                 : "bg-white/10 text-white/40 border border-white/20"
             )}
-            endContent={<Rocket className="w-4 h-4" />}
+            endContent={<Check className="w-4 h-4" />}
           >
             Mint Option
           </Button>
