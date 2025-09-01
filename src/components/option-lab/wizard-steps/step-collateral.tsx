@@ -13,6 +13,7 @@ import {
   Progress,
   Button,
   Tooltip,
+  Switch,
   cn 
 } from '@heroui/react';
 import type { SliderValue } from "@heroui/react";
@@ -60,6 +61,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const [leverage, setLeverage] = useState<SliderValue>(1);
   const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
+  const [autoLeverage, setAutoLeverage] = useState<boolean>(false);
   
   // Calculate derived values
   const options = formValues.strikePrice && formValues.premium ? [{
@@ -131,10 +133,27 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     onStateChangeAction
   ]);
 
+  const calculateAutoLeverage = () => {
+    if (Number(collateralProvided) > 0 && requiredCollateral > 0) {
+      // Calculate the minimum leverage needed to meet requirements
+      const calculatedLeverage = Math.max(1, requiredCollateral / Number(collateralProvided));
+      // Round up to nearest 0.5 and cap at 10
+      return Math.min(10, Math.ceil(calculatedLeverage * 2) / 2);
+    }
+    return 1;
+  };
+
   const handleCollateralChange = (value: string) => {
     // Only allow numbers and decimals
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setCollateralProvided(value);
+      
+      // Auto-update leverage if auto mode is enabled
+      if (autoLeverage && requiredCollateral > 0) {
+        const newLeverage = calculateAutoLeverage();
+        setLeverage(newLeverage);
+        setLeverageInputValue(newLeverage.toString());
+      }
     }
   };
 
@@ -292,7 +311,17 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 key={index}
                 size="sm"
                 variant="flat"
-                onPress={() => setCollateralProvided(amount.toFixed(2))}
+                onPress={() => {
+                  const newAmount = amount.toFixed(2);
+                  setCollateralProvided(newAmount);
+                  
+                  // Auto-update leverage if auto mode is enabled
+                  if (autoLeverage && requiredCollateral > 0) {
+                    const newLeverage = calculateAutoLeverage();
+                    setLeverage(newLeverage);
+                    setLeverageInputValue(newLeverage.toString());
+                  }
+                }}
                 className="bg-white/5 hover:bg-white/10 text-xs"
               >
                 ${amount.toFixed(0)}
@@ -303,11 +332,38 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
         {/* Leverage Section */}
         <motion.div variants={itemVariants} className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#5829f2]/20 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-[#5829f2]" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#5829f2]/20 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-[#5829f2]" />
+              </div>
+              <h3 className="text-lg font-medium text-white">Leverage</h3>
             </div>
-            <h3 className="text-lg font-medium text-white">Leverage</h3>
+            
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10"
+            >
+              <span className="text-xs text-white/80">Auto</span>
+              <Switch
+                size="sm"
+                checked={autoLeverage}
+                onValueChange={(value) => {
+                  setAutoLeverage(value);
+                  if (value) {
+                    // When enabling auto, calculate and set leverage
+                    const newLeverage = calculateAutoLeverage();
+                    setLeverage(newLeverage);
+                    setLeverageInputValue(newLeverage.toString());
+                  }
+                }}
+                classNames={{
+                  wrapper: "group-data-[selected=true]:bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
+                  thumb: "group-data-[selected=true]:bg-white"
+                }}
+              />
+            </motion.div>
           </div>
           
           {/* Leverage Slider */}
@@ -315,10 +371,13 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
             <Slider
               showTooltip
               getTooltipValue={(value: SliderValue) => `${value}x`}
+              isDisabled={autoLeverage}
               classNames={{
-                base: "w-full",
-                label: "text-medium",
-                filler: "bg-[#4a85ff]",
+                base: cn("w-full", autoLeverage && "opacity-50"),
+                label: cn("text-medium", autoLeverage && "text-white/40"),
+                filler: cn("bg-[#4a85ff]", autoLeverage && "bg-white/20"),
+                track: autoLeverage ? "bg-white/10" : undefined,
+                thumb: autoLeverage ? "bg-white/40" : undefined
               }}
               color="foreground"
               label="Leverage"
@@ -329,20 +388,28 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 <output {...props}>
                   <Tooltip
                     className="text-tiny text-default-500 rounded-md"
-                    content="Press Enter to confirm"
+                    content={autoLeverage ? "Auto mode enabled" : "Press Enter to confirm"}
                     placement="left"
                   >
                     <input
                       aria-label="Leverage value"
-                      className="px-1 py-0.5 w-12 text-right text-small text-default-700 font-medium bg-default-100 outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent hover:border-primary focus:border-primary"
+                      className={cn(
+                        "px-1 py-0.5 w-12 text-right text-small font-medium outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent",
+                        autoLeverage 
+                          ? "bg-white/10 text-white/40 cursor-not-allowed"
+                          : "bg-default-100 text-default-700 hover:border-primary focus:border-primary"
+                      )}
                       type="text"
                       value={leverageInputValue}
+                      disabled={autoLeverage}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const v = e.target.value;
-                        setLeverageInputValue(v);
+                        if (!autoLeverage) {
+                          const v = e.target.value;
+                          setLeverageInputValue(v);
+                        }
                       }}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
+                        if (!autoLeverage && e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
                           setLeverage(Number(leverageInputValue));
                         }
                       }}
@@ -354,9 +421,10 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               step={0.01}
               value={leverage}
               onChange={(value: SliderValue) => {
-                if (isNaN(Number(value))) return;
-                setLeverage(value);
-                setLeverageInputValue(value.toString());
+                if (!autoLeverage && !isNaN(Number(value))) {
+                  setLeverage(value);
+                  setLeverageInputValue(value.toString());
+                }
               }}
             />
           </div>
