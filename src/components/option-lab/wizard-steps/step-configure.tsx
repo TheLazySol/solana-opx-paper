@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody, Chip, Tooltip, Button, cn } from '@heroui/react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -40,7 +40,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
   const quantity = useWatch({ control: methods.control, name: 'quantity' });
   const premium = useWatch({ control: methods.control, name: 'premium' });
 
-  const calculateOptionPrice = async (values: any) => {
+  const calculateOptionPrice = useCallback(async (values: any) => {
     if (isCalculatingPremium) return;
     
     if (!assetPrice || !values.expirationDate || !values.strikePrice || values.strikePrice === '') {
@@ -80,7 +80,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
     } finally {
       setIsCalculatingPremium(false);
     }
-  };
+  }, [assetPrice, isCalculatingPremium, methods]);
 
   useEffect(() => {
     if (debounceTimer.current) {
@@ -103,7 +103,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [strikePrice, expirationDate, assetPrice, optionType]);
+  }, [strikePrice, expirationDate, assetPrice, optionType, calculateOptionPrice, methods]);
 
   const manualRefresh = () => {
     const values = methods.getValues();

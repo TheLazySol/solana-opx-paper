@@ -38,7 +38,6 @@ interface StepReviewProps {
   proMode: boolean;
   collateralState: CollateralState;
   assetPrice: number | null;
-  onSubmit: (e?: React.FormEvent) => void;
   isSubmitting: boolean;
 }
 
@@ -46,7 +45,6 @@ export function StepReview({
   proMode, 
   collateralState, 
   assetPrice,
-  onSubmit,
   isSubmitting 
 }: StepReviewProps) {
   const methods = useFormContext();
@@ -401,7 +399,7 @@ export function StepReview({
               <p className="text-sm font-medium text-green-400">Ready to Mint</p>
               <p className="text-xs text-green-300">
                 Your option contract is configured correctly and you have sufficient collateral. 
-                Click "Mint Option" to create your position.
+                Click &quot;Mint Option&quot; to create your position.
               </p>
             </div>
           </div>

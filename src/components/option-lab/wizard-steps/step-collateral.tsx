@@ -48,10 +48,10 @@ import {
 
 interface StepCollateralProps {
   proMode: boolean;
-  onStateChange: (state: CollateralState) => void;
+  onStateChangeAction: (state: CollateralState) => void;
 }
 
-export function StepCollateral({ proMode, onStateChange }: StepCollateralProps) {
+export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralProps) {
   const methods = useFormContext();
   const formValues = methods.watch();
   
@@ -72,9 +72,9 @@ export function StepCollateral({ proMode, onStateChange }: StepCollateralProps) 
   const totalPremium = calculateTotalPremium(options);
   const collateralNeeded = calculateCollateralNeeded(options);
   const requiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
-  const minCollateralRequired = calculateMinCollateralRequired(options);
+  const minCollateralRequired = calculateMinCollateralRequired(collateralNeeded);
   const borrowCost = calculateBorrowCost(Number(collateralProvided), leverage, requiredCollateral);
-  const optionCreationFee = calculateOptionCreationFee(options);
+  const optionCreationFee = calculateOptionCreationFee();
   const borrowFee = calculateBorrowFee(borrowCost);
   const transactionCost = TRANSACTION_COST_SOL;
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
@@ -93,7 +93,7 @@ export function StepCollateral({ proMode, onStateChange }: StepCollateralProps) 
       transactionCost,
       maxProfitPotential
     };
-    onStateChange(state);
+    onStateChangeAction(state);
   }, [
     hasEnough,
     collateralProvided,
@@ -104,7 +104,7 @@ export function StepCollateral({ proMode, onStateChange }: StepCollateralProps) 
     borrowFee,
     transactionCost,
     maxProfitPotential,
-    onStateChange
+    onStateChangeAction
   ]);
 
   const handleCollateralChange = (value: string) => {
@@ -230,7 +230,7 @@ export function StepCollateral({ proMode, onStateChange }: StepCollateralProps) 
             }}
           >
             {COLLATERAL_TYPES.map(type => (
-              <SelectItem key={type.value} value={type.value}>
+              <SelectItem key={type.value}>
                 {type.label}
               </SelectItem>
             ))}
