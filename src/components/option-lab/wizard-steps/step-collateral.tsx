@@ -73,9 +73,31 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const collateralNeeded = calculateCollateralNeeded(options);
   const requiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
   const minCollateralRequired = calculateMinCollateralRequired(collateralNeeded);
-  const borrowCost = calculateBorrowCost(Number(collateralProvided), leverage, requiredCollateral);
+  
+  // Convert annual to hourly interest rate
+  const hourlyInterestRate = BASE_ANNUAL_INTEREST_RATE / (365 * 24);
+  
+  // Calculate amount borrowed (collateral * (leverage - 1))
+  const amountBorrowed = Number(collateralProvided || 0) * (leverage - 1);
+  
+  // Calculate time until expiration (in hours)
+  const getTimeUntilExpiration = () => {
+    if (!formValues.expirationDate) {
+      return 7 * 24; // Default to 7 days if no expiration date
+    }
+    
+    const now = new Date();
+    const expiry = new Date(formValues.expirationDate);
+    const hoursUntilExpiry = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60)));
+    return hoursUntilExpiry;
+  };
+  
+  const hoursUntilExpiry = getTimeUntilExpiration();
+  
+  // Calculate all fees correctly
+  const borrowCost = calculateBorrowCost(amountBorrowed, hourlyInterestRate, hoursUntilExpiry);
   const optionCreationFee = calculateOptionCreationFee();
-  const borrowFee = calculateBorrowFee(borrowCost);
+  const borrowFee = calculateBorrowFee(amountBorrowed);
   const transactionCost = TRANSACTION_COST_SOL;
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
   const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), leverage);

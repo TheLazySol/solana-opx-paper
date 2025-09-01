@@ -208,7 +208,7 @@ export function OptionLabForm() {
 
   useEffect(() => {
     if (calculatedPrice !== null) {
-      methods.setValue('premium', calculatedPrice.toFixed(4), { 
+      methods.setValue('premium', calculatedPrice.toFixed(2), { 
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -566,7 +566,7 @@ export function OptionLabForm() {
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-white/60">Premium:</span>
                                 <span className="text-sm font-medium text-red-400">
-                                  ${Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(4)}
+                                  ${Number(pendingOptions[pendingOptions.length - 1].premium).toFixed(2)}
                                 </span>
                               </div>
                               

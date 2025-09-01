@@ -228,7 +228,7 @@ export function StepReview({
                     </div>
                     <p className="text-xs text-white/60 mt-0.5">
                       Strike: ${Number(formValues.strikePrice).toFixed(2)} | 
-                      Premium: ${Number(formValues.premium).toFixed(4)} | 
+                      Premium: ${Number(formValues.premium).toFixed(2)} | 
                       Qty: {formValues.quantity}
                     </p>
                   </div>

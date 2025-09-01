@@ -34,7 +34,7 @@ export const PremiumDisplay = ({
       <Input
         isReadOnly
         placeholder="Calculated premium"
-        value={getValues('premium') ? `$${getValues('premium')}` : 'Calculating...'}
+        value={getValues('premium') ? `$${Number(getValues('premium')).toFixed(2)}` : 'Calculating...'}
         variant="flat"
         classNames={{
           input: "text-blue-400 font-medium",

@@ -65,7 +65,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
       });
       const premium = result.price;
       
-      methods.setValue('premium', premium.toString(), {
+      methods.setValue('premium', premium.toFixed(2), {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -183,7 +183,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                     </div>
                     <div className="flex items-center gap-4 mt-1">
                       <span className="text-xs text-white/40">Strike: ${Number(strikePrice).toFixed(2)}</span>
-                      <span className="text-xs text-white/40">Premium: ${Number(premium).toFixed(4)}</span>
+                      <span className="text-xs text-white/40">Premium: ${Number(premium).toFixed(2)}</span>
                       <span className="text-xs text-white/40">Qty: {quantity}</span>
                     </div>
                   </div>
