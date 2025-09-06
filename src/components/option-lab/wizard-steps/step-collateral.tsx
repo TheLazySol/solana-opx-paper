@@ -250,207 +250,214 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       </motion.div>
 
       {/* Main Configuration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Collateral Input Section */}
-        <motion.div variants={itemVariants} className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#4a85ff]/20 flex items-center justify-center">
-              <Coins className="w-4 h-4 text-[#4a85ff]" />
-            </div>
-            <h3 className="text-lg font-medium text-white">Collateral Amount</h3>
-          </div>
-          
-          {/* Collateral Type Selector */}
-          <Select
-            label="Collateral Type"
-            selectedKeys={[collateralType]}
-            onSelectionChange={(keys) => setCollateralType(Array.from(keys)[0] as string)}
-            className="w-full"
-            classNames={{
-              trigger: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
-              value: "text-white",
-              label: "text-white/60"
-            }}
-          >
-            {COLLATERAL_TYPES.map(type => (
-              <SelectItem key={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </Select>
-          
-          {/* Collateral Amount Input */}
-          <Input
-            type="text"
-            label="Collateral Amount"
-            placeholder="0.00"
-            value={collateralProvided}
-            onValueChange={handleCollateralChange}
-            startContent={
-              <div className="pointer-events-none flex items-center">
-                <span className="text-white/60">$</span>
+        <motion.div variants={itemVariants}>
+          <Card className="bg-white/5 border border-white/10">
+            <CardBody className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Coins className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-sm font-medium text-white">Collateral Amount</h3>
               </div>
-            }
-            endContent={
-              <Chip size="sm" variant="flat" className="bg-white/10">
-                {collateralType}
-              </Chip>
-            }
-            classNames={{
-              base: "max-w-full",
-              input: "text-white",
-              inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10"
-            }}
-          />
-          
-          {/* Quick Select Buttons */}
-          <div className="flex gap-2">
-            <span className="text-xs text-white/40 mr-2">Quick:</span>
-            {[minCollateralRequired / Number(leverage), requiredCollateral / Number(leverage), requiredCollateral / Number(leverage) * 1.5].map((amount, index) => (
-              <Button
-                key={index}
-                size="sm"
-                variant="flat"
-                onPress={() => {
-                  const newAmount = amount.toFixed(2);
-                  setCollateralProvided(newAmount);
-                  
-                  // Auto-update leverage if auto mode is enabled
-                  if (autoLeverage && requiredCollateral > 0) {
-                    const newLeverage = calculateAutoLeverage();
-                    setLeverage(newLeverage);
-                    setLeverageInputValue(newLeverage.toString());
+              <div className="space-y-3">
+                {/* Collateral Type Selector */}
+                <Select
+                  label="Collateral Type"
+                  selectedKeys={[collateralType]}
+                  onSelectionChange={(keys) => setCollateralType(Array.from(keys)[0] as string)}
+                  className="w-full"
+                  classNames={{
+                    trigger: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
+                    value: "text-white",
+                    label: "text-white/60"
+                  }}
+                >
+                  {COLLATERAL_TYPES.map(type => (
+                    <SelectItem key={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </Select>
+                
+                {/* Collateral Amount Input */}
+                <Input
+                  type="text"
+                  label="Collateral Amount"
+                  placeholder="0.00"
+                  value={collateralProvided}
+                  onValueChange={handleCollateralChange}
+                  startContent={
+                    <div className="pointer-events-none flex items-center">
+                      <span className="text-white/60">$</span>
+                    </div>
                   }
-                }}
-                className="bg-white/5 hover:bg-white/10 text-xs"
-              >
-                ${amount.toFixed(0)}
-              </Button>
-            ))}
-          </div>
+                  endContent={
+                    <Chip size="sm" variant="flat" className="bg-white/10">
+                      {collateralType}
+                    </Chip>
+                  }
+                  classNames={{
+                    base: "max-w-full",
+                    input: "text-white",
+                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10"
+                  }}
+                />
+                
+                {/* Quick Select Buttons */}
+                <div className="flex gap-2">
+                  <span className="text-xs text-white/40 mr-2">Quick:</span>
+                  {[minCollateralRequired / Number(leverage), requiredCollateral / Number(leverage), requiredCollateral / Number(leverage) * 1.5].map((amount, index) => (
+                    <Button
+                      key={index}
+                      size="sm"
+                      variant="flat"
+                      onPress={() => {
+                        const newAmount = amount.toFixed(2);
+                        setCollateralProvided(newAmount);
+                        
+                        // Auto-update leverage if auto mode is enabled
+                        if (autoLeverage && requiredCollateral > 0) {
+                          const newLeverage = calculateAutoLeverage();
+                          setLeverage(newLeverage);
+                          setLeverageInputValue(newLeverage.toString());
+                        }
+                      }}
+                      className="bg-white/5 hover:bg-white/10 text-xs"
+                    >
+                      ${amount.toFixed(0)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardBody>
+          </Card>
         </motion.div>
 
         {/* Leverage Section */}
-        <motion.div variants={itemVariants} className="space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#5829f2]/20 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-[#5829f2]" />
-              </div>
-              <h3 className="text-lg font-medium text-white">Leverage</h3>
-            </div>
-            
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10"
-            >
-              <span className="text-xs text-white/80">Auto</span>
-              <Switch
-                size="sm"
-                checked={autoLeverage}
-                onValueChange={(value) => {
-                  setAutoLeverage(value);
-                  if (value) {
-                    // When enabling auto, calculate and set leverage
-                    const newLeverage = calculateAutoLeverage();
-                    setLeverage(newLeverage);
-                    setLeverageInputValue(newLeverage.toString());
-                  }
-                }}
-                classNames={{
-                  wrapper: "group-data-[selected=true]:bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
-                  thumb: "group-data-[selected=true]:bg-white"
-                }}
-              />
-            </motion.div>
-          </div>
-          
-          {/* Leverage Slider */}
-          <div className="space-y-2">
-            <Slider
-              showTooltip
-              getTooltipValue={(value: SliderValue) => `${value}x`}
-              isDisabled={autoLeverage}
-              classNames={{
-                base: cn("w-full", autoLeverage && "opacity-50"),
-                label: cn("text-medium", autoLeverage && "text-white/40"),
-                filler: cn("bg-[#4a85ff]", autoLeverage && "bg-white/20"),
-                track: autoLeverage ? "bg-white/10" : undefined,
-                thumb: autoLeverage ? "bg-white/40" : undefined
-              }}
-              color="foreground"
-              label="Leverage"
-              maxValue={10}
-              minValue={1}
-              // eslint-disable-next-line no-unused-vars
-              renderValue={({children, ...props}) => (
-                <output {...props}>
-                  <Tooltip
-                    className="text-tiny text-default-500 rounded-md"
-                    content={autoLeverage ? "Auto mode enabled" : "Press Enter to confirm"}
-                    placement="left"
-                  >
-                    <input
-                      aria-label="Leverage value"
-                      className={cn(
-                        "px-1 py-0.5 w-12 text-right text-small font-medium outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent",
-                        autoLeverage 
-                          ? "bg-white/10 text-white/40 cursor-not-allowed"
-                          : "bg-default-100 text-default-700 hover:border-primary focus:border-primary"
-                      )}
-                      type="text"
-                      value={leverageInputValue}
-                      disabled={autoLeverage}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        if (!autoLeverage) {
-                          const v = e.target.value;
-                          setLeverageInputValue(v);
-                        }
-                      }}
-                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (!autoLeverage && e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
-                          setLeverage(Number(leverageInputValue));
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                </output>
-              )}
-              size="sm"
-              step={0.01}
-              value={leverage}
-              onChange={(value: SliderValue) => {
-                if (!autoLeverage && !isNaN(Number(value))) {
-                  setLeverage(value);
-                  setLeverageInputValue(value.toString());
-                }
-              }}
-            />
-          </div>
-          
-          {/* Risk Indicator */}
+        <motion.div variants={itemVariants}>
           <Card className="bg-white/5 border border-white/10">
-            <CardBody className="p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-white/60">Risk Level</span>
-                <Chip
-                  size="sm"
-                  variant="flat"
-                  className={cn(
-                    Number(leverage) === 1 ? "bg-green-500/20 text-green-400" :
-                    Number(leverage) <= 3 ? "bg-blue-500/20 text-blue-400" :
-                    Number(leverage) <= 5 ? "bg-yellow-500/20 text-yellow-400" :
-                    Number(leverage) <= 7 ? "bg-orange-500/20 text-orange-400" :
-                    "bg-red-500/20 text-red-400"
-                  )}
+            <CardBody className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-[#5829f2]/20 flex items-center justify-center">
+                    <Zap className="w-3 h-3 text-[#5829f2]" />
+                  </div>
+                  <h3 className="text-sm font-medium text-white">Leverage</h3>
+                </div>
+                
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10"
                 >
-                  {Number(leverage) === 1 ? 'Minimal' :
-                   Number(leverage) <= 3 ? 'Low' :
-                   Number(leverage) <= 5 ? 'Medium' :
-                   Number(leverage) <= 7 ? 'High' :
-                   'Very High'}
-                </Chip>
+                  <span className="text-xs text-white/80">Auto</span>
+                  <Switch
+                    size="sm"
+                    checked={autoLeverage}
+                    onValueChange={(value) => {
+                      setAutoLeverage(value);
+                      if (value) {
+                        // When enabling auto, calculate and set leverage
+                        const newLeverage = calculateAutoLeverage();
+                        setLeverage(newLeverage);
+                        setLeverageInputValue(newLeverage.toString());
+                      }
+                    }}
+                    classNames={{
+                      wrapper: "group-data-[selected=true]:bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
+                      thumb: "group-data-[selected=true]:bg-white"
+                    }}
+                  />
+                </motion.div>
+              </div>
+              
+              {/* Leverage Slider */}
+              <div className="space-y-3">
+                <Slider
+                  showTooltip
+                  getTooltipValue={(value: SliderValue) => `${value}x`}
+                  isDisabled={autoLeverage}
+                  classNames={{
+                    base: cn("w-full", autoLeverage && "opacity-50"),
+                    label: cn("text-medium", autoLeverage && "text-white/40"),
+                    filler: cn("bg-[#4a85ff]", autoLeverage && "bg-white/20"),
+                    track: autoLeverage ? "bg-white/10" : undefined,
+                    thumb: autoLeverage ? "bg-white/40" : undefined
+                  }}
+                  color="foreground"
+                  label="Leverage"
+                  maxValue={10}
+                  minValue={1}
+                  // eslint-disable-next-line no-unused-vars
+                  renderValue={({children, ...props}) => (
+                    <output {...props}>
+                      <Tooltip
+                        className="text-tiny text-default-500 rounded-md"
+                        content={autoLeverage ? "Auto mode enabled" : "Press Enter to confirm"}
+                        placement="left"
+                      >
+                        <input
+                          aria-label="Leverage value"
+                          className={cn(
+                            "px-1 py-0.5 w-12 text-right text-small font-medium outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent",
+                            autoLeverage 
+                              ? "bg-white/10 text-white/40 cursor-not-allowed"
+                              : "bg-default-100 text-default-700 hover:border-primary focus:border-primary"
+                          )}
+                          type="text"
+                          value={leverageInputValue}
+                          disabled={autoLeverage}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            if (!autoLeverage) {
+                              const v = e.target.value;
+                              setLeverageInputValue(v);
+                            }
+                          }}
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                            if (!autoLeverage && e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
+                              setLeverage(Number(leverageInputValue));
+                            }
+                          }}
+                        />
+                      </Tooltip>
+                    </output>
+                  )}
+                  size="sm"
+                  step={0.01}
+                  value={leverage}
+                  onChange={(value: SliderValue) => {
+                    if (!autoLeverage && !isNaN(Number(value))) {
+                      setLeverage(value);
+                      setLeverageInputValue(value.toString());
+                    }
+                  }}
+                />
+              </div>
+              
+              {/* Risk Indicator */}
+              <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/60">Risk Level</span>
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    className={cn(
+                      Number(leverage) === 1 ? "bg-green-500/20 text-green-400" :
+                      Number(leverage) <= 3 ? "bg-blue-500/20 text-blue-400" :
+                      Number(leverage) <= 5 ? "bg-yellow-500/20 text-yellow-400" :
+                      Number(leverage) <= 7 ? "bg-orange-500/20 text-orange-400" :
+                      "bg-red-500/20 text-red-400"
+                    )}
+                  >
+                    {Number(leverage) === 1 ? 'Minimal' :
+                     Number(leverage) <= 3 ? 'Low' :
+                     Number(leverage) <= 5 ? 'Medium' :
+                     Number(leverage) <= 7 ? 'High' :
+                     'Very High'}
+                  </Chip>
+                </div>
               </div>
             </CardBody>
           </Card>
@@ -459,10 +466,12 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
       {/* Cost Breakdown */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-black/40 border border-white/10">
+        <Card className="bg-white/5 border border-white/10">
           <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
-              <Receipt className="w-4 h-4 text-[#4a85ff]" />
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Receipt className="w-3 h-3 text-[#4a85ff]" />
+              </div>
               <h4 className="text-sm font-medium text-white">Cost Breakdown</h4>
             </div>
             
@@ -511,7 +520,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
           <Card className="bg-white/5 border border-white/10">
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-4">
-                <Info className="w-4 h-4 text-[#4a85ff]" />
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Info className="w-3 h-3 text-[#4a85ff]" />
+                </div>
                 <h4 className="text-sm font-medium text-white">Advanced Collateral Details</h4>
               </div>
               
@@ -562,12 +573,14 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       )}
 
       {/* Help Text */}
-      <motion.div variants={itemVariants} className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-        <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-300">
-          Provide collateral to secure your option position. Use leverage to reduce collateral requirements but be aware of increased risk.
-          {proMode && ' Advanced metrics help you understand your risk exposure.'}
-        </p>
+      <motion.div variants={itemVariants}>
+        <div className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-blue-300">
+            Provide collateral to secure your option position. Use leverage to reduce collateral requirements but be aware of increased risk.
+            {proMode && ' Advanced metrics help you understand your risk exposure.'}
+          </p>
+        </div>
       </motion.div>
     </motion.div>
   );
