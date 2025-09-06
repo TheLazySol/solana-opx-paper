@@ -36,7 +36,8 @@ import {
   BORROW_FEE_RATE,
   OPTION_CREATION_FEE_RATE,
   TRANSACTION_COST_SOL,
-  MAX_LEVERAGE
+  MAX_LEVERAGE,
+  ASSET_PRICE_REFRESH_INTERVAL
 } from '@/constants/constants';
 import { getTokenPrice } from '@/lib/api/getTokenPrice';
 import { 
@@ -161,7 +162,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     };
     
     fetchSolPrice();
-    const interval = setInterval(fetchSolPrice, 30000); // Update every 30 seconds
+    const interval = setInterval(fetchSolPrice, ASSET_PRICE_REFRESH_INTERVAL * 20); // Update every 30 seconds (1.5s * 20)
     
     return () => clearInterval(interval);
   }, []);
@@ -199,10 +200,10 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   // Calculate maximum leverage that would result in exactly 100% coverage
   const maxLeverageFor100Percent = Number(collateralProvided) > 0 && requiredCollateral > 0
     ? Math.max(1, requiredCollateral / Number(collateralProvided))
-    : 10;
+    : MAX_LEVERAGE;
 
-  // Dynamic max leverage (capped at 10, but limited by 100% coverage and never below 1)
-  const dynamicMaxLeverage = Math.min(10, Math.max(1, maxLeverageFor100Percent));
+  // Dynamic max leverage (capped at MAX_LEVERAGE, but limited by 100% coverage and never below 1)
+  const dynamicMaxLeverage = Math.min(MAX_LEVERAGE, Math.max(1, maxLeverageFor100Percent));
 
   // Auto-adjust leverage when it would exceed 100% coverage or reset to 1x when 100% covered
   useEffect(() => {
@@ -211,7 +212,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       
       if (currentCoverage > 1) {
         // If current leverage results in over 100% coverage, reduce it but never below 1
-        const newLeverage = Math.max(1, Math.min(10, maxLeverageFor100Percent));
+        const newLeverage = Math.max(1, Math.min(MAX_LEVERAGE, maxLeverageFor100Percent));
         setLeverage(newLeverage);
         setLeverageInputValue(newLeverage.toString());
       }
@@ -227,7 +228,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
   // Handle max leverage alert visibility
   useEffect(() => {
-    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10;
+    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE;
     
     if (isAtMaxLeverage) {
       // Show alert and start 10-second timer
@@ -245,7 +246,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
   // Reset alert visibility when collateral changes (but only if not at max leverage)
   useEffect(() => {
-    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10;
+    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE;
     if (!isAtMaxLeverage) {
       setShowMaxLeverageAlert(false);
     }
@@ -360,7 +361,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                   }}
                   color="foreground"
                   label="Leverage"
-                  maxValue={10}
+                  maxValue={MAX_LEVERAGE}
                   minValue={1}
                   // eslint-disable-next-line no-unused-vars
                   renderValue={({children, ...props}) => (
@@ -446,32 +447,37 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               <h4 className="text-sm font-medium text-white">Collateral Status</h4>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-white/40 mb-1">Provided</p>
                 <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Required</p>
-                <p className="text-sm font-medium text-white">${(requiredCollateral / Number(leverage)).toFixed(2)}</p>
+                <p className="text-xs text-white/40 mb-1">Remaining Coverage Needed</p>
+                <p className="text-sm font-medium text-white">
+                  ${Math.max(0, (requiredCollateral / Number(leverage)) - Number(collateralProvided)).toFixed(2)}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-white/40 mb-1">Coverage</p>
-                <p className="text-sm font-medium text-white">{collateralPercentage.toFixed(1)}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/40 mb-1">Status</p>
-                <Chip
-                  size="sm"
-                  variant="flat"
+                <p 
                   className={cn(
-                    hasEnough
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
+                    "text-sm font-medium transition-all duration-300",
+                    collateralPercentage >= 100 
+                      ? "text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]" 
+                      : ""
                   )}
+                  style={{
+                    color: collateralPercentage >= 100 
+                      ? 'rgb(34 197 94)' 
+                      : `rgb(${255 - (collateralPercentage * 1.21)} ${255 - (collateralPercentage * 0.58)} ${255 - (collateralPercentage * 0.61)})`,
+                    filter: collateralPercentage >= 100 
+                      ? 'drop-shadow(0 0 8px rgba(34,197,94,0.8))' 
+                      : `drop-shadow(0 0 ${collateralPercentage * 0.08}px rgba(34,197,94,${collateralPercentage * 0.008}))`
+                  }}
                 >
-                  {hasEnough ? 'Sufficient' : 'Insufficient'}
-                </Chip>
+                  {collateralPercentage.toFixed(1)}%
+                </p>
               </div>
             </div>
           </CardBody>
@@ -480,7 +486,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
       {/* Max Leverage Alert */}
       <AnimatePresence>
-        {Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10 && showMaxLeverageAlert && (
+        {Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE && showMaxLeverageAlert && (
           <motion.div 
             key="max-leverage-alert"
             initial={{ opacity: 0, y: 10 }}
