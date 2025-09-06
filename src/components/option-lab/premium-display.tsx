@@ -52,7 +52,7 @@ export const PremiumDisplay = ({
         }
         classNames={{
           input: "text-blue-400 font-medium",
-          inputWrapper: "bg-white/5 border border-white/20 rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none border-[0.5px] hover:border-white/30"
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px] rounded-lg"
         }}
       />
     </div>

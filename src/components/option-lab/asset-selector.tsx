@@ -57,14 +57,16 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
       </div>
       
       <Dropdown
+        placement="bottom-start"
+        offset={4}
         classNames={{
-          content: "bg-[#010101] p-0 border-none shadow-none"
+          content: "p-0 border border-white/20 bg-[#1a1a1a] rounded-lg shadow-lg min-w-[var(--trigger-width)] animate-in fade-in-0 zoom-in-95 duration-150"
         }}
       >
         <DropdownTrigger>
           <Button 
             variant="bordered" 
-            className="w-full justify-between bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px]"
+            className="w-full justify-between bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px] rounded-lg"
             endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
           >
             <div className="flex items-center">
@@ -93,15 +95,20 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
         <DropdownMenu 
           aria-label="Asset selection"
           onAction={(key) => handleAssetChange(key as string)}
-          className="w-full"
           classNames={{
-            base: "bg-[#010101] p-0 border-none",
-            list: "bg-[#010101] p-1 border-none"
+            base: "p-1 bg-transparent border-none shadow-none",
+            list: "bg-transparent border-none shadow-none"
           }}
         >
           {assets.map((asset) => (
-            <DropdownItem key={asset.id}>
-              <div className="flex items-center">
+            <DropdownItem 
+              key={asset.id}
+              classNames={{
+                base: "rounded-md bg-transparent hover:bg-white/10 data-[hover=true]:bg-white/10 data-[selectable=true]:focus:bg-white/10",
+                wrapper: "bg-transparent"
+              }}
+            >
+              <div className="flex items-center text-white">
                 {asset.symbol.toUpperCase() === 'SOL' && (
                   <Image 
                     src="/token-logos/solana_logo.png" 

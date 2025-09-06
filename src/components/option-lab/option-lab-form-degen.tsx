@@ -40,10 +40,10 @@ const formSchema = z.object({
     },
     { message: "Premium must be a valid number" }
   ),
-  quantity: z.coerce
-    .number()
-    .min(0.01, { message: "Quantity must be at least 0.01" })
-    .max(10000, { message: "Quantity must be at most 10,000" })
+  quantity: z.union([
+    z.string().refine((val) => val === '', { message: "Quantity is required" }),
+    z.coerce.number().min(0.01, { message: "Quantity must be at least 0.01" }).max(10000, { message: "Quantity must be at most 10,000" })
+  ])
 });
 
 // Helper function for getting next available weekly Friday date
@@ -122,7 +122,7 @@ export function OptionLabFormDegen() {
       optionType: "call",
       strikePrice: '',
       premium: '',
-      quantity: 1.00,
+      quantity: '',
       expirationDate: defaultExpirationDate,
     },
   });
@@ -139,7 +139,7 @@ export function OptionLabFormDegen() {
           formValues.strikePrice !== '' &&
           formValues.premium &&
           formValues.expirationDate &&
-          formValues.quantity >= 0.01
+          formValues.quantity && formValues.quantity >= 0.01
         );
       case 1: // Collateral step
         return collateralState.hasEnoughCollateral;
@@ -169,7 +169,8 @@ export function OptionLabFormDegen() {
     const values = methods.getValues();
     
     // Ensure valid quantity
-    if (values.quantity < 0.01) {
+    const quantityNum = typeof values.quantity === 'string' ? parseFloat(values.quantity) : values.quantity;
+    if (isNaN(quantityNum) || quantityNum < 0.01) {
       methods.setError('quantity', {
         message: 'Quantity must be at least 0.01'
       });

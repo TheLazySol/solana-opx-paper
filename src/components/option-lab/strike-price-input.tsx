@@ -4,20 +4,14 @@ import { useFormContext } from 'react-hook-form';
 import { Info } from 'lucide-react';
 
 const getStepValue = (price: number | null): string => {
-  if (!price) return "0.0001";
-  if (price >= 100) return "1";
-  if (price >= 1) return "0.5";
-  if (price >= 0.01) return "0.005";
-  return "0.0001";
+  return "1"; // Always use step of 1 for whole numbers only
 };
 
 const validateStrikePrice = (value: string, assetPrice: number | null): boolean => {
-  if (!value || !assetPrice) return true;
+  if (!value) return true;
   const numValue = parseFloat(value);
-  if (assetPrice >= 100) return Number.isInteger(numValue);
-  if (assetPrice >= 1) return (numValue * 2) % 1 === 0;
-  if (assetPrice >= 0.01) return (numValue * 200) % 1 === 0;
-  return (numValue * 10000) % 1 === 0;
+  // Only allow whole numbers (integers)
+  return Number.isInteger(numValue) && numValue > 0;
 };
 
 export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) => {
@@ -40,32 +34,25 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       clearTimeout(debounceTimer.current);
     }
     
-    if (value === "") {
+    // Remove any non-digit characters (except empty string)
+    const numericValue = value.replace(/[^\d]/g, '');
+    
+    if (numericValue === "") {
       setValue('strikePrice', "", { shouldValidate: false });
       clearErrors("strikePrice");
       return;
     }
     
-    if (!validateStrikePrice(value, assetPrice)) {
-      let errorMessage = "";
-      if (assetPrice && assetPrice >= 100) {
-        errorMessage = "For assets worth $100+, no decimal places are allowed";
-      } else if (assetPrice && assetPrice >= 1) {
-        errorMessage = "For assets between $1-$100, only $0.50 steps are allowed";
-      } else if (assetPrice && assetPrice >= 0.01) {
-        errorMessage = "For assets between $0.01-$1, only $0.005 steps are allowed";
-      } else {
-        errorMessage = "For assets worth less than $0.01, only $0.0001 steps are allowed";
-      }
-      setError("strikePrice", { message: errorMessage });
+    if (!validateStrikePrice(numericValue, assetPrice)) {
+      setError("strikePrice", { message: "Please enter a whole number greater than 0" });
     } else {
       clearErrors("strikePrice");
     }
     
     // Only set value if it's different to prevent unnecessary updates
     const currentValue = getValues('strikePrice');
-    if (currentValue !== value) {
-      setValue('strikePrice', value, { shouldValidate: false });
+    if (currentValue !== numericValue) {
+      setValue('strikePrice', numericValue, { shouldValidate: false });
     }
   };
 
@@ -79,15 +66,17 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
       </div>
       <Input
         type="text"
-        step={getStepValue(assetPrice)}
-        min="0"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        step="1"
+        min="1"
         placeholder="Enter Strike Price"
         value={getValues('strikePrice')}
-        onChange={(e) => handleStrikePriceChange(e.target.value.replace('$', ''))}
+        onChange={(e) => handleStrikePriceChange(e.target.value)}
         variant="flat"
         classNames={{
-          input: "font-medium text-white",
-          inputWrapper: "bg-white/5 border border-white/20 rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none border-[0.5px] hover:border-white/30"
+          input: "font-medium text-white bg-transparent",
+          inputWrapper: "!bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px] rounded-lg data-[focus=true]:border-[#4a85ff]/60 data-[focus=true]:!bg-white/5"
         }}
         startContent={<span className="text-white/40">$</span>}
       />

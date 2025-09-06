@@ -217,32 +217,36 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         {/* Section Headers and Inputs in a more compact layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Asset & Type */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
-                <DollarSign className="w-3 h-3 text-[#4a85ff]" />
+          <Card className="bg-white/5 border border-white/10">
+            <CardBody className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <DollarSign className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-sm font-medium text-white">Asset & Option Type</h3>
               </div>
-              <h3 className="text-sm font-medium text-white">Asset & Type</h3>
-            </div>
-            <div className="space-y-3">
-              <AssetSelector assetPrice={assetPrice} />
-              <OptionTypeSelector />
-            </div>
-          </div>
+              <div className="space-y-3">
+                <AssetSelector assetPrice={assetPrice} />
+                <OptionTypeSelector />
+              </div>
+            </CardBody>
+          </Card>
 
           {/* Right Column - Pricing & Size */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md bg-[#5829f2]/20 flex items-center justify-center">
-                <Hash className="w-3 h-3 text-[#5829f2]" />
+          <Card className="bg-white/5 border border-white/10">
+            <CardBody className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Hash className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-sm font-medium text-white">Pricing & Trade Quantity</h3>
               </div>
-              <h3 className="text-sm font-medium text-white">Pricing & Size</h3>
-            </div>
-            <div className="space-y-3">
-              <StrikePriceInput assetPrice={assetPrice} />
-              <QuantityInput />
-            </div>
-          </div>
+              <div className="space-y-3">
+                <StrikePriceInput assetPrice={assetPrice} />
+                <QuantityInput />
+              </div>
+            </CardBody>
+          </Card>
         </div>
 
         {/* Bottom Row - Expiration & Premium in a more compact layout */}
@@ -262,91 +266,72 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
       </motion.div>
 
       {/* Advanced Option Details - Always visible */}
-      {premium && strikePrice && (
-        <motion.div 
-          variants={itemVariants}
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-        >
-          <Card className="bg-white/5 border border-white/10">
-            <CardBody className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Info className="w-4 h-4 text-[#4a85ff]" />
-                <h4 className="text-sm font-medium text-white">Advanced Option Details</h4>
+      <motion.div variants={itemVariants}>
+        <Card className="bg-white/5 border border-white/10">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="w-4 h-4 text-[#4a85ff]" />
+              <h4 className="text-sm font-medium text-white">Advanced Option Details</h4>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-white/40 mb-1">Implied Volatility</p>
+                <p className="text-sm font-medium text-white">{(SOL_PH_VOLATILITY * 100).toFixed(2)}%</p>
               </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-white/40 mb-1">Risk-Free Rate</p>
+                <p className="text-sm font-medium text-white">{(SOL_PH_RISK_FREE_RATE * 100).toFixed(2)}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Moneyness</p>
+                <p className="text-sm font-medium text-white">
+                  {assetPrice && strikePrice ? (
+                    optionType === 'call' 
+                      ? assetPrice > Number(strikePrice) ? 'ITM' : assetPrice < Number(strikePrice) ? 'OTM' : 'ATM'
+                      : assetPrice < Number(strikePrice) ? 'ITM' : assetPrice > Number(strikePrice) ? 'OTM' : 'ATM'
+                  ) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Total Value</p>
+                <p className="text-sm font-medium text-white">
+                  ${premium && quantity ? (Number(premium) * quantity * 100).toFixed(2) : '0.00'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-white/40 mb-1">Implied Volatility</p>
-                  <p className="text-sm font-medium text-white">{(SOL_PH_VOLATILITY * 100).toFixed(2)}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 mb-1">Risk-Free Rate</p>
-                  <p className="text-sm font-medium text-white">{(SOL_PH_RISK_FREE_RATE * 100).toFixed(2)}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 mb-1">Moneyness</p>
+                  <p className="text-xs text-white/40">Days to Expiration</p>
                   <p className="text-sm font-medium text-white">
-                    {assetPrice && strikePrice ? (
-                      optionType === 'call' 
-                        ? assetPrice > Number(strikePrice) ? 'ITM' : assetPrice < Number(strikePrice) ? 'OTM' : 'ATM'
-                        : assetPrice < Number(strikePrice) ? 'ITM' : assetPrice > Number(strikePrice) ? 'OTM' : 'ATM'
-                    ) : '-'}
+                    {expirationDate ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + ' days' : '-'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-white/40 mb-1">Total Value</p>
+                  <p className="text-xs text-white/40">Break-Even Price</p>
                   <p className="text-sm font-medium text-white">
-                    ${premium && quantity ? (Number(premium) * quantity * 100).toFixed(2) : '0.00'}
+                    {strikePrice && premium ? 
+                      `$${(optionType === 'call' 
+                        ? (Number(strikePrice) + Number(premium))
+                        : (Number(strikePrice) - Number(premium))).toFixed(2)}` 
+                      : '-'
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/40">Max Profit</p>
+                  <p className="text-sm font-medium text-green-400">
+                    {premium && quantity ? `$${(Number(premium) * quantity * 100).toFixed(2)}` : '-'}
                   </p>
                 </div>
               </div>
-              
-              {expirationDate && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-white/40">Days to Expiration</p>
-                      <p className="text-sm font-medium text-white">
-                        {Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-white/40">Break-Even Price</p>
-                      <p className="text-sm font-medium text-white">
-                        ${optionType === 'call' 
-                          ? (Number(strikePrice) + Number(premium)).toFixed(2)
-                          : (Number(strikePrice) - Number(premium)).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-white/40">Max Profit</p>
-                      <p className="text-sm font-medium text-green-400">
-                        ${(Number(premium) * quantity * 100).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-white/40">Max Loss</p>
-                      <p className="text-sm font-medium text-red-400">
-                        {optionType === 'call' ? 'Unlimited' : `$${(Number(strikePrice) * quantity * 100).toFixed(2)}`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardBody>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Mobile-friendly help text */}
-      <motion.div variants={itemVariants} className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-        <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-300">
-          Configure your option parameters. The premium will be automatically calculated based on the Black-Scholes model.
-        </p>
+            </div>
+          </CardBody>
+        </Card>
       </motion.div>
+
     </motion.div>
   );
 }
