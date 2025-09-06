@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Card, 
@@ -61,6 +62,13 @@ interface StepCollateralProps {
 export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralProps) {
   const methods = useFormContext();
   const formValues = methods.watch();
+  
+  // Mouse glow effect hooks for each card
+  const collateralCardRef = useMouseGlow();
+  const leverageCardRef = useMouseGlow();
+  const statusCardRef = useMouseGlow();
+  const costCardRef = useMouseGlow();
+  const advancedCardRef = useMouseGlow();
   
   const [collateralProvided, setCollateralProvided] = useState<string>("0");
   const [leverage, setLeverage] = useState<SliderValue>(1);
@@ -218,15 +226,18 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
   // Auto-adjust leverage when collateral changes (but not when leverage itself changes)
   useEffect(() => {
-    if (Number(collateralProvided) > 0 && requiredCollateral > 0) {
+    // Calculate required collateral locally to avoid dependency issues
+    const currentRequiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
+    
+    if (Number(collateralProvided) > 0 && currentRequiredCollateral > 0) {
       // If collateral alone covers 100% or more, reset leverage to 1x
-      const collateralOnlyCoverage = Number(collateralProvided) / requiredCollateral;
+      const collateralOnlyCoverage = Number(collateralProvided) / currentRequiredCollateral;
       if (collateralOnlyCoverage >= 1 && Number(leverageRef.current) > 1) {
         setLeverage(1);
         setLeverageInputValue("1");
       }
     }
-  }, [collateralProvided, requiredCollateral]);
+  }, [collateralProvided, collateralNeeded, totalPremium]);
 
 
   return (
@@ -240,7 +251,26 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Collateral Input Section */}
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/5 border border-white/10">
+          <Card 
+            ref={collateralCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.4), 
+                  rgb(30 41 59 / 0.3), 
+                  rgb(51 65 85 / 0.2)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -354,7 +384,26 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
         {/* Leverage Section */}
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/5 border border-white/10">
+          <Card 
+            ref={leverageCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.4), 
+                  rgb(30 41 59 / 0.3), 
+                  rgb(51 65 85 / 0.2)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -461,7 +510,23 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
       {/* Collateral Status */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white/5 border border-white/10">
+        <Card 
+          ref={statusCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0))), 
+                transparent 40%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `
+          }}
+        >
           <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -555,7 +620,23 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
 
       {/* Cost Breakdown */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white/5 border border-white/10">
+        <Card 
+          ref={costCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0))), 
+                transparent 40%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `
+          }}
+        >
           <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -611,7 +692,26 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
         >
-          <Card className="bg-white/5 border border-white/10">
+          <Card 
+            ref={advancedCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.4), 
+                  rgb(30 41 59 / 0.3), 
+                  rgb(51 65 85 / 0.2)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { motion } from 'framer-motion';
 import { Card, CardBody, Chip, Tooltip, Button, cn } from '@heroui/react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -26,6 +27,11 @@ interface StepConfigureProps {
 export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfigureProps) {
   const methods = useFormContext();
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  
+  // Mouse glow effect hooks for each card
+  const assetCardRef = useMouseGlow();
+  const pricingCardRef = useMouseGlow();
+  const advancedCardRef = useMouseGlow();
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -218,7 +224,26 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         {/* Section Headers and Inputs in a more compact layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Asset & Type */}
-          <Card className="bg-white/5 border border-white/10">
+          <Card 
+            ref={assetCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.4), 
+                  rgb(30 41 59 / 0.3), 
+                  rgb(51 65 85 / 0.2)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -234,7 +259,26 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
           </Card>
 
           {/* Right Column - Pricing & Size */}
-          <Card className="bg-white/5 border border-white/10">
+          <Card 
+            ref={pricingCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.4), 
+                  rgb(30 41 59 / 0.3), 
+                  rgb(51 65 85 / 0.2)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
@@ -268,7 +312,23 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
 
       {/* Advanced Option Details - Always visible */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white/5 border border-white/10">
+        <Card 
+          ref={advancedCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0))), 
+                transparent 40%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `
+          }}
+        >
           <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <Info className="w-4 h-4 text-[#4a85ff]" />
