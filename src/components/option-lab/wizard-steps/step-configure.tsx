@@ -41,8 +41,6 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
   const premium = useWatch({ control: methods.control, name: 'premium' });
 
   const calculateOptionPrice = useCallback(async (values: any) => {
-    if (isCalculatingPremium) return;
-    
     if (!assetPrice || !values.expirationDate || !values.strikePrice || values.strikePrice === '') {
       return;
     }
@@ -80,8 +78,18 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
     } finally {
       setIsCalculatingPremium(false);
     }
-  }, [assetPrice, isCalculatingPremium, methods]);
+  }, [assetPrice, methods]);
 
+  // Immediate calculation for option type and expiration date changes (no debounce)
+  useEffect(() => {
+    const values = methods.getValues();
+    if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
+      calculateOptionPrice(values);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionType, expirationDate]);
+
+  // Debounced calculation for strike price and asset price changes
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -103,22 +111,21 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [strikePrice, expirationDate, assetPrice, optionType, calculateOptionPrice, methods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strikePrice, assetPrice]);
 
-  const manualRefresh = () => {
+  const manualRefresh = async () => {
     const values = methods.getValues();
     if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
       setIsDebouncing(true);
-      setTimeout(async () => {
-        try {
-          await calculateOptionPrice(values);
-        } finally {
-          setIsDebouncing(false);
-        }
-      }, EDIT_REFRESH_INTERVAL);
+      try {
+        await calculateOptionPrice(values);
+      } finally {
+        setIsDebouncing(false);
+      }
     }
   };
 
@@ -247,7 +254,8 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
             <PremiumDisplay 
               lastUpdated={lastUpdated} 
               manualRefresh={manualRefresh} 
-              isDebouncing={isDebouncing} 
+              isDebouncing={isDebouncing}
+              isCalculating={isCalculatingPremium}
             />
           </div>
         </div>

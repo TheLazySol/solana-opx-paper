@@ -2,15 +2,18 @@ import React from 'react';
 import { Input, Tooltip } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
 import { Info } from 'lucide-react';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export const PremiumDisplay = ({ 
   lastUpdated, 
   manualRefresh, 
-  isDebouncing 
+  isDebouncing,
+  isCalculating 
 }: { 
   lastUpdated: Date | null, 
   manualRefresh: () => void,
-  isDebouncing: boolean 
+  isDebouncing: boolean,
+  isCalculating?: boolean 
 }) => {
   const { getValues } = useFormContext();
 
@@ -34,8 +37,19 @@ export const PremiumDisplay = ({
       <Input
         isReadOnly
         placeholder="Calculated premium"
-        value={getValues('premium') ? `$${Number(getValues('premium')).toFixed(2)}` : 'Calculating...'}
+        value={
+          isCalculating || isDebouncing 
+            ? 'Calculating...' 
+            : getValues('premium') 
+              ? `$${Number(getValues('premium')).toFixed(2)}` 
+              : 'Enter option details'
+        }
         variant="flat"
+        startContent={
+          (isCalculating || isDebouncing) && (
+            <ArrowPathIcon className="w-4 h-4 text-blue-400 animate-spin" />
+          )
+        }
         classNames={{
           input: "text-blue-400 font-medium",
           inputWrapper: "bg-white/5 border border-white/20 rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none border-[0.5px] hover:border-white/30"

@@ -118,8 +118,8 @@ export const formatSelectedOption = ({
 }
 
 // Option Lab Constants
-export const EDIT_REFRESH_INTERVAL = 1500; // 1.5 second debounce
-export const AUTO_REFRESH_INTERVAL = 3000; // 3 seconds
+export const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce for faster updates
+export const AUTO_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 export const COLLATERAL_TYPES = [
   { value: "USDC", label: "USDC", default: true }
