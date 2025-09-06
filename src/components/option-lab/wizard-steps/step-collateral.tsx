@@ -66,6 +66,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(true);
+  const [isQuickButtonClick, setIsQuickButtonClick] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
   
   // Calculate derived values
@@ -230,8 +231,8 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   useEffect(() => {
     const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE;
     
-    if (isAtMaxLeverage) {
-      // Show alert and start 10-second timer
+    if (isAtMaxLeverage && !isQuickButtonClick) {
+      // Show alert and start 5-second timer only if not from quick button
       setShowMaxLeverageAlert(true);
       const timer = setTimeout(() => {
         setShowMaxLeverageAlert(false);
@@ -239,10 +240,15 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       
       return () => clearTimeout(timer);
     } else {
-      // Hide alert immediately when not at max leverage
+      // Hide alert immediately when not at max leverage or from quick button
       setShowMaxLeverageAlert(false);
     }
-  }, [leverage, dynamicMaxLeverage]);
+    
+    // Reset quick button flag after processing
+    if (isQuickButtonClick) {
+      setIsQuickButtonClick(false);
+    }
+  }, [leverage, dynamicMaxLeverage, isQuickButtonClick]);
 
   // Reset alert visibility when collateral changes (but only if not at max leverage)
   useEffect(() => {
@@ -315,15 +321,16 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                   }}
                 />
                 
-                {/* Quick Select Buttons */}
+                {/* Auto Select Buttons */}
                 <div className="flex gap-2">
-                  <span className="text-xs text-white/40 mr-2">Quick:</span>
+                  <span className="text-xs text-white/40 mr-2">Auto:</span>
                   
                   {/* Minimum at 10x leverage */}
                   <Button
                     size="sm"
                     variant="flat"
                     onPress={() => {
+                      setIsQuickButtonClick(true);
                       const minCollateral = (requiredCollateral / MAX_LEVERAGE).toFixed(2);
                       const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
                       setCollateralProvided(minCollateral);
@@ -335,20 +342,21 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     Min (10x)
                   </Button>
                   
-                  {/* Medium at 5x leverage */}
+                  {/* Half at 5x leverage */}
                   <Button
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const mediumCollateral = (requiredCollateral / 5).toFixed(2);
+                      setIsQuickButtonClick(true);
+                      const halfCollateral = (requiredCollateral / 5).toFixed(2);
                       const newLeverage = 5;
-                      setCollateralProvided(mediumCollateral);
+                      setCollateralProvided(halfCollateral);
                       setLeverage(newLeverage);
                       setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
                     }}
                     className="bg-white/5 hover:bg-white/10 text-xs"
                   >
-                    Med (5x)
+                    Half (5x)
                   </Button>
                   
                   {/* Full at 1x leverage */}
@@ -356,6 +364,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
+                      setIsQuickButtonClick(true);
                       const fullCollateral = requiredCollateral.toFixed(2);
                       const newLeverage = 1;
                       setCollateralProvided(fullCollateral);
