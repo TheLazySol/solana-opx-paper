@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Card, 
   CardBody, 
@@ -61,7 +61,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const [leverage, setLeverage] = useState<SliderValue>(1);
   const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
-  const [autoLeverage, setAutoLeverage] = useState<boolean>(false);
+  const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(true);
   
   // Calculate derived values
   const options = formValues.strikePrice && formValues.premium ? [{
@@ -133,27 +133,11 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     onStateChangeAction
   ]);
 
-  const calculateAutoLeverage = () => {
-    if (Number(collateralProvided) > 0 && requiredCollateral > 0) {
-      // Calculate the minimum leverage needed to meet requirements
-      const calculatedLeverage = Math.max(1, requiredCollateral / Number(collateralProvided));
-      // Round up to nearest 0.5 and cap at 10
-      return Math.min(10, Math.ceil(calculatedLeverage * 2) / 2);
-    }
-    return 1;
-  };
 
   const handleCollateralChange = (value: string) => {
     // Only allow numbers and decimals
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setCollateralProvided(value);
-      
-      // Auto-update leverage if auto mode is enabled
-      if (autoLeverage && requiredCollateral > 0) {
-        const newLeverage = calculateAutoLeverage();
-        setLeverage(newLeverage);
-        setLeverageInputValue(newLeverage.toString());
-      }
     }
   };
 
@@ -177,8 +161,63 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   };
 
   const collateralPercentage = requiredCollateral > 0 
-    ? Math.min((Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100, 100)
+    ? (Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100
     : 0;
+
+  // Calculate maximum leverage that would result in exactly 100% coverage
+  const maxLeverageFor100Percent = Number(collateralProvided) > 0 && requiredCollateral > 0
+    ? Math.max(1, requiredCollateral / Number(collateralProvided))
+    : 10;
+
+  // Dynamic max leverage (capped at 10, but limited by 100% coverage and never below 1)
+  const dynamicMaxLeverage = Math.min(10, Math.max(1, maxLeverageFor100Percent));
+
+  // Auto-adjust leverage when it would exceed 100% coverage or reset to 1x when 100% covered
+  useEffect(() => {
+    if (Number(collateralProvided) > 0 && requiredCollateral > 0) {
+      const currentCoverage = (Number(collateralProvided) * Number(leverage)) / requiredCollateral;
+      
+      if (currentCoverage > 1) {
+        // If current leverage results in over 100% coverage, reduce it but never below 1
+        const newLeverage = Math.max(1, Math.min(10, maxLeverageFor100Percent));
+        setLeverage(newLeverage);
+        setLeverageInputValue(newLeverage.toString());
+      }
+      
+      // If collateral alone covers 100% or more, reset leverage to 1x
+      const collateralOnlyCoverage = Number(collateralProvided) / requiredCollateral;
+      if (collateralOnlyCoverage >= 1 && Number(leverage) > 1) {
+        setLeverage(1);
+        setLeverageInputValue("1");
+      }
+    }
+  }, [collateralProvided, requiredCollateral, leverage, maxLeverageFor100Percent]);
+
+  // Handle max leverage alert visibility
+  useEffect(() => {
+    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10;
+    
+    if (isAtMaxLeverage) {
+      // Show alert and start 10-second timer
+      setShowMaxLeverageAlert(true);
+      const timer = setTimeout(() => {
+        setShowMaxLeverageAlert(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Hide alert immediately when not at max leverage
+      setShowMaxLeverageAlert(false);
+    }
+  }, [leverage, dynamicMaxLeverage]);
+
+  // Reset alert visibility when collateral changes (but only if not at max leverage)
+  useEffect(() => {
+    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10;
+    if (!isAtMaxLeverage) {
+      setShowMaxLeverageAlert(false);
+    }
+  }, [collateralProvided, leverage, dynamicMaxLeverage]);
 
   return (
     <motion.div
@@ -187,63 +226,44 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       animate="visible"
       className="space-y-6"
     >
-      {/* Collateral Status Card */}
+      {/* Collateral Status */}
       <motion.div variants={itemVariants}>
-        <Card 
-          className={cn(
-            "border transition-all duration-300",
-            hasEnough
-              ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20"
-              : "bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20"
-          )}
-        >
+        <Card className="bg-white/5 border border-white/10">
           <CardBody className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Shield className={cn(
-                  "w-5 h-5",
-                  hasEnough ? "text-green-400" : "text-red-400"
-                )} />
-                <span className="font-medium text-white">
-                  Collateral Status
-                </span>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Shield className="w-3 h-3 text-[#4a85ff]" />
               </div>
-              <Chip
-                size="sm"
-                variant="flat"
-                className={cn(
-                  hasEnough
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-red-500/20 text-red-400"
-                )}
-              >
-                {hasEnough ? 'Sufficient' : 'Insufficient'}
-              </Chip>
+              <h4 className="text-sm font-medium text-white">Collateral Status</h4>
             </div>
             
-            <Progress
-              value={collateralPercentage}
-              className="h-2 mb-2"
-              classNames={{
-                indicator: cn(
-                  hasEnough
-                    ? "bg-gradient-to-r from-green-400 to-emerald-400"
-                    : "bg-gradient-to-r from-red-400 to-orange-400"
-                ),
-                track: "bg-white/10"
-              }}
-            />
-            
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/60">
-                ${Number(collateralProvided).toFixed(2)} provided
-              </span>
-              <span className={cn(
-                "font-medium",
-                hasEnough ? "text-green-400" : "text-red-400"
-              )}>
-                ${(requiredCollateral / Number(leverage)).toFixed(2)} needed
-              </span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-white/40 mb-1">Provided</p>
+                <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Required</p>
+                <p className="text-sm font-medium text-white">${(requiredCollateral / Number(leverage)).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Coverage</p>
+                <p className="text-sm font-medium text-white">{collateralPercentage.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Status</p>
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  className={cn(
+                    hasEnough
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  )}
+                >
+                  {hasEnough ? 'Sufficient' : 'Insufficient'}
+                </Chip>
+              </div>
             </div>
           </CardBody>
         </Card>
@@ -317,12 +337,6 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                         const newAmount = amount.toFixed(2);
                         setCollateralProvided(newAmount);
                         
-                        // Auto-update leverage if auto mode is enabled
-                        if (autoLeverage && requiredCollateral > 0) {
-                          const newLeverage = calculateAutoLeverage();
-                          setLeverage(newLeverage);
-                          setLeverageInputValue(newLeverage.toString());
-                        }
                       }}
                       className="bg-white/5 hover:bg-white/10 text-xs"
                     >
@@ -339,38 +353,11 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
         <motion.div variants={itemVariants}>
           <Card className="bg-white/5 border border-white/10">
             <CardBody className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-[#5829f2]/20 flex items-center justify-center">
-                    <Zap className="w-3 h-3 text-[#5829f2]" />
-                  </div>
-                  <h3 className="text-sm font-medium text-white">Leverage</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Zap className="w-3 h-3 text-[#4a85ff]" />
                 </div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/10"
-                >
-                  <span className="text-xs text-white/80">Auto</span>
-                  <Switch
-                    size="sm"
-                    checked={autoLeverage}
-                    onValueChange={(value) => {
-                      setAutoLeverage(value);
-                      if (value) {
-                        // When enabling auto, calculate and set leverage
-                        const newLeverage = calculateAutoLeverage();
-                        setLeverage(newLeverage);
-                        setLeverageInputValue(newLeverage.toString());
-                      }
-                    }}
-                    classNames={{
-                      wrapper: "group-data-[selected=true]:bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
-                      thumb: "group-data-[selected=true]:bg-white"
-                    }}
-                  />
-                </motion.div>
+                <h3 className="text-sm font-medium text-white">Leverage</h3>
               </div>
               
               {/* Leverage Slider */}
@@ -378,13 +365,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 <Slider
                   showTooltip
                   getTooltipValue={(value: SliderValue) => `${value}x`}
-                  isDisabled={autoLeverage}
                   classNames={{
-                    base: cn("w-full", autoLeverage && "opacity-50"),
-                    label: cn("text-medium", autoLeverage && "text-white/40"),
-                    filler: cn("bg-[#4a85ff]", autoLeverage && "bg-white/20"),
-                    track: autoLeverage ? "bg-white/10" : undefined,
-                    thumb: autoLeverage ? "bg-white/40" : undefined
+                    base: "w-full",
+                    filler: "bg-[#4a85ff]"
                   }}
                   color="foreground"
                   label="Leverage"
@@ -395,29 +378,27 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     <output {...props}>
                       <Tooltip
                         className="text-tiny text-default-500 rounded-md"
-                        content={autoLeverage ? "Auto mode enabled" : "Press Enter to confirm"}
+                        content="Press Enter to confirm"
                         placement="left"
                       >
                         <input
                           aria-label="Leverage value"
-                          className={cn(
-                            "px-1 py-0.5 w-12 text-right text-small font-medium outline-solid outline-transparent transition-colors rounded-small border-medium border-transparent",
-                            autoLeverage 
-                              ? "bg-white/10 text-white/40 cursor-not-allowed"
-                              : "bg-default-100 text-default-700 hover:border-primary focus:border-primary"
-                          )}
+                          className="px-2 py-1 w-16 text-right text-small font-medium text-white bg-white/5 outline-none transition-colors rounded-lg border border-white/20 hover:border-white/30 focus:border-[#4a85ff]/60"
                           type="text"
                           value={leverageInputValue}
-                          disabled={autoLeverage}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            if (!autoLeverage) {
-                              const v = e.target.value;
+                            const v = e.target.value;
+                            // Limit to 3 decimal places and prevent empty values that aren't being typed
+                            if (v === '' || /^\d{1,2}(\.\d{0,3})?$/.test(v)) {
                               setLeverageInputValue(v);
                             }
                           }}
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (!autoLeverage && e.key === "Enter" && !isNaN(Number(leverageInputValue))) {
-                              setLeverage(Number(leverageInputValue));
+                            if (e.key === "Enter" && leverageInputValue !== '' && !isNaN(Number(leverageInputValue))) {
+                              const inputValue = Number(leverageInputValue);
+                              const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
+                              setLeverage(clampedValue);
+                              setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
                             }
                           }}
                         />
@@ -428,9 +409,10 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                   step={0.01}
                   value={leverage}
                   onChange={(value: SliderValue) => {
-                    if (!autoLeverage && !isNaN(Number(value))) {
-                      setLeverage(value);
-                      setLeverageInputValue(value.toString());
+                    if (!isNaN(Number(value))) {
+                      const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, Number(value)));
+                      setLeverage(clampedValue);
+                      setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
                     }
                   }}
                 />
@@ -439,7 +421,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               {/* Risk Indicator */}
               <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/60">Risk Level</span>
+                  <span className="text-xs text-white/60">Liquidation Risk</span>
                   <Chip
                     size="sm"
                     variant="flat"
@@ -463,6 +445,31 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
           </Card>
         </motion.div>
       </div>
+
+      {/* Max Leverage Alert */}
+      <AnimatePresence>
+        {Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10 && showMaxLeverageAlert && (
+          <motion.div 
+            key="max-leverage-alert"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-start gap-2 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-amber-300 font-medium mb-1">
+                  Maximum Leverage Reached
+                </p>
+                <p className="text-xs text-amber-300/80">
+                  You&apos;ve reached the maximum leverage ({dynamicMaxLeverage.toFixed(2)}x) needed for 100% trade coverage. Add more collateral to increase leverage further.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cost Breakdown */}
       <motion.div variants={itemVariants}>
@@ -572,16 +579,6 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
         </motion.div>
       )}
 
-      {/* Help Text */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-          <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-blue-300">
-            Provide collateral to secure your option position. Use leverage to reduce collateral requirements but be aware of increased risk.
-            {proMode && ' Advanced metrics help you understand your risk exposure.'}
-          </p>
-        </div>
-      </motion.div>
     </motion.div>
   );
 }
