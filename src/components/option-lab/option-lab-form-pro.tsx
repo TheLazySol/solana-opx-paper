@@ -51,7 +51,7 @@ function getNextAvailableWeeklyDate(): Date {
   return nextAvailableDate || allowedDates[0];
 }
 
-export function OptionLabFormWizard() {
+export function OptionLabFormPro() {
   const router = useRouter();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -261,8 +261,8 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         </div>
       </motion.div>
 
-      {/* Pro Mode Details */}
-      {proMode && premium && strikePrice && (
+      {/* Advanced Option Details - Always visible */}
+      {premium && strikePrice && (
         <motion.div 
           variants={itemVariants}
           initial={{ opacity: 0, height: 0 }}
@@ -345,7 +345,6 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
         <p className="text-xs text-blue-300">
           Configure your option parameters. The premium will be automatically calculated based on the Black-Scholes model.
-          {proMode && ' Advanced details are shown below for professional traders.'}
         </p>
       </motion.div>
     </motion.div>
