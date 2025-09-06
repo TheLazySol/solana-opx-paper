@@ -318,21 +318,54 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 {/* Quick Select Buttons */}
                 <div className="flex gap-2">
                   <span className="text-xs text-white/40 mr-2">Quick:</span>
-                  {[minCollateralRequired / Number(leverage), requiredCollateral / Number(leverage), requiredCollateral / Number(leverage) * 1.5].map((amount, index) => (
-                    <Button
-                      key={index}
-                      size="sm"
-                      variant="flat"
-                      onPress={() => {
-                        const newAmount = amount.toFixed(2);
-                        setCollateralProvided(newAmount);
-                        
-                      }}
-                      className="bg-white/5 hover:bg-white/10 text-xs"
-                    >
-                      ${amount.toFixed(0)}
-                    </Button>
-                  ))}
+                  
+                  {/* Minimum at 10x leverage */}
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => {
+                      const minCollateral = (requiredCollateral / MAX_LEVERAGE).toFixed(2);
+                      const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
+                      setCollateralProvided(minCollateral);
+                      setLeverage(newLeverage);
+                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                    }}
+                    className="bg-white/5 hover:bg-white/10 text-xs"
+                  >
+                    Min (10x)
+                  </Button>
+                  
+                  {/* Medium at 5x leverage */}
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => {
+                      const mediumCollateral = (requiredCollateral / 5).toFixed(2);
+                      const newLeverage = 5;
+                      setCollateralProvided(mediumCollateral);
+                      setLeverage(newLeverage);
+                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                    }}
+                    className="bg-white/5 hover:bg-white/10 text-xs"
+                  >
+                    Med (5x)
+                  </Button>
+                  
+                  {/* Full at 1x leverage */}
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    onPress={() => {
+                      const fullCollateral = requiredCollateral.toFixed(2);
+                      const newLeverage = 1;
+                      setCollateralProvided(fullCollateral);
+                      setLeverage(newLeverage);
+                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                    }}
+                    className="bg-white/5 hover:bg-white/10 text-xs"
+                  >
+                    Full (1x)
+                  </Button>
                 </div>
               </div>
             </CardBody>
@@ -449,13 +482,18 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-white/40 mb-1">Provided</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Provided</p>
+                  {Number(collateralProvided) === 0 && (
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                  )}
+                </div>
                 <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
               </div>
               <div>
                 <p className="text-xs text-white/40 mb-1">Remaining Coverage Needed</p>
                 <p className="text-sm font-medium text-white">
-                  ${Math.max(0, (requiredCollateral / Number(leverage)) - Number(collateralProvided)).toFixed(2)}
+                  ${Math.max(0, requiredCollateral - (Number(collateralProvided) * Number(leverage))).toFixed(2)}
                 </p>
               </div>
               <div>
