@@ -49,7 +49,8 @@ import {
   Info,
   Coins,
   Lock,
-  Receipt
+  Receipt,
+  Check
 } from 'lucide-react';
 
 interface StepCollateralProps {
@@ -364,11 +365,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               {/* Leverage Slider */}
               <div className="space-y-3">
                 <Slider
-                  showTooltip
-                  getTooltipValue={(value: SliderValue) => `${value}x`}
                   classNames={{
                     base: "w-full",
-                    filler: "bg-[#4a85ff]"
+                    label: "text-medium"
                   }}
                   color="foreground"
                   label="Leverage"
@@ -474,20 +473,36 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <p className="text-xs text-white/40">Provided</p>
-                  {Number(collateralProvided) === 0 && (
+                  {Number(collateralProvided) === 0 ? (
                     <AlertTriangle className="w-3 h-3 text-red-400" />
+                  ) : (
+                    <Check className="w-3 h-3 text-green-400" />
                   )}
                 </div>
                 <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Remaining Coverage Needed</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Remaining Coverage Needed</p>
+                  {Math.max(0, requiredCollateral - (Number(collateralProvided) * Number(leverage))) > 0 ? (
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                  ) : (
+                    <Check className="w-3 h-3 text-green-400" />
+                  )}
+                </div>
                 <p className="text-sm font-medium text-white">
                   ${Math.max(0, requiredCollateral - (Number(collateralProvided) * Number(leverage))).toFixed(2)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Coverage</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Coverage</p>
+                  {collateralPercentage < 100 ? (
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                  ) : (
+                    <Check className="w-3 h-3 text-green-400" />
+                  )}
+                </div>
                 <p 
                   className={cn(
                     "text-sm font-medium transition-all duration-300",
