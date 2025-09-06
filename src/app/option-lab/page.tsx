@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { OptionLabFormPro } from "@/components/option-lab/option-lab-form-pro"
 import { OptionLabFormDegen } from "@/components/option-lab/option-lab-form-degen"
-import { Switch, cn } from '@heroui/react';
+import { Switch, cn, Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
 
 export default function MintOptionPage() {
-  const [isProMode, setIsProMode] = useState(false);
+  const [isProMode, setIsProMode] = useState(true);
 
   return (
     <div className="py-4 md:py-8 min-h-screen">
@@ -26,21 +26,25 @@ export default function MintOptionPage() {
           transition={{ delay: 0.2 }}
           className="mt-6 flex items-center justify-center gap-3"
         >
-          <span className={cn(
-            "text-sm font-medium transition-colors",
-            !isProMode ? "text-[#4a85ff]" : "text-white/60"
-          )}>
-            Degen Mode
-          </span>
+          <Tooltip content="Coming Soon!" placement="top">
+            <span className={cn(
+              "text-sm font-medium transition-colors cursor-not-allowed",
+              "text-white/30 line-through"
+            )}>
+              Degen Mode
+            </span>
+          </Tooltip>
           <Switch
             isSelected={isProMode}
-            onValueChange={setIsProMode}
+            onValueChange={() => {}} // Disabled
             size="sm"
+            isDisabled={true}
             classNames={{
               wrapper: cn(
                 "group-data-[selected=true]:bg-gradient-to-r",
                 "group-data-[selected=true]:from-[#4a85ff]",
-                "group-data-[selected=true]:to-[#5829f2]"
+                "group-data-[selected=true]:to-[#5829f2]",
+                "opacity-50"
               ),
               thumb: cn(
                 "group-data-[selected=true]:ml-6",
@@ -50,7 +54,7 @@ export default function MintOptionPage() {
           />
           <span className={cn(
             "text-sm font-medium transition-colors",
-            isProMode ? "text-[#5829f2]" : "text-white/60"
+            "text-[#5829f2]"
           )}>
             Pro Mode
           </span>
@@ -62,13 +66,11 @@ export default function MintOptionPage() {
           transition={{ delay: 0.3 }}
           className="text-xs text-white/40 mt-2"
         >
-          {isProMode 
-            ? "Advanced interface with all options visible at once" 
-            : "Simplified step-by-step interface for beginners"}
+          Advanced interface with all options visible at once
         </motion.p>
       </div>
       
-      {isProMode ? <OptionLabFormPro /> : <OptionLabFormDegen />}
+      <OptionLabFormPro />
     </div>
   )
 }
