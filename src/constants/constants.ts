@@ -127,10 +127,10 @@ export const COLLATERAL_TYPES = [
 ] as const;
 
 // Financial constants
-export const BASE_ANNUAL_INTEREST_RATE = 0.1456; // 14.56% annual interest rate
+export const BASE_ANNUAL_INTEREST_RATE = 0.1021; // 10.21% annual interest rate
 export const OPTION_CREATION_FEE_RATE = 0.01; // 0.01 SOL
 export const BORROW_FEE_RATE = 0.00035; // 0.035% of the amount borrowed
-export const TRANSACTION_COST_SOL = 0.02; // 0.02 SOL
+export const TRANSACTION_COST_SOL = 0.002; // 0.002 SOL
 export const MAX_LEVERAGE = 10; // 10x leverage
 export const STANDARD_CONTRACT_SIZE = 100; // 100 units of the underlying 
 

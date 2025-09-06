@@ -33,9 +33,12 @@ import {
 import {
   COLLATERAL_TYPES,
   BASE_ANNUAL_INTEREST_RATE,
+  BORROW_FEE_RATE,
+  OPTION_CREATION_FEE_RATE,
   TRANSACTION_COST_SOL,
   MAX_LEVERAGE
 } from '@/constants/constants';
+import { getTokenPrice } from '@/lib/api/getTokenPrice';
 import { 
   Shield, 
   Zap, 
@@ -62,6 +65,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(true);
+  const [solPrice, setSolPrice] = useState<number>(0);
   
   // Calculate derived values
   const options = formValues.strikePrice && formValues.premium ? [{
@@ -97,12 +101,15 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   };
   
   const hoursUntilExpiry = getTimeUntilExpiration();
+  const daysUntilExpiry = hoursUntilExpiry / 24;
   
-  // Calculate all fees correctly
-  const borrowCost = calculateBorrowCost(amountBorrowed, hourlyInterestRate, hoursUntilExpiry);
-  const optionCreationFee = calculateOptionCreationFee();
+  // Calculate all fees correctly - now in USD
+  const dailyBorrowRate = BORROW_FEE_RATE; // This is already daily rate (0.035%)
+  const borrowCost = amountBorrowed * dailyBorrowRate * daysUntilExpiry;
+  const optionCreationFee = OPTION_CREATION_FEE_RATE * solPrice; // Convert SOL to USD
   const borrowFee = calculateBorrowFee(amountBorrowed);
-  const transactionCost = TRANSACTION_COST_SOL;
+  const transactionCost = TRANSACTION_COST_SOL * solPrice; // Convert SOL to USD
+  
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
   const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), Number(leverage));
 
@@ -130,9 +137,34 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     borrowFee,
     transactionCost,
     maxProfitPotential,
+    solPrice,
     onStateChangeAction
   ]);
 
+  // Fetch SOL price
+  useEffect(() => {
+    const fetchSolPrice = async () => {
+      try {
+        const priceData = await getTokenPrice('SOL');
+        
+        // If API returns 0 (no API key or token not found), use a fallback price for development
+        const finalPrice = priceData.price > 0 ? priceData.price : 100; // Fallback to $100 for development
+        setSolPrice(finalPrice);
+        
+        if (priceData.price === 0) {
+          console.warn('SOL price API returned 0, using fallback price of $100 for calculations');
+        }
+      } catch (error) {
+        console.error('Error fetching SOL price:', error);
+        setSolPrice(100); // Fallback to $100 for development
+      }
+    };
+    
+    fetchSolPrice();
+    const interval = setInterval(fetchSolPrice, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCollateralChange = (value: string) => {
     // Only allow numbers and decimals
@@ -226,49 +258,6 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       animate="visible"
       className="space-y-6"
     >
-      {/* Collateral Status */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-white/5 border border-white/10">
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
-                <Shield className="w-3 h-3 text-[#4a85ff]" />
-              </div>
-              <h4 className="text-sm font-medium text-white">Collateral Status</h4>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-white/40 mb-1">Provided</p>
-                <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/40 mb-1">Required</p>
-                <p className="text-sm font-medium text-white">${(requiredCollateral / Number(leverage)).toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/40 mb-1">Coverage</p>
-                <p className="text-sm font-medium text-white">{collateralPercentage.toFixed(1)}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/40 mb-1">Status</p>
-                <Chip
-                  size="sm"
-                  variant="flat"
-                  className={cn(
-                    hasEnough
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
-                  )}
-                >
-                  {hasEnough ? 'Sufficient' : 'Insufficient'}
-                </Chip>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </motion.div>
-
       {/* Main Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Collateral Input Section */}
@@ -446,6 +435,49 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
         </motion.div>
       </div>
 
+      {/* Collateral Status */}
+      <motion.div variants={itemVariants}>
+        <Card className="bg-white/5 border border-white/10">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Shield className="w-3 h-3 text-[#4a85ff]" />
+              </div>
+              <h4 className="text-sm font-medium text-white">Collateral Status</h4>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-white/40 mb-1">Provided</p>
+                <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Required</p>
+                <p className="text-sm font-medium text-white">${(requiredCollateral / Number(leverage)).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Coverage</p>
+                <p className="text-sm font-medium text-white">{collateralPercentage.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-1">Status</p>
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  className={cn(
+                    hasEnough
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  )}
+                >
+                  {hasEnough ? 'Sufficient' : 'Insufficient'}
+                </Chip>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </motion.div>
+
       {/* Max Leverage Alert */}
       <AnimatePresence>
         {Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < 10 && showMaxLeverageAlert && (
@@ -480,24 +512,29 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                 <Receipt className="w-3 h-3 text-[#4a85ff]" />
               </div>
               <h4 className="text-sm font-medium text-white">Cost Breakdown</h4>
+              {solPrice === 100 && (
+                <Chip size="sm" variant="flat" className="bg-amber-500/20 text-amber-400">
+                  Dev Mode
+                </Chip>
+              )}
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/60">Borrow Cost</span>
-                <span className="text-sm font-medium text-white">${borrowCost.toFixed(4)}</span>
+                <span className="text-sm text-white/60">Borrow Cost (Daily)</span>
+                <span className="text-sm font-medium text-white">${borrowCost.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/60">Option Creation Fee</span>
-                <span className="text-sm font-medium text-white">${optionCreationFee.toFixed(4)}</span>
+                <span className="text-sm font-medium text-white">${optionCreationFee.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/60">Borrow Fee</span>
-                <span className="text-sm font-medium text-white">${borrowFee.toFixed(4)}</span>
+                <span className="text-sm font-medium text-white">${borrowFee.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/60">Transaction Cost</span>
-                <span className="text-sm font-medium text-white">${transactionCost.toFixed(4)}</span>
+                <span className="text-sm font-medium text-white">${transactionCost.toFixed(2)}</span>
               </div>
               
               <div className="pt-3 mt-3 border-t border-white/10">
