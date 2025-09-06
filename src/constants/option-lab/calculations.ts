@@ -6,12 +6,31 @@ import {
   MAX_LEVERAGE
 } from "@/constants/constants";
 
+/* =========================
+   Premium & Payout Calculations
+   ========================= */
+
+/**
+ * Calculates the total premium received for a set of option positions.
+ * @param options Array of option objects
+ * @returns Total premium in USD
+ */
 export const calculateTotalPremium = (options: any[]) => {
   return options.reduce((total, option) => {
     return total + (Number(option.premium) * option.quantity * 100)
   }, 0)
 }
 
+/* =========================
+   Collateral Calculations
+   ========================= */
+
+/**
+ * Calculates the total collateral needed for a set of options.
+ * For both calls and puts, collateral is 100% of strike price * quantity * contract size.
+ * @param options Array of option objects
+ * @returns Total collateral required
+ */
 export const calculateCollateralNeeded = (options: any[]) => {
   return options.reduce((total, option) => {
     // For calls, collateral is 100% of strike price
@@ -23,6 +42,12 @@ export const calculateCollateralNeeded = (options: any[]) => {
   }, 0)
 }
 
+/**
+ * Calculates the required collateral after accounting for position size.
+ * @param collateralNeeded Total collateral needed
+ * @param positionSize Size of the position
+ * @returns Adjusted required collateral
+ */
 export const calculateRequiredCollateral = (
   collateralNeeded: number,
   positionSize: number
@@ -35,6 +60,13 @@ export const calculateRequiredCollateral = (
   return collateralNeeded
 }
 
+/**
+ * Checks if the provided collateral (with leverage) is enough to cover the required collateral.
+ * @param collateralNeeded Total collateral required
+ * @param collateralProvided Collateral provided by user
+ * @param leverage Leverage multiplier
+ * @returns Boolean indicating sufficiency
+ */
 export const hasEnoughCollateral = (
   collateralNeeded: number,
   collateralProvided: number,
@@ -44,6 +76,13 @@ export const hasEnoughCollateral = (
   return totalAvailable >= collateralNeeded
 }
 
+/**
+ * Calculates the optimal leverage needed to exactly meet the collateral requirement.
+ * @param collateralNeeded Total collateral required
+ * @param collateralProvided Collateral provided by user
+ * @param maxLeverage Maximum allowed leverage
+ * @returns Optimal leverage (rounded to 2 decimals)
+ */
 export const calculateOptimalLeverage = (
   collateralNeeded: number,
   collateralProvided: number,
@@ -58,12 +97,26 @@ export const calculateOptimalLeverage = (
   return Number(Math.min(Math.max(1, requiredLeverage), maxLeverage).toFixed(2));
 }
 
-// Calculate hourly interest rate from annual rate
+/* =========================
+   Interest & Fee Calculations
+   ========================= */
+
+/**
+ * Converts an annual interest rate to an hourly rate.
+ * @param annualRate Annual interest rate (default: BASE_ANNUAL_INTEREST_RATE)
+ * @returns Hourly interest rate
+ */
 export const calculateHourlyInterestRate = (annualRate: number = BASE_ANNUAL_INTEREST_RATE): number => {
   return annualRate / (365 * 24);
 }
 
-// Calculate borrowing cost
+/**
+ * Calculates the total borrowing cost for a given amount, rate, and duration.
+ * @param amountBorrowed Amount borrowed
+ * @param hourlyRate Hourly interest rate
+ * @param hours Number of hours borrowed
+ * @returns Total borrowing cost
+ */
 export const calculateBorrowCost = (
   amountBorrowed: number,
   hourlyRate: number,
@@ -72,17 +125,36 @@ export const calculateBorrowCost = (
   return amountBorrowed * hourlyRate * hours;
 }
 
-// Calculate option creation fee (uses OPTION_CREATION_FEE_RATE from constants)
+/**
+ * Returns the fixed option creation fee.
+ * @returns Option creation fee (in SOL)
+ */
 export const calculateOptionCreationFee = (): number => {
   return OPTION_CREATION_FEE_RATE;
 }
 
-// Calculate borrow fee (uses BORROW_FEE_RATE from constants)
+/**
+ * Calculates the borrow fee for a given borrowed amount.
+ * @param amountBorrowed Amount borrowed
+ * @returns Borrow fee
+ */
 export const calculateBorrowFee = (amountBorrowed: number): number => {
   return amountBorrowed * BORROW_FEE_RATE;
 }
 
-// Calculate maximum profit potential
+/* =========================
+   Profit & Risk Calculations
+   ========================= */
+
+/**
+ * Calculates the maximum profit potential for an option seller.
+ * @param totalPremium Total premium received
+ * @param borrowCost Total borrowing cost
+ * @param optionCreationFee Option creation fee
+ * @param transactionCost Transaction cost in SOL (default: TRANSACTION_COST_SOL)
+ * @param solPrice Current SOL price in USD (default: 1)
+ * @returns Maximum profit potential in USD
+ */
 export const calculateMaxProfitPotential = (
   totalPremium: number,
   borrowCost: number,
@@ -94,12 +166,22 @@ export const calculateMaxProfitPotential = (
   return totalPremium - borrowCost - optionCreationFee - transactionCostInUSD;
 }
 
+/**
+ * Calculates the minimum collateral required for a given leverage.
+ * @param collateralNeeded Total collateral required
+ * @param maxLeverage Maximum allowed leverage
+ * @returns Minimum collateral required
+ */
 export const calculateMinCollateralRequired = (
   collateralNeeded: number,
   maxLeverage: number = MAX_LEVERAGE
 ): number => {
   return collateralNeeded / maxLeverage;
 }
+
+/* =========================
+   Liquidation Calculations
+   ========================= */
 
 /**
  * Calculate the liquidation price for an option seller based on their collateral and leverage
@@ -174,6 +256,10 @@ export const calculateLiquidationPrice = (
   
   return { upward: upwardLiquidationPrice, downward: downwardLiquidationPrice };
 };
+
+/* =========================
+   Position Management Calculations
+   ========================= */
 
 /**
  * Calculates the average entry price for a position based on fill history

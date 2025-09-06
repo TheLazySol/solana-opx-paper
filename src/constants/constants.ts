@@ -63,13 +63,13 @@ export type ExpirationDate = {
 export const ASSET_PRICE_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 // SOL PH Volatility
-export const SOL_PH_VOLATILITY = 1.16;
+export const SOL_PH_VOLATILITY = 0.94; // 94% annual volatility
 
 // SOL PH Risk Free Rate
-export const SOL_PH_RISK_FREE_RATE = 0.08;
+export const SOL_PH_RISK_FREE_RATE = 0.065; // 6.5% annual interest rate
 
 // Option Chain Constants
-export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
+export const OPTION_SPREAD_PERCENTAGE = 0.00; // 0% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
 
