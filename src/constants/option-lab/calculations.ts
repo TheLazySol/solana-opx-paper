@@ -258,6 +258,69 @@ export const calculateLiquidationPrice = (
 };
 
 /* =========================
+   Option Value Calculations
+   ========================= */
+
+/**
+ * Calculates the intrinsic value of an option.
+ * @param optionType 'call' or 'put'
+ * @param currentPrice Current price of the underlying asset
+ * @param strikePrice Strike price of the option
+ * @returns Intrinsic value (always >= 0)
+ */
+export const calculateIntrinsicValue = (
+  optionType: string,
+  currentPrice: number,
+  strikePrice: number
+): number => {
+  if (optionType.toLowerCase() === 'call') {
+    // Call option: max(currentPrice - strikePrice, 0)
+    return Math.max(currentPrice - strikePrice, 0);
+  } else {
+    // Put option: max(strikePrice - currentPrice, 0)
+    return Math.max(strikePrice - currentPrice, 0);
+  }
+};
+
+/**
+ * Calculates the extrinsic value (time value) of an option.
+ * @param premium Option's total market price
+ * @param intrinsicValue Option's intrinsic value
+ * @returns Extrinsic value (premium - intrinsic value)
+ */
+export const calculateExtrinsicValue = (
+  premium: number,
+  intrinsicValue: number
+): number => {
+  return Math.max(premium - intrinsicValue, 0);
+};
+
+/**
+ * Determines if an option is in-the-money, at-the-money, or out-of-the-money.
+ * @param optionType 'call' or 'put'
+ * @param currentPrice Current price of the underlying asset
+ * @param strikePrice Strike price of the option
+ * @returns 'ITM', 'ATM', or 'OTM'
+ */
+export const calculateMoneyness = (
+  optionType: string,
+  currentPrice: number,
+  strikePrice: number
+): 'ITM' | 'ATM' | 'OTM' => {
+  const tolerance = 0.01; // Consider prices within $0.01 as ATM
+  
+  if (Math.abs(currentPrice - strikePrice) <= tolerance) {
+    return 'ATM';
+  }
+  
+  if (optionType.toLowerCase() === 'call') {
+    return currentPrice > strikePrice ? 'ITM' : 'OTM';
+  } else {
+    return currentPrice < strikePrice ? 'ITM' : 'OTM';
+  }
+};
+
+/* =========================
    Position Management Calculations
    ========================= */
 

@@ -12,6 +12,7 @@ import { PremiumDisplay } from '../premium-display';
 import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
+import { calculateIntrinsicValue, calculateExtrinsicValue, calculateMoneyness } from '@/constants/option-lab/calculations';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { Info, TrendingUp, TrendingDown, Calendar, DollarSign, Hash } from 'lucide-react';
 import Image from 'next/image';
@@ -276,25 +277,78 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-white/40 mb-1">Implied Volatility</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Implied Volatility</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Market expectation of future price movement for <span style={{ color: '#4a85ff', textShadow: '0 0 8px #4a85ff88, 0 0 2px #4a85ff' }}>{selectedAsset || 'the asset'}</span>. Higher volatility increases option premiums as larger price swings become more likely.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium text-white">{(SOL_PH_VOLATILITY * 100).toFixed(2)}%</p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Risk-Free Rate</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Risk-Free Rate</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Interest rate of &quot;risk-free&quot; investments (like Lending USDC). Used as the baseline for pricing models to calculate theoretical option values.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium text-white">{(SOL_PH_RISK_FREE_RATE * 100).toFixed(2)}%</p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Moneyness</p>
-                <p className="text-sm font-medium text-white">
-                  {assetPrice && strikePrice ? (
-                    optionType === 'call' 
-                      ? assetPrice > Number(strikePrice) ? 'ITM' : assetPrice < Number(strikePrice) ? 'OTM' : 'ATM'
-                      : assetPrice < Number(strikePrice) ? 'ITM' : assetPrice > Number(strikePrice) ? 'OTM' : 'ATM'
-                  ) : '-'}
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Moneyness</p>
+                  <Tooltip 
+                    content={
+                      assetPrice && strikePrice && premium ? (
+                        <div className="text-xs font-light space-y-1">
+                          <div><span className="text-green-400/70 font-light" style={{ textShadow: '0 0 6px rgba(34, 197, 94, 0.4)' }}>Intrinsic</span> Value: ${calculateIntrinsicValue(optionType, assetPrice, Number(strikePrice)).toFixed(2)}</div>
+                          <div><span className="text-red-400/70 font-light" style={{ textShadow: '0 0 6px rgba(248, 113, 113, 0.4)' }}>Extrinsic</span> Value: ${calculateExtrinsicValue(Number(premium), calculateIntrinsicValue(optionType, assetPrice, Number(strikePrice))).toFixed(2)}</div>
+                        </div>
+                      ) : <div className="text-xs font-light text-white/70">Option value breakdown available when all values are set</div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className={`text-sm font-medium ${
+                  assetPrice && strikePrice ? 
+                    calculateMoneyness(optionType, assetPrice, Number(strikePrice)) === 'ITM' ? 'text-green-400' :
+                    calculateMoneyness(optionType, assetPrice, Number(strikePrice)) === 'ATM' ? 'text-yellow-400' :
+                    'text-red-400'
+                    : 'text-white'
+                }`}>
+                  {assetPrice && strikePrice ? calculateMoneyness(optionType, assetPrice, Number(strikePrice)) : '-'}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-white/40 mb-1">Total Value</p>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Total Value</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70">
+                        Quantity × Option Premium × 100 (contract multiplier)
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
                 <p className="text-sm font-medium text-white">
                   ${premium && quantity ? (Number(premium) * quantity * 100).toFixed(2) : '0.00'}
                 </p>
@@ -304,13 +358,40 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
             <div className="mt-4 pt-4 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-white/40">Days to Expiration</p>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Days to Expiration</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70">
+                          {expirationDate ? 
+                            `Expires: ${expirationDate.toLocaleDateString()} at ${expirationDate.toLocaleTimeString()} UTC` 
+                            : 'Expiration date and time in UTC'
+                          }
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
                   <p className="text-sm font-medium text-white">
                     {expirationDate ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + ' days' : '-'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-white/40">Break-Even Price</p>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Break-Even Price</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70">
+                          {optionType === 'call' ? 'Strike Price + Premium' : 'Strike Price - Premium'}
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
                   <p className="text-sm font-medium text-white">
                     {strikePrice && premium ? 
                       `$${(optionType === 'call' 
@@ -321,7 +402,19 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-white/40">Max Profit</p>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Est. Max Profit</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70 max-w-xs">
+                          Maximum profit earned if the option expires worthless to the buyer. This is an estimate and may not be accurate!
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
                   <p className="text-sm font-medium text-green-400">
                     {premium && quantity ? `$${(Number(premium) * quantity * 100).toFixed(2)}` : '-'}
                   </p>
