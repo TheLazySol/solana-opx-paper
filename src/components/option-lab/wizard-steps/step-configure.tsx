@@ -205,41 +205,52 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
         </motion.div>
       )}
 
-      {/* Configuration Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Asset & Type Row */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#4a85ff]/20 flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-[#4a85ff]" />
+      {/* Configuration Grid - Improved Layout */}
+      <motion.div variants={itemVariants} className="space-y-6">
+        {/* Section Headers and Inputs in a more compact layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Asset & Type */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <DollarSign className="w-3 h-3 text-[#4a85ff]" />
+              </div>
+              <h3 className="text-sm font-medium text-white">Asset & Type</h3>
             </div>
-            <h3 className="text-lg font-medium text-white">Asset & Type</h3>
+            <div className="space-y-3">
+              <AssetSelector assetPrice={assetPrice} />
+              <OptionTypeSelector />
+            </div>
           </div>
-          <AssetSelector assetPrice={assetPrice} />
-          <OptionTypeSelector />
+
+          {/* Right Column - Pricing & Size */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-md bg-[#5829f2]/20 flex items-center justify-center">
+                <Hash className="w-3 h-3 text-[#5829f2]" />
+              </div>
+              <h3 className="text-sm font-medium text-white">Pricing & Size</h3>
+            </div>
+            <div className="space-y-3">
+              <StrikePriceInput assetPrice={assetPrice} />
+              <QuantityInput />
+            </div>
+          </div>
         </div>
 
-        {/* Price & Quantity Row */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#5829f2]/20 flex items-center justify-center">
-              <Hash className="w-4 h-4 text-[#5829f2]" />
-            </div>
-            <h3 className="text-lg font-medium text-white">Pricing & Size</h3>
+        {/* Bottom Row - Expiration & Premium in a more compact layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <ExpirationDatePicker />
           </div>
-          <StrikePriceInput assetPrice={assetPrice} />
-          <QuantityInput />
+          <div className="space-y-2">
+            <PremiumDisplay 
+              lastUpdated={lastUpdated} 
+              manualRefresh={manualRefresh} 
+              isDebouncing={isDebouncing} 
+            />
+          </div>
         </div>
-      </motion.div>
-
-      {/* Expiration & Premium Row */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ExpirationDatePicker />
-        <PremiumDisplay 
-          lastUpdated={lastUpdated} 
-          manualRefresh={manualRefresh} 
-          isDebouncing={isDebouncing} 
-        />
       </motion.div>
 
       {/* Pro Mode Details */}
