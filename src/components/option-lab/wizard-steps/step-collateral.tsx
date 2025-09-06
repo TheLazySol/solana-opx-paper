@@ -65,8 +65,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const [leverage, setLeverage] = useState<SliderValue>(1);
   const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
   const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
-  const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(true);
-  const [isQuickButtonClick, setIsQuickButtonClick] = useState<boolean>(false);
+  const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
   
   // Calculate derived values
@@ -227,36 +226,6 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     }
   }, [collateralProvided, requiredCollateral, leverage, maxLeverageFor100Percent]);
 
-  // Handle max leverage alert visibility
-  useEffect(() => {
-    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE;
-    
-    if (isAtMaxLeverage && !isQuickButtonClick) {
-      // Show alert and start 5-second timer only if not from quick button
-      setShowMaxLeverageAlert(true);
-      const timer = setTimeout(() => {
-        setShowMaxLeverageAlert(false);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // Hide alert immediately when not at max leverage or from quick button
-      setShowMaxLeverageAlert(false);
-    }
-    
-    // Reset quick button flag after processing
-    if (isQuickButtonClick) {
-      setIsQuickButtonClick(false);
-    }
-  }, [leverage, dynamicMaxLeverage, isQuickButtonClick]);
-
-  // Reset alert visibility when collateral changes (but only if not at max leverage)
-  useEffect(() => {
-    const isAtMaxLeverage = Number(leverage) >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE;
-    if (!isAtMaxLeverage) {
-      setShowMaxLeverageAlert(false);
-    }
-  }, [collateralProvided, leverage, dynamicMaxLeverage]);
 
   return (
     <motion.div
@@ -330,9 +299,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      setIsQuickButtonClick(true);
                       const minCollateral = (requiredCollateral / MAX_LEVERAGE).toFixed(2);
                       const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
+                      
                       setCollateralProvided(minCollateral);
                       setLeverage(newLeverage);
                       setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
@@ -347,9 +316,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      setIsQuickButtonClick(true);
                       const halfCollateral = (requiredCollateral / 5).toFixed(2);
                       const newLeverage = 5;
+                      
                       setCollateralProvided(halfCollateral);
                       setLeverage(newLeverage);
                       setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
@@ -364,9 +333,9 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      setIsQuickButtonClick(true);
                       const fullCollateral = requiredCollateral.toFixed(2);
                       const newLeverage = 1;
+                      
                       setCollateralProvided(fullCollateral);
                       setLeverage(newLeverage);
                       setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
@@ -431,6 +400,12 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                               const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
                               setLeverage(clampedValue);
                               setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
+                              
+                              // Show max leverage alert if we hit the limit
+                              if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
+                                setShowMaxLeverageAlert(true);
+                                setTimeout(() => setShowMaxLeverageAlert(false), 5000);
+                              }
                             }
                           }}
                         />
@@ -445,6 +420,12 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                       const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, Number(value)));
                       setLeverage(clampedValue);
                       setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
+                      
+                      // Show max leverage alert if we hit the limit
+                      if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
+                        setShowMaxLeverageAlert(true);
+                        setTimeout(() => setShowMaxLeverageAlert(false), 5000);
+                      }
                     }
                   }}
                 />
