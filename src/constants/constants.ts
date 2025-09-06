@@ -134,13 +134,36 @@ export const TRANSACTION_COST_SOL = 0.02; // 0.02 SOL
 export const MAX_LEVERAGE = 10; // 10x leverage
 export const STANDARD_CONTRACT_SIZE = 100; // 100 units of the underlying 
 
-// Get all bi-weekly expiration dates between two dates for the calendar
+// Get all bi-weekly Friday expiration dates between two dates for the calendar
 export function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];
   let currentDate = new Date(startDate);
+  
+  // Find the first Friday from the start date
+  while (currentDate.getDay() !== 5) { // 5 = Friday
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
   while (currentDate <= endDate) {
     dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
+    currentDate.setDate(currentDate.getDate() + 14); // Add 14 days for bi-weekly
+  }
+  return dates;
+}
+
+// Get all weekly Friday expiration dates between two dates for the calendar
+export function getWeeklyFridayDates(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let currentDate = new Date(startDate);
+  
+  // Find the first Friday from the start date
+  while (currentDate.getDay() !== 5) { // 5 = Friday
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 7); // Add 7 days for weekly
   }
   return dates;
 }

@@ -11,20 +11,9 @@ import { CalendarIcon, Info } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
+import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
 
-const startDate = new Date(2025, 0, 1); // January 1st, 2025
-const endDate = new Date(2026, 0, 1);   // January 1st, 2026
-const allowedDates = getBiWeeklyDates(startDate, endDate);
-
-function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
-  const dates: Date[] = [];
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
-  }
-  return dates;
-}
+const allowedDates = getWeeklyFridayDates(startDate, endDate);
 
 export const ExpirationDatePicker = () => {
   const { getValues, setValue } = useFormContext();

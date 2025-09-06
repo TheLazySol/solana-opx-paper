@@ -13,6 +13,7 @@ import { OptionOrder } from '@/types/options/optionTypes';
 import { OptionLabWizard } from './option-lab-wizard';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { motion } from 'framer-motion';
+import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -40,21 +41,9 @@ const formSchema = z.object({
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
-// Helper functions for getting bi-weekly dates
-function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
-  const dates: Date[] = [];
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
-  }
-  return dates;
-}
-
-function getNextAvailableBiWeeklyDate(): Date {
-  const startDate = new Date(2025, 0, 1); // January 1st, 2025
-  const endDate = new Date(2026, 0, 1);   // January 1st, 2026
-  const allowedDates = getBiWeeklyDates(startDate, endDate);
+// Helper function for getting next available weekly Friday date
+function getNextAvailableWeeklyDate(): Date {
+  const allowedDates = getWeeklyFridayDates(startDate, endDate);
   
   const now = new Date();
   const nextAvailableDate = allowedDates.find(date => date > now);
@@ -67,7 +56,7 @@ export function OptionLabFormWizard() {
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const defaultExpirationDate = getNextAvailableBiWeeklyDate();
+  const defaultExpirationDate = getNextAvailableWeeklyDate();
 
   const methods = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

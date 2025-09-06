@@ -18,6 +18,7 @@ import { ExpirationDatePicker } from './expiration-date-select';
 import { StrikePriceInput } from './strike-price-input';
 import { PremiumDisplay } from './premium-display';
 import { QuantityInput } from './quantity-input';
+import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
 import { EDIT_REFRESH_INTERVAL } from '@/constants/constants';
 import { 
   Button, 
@@ -61,22 +62,9 @@ const formSchema = z.object({
     .max(10000, { message: "Quantity must be at most 10,000" })
 });
 
-// Helper functions for getting bi-weekly dates (same as in expiration-date-select.tsx)
-function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
-  const dates: Date[] = [];
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
-  }
-  return dates;
-}
-
-// Helper function to get the next available bi-weekly date from the allowed dates
-function getNextAvailableBiWeeklyDate(): Date {
-  const startDate = new Date(2025, 0, 1); // January 1st, 2025
-  const endDate = new Date(2026, 0, 1);   // January 1st, 2026
-  const allowedDates = getBiWeeklyDates(startDate, endDate);
+// Helper function to get the next available weekly Friday date from the allowed dates
+function getNextAvailableWeeklyDate(): Date {
+  const allowedDates = getWeeklyFridayDates(startDate, endDate);
   
   // Find the first date that is in the future
   const now = new Date();
@@ -93,7 +81,7 @@ export function OptionLabForm() {
   const [pendingOptions, setPendingOptions] = useState<Array<z.infer<typeof formSchema>>>([]);
 
   // Get the next available expiration date
-  const defaultExpirationDate = getNextAvailableBiWeeklyDate();
+  const defaultExpirationDate = getNextAvailableWeeklyDate();
 
   const methods = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
