@@ -74,6 +74,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [currentStep, setCurrentStep] = useState<string>('asset');
+  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set(['asset'])); // User starts on asset step
   const debounceTimer = useRef<NodeJS.Timeout>();
   
   const selectedAsset = methods.watch('asset');
@@ -86,8 +87,8 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
   const quantity = useWatch({ control: methods.control, name: 'quantity' });
   const premium = useWatch({ control: methods.control, name: 'premium' });
 
-  // Determine which steps are completed
-  const isStepCompleted = useCallback((step: string): boolean => {
+  // Determine which steps have valid form data
+  const isStepValidated = useCallback((step: string): boolean => {
     switch (step) {
       case 'asset':
         return !!selectedAsset;
@@ -106,38 +107,51 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
     }
   }, [selectedAsset, optionType, strikePrice, quantity, expirationDate, premium]);
 
-  // Determine which steps are enabled
+  // Determine which steps are completed (visited AND validated)
+  const isStepCompleted = useCallback((step: string): boolean => {
+    return visitedSteps.has(step) && isStepValidated(step);
+  }, [visitedSteps, isStepValidated]);
+
+  // Determine which steps are enabled (based on validation, not completion)
   const isStepEnabled = useCallback((step: string): boolean => {
     switch (step) {
       case 'asset':
         return true;
       case 'optionType':
-        return isStepCompleted('asset');
+        return isStepValidated('asset');
       case 'strikePrice':
-        return isStepCompleted('asset') && isStepCompleted('optionType');
+        return isStepValidated('asset') && isStepValidated('optionType');
       case 'quantity':
-        return isStepCompleted('asset') && isStepCompleted('optionType') && isStepCompleted('strikePrice');
+        return isStepValidated('asset') && isStepValidated('optionType') && isStepValidated('strikePrice');
       case 'expirationDate':
-        return isStepCompleted('asset') && isStepCompleted('optionType') && isStepCompleted('strikePrice') && isStepCompleted('quantity');
+        return isStepValidated('asset') && isStepValidated('optionType') && isStepValidated('strikePrice') && isStepValidated('quantity');
       case 'premium':
-        return isStepCompleted('asset') && isStepCompleted('optionType') && isStepCompleted('strikePrice') && isStepCompleted('quantity') && isStepCompleted('expirationDate');
+        return isStepValidated('asset') && isStepValidated('optionType') && isStepValidated('strikePrice') && isStepValidated('quantity') && isStepValidated('expirationDate');
       default:
         return false;
     }
-  }, [isStepCompleted]);
+  }, [isStepValidated]);
 
-  // Auto-advance to next step when current step is completed
+  // Auto-advance to next step when current step is validated (but allow going back)
   useEffect(() => {
     const stepOrder = ['asset', 'optionType', 'strikePrice', 'quantity', 'expirationDate', 'premium'];
     const currentIndex = stepOrder.indexOf(currentStep);
     
-    if (currentIndex < stepOrder.length - 1 && isStepCompleted(currentStep)) {
+    // Only auto-advance if we're on the last incomplete step and it just got validated
+    if (currentIndex < stepOrder.length - 1 && isStepValidated(currentStep)) {
       const nextStep = stepOrder[currentIndex + 1];
-      if (isStepEnabled(nextStep) && !isStepCompleted(nextStep)) {
-        setTimeout(() => setCurrentStep(nextStep), 300);
+      if (isStepEnabled(nextStep) && !isStepValidated(nextStep)) {
+        // Mark current step as visited since user completed it
+        setVisitedSteps(prev => new Set([...prev, currentStep]));
+        // Add a longer delay to give users time to see their selection
+        const timer = setTimeout(() => {
+          setCurrentStep(nextStep);
+          setVisitedSteps(prev => new Set([...prev, nextStep]));
+        }, 1000);
+        return () => clearTimeout(timer);
       }
     }
-  }, [selectedAsset, optionType, strikePrice, quantity, expirationDate, premium, currentStep, isStepCompleted, isStepEnabled]);
+  }, [selectedAsset, optionType, strikePrice, quantity, expirationDate, premium, currentStep, isStepValidated, isStepEnabled, methods]);
 
   const calculateOptionPrice = useCallback(async (values: any) => {
     if (!assetPrice || !values.expirationDate || !values.strikePrice || values.strikePrice === '') {
@@ -162,11 +176,16 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
       });
       const premium = result.price;
       
-      methods.setValue('premium', premium.toFixed(2), {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true
-      });
+      // Only update if the value actually changed to prevent infinite loops
+      const currentPremium = methods.getValues('premium');
+      const newPremiumValue = premium.toFixed(2);
+      if (currentPremium !== newPremiumValue) {
+        methods.setValue('premium', newPremiumValue, {
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: false
+        });
+      }
       setCalculatedPrice(premium);
       setLastUpdated(new Date());
       
@@ -183,11 +202,23 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
   useEffect(() => {
     const values = methods.getValues();
     if (values.strikePrice && values.strikePrice !== '' && values.expirationDate && values.quantity >= 0.01) {
-      calculateOptionPrice(values);
+      // Debounce the calculation to prevent infinite loops
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+        calculateOptionPrice(values);
+      }, EDIT_REFRESH_INTERVAL);
     }
-  }, [optionType, expirationDate, strikePrice, quantity, calculateOptionPrice, methods]);
+    
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [optionType, expirationDate, strikePrice, quantity, assetPrice, calculateOptionPrice, methods]);
 
-  const manualRefresh = async () => {
+  const manualRefresh = useCallback(async () => {
     const values = methods.getValues();
     if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
       if (debounceTimer.current) {
@@ -200,7 +231,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
         setIsDebouncing(false);
       }
     }
-  };
+  }, [methods, calculateOptionPrice]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -307,7 +338,12 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
             <CardBody className="p-4">
               <div 
                 className="flex items-start gap-3 cursor-pointer" 
-                onClick={() => isStepEnabled('asset') && setCurrentStep('asset')}
+                onClick={() => {
+                  if (isStepEnabled('asset')) {
+                    setCurrentStep('asset');
+                    setVisitedSteps(prev => new Set([...prev, 'asset']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -365,9 +401,14 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
               <div 
                 className={cn(
                   "flex items-start gap-3",
-                  isStepEnabled('optionType') ? "cursor-pointer" : "cursor-not-allowed"
+                  (isStepEnabled('optionType') || isStepCompleted('optionType')) ? "cursor-pointer" : "cursor-not-allowed"
                 )}
-                onClick={() => isStepEnabled('optionType') && setCurrentStep('optionType')}
+                onClick={() => {
+                  if (isStepEnabled('optionType') || isStepCompleted('optionType')) {
+                    setCurrentStep('optionType');
+                    setVisitedSteps(prev => new Set([...prev, 'optionType']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -425,9 +466,14 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
               <div 
                 className={cn(
                   "flex items-start gap-3",
-                  isStepEnabled('strikePrice') ? "cursor-pointer" : "cursor-not-allowed"
+                  (isStepEnabled('strikePrice') || isStepCompleted('strikePrice')) ? "cursor-pointer" : "cursor-not-allowed"
                 )}
-                onClick={() => isStepEnabled('strikePrice') && setCurrentStep('strikePrice')}
+                onClick={() => {
+                  if (isStepEnabled('strikePrice') || isStepCompleted('strikePrice')) {
+                    setCurrentStep('strikePrice');
+                    setVisitedSteps(prev => new Set([...prev, 'strikePrice']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -485,9 +531,14 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
               <div 
                 className={cn(
                   "flex items-start gap-3",
-                  isStepEnabled('quantity') ? "cursor-pointer" : "cursor-not-allowed"
+                  (isStepEnabled('quantity') || isStepCompleted('quantity')) ? "cursor-pointer" : "cursor-not-allowed"
                 )}
-                onClick={() => isStepEnabled('quantity') && setCurrentStep('quantity')}
+                onClick={() => {
+                  if (isStepEnabled('quantity') || isStepCompleted('quantity')) {
+                    setCurrentStep('quantity');
+                    setVisitedSteps(prev => new Set([...prev, 'quantity']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -545,9 +596,14 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
               <div 
                 className={cn(
                   "flex items-start gap-3",
-                  isStepEnabled('expirationDate') ? "cursor-pointer" : "cursor-not-allowed"
+                  (isStepEnabled('expirationDate') || isStepCompleted('expirationDate')) ? "cursor-pointer" : "cursor-not-allowed"
                 )}
-                onClick={() => isStepEnabled('expirationDate') && setCurrentStep('expirationDate')}
+                onClick={() => {
+                  if (isStepEnabled('expirationDate') || isStepCompleted('expirationDate')) {
+                    setCurrentStep('expirationDate');
+                    setVisitedSteps(prev => new Set([...prev, 'expirationDate']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -605,9 +661,14 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
               <div 
                 className={cn(
                   "flex items-start gap-3",
-                  isStepEnabled('premium') ? "cursor-pointer" : "cursor-not-allowed"
+                  (isStepEnabled('premium') || isStepCompleted('premium')) ? "cursor-pointer" : "cursor-not-allowed"
                 )}
-                onClick={() => isStepEnabled('premium') && setCurrentStep('premium')}
+                onClick={() => {
+                  if (isStepEnabled('premium') || isStepCompleted('premium')) {
+                    setCurrentStep('premium');
+                    setVisitedSteps(prev => new Set([...prev, 'premium']));
+                  }
+                }}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all",

@@ -24,9 +24,24 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
   const { getValues, setValue, setError, clearErrors } = useFormContext();
   const debounceTimer = React.useRef<NodeJS.Timeout>();
 
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    const timer = debounceTimer.current;
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, []);
+
   const handleStrikePriceChange = (value: string) => {
+    // Clear any existing timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
     if (value === "") {
-      setValue('strikePrice', "");
+      setValue('strikePrice', "", { shouldValidate: false });
       clearErrors("strikePrice");
       return;
     }
@@ -46,23 +61,11 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
     } else {
       clearErrors("strikePrice");
     }
-    setValue('strikePrice', value);
     
-    // Don't try to calculate price for an empty value
-    if (value) {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        const values = getValues();
-        if (!values.expirationDate) {
-          const tempValues = {...values};
-          tempValues.expirationDate = new Date(); // Use a default date
-          // calculateOptionPrice(tempValues);
-        } else {
-          // calculateOptionPrice(values);
-        }
-      }, 2000); // 2 second debounce
+    // Only set value if it's different to prevent unnecessary updates
+    const currentValue = getValues('strikePrice');
+    if (currentValue !== value) {
+      setValue('strikePrice', value, { shouldValidate: false });
     }
   };
 

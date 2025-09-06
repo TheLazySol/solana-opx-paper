@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardBody, Button, Progress, Switch, cn } from '@heroui/react';
+import { Card, CardBody, Button, Progress, cn } from '@heroui/react';
 import { ChevronLeft, ChevronRight, Check, Circle, DollarSign, FileCheck } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { StepConfigure, StepCollateral, StepReview } from './wizard-steps';
@@ -56,7 +56,7 @@ interface OptionLabWizardProps {
 
 export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: OptionLabWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [proMode, setProMode] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [collateralState, setCollateralState] = useState<CollateralState>({
     hasEnoughCollateral: false,
     collateralProvided: "0",
@@ -93,6 +93,8 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
 
   const handleNext = () => {
     if (currentStep < steps.length - 1 && canProceed(currentStep)) {
+      // Mark current step as completed when user proceeds to next step
+      setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(currentStep + 1);
     }
   };
@@ -109,6 +111,8 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
       setCurrentStep(index);
     } else if (index === currentStep + 1 && canProceed(currentStep)) {
       // Allow going to next step if current step is valid
+      // Mark current step as completed when user proceeds to next step
+      setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(index);
     }
   };
@@ -130,11 +134,11 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {/* Header with Pro Mode Toggle */}
+      {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        className="mb-6 md:mb-8"
       >
         <div>
           <h2 className="text-2xl md:text-3xl font-thin text-white mb-1">
@@ -144,23 +148,6 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
             Follow the steps to configure and mint your option
           </p>
         </div>
-        
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10"
-        >
-          <span className="text-sm text-white/80">Pro Mode</span>
-          <Switch
-            size="sm"
-            checked={proMode}
-            onValueChange={setProMode}
-            classNames={{
-              wrapper: "group-data-[selected=true]:bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
-              thumb: "group-data-[selected=true]:bg-white"
-            }}
-          />
-        </motion.div>
       </motion.div>
 
       {/* Progress Steps - Mobile Optimized */}
@@ -184,12 +171,12 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
                     "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
                     index === currentStep
                       ? "bg-white/10 border-white text-white"
-                      : index < currentStep
+                      : completedSteps.has(index)
                       ? "bg-green-500/20 border-green-500 text-green-400"
                       : "bg-white/5 border-white/20 text-white/60"
                   )}
                 >
-                  {index < currentStep ? (
+                  {completedSteps.has(index) ? (
                     <Check className="w-4 h-4" />
                   ) : (
                     step.icon
@@ -213,7 +200,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
                   <motion.div
                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
                     initial={{ width: 0 }}
-                    animate={{ width: index < currentStep ? '100%' : '0%' }}
+                    animate={{ width: completedSteps.has(index) ? '100%' : '0%' }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
@@ -259,18 +246,18 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
               {currentStep === 0 && (
                 <StepConfigure 
                   assetPrice={assetPrice}
-                  proMode={proMode}
+                  proMode={false}
                 />
               )}
               {currentStep === 1 && (
                 <StepCollateral
-                  proMode={proMode}
+                  proMode={false}
                   onStateChangeAction={setCollateralState}
                 />
               )}
               {currentStep === 2 && (
                 <StepReview
-                  proMode={proMode}
+                  proMode={false}
                   collateralState={collateralState}
                   assetPrice={assetPrice}
                   isSubmitting={isSubmitting}
