@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Card, 
@@ -83,6 +83,11 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const collateralNeeded = calculateCollateralNeeded(options);
   const requiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
   const minCollateralRequired = calculateMinCollateralRequired(collateralNeeded);
+  
+  // Calculate the actual collateral requirement based on strike price and contract quantity
+  const actualCollateralRequired = formValues.strikePrice && formValues.quantity 
+    ? (formValues.strikePrice * (formValues.quantity * 100))
+    : 0;
   
   // Convert annual to hourly interest rate
   const hourlyInterestRate = BASE_ANNUAL_INTEREST_RATE / (365 * 24);
@@ -194,38 +199,34 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     }
   };
 
-  const collateralPercentage = requiredCollateral > 0 
-    ? (Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100
+  // Calculate total coverage including leverage (collateral + borrowed amount)
+  const totalCoverage = Number(collateralProvided) * Number(leverage);
+  const collateralPercentage = actualCollateralRequired > 0 
+    ? (totalCoverage / actualCollateralRequired) * 100
     : 0;
 
-  // Calculate maximum leverage that would result in exactly 100% coverage
-  const maxLeverageFor100Percent = Number(collateralProvided) > 0 && requiredCollateral > 0
-    ? Math.max(1, requiredCollateral / Number(collateralProvided))
+  // Calculate maximum leverage that would result in exactly 100% coverage using actualCollateralRequired
+  const maxLeverageFor100Percent = Number(collateralProvided) > 0 && actualCollateralRequired > 0
+    ? Math.max(1, actualCollateralRequired / Number(collateralProvided))
     : MAX_LEVERAGE;
 
   // Dynamic max leverage (capped at MAX_LEVERAGE, but limited by 100% coverage and never below 1)
   const dynamicMaxLeverage = Math.min(MAX_LEVERAGE, Math.max(1, maxLeverageFor100Percent));
 
-  // Auto-adjust leverage when it would exceed 100% coverage or reset to 1x when 100% covered
+  const leverageRef = useRef(leverage);
+  leverageRef.current = leverage;
+
+  // Auto-adjust leverage when collateral changes (but not when leverage itself changes)
   useEffect(() => {
     if (Number(collateralProvided) > 0 && requiredCollateral > 0) {
-      const currentCoverage = (Number(collateralProvided) * Number(leverage)) / requiredCollateral;
-      
-      if (currentCoverage > 1) {
-        // If current leverage results in over 100% coverage, reduce it but never below 1
-        const newLeverage = Math.max(1, Math.min(MAX_LEVERAGE, maxLeverageFor100Percent));
-        setLeverage(newLeverage);
-        setLeverageInputValue(newLeverage.toString());
-      }
-      
       // If collateral alone covers 100% or more, reset leverage to 1x
       const collateralOnlyCoverage = Number(collateralProvided) / requiredCollateral;
-      if (collateralOnlyCoverage >= 1 && Number(leverage) > 1) {
+      if (collateralOnlyCoverage >= 1 && Number(leverageRef.current) > 1) {
         setLeverage(1);
         setLeverageInputValue("1");
       }
     }
-  }, [collateralProvided, requiredCollateral, leverage, maxLeverageFor100Percent]);
+  }, [collateralProvided, requiredCollateral]);
 
 
   return (
@@ -300,7 +301,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const minCollateral = (requiredCollateral / MAX_LEVERAGE).toFixed(2);
+                      const minCollateral = (actualCollateralRequired / MAX_LEVERAGE).toFixed(2);
                       const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
                       
                       setCollateralProvided(minCollateral);
@@ -317,7 +318,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const halfCollateral = (requiredCollateral / 5).toFixed(2);
+                      const halfCollateral = (actualCollateralRequired / 5).toFixed(2);
                       const newLeverage = 5;
                       
                       setCollateralProvided(halfCollateral);
@@ -334,7 +335,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const fullCollateral = requiredCollateral.toFixed(2);
+                      const fullCollateral = actualCollateralRequired.toFixed(2);
                       const newLeverage = 1;
                       
                       setCollateralProvided(fullCollateral);
@@ -484,14 +485,14 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <p className="text-xs text-white/40">Remaining Coverage Needed</p>
-                  {Math.max(0, requiredCollateral - (Number(collateralProvided) * Number(leverage))) > 0 ? (
+                  {Math.max(0, actualCollateralRequired - totalCoverage) > 0 ? (
                     <AlertTriangle className="w-3 h-3 text-red-400" />
                   ) : (
                     <Check className="w-3 h-3 text-green-400" />
                   )}
                 </div>
                 <p className="text-sm font-medium text-white">
-                  ${Math.max(0, requiredCollateral - (Number(collateralProvided) * Number(leverage))).toFixed(2)}
+                  ${Math.max(0, actualCollateralRequired - totalCoverage).toFixed(2)}
                 </p>
               </div>
               <div>
