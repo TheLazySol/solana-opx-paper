@@ -319,7 +319,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                   classNames={{
                     base: "max-w-full",
                     input: "text-white",
-                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10"
+                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
                   }}
                 />
                 
