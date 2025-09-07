@@ -59,7 +59,7 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/80">Strike Price</label>
+        <label className="text-sm font-medium text-white/60">Strike Price</label>
         <Tooltip 
           content={
             <div className="text-xs font-light text-white/70 max-w-xs">
@@ -82,8 +82,9 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
         onChange={(e) => handleStrikePriceChange(e.target.value)}
         variant="flat"
         classNames={{
-          input: "font-medium text-white bg-transparent",
-          inputWrapper: "!bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px] rounded-lg data-[focus=true]:border-[#4a85ff]/60 data-[focus=true]:!bg-white/5"
+          base: "max-w-full",
+          input: "text-white",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
         }}
         startContent={<span className="text-white/40">$</span>}
       />

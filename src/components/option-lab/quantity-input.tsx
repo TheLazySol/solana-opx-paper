@@ -47,7 +47,7 @@ export const QuantityInput = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/80">
+        <label className="text-sm font-medium text-white/60">
           Contract Quantity <span className="opacity-50">(1 = 100 Underlying Tokens)</span>
         </label>
         <Tooltip 
@@ -71,8 +71,9 @@ export const QuantityInput = () => {
         onChange={(e) => handleQuantityChange(e.target.value)}
         variant="flat"
         classNames={{
-          input: "font-medium text-white bg-transparent",
-          inputWrapper: "!bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px] rounded-lg data-[focus=true]:border-[#4a85ff]/60 data-[focus=true]:!bg-white/5"
+          base: "max-w-full",
+          input: "text-white",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
         }}
       />
     </div>
