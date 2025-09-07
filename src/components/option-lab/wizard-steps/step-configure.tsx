@@ -255,6 +255,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
               <div className="space-y-3">
                 <AssetSelector assetPrice={assetPrice} />
                 <OptionTypeSelector />
+                <ExpirationDatePicker />
               </div>
             </CardBody>
           </Card>
@@ -290,25 +291,17 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
               <div className="space-y-3">
                 <StrikePriceInput assetPrice={assetPrice} />
                 <QuantityInput />
+                <PremiumDisplay 
+                  lastUpdated={lastUpdated} 
+                  manualRefresh={manualRefresh} 
+                  isDebouncing={isDebouncing}
+                  isCalculating={isCalculatingPremium}
+                />
               </div>
             </CardBody>
           </Card>
         </div>
 
-        {/* Bottom Row - Expiration & Premium in a more compact layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <ExpirationDatePicker />
-          </div>
-          <div className="space-y-2">
-            <PremiumDisplay 
-              lastUpdated={lastUpdated} 
-              manualRefresh={manualRefresh} 
-              isDebouncing={isDebouncing}
-              isCalculating={isCalculatingPremium}
-            />
-          </div>
-        </div>
       </motion.div>
 
       {/* Advanced Option Details - Always visible */}
