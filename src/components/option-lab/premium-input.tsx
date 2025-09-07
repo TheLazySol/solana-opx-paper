@@ -137,7 +137,7 @@ export const PremiumDisplay = ({
         }
         classNames={{
           base: "max-w-full",
-          input: "text-white",
+          input: orderType === 'market' ? "text-white/50" : "text-white",
           inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
         }}
       />

@@ -53,10 +53,10 @@ export const ExpirationDatePicker = () => {
       <Popover placement="bottom">
         <PopoverTrigger>
           <Button
-            variant="bordered"
+            variant="flat"
             className={cn(
               "w-full justify-start text-left font-normal h-10 rounded-lg",
-              "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
+              "bg-white/5 border border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
               !getValues('expirationDate') && "text-white/40",
               getValues('expirationDate') && "text-white"
             )}

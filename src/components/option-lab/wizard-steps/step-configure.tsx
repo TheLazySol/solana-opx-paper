@@ -9,7 +9,7 @@ import { AssetSelector } from '../asset-selector';
 import { OptionTypeSelector } from '../option-type-select';
 import { ExpirationDatePicker } from '../expiration-date-select';
 import { StrikePriceInput } from '../strike-price-input';
-import { PremiumDisplay } from '../premium-display';
+import { PremiumDisplay } from '../premium-input';
 import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
