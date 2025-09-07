@@ -66,7 +66,7 @@ export const QuantityInput = () => {
         inputMode="decimal"
         max="10000"
         step="0.01"
-        placeholder="Min Qty: 0.01 (2 decimal max)"
+        placeholder="Min Qty: 0.01"
         value={getValues('quantity')}
         onChange={(e) => handleQuantityChange(e.target.value)}
         variant="flat"
