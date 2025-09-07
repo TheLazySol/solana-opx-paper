@@ -36,6 +36,8 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Get order type from form context
+  const premiumOrderType = methods.watch('orderType') || 'market';
   const debounceTimer = useRef<NodeJS.Timeout>();
   
   const selectedAsset = methods.watch('asset');
@@ -90,29 +92,33 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
 
   // Immediate calculation for option type and expiration date changes (no debounce)
   useEffect(() => {
-    const values = methods.getValues();
-    if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
-      calculateOptionPrice(values);
+    if (premiumOrderType === 'market') {
+      const values = methods.getValues();
+      if (values.strikePrice && values.strikePrice !== '' && values.expirationDate) {
+        calculateOptionPrice(values);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [optionType, expirationDate]);
+  }, [optionType, expirationDate, premiumOrderType]);
 
   // Debounced calculation for strike price and asset price changes
   useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-    const values = methods.getValues();
-    if (strikePrice && strikePrice !== '') {
-      debounceTimer.current = setTimeout(() => {
-        if (!expirationDate) {
-          const tempValues = {...values};
-          tempValues.expirationDate = new Date();
-          calculateOptionPrice(tempValues);
-        } else {
-          calculateOptionPrice(values);
-        }
-      }, EDIT_REFRESH_INTERVAL);
+    if (premiumOrderType === 'market') {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      const values = methods.getValues();
+      if (strikePrice && strikePrice !== '') {
+        debounceTimer.current = setTimeout(() => {
+          if (!expirationDate) {
+            const tempValues = {...values};
+            tempValues.expirationDate = new Date();
+            calculateOptionPrice(tempValues);
+          } else {
+            calculateOptionPrice(values);
+          }
+        }, EDIT_REFRESH_INTERVAL);
+      }
     }
     return () => {
       if (debounceTimer.current) {
@@ -120,7 +126,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [strikePrice, assetPrice]);
+  }, [strikePrice, assetPrice, premiumOrderType]);
 
   const manualRefresh = async () => {
     const values = methods.getValues();
@@ -296,6 +302,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                   manualRefresh={manualRefresh} 
                   isDebouncing={isDebouncing}
                   isCalculating={isCalculatingPremium}
+                  onOrderTypeChange={(type) => methods.setValue('orderType', type)}
                 />
               </div>
             </CardBody>

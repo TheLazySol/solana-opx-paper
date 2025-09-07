@@ -74,6 +74,8 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
   const [isCalculatingPremium, setIsCalculatingPremium] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Get order type from form context
+  const premiumOrderType = methods.watch('orderType') || 'market';
   const [currentStep, setCurrentStep] = useState<string>('asset');
   const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set(['asset'])); // User starts on asset step
   const debounceTimer = useRef<NodeJS.Timeout>();
@@ -201,15 +203,17 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
 
   // Calculate premium when all required fields are filled
   useEffect(() => {
-    const values = methods.getValues();
-    if (values.strikePrice && values.strikePrice !== '' && values.expirationDate && values.quantity >= 0.01) {
-      // Debounce the calculation to prevent infinite loops
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
+    if (premiumOrderType === 'market') {
+      const values = methods.getValues();
+      if (values.strikePrice && values.strikePrice !== '' && values.expirationDate && values.quantity >= 0.01) {
+        // Debounce the calculation to prevent infinite loops
+        if (debounceTimer.current) {
+          clearTimeout(debounceTimer.current);
+        }
+        debounceTimer.current = setTimeout(() => {
+          calculateOptionPrice(values);
+        }, EDIT_REFRESH_INTERVAL);
       }
-      debounceTimer.current = setTimeout(() => {
-        calculateOptionPrice(values);
-      }, EDIT_REFRESH_INTERVAL);
     }
     
     return () => {
@@ -217,7 +221,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [optionType, expirationDate, strikePrice, quantity, assetPrice, calculateOptionPrice, methods]);
+  }, [optionType, expirationDate, strikePrice, quantity, assetPrice, calculateOptionPrice, methods, premiumOrderType]);
 
   const manualRefresh = useCallback(async () => {
     const values = methods.getValues();
@@ -702,6 +706,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                           manualRefresh={manualRefresh} 
                           isDebouncing={isDebouncing}
                           isCalculating={isCalculatingPremium}
+                          onOrderTypeChange={(type) => methods.setValue('orderType', type)}
                         />
                         {premium && (
                           <div className="p-3 bg-[#4a85ff]/10 rounded-lg border border-[#4a85ff]/20">
