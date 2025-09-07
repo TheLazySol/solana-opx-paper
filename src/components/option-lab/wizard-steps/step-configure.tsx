@@ -13,6 +13,7 @@ import { PremiumDisplay } from '../premium-display';
 import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
+import { formatNumberWithCommas } from '@/utils/utils';
 import { calculateIntrinsicValue, calculateExtrinsicValue, calculateMoneyness } from '@/constants/option-lab/calculations';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { Info, TrendingUp, TrendingDown, Calendar, DollarSign, Hash } from 'lucide-react';
@@ -428,7 +429,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                   </Tooltip>
                 </div>
                 <p className="text-sm font-medium text-white">
-                  ${premium && quantity ? (Number(premium) * quantity * 100).toFixed(2) : '0.00'}
+                  ${premium && quantity ? formatNumberWithCommas(Number(premium) * quantity * 100) : '0.00'}
                 </p>
               </div>
             </div>
@@ -494,7 +495,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                     </Tooltip>
                   </div>
                   <p className="text-sm font-medium text-green-400">
-                    {premium && quantity ? `$${(Number(premium) * quantity * 100).toFixed(2)}` : '-'}
+                    {premium && quantity ? `$${formatNumberWithCommas(Number(premium) * quantity * 100)}` : '-'}
                   </p>
                 </div>
               </div>

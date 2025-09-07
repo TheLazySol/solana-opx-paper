@@ -1,6 +1,7 @@
 import { Card, CardBody, CardHeader, Tooltip, Chip } from '@heroui/react'
 import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
 import { MakerPnlChart } from "./maker-pnl-chart"
+import { formatNumberWithCommas } from '@/utils/utils'
 import { useMemo } from "react"
 import { Activity, Target, TrendingUp, TrendingDown } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -282,7 +283,7 @@ export function MakerSummary({
                   </span>
                 </Tooltip>
                 <span className="font-bold text-sm text-white">
-                  ${positionSize.toFixed(2)}
+                  ${formatNumberWithCommas(positionSize)}
                 </span>
               </div>
 
@@ -294,7 +295,7 @@ export function MakerSummary({
                   </span>
                 </Tooltip>
                 <span className="font-bold text-sm text-green-400">
-                  ${totalPremium.toFixed(2)}
+                  ${formatNumberWithCommas(totalPremium)}
                 </span>
               </div>
 

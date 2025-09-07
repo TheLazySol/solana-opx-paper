@@ -17,6 +17,7 @@ import {
   Dot
 } from 'recharts';
 import { Info, ZoomIn, ZoomOut, RotateCcw, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatNumberWithCommas } from '@/utils/utils';
 
 interface OptionPosition {
   quantity: number;
@@ -407,7 +408,7 @@ export function InteractivePnlChart({
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-green-400" />
-          <span className="text-green-400">Max Profit: ${(premium * options[0].quantity * 100).toFixed(2)}</span>
+          <span className="text-green-400">Max Profit: ${formatNumberWithCommas(premium * options[0].quantity * 100)}</span>
         </div>
       </div>
 

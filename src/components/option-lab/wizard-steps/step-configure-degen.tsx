@@ -12,6 +12,7 @@ import { PremiumDisplay } from '../premium-display';
 import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
+import { formatNumberWithCommas } from '@/utils/utils';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { Info, TrendingUp, TrendingDown, Calendar, DollarSign, Hash, HelpCircle, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
@@ -273,7 +274,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                   variant="flat"
                   className="bg-green-500/20 text-green-400"
                 >
-                  Total Value: ${totalValue.toFixed(2)}
+                  Total Value: ${formatNumberWithCommas(totalValue)}
                 </Chip>
               )}
             </div>
@@ -718,7 +719,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                   {currentStep !== 'premium' && isStepCompleted('premium') && (
                     <div>
                       <p className="text-xs text-white/60">Premium: ${Number(premium).toFixed(2)}/contract</p>
-                      <p className="text-xs text-[#4a85ff] font-medium">Total Value: ${totalValue.toFixed(2)}</p>
+                      <p className="text-xs text-[#4a85ff] font-medium">Total Value: ${formatNumberWithCommas(totalValue)}</p>
                     </div>
                   )}
                 </div>
@@ -771,7 +772,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                 <div>
                   <p className="text-xs text-white/40 mb-1">Total Value</p>
                   <p className="text-sm font-medium text-white">
-                    ${totalValue.toFixed(2)}
+                    ${formatNumberWithCommas(totalValue)}
                   </p>
                 </div>
               </div>
@@ -796,7 +797,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                     <div>
                       <p className="text-xs text-white/40">Max Profit</p>
                       <p className="text-sm font-medium text-green-400">
-                        ${totalValue.toFixed(2)}
+                        ${formatNumberWithCommas(totalValue)}
                       </p>
                     </div>
                     <div>

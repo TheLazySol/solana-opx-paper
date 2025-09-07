@@ -16,6 +16,7 @@ import { CollateralState } from '../collateral-provider';
 import { InteractivePnlChart } from '../interactive-pnl-chart';
 import { calculateTotalPremium } from '@/constants/option-lab/calculations';
 import { format } from 'date-fns';
+import { formatNumberWithCommas } from '@/utils/utils';
 import { 
   Shield, 
   TrendingUp, 
@@ -86,7 +87,7 @@ export function StepReview({
     {
       id: 'premium',
       label: 'Premium Income',
-      value: `$${totalPremium.toFixed(2)}`,
+      value: `$${formatNumberWithCommas(totalPremium)}`,
       icon: <DollarSign className="w-4 h-4" />,
       color: 'text-green-400',
       bgColor: 'bg-green-500/20',
@@ -95,7 +96,7 @@ export function StepReview({
     {
       id: 'collateral',
       label: 'Collateral Provided',
-      value: `$${Number(collateralState.collateralProvided).toFixed(2)}`,
+      value: `$${formatNumberWithCommas(Number(collateralState.collateralProvided))}`,
       icon: <Shield className="w-4 h-4" />,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/20',
@@ -113,7 +114,7 @@ export function StepReview({
     {
       id: 'maxProfit',
       label: 'Max Profit',
-      value: `$${Math.abs(collateralState.maxProfitPotential).toFixed(2)}`,
+      value: `$${formatNumberWithCommas(Math.abs(collateralState.maxProfitPotential))}`,
       icon: <TrendingUp className="w-4 h-4" />,
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500/20',
@@ -252,7 +253,7 @@ export function StepReview({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-white/40 mb-1">Total Value</p>
-                  <p className="text-sm font-medium text-white">${totalValue.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-white">${formatNumberWithCommas(totalValue)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">Break-Even</p>

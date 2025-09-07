@@ -31,6 +31,7 @@ import {
   calculateMaxProfitPotential,
   calculateMinCollateralRequired
 } from '@/constants/option-lab/calculations';
+import { formatNumberWithCommas } from '@/utils/utils';
 import {
   COLLATERAL_TYPES,
   BASE_ANNUAL_INTEREST_RATE,
@@ -675,7 +676,7 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
                     "text-sm font-bold",
                     maxProfitPotential > 0 ? "text-green-400" : "text-red-400"
                   )}>
-                    ${Math.abs(maxProfitPotential).toFixed(2)}
+                    ${formatNumberWithCommas(Math.abs(maxProfitPotential))}
                   </span>
                 </div>
               </div>

@@ -34,6 +34,7 @@ import {
   calculateMaxProfitPotential,
   calculateMinCollateralRequired
 } from "@/constants/option-lab/calculations";
+import { formatNumberWithCommas } from '@/utils/utils';
 import { 
   Info, 
   AlertTriangle, 
@@ -436,7 +437,7 @@ export function CollateralProvider({
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-white/80">Max Profit Potential</span>
               <span className="text-sm font-semibold text-green-400">
-                ${maxProfitPotential.toFixed(2)}
+                ${formatNumberWithCommas(maxProfitPotential)}
               </span>
             </div>
             <div className="text-xs text-white/40 text-right">(after fees)</div>
