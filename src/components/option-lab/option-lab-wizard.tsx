@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardBody, Button, Progress, cn } from '@heroui/react';
+import { Card, CardBody, Button, Progress, cn, Switch, Tooltip } from '@heroui/react';
 import { ChevronLeft, ChevronRight, Check, Circle, DollarSign, FileCheck } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { StepConfigure, StepCollateral, StepReview } from './wizard-steps';
@@ -57,6 +57,7 @@ interface OptionLabWizardProps {
 export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: OptionLabWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [isProMode, setIsProMode] = useState(true);
   const [collateralState, setCollateralState] = useState<CollateralState>({
     hasEnoughCollateral: false,
     collateralProvided: "0",
@@ -140,13 +141,56 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
         animate={{ opacity: 1, y: 0 }}
         className="mb-6 md:mb-8"
       >
-        <div>
-          <h2 className="text-2xl md:text-3xl font-thin text-white mb-1">
-            Create Your Option Contract
-          </h2>
-          <p className="text-sm text-white/60">
-            Follow the steps to configure and mint your option
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-thin text-white mb-1">
+              Create Your Option Contract
+            </h2>
+            <p className="text-sm text-white/60">
+              Follow the steps to configure and mint your option
+            </p>
+          </div>
+          
+          {/* Mode Selector - Aligned with Header */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center gap-3 mt-1"
+          >
+            <Tooltip content="Coming Soon!" placement="bottom">
+              <span className={cn(
+                "text-sm font-medium transition-colors cursor-not-allowed",
+                "text-white/30 line-through"
+              )}>
+                Degen Mode
+              </span>
+            </Tooltip>
+            <Switch
+              isSelected={isProMode}
+              onValueChange={() => {}} // Disabled
+              size="sm"
+              isDisabled={true}
+              classNames={{
+                wrapper: cn(
+                  "group-data-[selected=true]:bg-gradient-to-r",
+                  "group-data-[selected=true]:from-[#4a85ff]",
+                  "group-data-[selected=true]:to-[#5829f2]",
+                  "opacity-50"
+                ),
+                thumb: cn(
+                  "group-data-[selected=true]:ml-6",
+                  "group-data-[selected=true]:bg-white"
+                )
+              }}
+            />
+            <span className={cn(
+              "text-sm font-medium transition-colors",
+              "text-[#5829f2]"
+            )}>
+              Pro Mode
+            </span>
+          </motion.div>
         </div>
       </motion.div>
 
