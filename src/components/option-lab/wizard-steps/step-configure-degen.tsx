@@ -743,7 +743,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                 <h4 className="text-sm font-medium text-white">Advanced Option Details</h4>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <p className="text-xs text-white/40 mb-1">Implied Volatility</p>
                   <p className="text-sm font-medium text-white">{(SOL_PH_VOLATILITY * 100).toFixed(2)}%</p>
@@ -760,6 +760,12 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
                         ? assetPrice > Number(strikePrice) ? 'ITM' : assetPrice < Number(strikePrice) ? 'OTM' : 'ATM'
                         : assetPrice < Number(strikePrice) ? 'ITM' : assetPrice > Number(strikePrice) ? 'OTM' : 'ATM'
                     ) : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/40 mb-1">Option Premium</p>
+                  <p className="text-sm font-medium text-blue-400">
+                    ${premium ? Number(premium).toFixed(2) : '0.00'}
                   </p>
                 </div>
                 <div>

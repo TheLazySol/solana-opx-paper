@@ -335,7 +335,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
               <h4 className="text-sm font-medium text-white">Advanced Option Details</h4>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <p className="text-xs text-white/40">Implied Volatility</p>
@@ -393,6 +393,24 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                     : 'text-white'
                 }`}>
                   {assetPrice && strikePrice ? calculateMoneyness(optionType, assetPrice, Number(strikePrice)) : '-'}
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Option Premium</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        The price paid by the buyer for each option contract. This is the maximum profit for the option seller at expiration.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium text-blue-400">
+                  ${premium ? Number(premium).toFixed(2) : '0.00'}
                 </p>
               </div>
               <div>

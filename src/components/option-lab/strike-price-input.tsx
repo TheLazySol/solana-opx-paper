@@ -60,8 +60,15 @@ export const StrikePriceInput = ({ assetPrice }: { assetPrice: number | null }) 
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <label className="text-sm font-medium text-white/80">Strike Price</label>
-        <Tooltip content="The market price at which the option can be exercised by the buyer.">
-          <Info className="w-4 h-4 text-white/40 cursor-help" />
+        <Tooltip 
+          content={
+            <div className="text-xs font-light text-white/70 max-w-xs">
+              The market price at which the option can be exercised by the buyer.
+            </div>
+          }
+          placement="top"
+        >
+          <Info className="w-3 h-3 text-white/30 cursor-help" />
         </Tooltip>
       </div>
       <Input

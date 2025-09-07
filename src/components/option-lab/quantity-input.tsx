@@ -47,9 +47,18 @@ export const QuantityInput = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/80">Quantity</label>
-        <Tooltip content="The number of option contracts to sell. Supports up to 2 decimal places.">
-          <Info className="w-4 h-4 text-white/40 cursor-help" />
+        <label className="text-sm font-medium text-white/80">
+          Contract Quantity <span className="opacity-50">(1 = 100 Underlying Tokens)</span>
+        </label>
+        <Tooltip 
+          content={
+            <div className="text-xs font-light text-white/70 max-w-xs">
+              The number of option contracts to short sell
+            </div>
+          }
+          placement="top"
+        >
+          <Info className="w-3 h-3 text-white/30 cursor-help" />
         </Tooltip>
       </div>
       <Input
