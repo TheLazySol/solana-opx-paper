@@ -15,9 +15,14 @@ import { Info } from 'lucide-react';
 interface AdvancedOptionDetailsProps {
   assetPrice: number | null;
   showTitle?: boolean;
+  collateralInfo?: {
+    collateralProvided: string;
+    collateralType: string;
+    collateralPrice: number;
+  };
 }
 
-export function AdvancedOptionDetails({ assetPrice, showTitle = true }: AdvancedOptionDetailsProps) {
+export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateralInfo }: AdvancedOptionDetailsProps) {
   const cardRef = useMouseGlow();
   const methods = useFormContext();
   const formValues = methods.watch();
@@ -210,7 +215,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true }: Advanced
         </div>
         
         <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <div className="flex items-center gap-1 mb-1">
                 <p className="text-xs text-white/40">Days to Expiration</p>
@@ -274,6 +279,36 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true }: Advanced
               <p className="text-sm font-medium text-green-400">
                 {premium && quantity ? `$${formatNumberWithCommas(Number(premium) * quantity * 100)}` : '-'}
               </p>
+            </div>
+            
+            <div>
+              <div className="flex items-center gap-1 mb-1">
+                <p className="text-xs text-white/40">Est. Max Loss</p>
+                <Tooltip 
+                  content={
+                    <div className="text-xs font-light text-white/70 max-w-xs">
+                      Maximum potential loss based on collateral provided. This represents the amount at risk if the option expires in-the-money for the buyer.
+                    </div>
+                  }
+                  placement="top"
+                >
+                  <Info className="w-3 h-3 text-white/30 cursor-help" />
+                </Tooltip>
+              </div>
+              <div className="text-sm font-medium text-red-400">
+                {collateralInfo && Number(collateralInfo.collateralProvided) > 0 ? (
+                  <div>
+                    <div>${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}</div>
+                    {collateralInfo.collateralType !== 'USDC' && (
+                      <div className="text-xs text-white/40 font-normal">
+                        ({Number(collateralInfo.collateralProvided).toFixed(4)} {collateralInfo.collateralType})
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>-</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

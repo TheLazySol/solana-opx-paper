@@ -19,6 +19,7 @@ import { useFormContext } from 'react-hook-form';
 import { CollateralState } from '../collateral-provider';
 import { CostBreakdown } from '../cost-breakdown';
 import { OptionContractSummary } from '../option-contract-summary';
+import { AdvancedOptionDetails } from '../advanced-option-details';
 import {
   calculateCollateralNeeded,
   calculateRequiredCollateral,
@@ -852,6 +853,19 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
             </div>
           </CardBody>
         </Card>
+      </motion.div>
+
+      {/* Advanced Option Details */}
+      <motion.div variants={itemVariants}>
+        <AdvancedOptionDetails 
+          assetPrice={formValues.asset ? solPrice : null}
+          showTitle={false}
+          collateralInfo={{
+            collateralProvided,
+            collateralType,
+            collateralPrice
+          }}
+        />
       </motion.div>
 
       {/* Max Leverage Alert */}

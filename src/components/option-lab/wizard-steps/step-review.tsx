@@ -106,7 +106,14 @@ export function StepReview({
 
       {/* 2. Advanced Option Details */}
       <motion.div variants={itemVariants}>
-        <AdvancedOptionDetails assetPrice={assetPrice} />
+        <AdvancedOptionDetails 
+          assetPrice={assetPrice} 
+          collateralInfo={{
+            collateralProvided: collateralState.collateralProvided,
+            collateralType: collateralState.collateralType,
+            collateralPrice: collateralState.collateralType === 'SOL' ? (assetPrice || 100) : 1
+          }}
+        />
       </motion.div>
 
       {/* 3. Cost Breakdown */}
