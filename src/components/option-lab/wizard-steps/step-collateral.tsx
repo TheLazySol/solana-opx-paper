@@ -60,6 +60,11 @@ interface StepCollateralProps {
   initialCollateralState?: CollateralState;
 }
 
+// Helper function to format leverage value to 3 decimal places, removing trailing zeros
+const formatLeverageValue = (value: number): string => {
+  return value.toFixed(3).replace(/\.?0+$/, '');
+};
+
 export function StepCollateral({ proMode, onStateChangeAction, initialCollateralState }: StepCollateralProps) {
   const methods = useFormContext();
   const formValues = methods.watch();
@@ -78,12 +83,13 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     initialCollateralState?.leverage || 1
   );
   const [leverageInputValue, setLeverageInputValue] = useState<string>(
-    initialCollateralState?.leverage?.toString() || "1"
+    initialCollateralState?.leverage ? formatLeverageValue(initialCollateralState.leverage) : "1"
   );
   const [collateralType, setCollateralType] = useState<string>(
     initialCollateralState?.collateralType || COLLATERAL_TYPES[0].value
   );
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(false);
+  const maxLeverageAlertTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [autoMode, setAutoMode] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
   const [collateralPrice, setCollateralPrice] = useState<number>(1); // Price of selected collateral in USD
@@ -211,6 +217,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
       }
+      if (maxLeverageAlertTimeoutRef.current) {
+        clearTimeout(maxLeverageAlertTimeoutRef.current);
+      }
     };
   }, [debouncedUpdateParentState]);
 
@@ -224,7 +233,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
       setTimeout(() => {
         setCollateralProvided("0");
         setLeverage(1);
-        setLeverageInputValue("1");
+        setLeverageInputValue(formatLeverageValue(1));
         setAutoMode(false); // Also reset auto mode when changing types
       }, 0);
     }
@@ -235,7 +244,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     if (initialCollateralState) {
       setCollateralProvided(initialCollateralState.collateralProvided);
       setLeverage(initialCollateralState.leverage);
-      setLeverageInputValue(initialCollateralState.leverage.toString());
+      setLeverageInputValue(formatLeverageValue(initialCollateralState.leverage));
       setCollateralType(initialCollateralState.collateralType);
       // Only reset auto mode on initial load, not on every state change
       // setAutoMode(false); // Commented out to preserve auto mode state
@@ -287,7 +296,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
           const optimalLeverage = Math.min(MAX_LEVERAGE, actualCollateralRequired / collateralUSD);
           const clampedLeverage = Math.max(1, optimalLeverage);
           setLeverage(clampedLeverage);
-          setLeverageInputValue(clampedLeverage.toFixed(3).replace(/\.?0+$/, ''));
+          setLeverageInputValue(formatLeverageValue(clampedLeverage));
         }
       }
     }
@@ -342,7 +351,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
       const collateralOnlyCoverage = collateralProvidedUSD / currentRequiredCollateral;
       if (collateralOnlyCoverage >= 1 && Number(leverageRef.current) > 1) {
         setLeverage(1);
-        setLeverageInputValue("1");
+        setLeverageInputValue(formatLeverageValue(1));
       }
     }
   }, [collateralProvided, collateralNeeded, totalPremium, collateralProvidedUSD, collateralPrice, autoMode]);
@@ -457,7 +466,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                           const optimalLeverage = Math.min(MAX_LEVERAGE, actualCollateralRequired / collateralUSD);
                           const clampedLeverage = Math.max(1, optimalLeverage);
                           setLeverage(clampedLeverage);
-                          setLeverageInputValue(clampedLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                          setLeverageInputValue(formatLeverageValue(clampedLeverage));
                         }
                       }
                     }}
@@ -484,7 +493,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                       
                       setCollateralProvided(minCollateral);
                       setLeverage(targetLeverage);
-                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverageInputValue(formatLeverageValue(targetLeverage));
                     }}
                     className={cn(
                       "text-xs",
@@ -509,7 +518,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                       
                       setCollateralProvided(halfCollateral);
                       setLeverage(targetLeverage);
-                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverageInputValue(formatLeverageValue(targetLeverage));
                     }}
                     className={cn(
                       "text-xs",
@@ -534,7 +543,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                       
                       setCollateralProvided(fullCollateral);
                       setLeverage(targetLeverage);
-                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverageInputValue(formatLeverageValue(targetLeverage));
                     }}
                     className={cn(
                       "text-xs",
@@ -581,23 +590,77 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                 <h3 className="text-sm font-medium text-white">Leverage</h3>
               </div>
               
-                {/* Leverage Input and Visual Bar */}
+                {/* Leverage Usage Bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-white/40">
+                    <span>1x</span>
+                    <span>{MAX_LEVERAGE}x Max</span>
+                  </div>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light space-y-1">
+                        <div>Current Leverage: <span className="text-[#4a85ff]">{Number(leverage).toFixed(2)}x</span></div>
+                        <div>Usage: <span className="text-[#4a85ff]">{((Number(leverage) / MAX_LEVERAGE) * 100).toFixed(1)}%</span></div>
+                        <div className="text-white/60">Adjust using input field or auto buttons</div>
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <div className="relative h-3 w-full bg-white/10 rounded-full" style={{ padding: '2px' }}>
+                      <div 
+                        className="absolute left-0 h-full transition-all duration-300 rounded-full"
+                        style={{ 
+                          width: `${((Number(leverage) - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
+                          background: '#4a85ff',
+                          boxShadow: `0 0 ${Math.min(20, 6 + (Number(leverage) / MAX_LEVERAGE) * 14)}px rgba(74, 133, 255, ${Math.min(0.9, 0.4 + (Number(leverage) / MAX_LEVERAGE) * 0.5)})`,
+                          top: '2px',
+                          height: 'calc(100% - 4px)'
+                        }}
+                      />
+                      {/* Marker for current dynamic max if different from MAX_LEVERAGE */}
+                      {dynamicMaxLeverage < MAX_LEVERAGE && (
+                        <div 
+                          className="absolute w-0.5 bg-white/60"
+                          style={{ 
+                            left: `${((dynamicMaxLeverage - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
+                            top: '2px',
+                            height: 'calc(100% - 4px)'
+                          }}
+                        />
+                      )}
+                    </div>
+                  </Tooltip>
+                </div>
+              
+              {/* Leverage Details */}
+              <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm text-white/60">Leverage</label>
-                    <Tooltip
-                      className="text-tiny text-default-500 rounded-md"
-                      content="Press Enter to confirm"
-                      placement="left"
-                    >
+                  {/* First Row - Main Details */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">Amount Borrowed</p>
+                      <p className="text-xs font-medium text-white">
+                        {formValues.asset && solPrice > 0 ? (
+                          `${(amountBorrowed / solPrice).toFixed(4)} ${formValues.asset || 'SOL'}`
+                        ) : (
+                          '0.0000 SOL'
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">OMLP Route</p>
+                      <p className="text-xs font-medium text-white">SAP-1 ({formValues.asset || 'SOL'})</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">Leverage</p>
                       <input
                         aria-label="Leverage value"
-                        className="px-2 py-1 w-16 text-right text-small font-medium text-white bg-white/5 outline-none transition-colors rounded-lg border border-white/20 hover:border-white/30 focus:border-[#4a85ff]/60"
+                        className="w-full px-2 py-1 text-xs font-medium text-white bg-white/5 outline-none transition-colors rounded hover:bg-white/10 focus:bg-white/10"
                         type="text"
                         value={leverageInputValue}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const v = e.target.value;
-                          // Limit to 3 decimal places and prevent empty values that aren't being typed
+                          // Allow empty string, numbers up to 2 digits before decimal, and up to 3 decimal places
                           if (v === '' || /^\d{1,2}(\.\d{0,3})?$/.test(v)) {
                             setLeverageInputValue(v);
                             // Auto-sync leverage value while typing (if valid number)
@@ -605,91 +668,93 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                               const inputValue = Number(v);
                               const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
                               setLeverage(clampedValue);
+                              
+                              // Clear existing timeout
+                              if (maxLeverageAlertTimeoutRef.current) {
+                                clearTimeout(maxLeverageAlertTimeoutRef.current);
+                              }
+                              
+                              // Show max leverage alert with 50ms delay if we hit the limit
+                              if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
+                                maxLeverageAlertTimeoutRef.current = setTimeout(() => {
+                                  setShowMaxLeverageAlert(true);
+                                  setTimeout(() => setShowMaxLeverageAlert(false), 5000);
+                                }, 50);
+                              }
                             }
+                          }
+                        }}
+                        onBlur={() => {
+                          // Clear existing timeout
+                          if (maxLeverageAlertTimeoutRef.current) {
+                            clearTimeout(maxLeverageAlertTimeoutRef.current);
+                          }
+                          
+                          // Format the input value when user finishes editing
+                          if (leverageInputValue !== '' && !isNaN(Number(leverageInputValue))) {
+                            const inputValue = Number(leverageInputValue);
+                            const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
+                            setLeverage(clampedValue);
+                            setLeverageInputValue(formatLeverageValue(clampedValue));
+                          } else if (leverageInputValue === '') {
+                            // Reset to 1 if empty
+                            setLeverage(1);
+                            setLeverageInputValue(formatLeverageValue(1));
                           }
                         }}
                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === "Enter" && leverageInputValue !== '' && !isNaN(Number(leverageInputValue))) {
+                            // Clear existing timeout
+                            if (maxLeverageAlertTimeoutRef.current) {
+                              clearTimeout(maxLeverageAlertTimeoutRef.current);
+                            }
+                            
                             const inputValue = Number(leverageInputValue);
                             const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
                             setLeverage(clampedValue);
-                            setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
+                            setLeverageInputValue(formatLeverageValue(clampedValue));
                             
-                            // Show max leverage alert if we hit the limit
-                            if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
-                              setShowMaxLeverageAlert(true);
-                              setTimeout(() => setShowMaxLeverageAlert(false), 5000);
-                            }
+                            // Blur the input to trigger formatting
+                            (e.target as HTMLInputElement).blur();
                           }
                         }}
+                        placeholder="1.0"
                       />
-                    </Tooltip>
+                    </div>
                   </div>
                   
-                  {/* Leverage Usage Bar */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-white/40">
-                      <span>1x</span>
-                      <span>{MAX_LEVERAGE}x Max</span>
+                  {/* Second Row - Costs and Risk */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">Est. Daily Interest</p>
+                      <p className="text-xs font-medium text-white">${borrowCost.toFixed(2)}</p>
                     </div>
-                    <Tooltip 
-                      content={
-                        <div className="text-xs font-light space-y-1">
-                          <div>Current Leverage: <span className="text-[#4a85ff]">{Number(leverage).toFixed(2)}x</span></div>
-                          <div>Usage: <span className="text-[#4a85ff]">{((Number(leverage) / MAX_LEVERAGE) * 100).toFixed(1)}%</span></div>
-                          <div className="text-white/60">Adjust using input field or auto buttons</div>
-                        </div>
-                      }
-                      placement="top"
-                    >
-                      <div className="relative h-3 w-full bg-white/10 rounded-full" style={{ padding: '2px' }}>
-                        <div 
-                          className="absolute left-0 h-full transition-all duration-300 rounded-full"
-                          style={{ 
-                            width: `${((Number(leverage) - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
-                            background: '#4a85ff',
-                            boxShadow: `0 0 ${Math.min(20, 6 + (Number(leverage) / MAX_LEVERAGE) * 14)}px rgba(74, 133, 255, ${Math.min(0.9, 0.4 + (Number(leverage) / MAX_LEVERAGE) * 0.5)})`,
-                            top: '2px',
-                            height: 'calc(100% - 4px)'
-                          }}
-                        />
-                        {/* Marker for current dynamic max if different from MAX_LEVERAGE */}
-                        {dynamicMaxLeverage < MAX_LEVERAGE && (
-                          <div 
-                            className="absolute w-0.5 bg-white/60"
-                            style={{ 
-                              left: `${((dynamicMaxLeverage - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
-                              top: '2px',
-                              height: 'calc(100% - 4px)'
-                            }}
-                          />
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">Borrow Fee</p>
+                      <p className="text-xs font-medium text-white">${borrowFee.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-0.5">Liquidation Risk</p>
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        className={cn(
+                          "text-xs",
+                          Number(leverage) === 1 ? "bg-green-500/20 text-green-400" :
+                          Number(leverage) <= 3 ? "bg-blue-500/20 text-blue-400" :
+                          Number(leverage) <= 5 ? "bg-yellow-500/20 text-yellow-400" :
+                          Number(leverage) <= 7 ? "bg-orange-500/20 text-orange-400" :
+                          "bg-red-500/20 text-red-400"
                         )}
-                      </div>
-                    </Tooltip>
+                      >
+                        {Number(leverage) === 1 ? 'Minimal' :
+                         Number(leverage) <= 3 ? 'Low' :
+                         Number(leverage) <= 5 ? 'Medium' :
+                         Number(leverage) <= 7 ? 'High' :
+                         'Very High'}
+                      </Chip>
+                    </div>
                   </div>
-                </div>
-              
-              {/* Risk Indicator */}
-              <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/60">Liquidation Risk</span>
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    className={cn(
-                      Number(leverage) === 1 ? "bg-green-500/20 text-green-400" :
-                      Number(leverage) <= 3 ? "bg-blue-500/20 text-blue-400" :
-                      Number(leverage) <= 5 ? "bg-yellow-500/20 text-yellow-400" :
-                      Number(leverage) <= 7 ? "bg-orange-500/20 text-orange-400" :
-                      "bg-red-500/20 text-red-400"
-                    )}
-                  >
-                    {Number(leverage) === 1 ? 'Minimal' :
-                     Number(leverage) <= 3 ? 'Low' :
-                     Number(leverage) <= 5 ? 'Medium' :
-                     Number(leverage) <= 7 ? 'High' :
-                     'Very High'}
-                  </Chip>
                 </div>
               </div>
             </CardBody>
@@ -814,8 +879,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
         )}
       </AnimatePresence>
 
-      {/* Cost Breakdown */}
-      <motion.div variants={itemVariants}>
+      {/* Cost Breakdown - Temporarily hidden as info is now in Leverage Details */}
+      {/* <motion.div variants={itemVariants}>
         <CostBreakdown 
           collateralState={{
             hasEnoughCollateral: hasEnough,
@@ -830,7 +895,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
           }}
           showDevModeChip={solPrice === 100}
         />
-      </motion.div>
+      </motion.div> */}
 
       {/* Pro Mode Advanced Details */}
       {proMode && (
