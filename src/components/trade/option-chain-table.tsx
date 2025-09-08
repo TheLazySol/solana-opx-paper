@@ -433,12 +433,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               : 'translate-y-4 opacity-0'
           }`}>
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">CALLS</span>
+            <span className="text-lg font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.4)' }}>CALLS</span>
           </div>
           <div className="w-[100px] text-center">
           </div>
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">PUTS</span>
+            <span className="text-lg font-bold text-red-400" style={{ textShadow: '0 0 10px rgba(248, 113, 113, 0.6), 0 0 20px rgba(248, 113, 113, 0.4)' }}>PUTS</span>
           </div>
         </div>
 
