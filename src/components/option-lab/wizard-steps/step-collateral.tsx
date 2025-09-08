@@ -445,7 +445,22 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                   <Button
                     size="sm"
                     variant={autoMode ? "solid" : "flat"}
-                    onPress={() => setAutoMode(!autoMode)}
+                    onPress={() => {
+                      const newAutoMode = !autoMode;
+                      setAutoMode(newAutoMode);
+                      
+                      // If turning auto mode ON and there's collateral provided, auto-adjust leverage
+                      if (newAutoMode && collateralProvided !== '' && Number(collateralProvided) > 0 && actualCollateralRequired > 0) {
+                        const collateralUSD = Number(collateralProvided) * collateralPrice;
+                        if (collateralUSD > 0) {
+                          // Calculate optimal leverage up to 10x to reach 100% coverage
+                          const optimalLeverage = Math.min(MAX_LEVERAGE, actualCollateralRequired / collateralUSD);
+                          const clampedLeverage = Math.max(1, optimalLeverage);
+                          setLeverage(clampedLeverage);
+                          setLeverageInputValue(clampedLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                        }
+                      }
+                    }}
                     className={cn(
                       "text-xs transition-all",
                       autoMode 
@@ -462,9 +477,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     variant="flat"
                     isDisabled={autoMode}
                     onPress={() => {
-                      // Calculate exact collateral needed for 100% coverage at 10x leverage
+                      // Calculate exact collateral needed for 100% coverage at 10x leverage + $0.01 buffer
                       const targetLeverage = MAX_LEVERAGE;
-                      const minCollateralUSD = Math.ceil(actualCollateralRequired / targetLeverage * 100) / 100; // Round up to ensure 100%+
+                      const minCollateralUSD = (actualCollateralRequired / targetLeverage) + 0.01; // Add $0.01 buffer
                       const minCollateral = (minCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       
                       setCollateralProvided(minCollateral);
@@ -487,9 +502,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     variant="flat"
                     isDisabled={autoMode}
                     onPress={() => {
-                      // Calculate exact collateral needed for 100% coverage at 5x leverage
+                      // Calculate exact collateral needed for 100% coverage at 5x leverage + $0.01 buffer
                       const targetLeverage = 5;
-                      const halfCollateralUSD = Math.ceil(actualCollateralRequired / targetLeverage * 100) / 100; // Round up to ensure 100%+
+                      const halfCollateralUSD = (actualCollateralRequired / targetLeverage) + 0.01; // Add $0.01 buffer
                       const halfCollateral = (halfCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       
                       setCollateralProvided(halfCollateral);
@@ -512,9 +527,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     variant="flat"
                     isDisabled={autoMode}
                     onPress={() => {
-                      // Calculate exact collateral needed for 100% coverage at 1x leverage
+                      // Calculate exact collateral needed for 100% coverage at 1x leverage + $0.01 buffer
                       const targetLeverage = 1;
-                      const fullCollateralUSD = Math.ceil(actualCollateralRequired * 100) / 100; // Round up to ensure 100%+
+                      const fullCollateralUSD = actualCollateralRequired + 0.01; // Add $0.01 buffer
                       const fullCollateral = (fullCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       
                       setCollateralProvided(fullCollateral);
