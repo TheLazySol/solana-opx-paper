@@ -685,7 +685,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     )}
                   >
                     {Number(leverage) === 1 ? 'Minimal' :
-                     Number(leverage) <= 2.5 ? 'Low' :
+                     Number(leverage) <= 3 ? 'Low' :
                      Number(leverage) <= 5 ? 'Medium' :
                      Number(leverage) <= 7 ? 'High' :
                      'Very High'}
