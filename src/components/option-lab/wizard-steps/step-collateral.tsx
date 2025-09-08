@@ -863,7 +863,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
           collateralInfo={{
             collateralProvided,
             collateralType,
-            collateralPrice
+            collateralPrice,
+            borrowCost, // Total borrow cost over the period
+            borrowFee
           }}
         />
       </motion.div>

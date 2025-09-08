@@ -19,6 +19,8 @@ interface AdvancedOptionDetailsProps {
     collateralProvided: string;
     collateralType: string;
     collateralPrice: number;
+    borrowCost?: number;
+    borrowFee?: number;
   };
 }
 
@@ -35,6 +37,14 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
     quantity,
     expirationDate
   } = formValues;
+
+  // Calculate days to expiration
+  const daysToExpiration = expirationDate ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+  
+  // Calculate daily theta yield
+  const dailyThetaYield = premium && quantity && daysToExpiration > 0 
+    ? (Number(premium) * quantity * 100) / daysToExpiration
+    : 0;
 
   return (
     <Card 
@@ -276,9 +286,18 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
                   <Info className="w-3 h-3 text-white/30 cursor-help" />
                 </Tooltip>
               </div>
-              <p className="text-sm font-medium text-green-400">
-                {premium && quantity ? `$${formatNumberWithCommas(Number(premium) * quantity * 100)}` : '-'}
-              </p>
+              <Tooltip 
+                content={
+                  <div className="text-xs font-light space-y-1">
+                    <div>Avg. Daily Yield: <span className="text-green-400">${dailyThetaYield.toFixed(2)}</span></div>
+                  </div>
+                }
+                placement="top"
+              >
+                <p className="text-sm font-medium text-green-400 cursor-help underline decoration-dotted decoration-green-400/60 hover:decoration-green-400 transition-colors underline-offset-2">
+                  {premium && quantity ? `$${formatNumberWithCommas(Number(premium) * quantity * 100)}` : '-'}
+                </p>
+              </Tooltip>
             </div>
             
             <div>
@@ -295,20 +314,30 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
                   <Info className="w-3 h-3 text-white/30 cursor-help" />
                 </Tooltip>
               </div>
-              <div className="text-sm font-medium text-red-400">
-                {collateralInfo && Number(collateralInfo.collateralProvided) > 0 ? (
-                  <div>
-                    <div>${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}</div>
-                    {collateralInfo.collateralType !== 'USDC' && (
-                      <div className="text-xs text-white/40 font-normal">
-                        ({Number(collateralInfo.collateralProvided).toFixed(4)} {collateralInfo.collateralType})
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div>-</div>
-                )}
-              </div>
+              {collateralInfo && Number(collateralInfo.collateralProvided) > 0 ? (
+                <Tooltip 
+                  content={
+                    <div className="text-xs font-light space-y-1">
+                      <div>Collateral Provided: <span className="text-red-400">
+                        ${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
+                      </span></div>
+                      {collateralInfo.borrowCost && daysToExpiration > 0 && (
+                        <div>Margin Interest: <span className="text-red-400">${collateralInfo.borrowCost.toFixed(2)}</span></div>
+                      )}
+                      {collateralInfo.borrowFee && (
+                        <div>Borrow Fee: <span className="text-red-400">${collateralInfo.borrowFee.toFixed(2)}</span></div>
+                      )}
+                    </div>
+                  }
+                  placement="top"
+                >
+                  <p className="text-sm font-medium text-red-400 cursor-help underline decoration-dotted decoration-red-400/60 hover:decoration-red-400 transition-colors underline-offset-2">
+                    ${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
+                  </p>
+                </Tooltip>
+              ) : (
+                <p className="text-sm font-medium text-red-400">-</p>
+              )}
             </div>
           </div>
         </div>

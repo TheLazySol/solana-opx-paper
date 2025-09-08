@@ -111,7 +111,9 @@ export function StepReview({
           collateralInfo={{
             collateralProvided: collateralState.collateralProvided,
             collateralType: collateralState.collateralType,
-            collateralPrice: collateralState.collateralType === 'SOL' ? (assetPrice || 100) : 1
+            collateralPrice: collateralState.collateralType === 'SOL' ? (assetPrice || 100) : 1,
+            borrowCost: collateralState.borrowCost,
+            borrowFee: collateralState.borrowFee
           }}
         />
       </motion.div>
