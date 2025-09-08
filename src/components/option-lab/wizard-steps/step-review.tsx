@@ -72,6 +72,13 @@ export function StepReview({
       animate="visible"
       className="space-y-6"
     >
+      {/* Option Summary Card - Always visible */}
+      {formValues.strikePrice && formValues.premium && (
+        <motion.div variants={itemVariants}>
+          <OptionContractSummary showDetailedInfo={true} />
+        </motion.div>
+      )}
+
       {/* 1. Interactive P&L Chart */}
       <motion.div variants={itemVariants}>
         <Card className="bg-black/40 border border-white/10">
@@ -98,17 +105,13 @@ export function StepReview({
         </Card>
       </motion.div>
 
-      {/* 2. Option Contract Summary */}
-      <motion.div variants={itemVariants}>
-        <OptionContractSummary showDetailedInfo={true} />
-      </motion.div>
 
-      {/* 3. Advanced Option Details */}
+      {/* 2. Advanced Option Details */}
       <motion.div variants={itemVariants}>
         <AdvancedOptionDetails assetPrice={assetPrice} />
       </motion.div>
 
-      {/* 4. Cost Breakdown */}
+      {/* 3. Cost Breakdown */}
       <motion.div variants={itemVariants}>
         <CostBreakdown collateralState={collateralState} />
       </motion.div>

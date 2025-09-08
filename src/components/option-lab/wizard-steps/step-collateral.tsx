@@ -21,6 +21,7 @@ import type { SliderValue } from "@heroui/react";
 import { useFormContext } from 'react-hook-form';
 import { CollateralState } from '../collateral-provider';
 import { CostBreakdown } from '../cost-breakdown';
+import { OptionContractSummary } from '../option-contract-summary';
 import {
   calculateCollateralNeeded,
   calculateRequiredCollateral,
@@ -129,6 +130,10 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
   const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), Number(leverage));
+  
+  // Get form values for summary
+  const strikePrice = formValues.strikePrice;
+  const premium = formValues.premium;
 
   // Update parent state
   useEffect(() => {
@@ -249,6 +254,13 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
       animate="visible"
       className="space-y-6"
     >
+      {/* Option Summary Card - Always visible */}
+      {strikePrice && premium && (
+        <motion.div variants={itemVariants}>
+          <OptionContractSummary />
+        </motion.div>
+      )}
+
       {/* Main Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Collateral Input Section */}
