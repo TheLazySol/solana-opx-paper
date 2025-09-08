@@ -374,27 +374,75 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                   <p className="text-xs text-white/40">Moneyness</p>
                   <Tooltip 
                     content={
-                      assetPrice && strikePrice && premium ? (
-                        <div className="text-xs font-light space-y-1">
-                          <div><span className="text-green-400/70 font-light" style={{ textShadow: '0 0 6px rgba(34, 197, 94, 0.4)' }}>Intrinsic</span> Value: ${calculateIntrinsicValue(optionType, assetPrice, Number(strikePrice)).toFixed(2)}</div>
-                          <div><span className="text-red-400/70 font-light" style={{ textShadow: '0 0 6px rgba(248, 113, 113, 0.4)' }}>Extrinsic</span> Value: ${calculateExtrinsicValue(Number(premium), calculateIntrinsicValue(optionType, assetPrice, Number(strikePrice))).toFixed(2)}</div>
-                        </div>
-                      ) : <div className="text-xs font-light text-white/70">Option value breakdown available when all values are set</div>
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Shows how much of the option&apos;s premium comes from immediate profit (IV) vs time/volatility value (EV). Helps assess risk and pricing efficiency.
+                      </div>
                     }
                     placement="top"
                   >
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className={`text-sm font-medium ${
-                  assetPrice && strikePrice ? 
-                    calculateMoneyness(optionType, assetPrice, Number(strikePrice)) === 'ITM' ? 'text-green-400' :
-                    calculateMoneyness(optionType, assetPrice, Number(strikePrice)) === 'ATM' ? 'text-yellow-400' :
-                    'text-red-400'
-                    : 'text-white'
-                }`}>
-                  {assetPrice && strikePrice ? calculateMoneyness(optionType, assetPrice, Number(strikePrice)) : '-'}
-                </p>
+{/* Value Breakdown Display */}
+                {assetPrice && strikePrice && premium && Number(premium) > 0 ? (
+                  (() => {
+                    const intrinsicValue = calculateIntrinsicValue(optionType, assetPrice, Number(strikePrice));
+                    const extrinsicValue = calculateExtrinsicValue(Number(premium), intrinsicValue);
+                    const totalValue = intrinsicValue + extrinsicValue;
+                    const intrinsicPercentage = totalValue > 0 ? (intrinsicValue / totalValue) * 100 : 0;
+                    const extrinsicPercentage = totalValue > 0 ? (extrinsicValue / totalValue) * 100 : 0;
+                    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                            intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                          }`}
+                        >
+                          IV
+                        </span>
+                        
+                        <Tooltip 
+                          content={
+                            <div className="text-xs font-light space-y-1">
+                              <div><span className="text-green-400">Intrinsic Value</span>: ${intrinsicValue.toFixed(2)} ({intrinsicPercentage.toFixed(1)}%)</div>
+                              <div><span className="text-red-400">Extrinsic Value</span>: ${extrinsicValue.toFixed(2)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                            </div>
+                          }
+                          placement="top"
+                        >
+                          <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
+                            <div 
+                              className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                              style={{ 
+                                width: `${intrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                              }}
+                            />
+                            <div 
+                              className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                              style={{ 
+                                width: `${extrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                              }}
+                            />
+                          </div>
+                        </Tooltip>
+                        
+                        <span 
+                          className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                            !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                          }`}
+                        >
+                          EV
+                        </span>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm font-medium text-white">-</p>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-1">

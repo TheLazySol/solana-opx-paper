@@ -11,6 +11,7 @@ import { StrikePriceInput } from '../strike-price-input';
 import { PremiumDisplay } from '../premium-input';
 import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
+import { calculateIntrinsicValue, calculateExtrinsicValue } from '@/constants/option-lab/calculations';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
 import { formatNumberWithCommas } from '@/utils/utils';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';

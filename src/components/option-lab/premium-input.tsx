@@ -74,15 +74,16 @@ export const PremiumDisplay = ({
           </label>
           <Tooltip 
             content={
-              <div className="max-w-xs">
-                <p className="text-xs">The price paid by the buyer, this is the max profit for the option seller at expiration.</p>
+              <div className="text-xs font-light text-white/70 max-w-xs">
+                The price paid by the buyer, this is the max profit for the option seller at expiration.
                 {lastUpdated && getValues('premium') && (
-                  <p className="text-blue-400 mt-1 text-xs">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</p>
+                  <div className="text-blue-400 mt-1">${(Number(getValues('premium')) * 100).toFixed(2)} USD per contract</div>
                 )}
               </div>
             }
+            placement="top"
           >
-            <Info className="w-4 h-4 text-white/40 cursor-help" />
+            <Info className="w-3 h-3 text-white/30 cursor-help" />
           </Tooltip>
         </div>
         <div className="flex items-center gap-1">
