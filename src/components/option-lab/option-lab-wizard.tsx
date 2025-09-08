@@ -297,6 +297,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
                 <StepCollateral
                   proMode={false}
                   onStateChangeAction={setCollateralState}
+                  initialCollateralState={collateralState}
                 />
               )}
               {currentStep === 2 && (

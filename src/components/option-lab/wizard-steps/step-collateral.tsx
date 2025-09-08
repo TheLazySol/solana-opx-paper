@@ -60,9 +60,10 @@ import {
 interface StepCollateralProps {
   proMode: boolean;
   onStateChangeAction: (state: CollateralState) => void;
+  initialCollateralState?: CollateralState;
 }
 
-export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralProps) {
+export function StepCollateral({ proMode, onStateChangeAction, initialCollateralState }: StepCollateralProps) {
   const methods = useFormContext();
   const formValues = methods.watch();
   
@@ -73,10 +74,18 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
   const costCardRef = useMouseGlow();
   const advancedCardRef = useMouseGlow();
   
-  const [collateralProvided, setCollateralProvided] = useState<string>("0");
-  const [leverage, setLeverage] = useState<SliderValue>(1);
-  const [leverageInputValue, setLeverageInputValue] = useState<string>("1");
-  const [collateralType, setCollateralType] = useState<string>(COLLATERAL_TYPES[0].value);
+  const [collateralProvided, setCollateralProvided] = useState<string>(
+    initialCollateralState?.collateralProvided || "0"
+  );
+  const [leverage, setLeverage] = useState<SliderValue>(
+    initialCollateralState?.leverage || 1
+  );
+  const [leverageInputValue, setLeverageInputValue] = useState<string>(
+    initialCollateralState?.leverage?.toString() || "1"
+  );
+  const [collateralType, setCollateralType] = useState<string>(
+    initialCollateralState?.collateralType || COLLATERAL_TYPES[0].value
+  );
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
   
@@ -162,6 +171,16 @@ export function StepCollateral({ proMode, onStateChangeAction }: StepCollateralP
     solPrice,
     onStateChangeAction
   ]);
+
+  // Restore state when initialCollateralState changes (user navigating back)
+  useEffect(() => {
+    if (initialCollateralState) {
+      setCollateralProvided(initialCollateralState.collateralProvided);
+      setLeverage(initialCollateralState.leverage);
+      setLeverageInputValue(initialCollateralState.leverage.toString());
+      setCollateralType(initialCollateralState.collateralType);
+    }
+  }, [initialCollateralState]);
 
   // Fetch SOL price
   useEffect(() => {

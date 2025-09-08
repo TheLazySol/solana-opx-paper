@@ -16,8 +16,6 @@ import { AdvancedOptionDetails } from '../advanced-option-details';
 import { CostBreakdown } from '../cost-breakdown';
 import { calculateTotalPremium } from '@/constants/option-lab/calculations';
 import { 
-  CheckCircle,
-  XCircle,
   Target
 } from 'lucide-react';
 
@@ -116,31 +114,6 @@ export function StepReview({
         <CostBreakdown collateralState={collateralState} />
       </motion.div>
 
-      {/* Status Messages */}
-      <motion.div variants={itemVariants}>
-        {collateralState.hasEnoughCollateral ? (
-          <div className="flex items-start gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-            <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-green-400">Ready to Mint</p>
-              <p className="text-xs text-green-300">
-                Your option contract is configured correctly and you have sufficient collateral. 
-                Click &quot;Mint Option&quot; to create your position.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-start gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-            <XCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-red-400">Insufficient Collateral</p>
-              <p className="text-xs text-red-300">
-                Please go back to the previous step and provide more collateral or increase your leverage.
-              </p>
-            </div>
-          </div>
-        )}
-      </motion.div>
     </motion.div>
   );
 }
