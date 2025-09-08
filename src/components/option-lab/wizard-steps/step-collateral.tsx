@@ -493,7 +493,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                         : "bg-white/5 hover:bg-white/10"
                     )}
                   >
-                    Min (10x)
+                    10%
                   </Button>
                   
                   {/* Half at 5x leverage */}
@@ -518,7 +518,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                         : "bg-white/5 hover:bg-white/10"
                     )}
                   >
-                    Half (5x)
+                    50%
                   </Button>
                   
                   {/* Full at 1x leverage */}
@@ -543,7 +543,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                         : "bg-white/5 hover:bg-white/10"
                     )}
                   >
-                    Full (1x)
+                    100%
                   </Button>
                 </div>
               </div>
@@ -642,29 +642,25 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                       }
                       placement="top"
                     >
-                      <div className="relative h-3 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="relative h-3 w-full bg-white/10 rounded-full" style={{ padding: '2px' }}>
                         <div 
                           className="absolute left-0 h-full transition-all duration-300 rounded-full"
                           style={{ 
                             width: `${((Number(leverage) - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
-                            background: Number(leverage) === 1 ? 'linear-gradient(90deg, #22c55e, #16a34a)' :
-                                       Number(leverage) <= 3 ? 'linear-gradient(90deg, #3b82f6, #1d4ed8)' :
-                                       Number(leverage) <= 5 ? 'linear-gradient(90deg, #eab308, #ca8a04)' :
-                                       Number(leverage) <= 7 ? 'linear-gradient(90deg, #f97316, #ea580c)' :
-                                       'linear-gradient(90deg, #ef4444, #dc2626)',
-                            boxShadow: Number(leverage) === 1 ? '0 0 8px rgba(34, 197, 94, 0.6)' :
-                                       Number(leverage) <= 3 ? '0 0 8px rgba(59, 130, 246, 0.6)' :
-                                       Number(leverage) <= 5 ? '0 0 8px rgba(234, 179, 8, 0.6)' :
-                                       Number(leverage) <= 7 ? '0 0 8px rgba(249, 115, 22, 0.6)' :
-                                       '0 0 8px rgba(239, 68, 68, 0.6)'
+                            background: '#4a85ff',
+                            boxShadow: `0 0 ${Math.min(20, 6 + (Number(leverage) / MAX_LEVERAGE) * 14)}px rgba(74, 133, 255, ${Math.min(0.9, 0.4 + (Number(leverage) / MAX_LEVERAGE) * 0.5)})`,
+                            top: '2px',
+                            height: 'calc(100% - 4px)'
                           }}
                         />
                         {/* Marker for current dynamic max if different from MAX_LEVERAGE */}
                         {dynamicMaxLeverage < MAX_LEVERAGE && (
                           <div 
-                            className="absolute top-0 h-full w-0.5 bg-white/60"
+                            className="absolute w-0.5 bg-white/60"
                             style={{ 
-                              left: `${((dynamicMaxLeverage - 1) / (MAX_LEVERAGE - 1)) * 100}%`
+                              left: `${((dynamicMaxLeverage - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
+                              top: '2px',
+                              height: 'calc(100% - 4px)'
                             }}
                           />
                         )}
