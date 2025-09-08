@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { Card, CardBody, Tooltip, cn } from '@heroui/react';
 import { useFormContext } from 'react-hook-form';
@@ -27,24 +27,32 @@ interface AdvancedOptionDetailsProps {
 export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateralInfo }: AdvancedOptionDetailsProps) {
   const cardRef = useMouseGlow();
   const methods = useFormContext();
-  const formValues = methods.watch();
+  const [forceUpdate, setForceUpdate] = useState(0);
   
-  const {
-    asset,
-    optionType,
-    strikePrice,
-    premium,
-    quantity,
-    expirationDate
-  } = formValues;
+  // Watch specific fields to ensure reactivity
+  const asset = methods.watch('asset');
+  const optionType = methods.watch('optionType');
+  const strikePrice = methods.watch('strikePrice');
+  const premium = methods.watch('premium');
+  const quantity = methods.watch('quantity');
+  const expirationDate = methods.watch('expirationDate');
 
-  // Calculate days to expiration
-  const daysToExpiration = expirationDate ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+  // Force component update when key values change
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [asset, optionType, strikePrice, premium, quantity, expirationDate, assetPrice, collateralInfo]);
+
+  // Memoize calculations to prevent unnecessary recalculations
+  const daysToExpiration = useMemo(() => {
+    return expirationDate ? Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+  }, [expirationDate]);
   
   // Calculate daily theta yield
-  const dailyThetaYield = premium && quantity && daysToExpiration > 0 
-    ? (Number(premium) * quantity * 100) / daysToExpiration
-    : 0;
+  const dailyThetaYield = useMemo(() => {
+    return premium && quantity && daysToExpiration > 0 
+      ? (Number(premium) * quantity * 100) / daysToExpiration
+      : 0;
+  }, [premium, quantity, daysToExpiration]);
 
   return (
     <Card 
@@ -74,7 +82,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
           </div>
         )}
         
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 justify-items-center">
           <div>
             <div className="flex items-center gap-1 mb-1">
               <p className="text-xs text-white/40">Implied Volatility</p>
@@ -206,7 +214,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
           
           <div>
             <div className="flex items-center gap-1 mb-1">
-              <p className="text-xs text-white/40">Total Value</p>
+              <p className="text-xs text-white/40">Total Option Value</p>
               <Tooltip 
                 content={
                   <div className="text-xs font-light text-white/70">
@@ -225,7 +233,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
         </div>
         
         <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center">
             <div>
               <div className="flex items-center gap-1 mb-1">
                 <p className="text-xs text-white/40">Days to Expiration</p>

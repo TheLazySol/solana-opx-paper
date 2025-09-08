@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -70,6 +70,14 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const methods = useFormContext();
   const formValues = methods.watch();
   
+  // Watch specific fields for reactivity
+  const asset = methods.watch('asset');
+  const strikePrice = methods.watch('strikePrice');
+  const premium = methods.watch('premium');
+  const quantity = methods.watch('quantity');
+  const optionType = methods.watch('optionType');
+  const expirationDate = methods.watch('expirationDate');
+  
   // Mouse glow effect hooks for each card
   const collateralCardRef = useMouseGlow();
   const leverageCardRef = useMouseGlow();
@@ -96,13 +104,13 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const [collateralPrice, setCollateralPrice] = useState<number>(1); // Price of selected collateral in USD
   
   // Calculate derived values
-  const options = formValues.strikePrice && formValues.premium ? [{
-    quantity: formValues.quantity || 1,
-    strikePrice: formValues.strikePrice,
-    premium: formValues.premium,
-    optionType: formValues.optionType,
-    asset: formValues.asset,
-    expirationDate: formValues.expirationDate
+  const options = strikePrice && premium ? [{
+    quantity: quantity || 1,
+    strikePrice: strikePrice,
+    premium: premium,
+    optionType: optionType,
+    asset: asset,
+    expirationDate: expirationDate
   }] : [];
 
   const totalPremium = calculateTotalPremium(options);
@@ -114,8 +122,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const collateralProvidedUSD = Number(collateralProvided || 0) * collateralPrice;
   
   // Calculate the actual collateral requirement based on strike price and contract quantity
-  const actualCollateralRequired = formValues.strikePrice && formValues.quantity 
-    ? (formValues.strikePrice * (formValues.quantity * 100))
+  const actualCollateralRequired = strikePrice && quantity 
+    ? (strikePrice * (quantity * 100))
     : 0;
   
   // Convert annual to hourly interest rate
@@ -126,12 +134,12 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   
   // Calculate time until expiration (in hours)
   const getTimeUntilExpiration = () => {
-    if (!formValues.expirationDate) {
+    if (!expirationDate) {
       return 7 * 24; // Default to 7 days if no expiration date
     }
     
     const now = new Date();
-    const expiry = new Date(formValues.expirationDate);
+    const expiry = new Date(expirationDate);
     const hoursUntilExpiry = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60)));
     return hoursUntilExpiry;
   };
@@ -148,10 +156,6 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
   const hasEnough = hasEnoughCollateral(requiredCollateral, collateralProvidedUSD, Number(leverage));
-  
-  // Get form values for summary
-  const strikePrice = formValues.strikePrice;
-  const premium = formValues.premium;
 
   // Use ref to store the callback to avoid dependency issues
   const onStateChangeRef = useRef(onStateChangeAction);
@@ -641,8 +645,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     <div>
                       <p className="text-xs text-white/40 mb-0.5">Amount Borrowed</p>
                       <p className="text-xs font-medium text-white">
-                        {formValues.asset && solPrice > 0 ? (
-                          `${(amountBorrowed / solPrice).toFixed(4)} ${formValues.asset || 'SOL'}`
+                        {asset && solPrice > 0 ? (
+                          `${(amountBorrowed / solPrice).toFixed(4)} ${asset || 'SOL'}`
                         ) : (
                           '0.0000 SOL'
                         )}
@@ -650,7 +654,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     </div>
                     <div>
                       <p className="text-xs text-white/40 mb-0.5">OMLP Route</p>
-                      <p className="text-xs font-medium text-white">SAP-1 ({formValues.asset || 'SOL'})</p>
+                      <p className="text-xs font-medium text-white">SAP-1 ({asset || 'SOL'})</p>
                     </div>
                     <div>
                       <p className="text-xs text-white/40 mb-0.5">Leverage</p>
@@ -858,15 +862,15 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
       {/* Advanced Option Details */}
       <motion.div variants={itemVariants}>
         <AdvancedOptionDetails 
-          assetPrice={formValues.asset ? solPrice : null}
+          assetPrice={asset ? solPrice : null}
           showTitle={false}
-          collateralInfo={{
+          collateralInfo={useMemo(() => ({
             collateralProvided,
             collateralType,
             collateralPrice,
             borrowCost, // Total borrow cost over the period
             borrowFee
-          }}
+          }), [collateralProvided, collateralType, collateralPrice, borrowCost, borrowFee])}
         />
       </motion.div>
 

@@ -108,6 +108,7 @@ export function StepReview({
       <motion.div variants={itemVariants}>
         <AdvancedOptionDetails 
           assetPrice={assetPrice} 
+          showTitle={false}
           collateralInfo={{
             collateralProvided: collateralState.collateralProvided,
             collateralType: collateralState.collateralType,
