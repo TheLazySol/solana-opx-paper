@@ -7,17 +7,14 @@ import {
   Card, 
   CardBody, 
   Input, 
-  Slider, 
   Select, 
   SelectItem, 
   Chip, 
-  Progress,
   Button,
   Tooltip,
   Switch,
   cn 
 } from '@heroui/react';
-import type { SliderValue } from "@heroui/react";
 import { useFormContext } from 'react-hook-form';
 import { CollateralState } from '../collateral-provider';
 import { CostBreakdown } from '../cost-breakdown';
@@ -77,7 +74,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const [collateralProvided, setCollateralProvided] = useState<string>(
     initialCollateralState?.collateralProvided || "0"
   );
-  const [leverage, setLeverage] = useState<SliderValue>(
+  const [leverage, setLeverage] = useState<number>(
     initialCollateralState?.leverage || 1
   );
   const [leverageInputValue, setLeverageInputValue] = useState<string>(
@@ -88,6 +85,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   );
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
+  const [collateralPrice, setCollateralPrice] = useState<number>(1); // Price of selected collateral in USD
   
   // Calculate derived values
   const options = formValues.strikePrice && formValues.premium ? [{
@@ -104,6 +102,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const requiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
   const minCollateralRequired = calculateMinCollateralRequired(collateralNeeded);
   
+  // Convert collateral to USD for calculations
+  const collateralProvidedUSD = Number(collateralProvided || 0) * collateralPrice;
+  
   // Calculate the actual collateral requirement based on strike price and contract quantity
   const actualCollateralRequired = formValues.strikePrice && formValues.quantity 
     ? (formValues.strikePrice * (formValues.quantity * 100))
@@ -112,8 +113,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   // Convert annual to hourly interest rate
   const hourlyInterestRate = BASE_ANNUAL_INTEREST_RATE / (365 * 24);
   
-  // Calculate amount borrowed (collateral * (leverage - 1))
-  const amountBorrowed = Number(collateralProvided || 0) * (Number(leverage) - 1);
+  // Calculate amount borrowed (collateral * (leverage - 1)) in USD
+  const amountBorrowed = collateralProvidedUSD * (Number(leverage) - 1);
   
   // Calculate time until expiration (in hours)
   const getTimeUntilExpiration = () => {
@@ -138,7 +139,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const transactionCost = TRANSACTION_COST_SOL * solPrice; // Convert SOL to USD
   
   const maxProfitPotential = calculateMaxProfitPotential(totalPremium, borrowCost, optionCreationFee, borrowFee, transactionCost);
-  const hasEnough = hasEnoughCollateral(requiredCollateral, Number(collateralProvided), Number(leverage));
+  const hasEnough = hasEnoughCollateral(requiredCollateral, collateralProvidedUSD, Number(leverage));
   
   // Get form values for summary
   const strikePrice = formValues.strikePrice;
@@ -169,6 +170,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     transactionCost,
     maxProfitPotential,
     solPrice,
+    collateralPrice,
     onStateChangeAction
   ]);
 
@@ -182,30 +184,37 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     }
   }, [initialCollateralState]);
 
-  // Fetch SOL price
+  // Fetch SOL price and collateral price
   useEffect(() => {
-    const fetchSolPrice = async () => {
+    const fetchPrices = async () => {
       try {
-        const priceData = await getTokenPrice('SOL');
+        // Always fetch SOL price for fee calculations
+        const solPriceData = await getTokenPrice('SOL');
+        const finalSolPrice = solPriceData.price > 0 ? solPriceData.price : 100;
+        setSolPrice(finalSolPrice);
         
-        // If API returns 0 (no API key or token not found), use a fallback price for development
-        const finalPrice = priceData.price > 0 ? priceData.price : 100; // Fallback to $100 for development
-        setSolPrice(finalPrice);
+        // Fetch collateral price if it's not USDC
+        if (collateralType === 'SOL') {
+          setCollateralPrice(finalSolPrice);
+        } else {
+          setCollateralPrice(1); // USDC is always 1:1 with USD
+        }
         
-        if (priceData.price === 0) {
+        if (solPriceData.price === 0) {
           console.warn('SOL price API returned 0, using fallback price of $100 for calculations');
         }
       } catch (error) {
-        console.error('Error fetching SOL price:', error);
-        setSolPrice(100); // Fallback to $100 for development
+        console.error('Error fetching prices:', error);
+        setSolPrice(100);
+        setCollateralPrice(collateralType === 'SOL' ? 100 : 1);
       }
     };
     
-    fetchSolPrice();
-    const interval = setInterval(fetchSolPrice, ASSET_PRICE_REFRESH_INTERVAL * 20); // Update every 30 seconds (1.5s * 20)
+    fetchPrices();
+    const interval = setInterval(fetchPrices, ASSET_PRICE_REFRESH_INTERVAL * 20);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [collateralType]);
 
   const handleCollateralChange = (value: string) => {
     // Only allow numbers and decimals
@@ -233,15 +242,15 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     }
   };
 
-  // Calculate total coverage including leverage (collateral + borrowed amount)
-  const totalCoverage = Number(collateralProvided) * Number(leverage);
+  // Calculate total coverage including leverage (collateral + borrowed amount) in USD
+  const totalCoverage = collateralProvidedUSD * Number(leverage);
   const collateralPercentage = actualCollateralRequired > 0 
     ? (totalCoverage / actualCollateralRequired) * 100
     : 0;
 
   // Calculate maximum leverage that would result in exactly 100% coverage using actualCollateralRequired
-  const maxLeverageFor100Percent = Number(collateralProvided) > 0 && actualCollateralRequired > 0
-    ? Math.max(1, actualCollateralRequired / Number(collateralProvided))
+  const maxLeverageFor100Percent = collateralProvidedUSD > 0 && actualCollateralRequired > 0
+    ? Math.max(1, actualCollateralRequired / collateralProvidedUSD)
     : MAX_LEVERAGE;
 
   // Dynamic max leverage (capped at MAX_LEVERAGE, but limited by 100% coverage and never below 1)
@@ -255,15 +264,15 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     // Calculate required collateral locally to avoid dependency issues
     const currentRequiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
     
-    if (Number(collateralProvided) > 0 && currentRequiredCollateral > 0) {
+    if (collateralProvidedUSD > 0 && currentRequiredCollateral > 0) {
       // If collateral alone covers 100% or more, reset leverage to 1x
-      const collateralOnlyCoverage = Number(collateralProvided) / currentRequiredCollateral;
+      const collateralOnlyCoverage = collateralProvidedUSD / currentRequiredCollateral;
       if (collateralOnlyCoverage >= 1 && Number(leverageRef.current) > 1) {
         setLeverage(1);
         setLeverageInputValue("1");
       }
     }
-  }, [collateralProvided, collateralNeeded, totalPremium]);
+  }, [collateralProvided, collateralNeeded, totalPremium, collateralProvidedUSD, collateralPrice]);
 
 
   return (
@@ -339,9 +348,11 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                   value={collateralProvided}
                   onValueChange={handleCollateralChange}
                   startContent={
-                    <div className="pointer-events-none flex items-center">
-                      <span className="text-white/60">$</span>
-                    </div>
+                    collateralType === 'USDC' ? (
+                      <div className="pointer-events-none flex items-center">
+                        <span className="text-white/60">$</span>
+                      </div>
+                    ) : null
                   }
                   endContent={
                     <Chip size="sm" variant="flat" className="bg-white/10">
@@ -364,7 +375,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const minCollateral = (actualCollateralRequired / MAX_LEVERAGE).toFixed(2);
+                      const minCollateralUSD = actualCollateralRequired / MAX_LEVERAGE;
+                      const minCollateral = (minCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
                       
                       setCollateralProvided(minCollateral);
@@ -381,7 +393,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const halfCollateral = (actualCollateralRequired / 5).toFixed(2);
+                      const halfCollateralUSD = actualCollateralRequired / 5;
+                      const halfCollateral = (halfCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       const newLeverage = 5;
                       
                       setCollateralProvided(halfCollateral);
@@ -398,7 +411,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     size="sm"
                     variant="flat"
                     onPress={() => {
-                      const fullCollateral = actualCollateralRequired.toFixed(2);
+                      const fullCollateralUSD = actualCollateralRequired;
+                      const fullCollateral = (fullCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
                       const newLeverage = 1;
                       
                       setCollateralProvided(fullCollateral);
@@ -445,73 +459,91 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                 <h3 className="text-sm font-medium text-white">Leverage</h3>
               </div>
               
-              {/* Leverage Slider */}
-              <div className="space-y-3">
-                <Slider
-                  classNames={{
-                    base: "w-full",
-                    label: "text-medium"
-                  }}
-                  color="foreground"
-                  label="Leverage"
-                  maxValue={MAX_LEVERAGE}
-                  minValue={1}
-                  // eslint-disable-next-line no-unused-vars
-                  renderValue={({children, ...props}) => (
-                    <output {...props}>
-                      <Tooltip
-                        className="text-tiny text-default-500 rounded-md"
-                        content="Press Enter to confirm"
-                        placement="left"
-                      >
-                        <input
-                          aria-label="Leverage value"
-                          className="px-2 py-1 w-16 text-right text-small font-medium text-white bg-white/5 outline-none transition-colors rounded-lg border border-white/20 hover:border-white/30 focus:border-[#4a85ff]/60"
-                          type="text"
-                          value={leverageInputValue}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const v = e.target.value;
-                            // Limit to 3 decimal places and prevent empty values that aren't being typed
-                            if (v === '' || /^\d{1,2}(\.\d{0,3})?$/.test(v)) {
-                              setLeverageInputValue(v);
+                {/* Leverage Input and Visual Bar */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm text-white/60">Leverage</label>
+                    <Tooltip
+                      className="text-tiny text-default-500 rounded-md"
+                      content="Press Enter to confirm"
+                      placement="left"
+                    >
+                      <input
+                        aria-label="Leverage value"
+                        className="px-2 py-1 w-16 text-right text-small font-medium text-white bg-white/5 outline-none transition-colors rounded-lg border border-white/20 hover:border-white/30 focus:border-[#4a85ff]/60"
+                        type="text"
+                        value={leverageInputValue}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const v = e.target.value;
+                          // Limit to 3 decimal places and prevent empty values that aren't being typed
+                          if (v === '' || /^\d{1,2}(\.\d{0,3})?$/.test(v)) {
+                            setLeverageInputValue(v);
+                          }
+                        }}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                          if (e.key === "Enter" && leverageInputValue !== '' && !isNaN(Number(leverageInputValue))) {
+                            const inputValue = Number(leverageInputValue);
+                            const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
+                            setLeverage(clampedValue);
+                            setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
+                            
+                            // Show max leverage alert if we hit the limit
+                            if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
+                              setShowMaxLeverageAlert(true);
+                              setTimeout(() => setShowMaxLeverageAlert(false), 5000);
                             }
-                          }}
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (e.key === "Enter" && leverageInputValue !== '' && !isNaN(Number(leverageInputValue))) {
-                              const inputValue = Number(leverageInputValue);
-                              const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
-                              setLeverage(clampedValue);
-                              setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
-                              
-                              // Show max leverage alert if we hit the limit
-                              if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
-                                setShowMaxLeverageAlert(true);
-                                setTimeout(() => setShowMaxLeverageAlert(false), 5000);
-                              }
-                            }
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  </div>
+                  
+                  {/* Leverage Usage Bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-white/40">
+                      <span>1x</span>
+                      <span>{MAX_LEVERAGE}x Max</span>
+                    </div>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light space-y-1">
+                          <div>Current Leverage: <span className="text-[#4a85ff]">{Number(leverage).toFixed(2)}x</span></div>
+                          <div>Usage: <span className="text-[#4a85ff]">{((Number(leverage) / MAX_LEVERAGE) * 100).toFixed(1)}%</span></div>
+                          <div className="text-white/60">Adjust using input field or auto buttons</div>
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <div className="relative h-3 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div 
+                          className="absolute left-0 h-full transition-all duration-300 rounded-full"
+                          style={{ 
+                            width: `${((Number(leverage) - 1) / (MAX_LEVERAGE - 1)) * 100}%`,
+                            background: Number(leverage) === 1 ? 'linear-gradient(90deg, #22c55e, #16a34a)' :
+                                       Number(leverage) <= 3 ? 'linear-gradient(90deg, #3b82f6, #1d4ed8)' :
+                                       Number(leverage) <= 5 ? 'linear-gradient(90deg, #eab308, #ca8a04)' :
+                                       Number(leverage) <= 7 ? 'linear-gradient(90deg, #f97316, #ea580c)' :
+                                       'linear-gradient(90deg, #ef4444, #dc2626)',
+                            boxShadow: Number(leverage) === 1 ? '0 0 8px rgba(34, 197, 94, 0.6)' :
+                                       Number(leverage) <= 3 ? '0 0 8px rgba(59, 130, 246, 0.6)' :
+                                       Number(leverage) <= 5 ? '0 0 8px rgba(234, 179, 8, 0.6)' :
+                                       Number(leverage) <= 7 ? '0 0 8px rgba(249, 115, 22, 0.6)' :
+                                       '0 0 8px rgba(239, 68, 68, 0.6)'
                           }}
                         />
-                      </Tooltip>
-                    </output>
-                  )}
-                  size="sm"
-                  step={0.01}
-                  value={leverage}
-                  onChange={(value: SliderValue) => {
-                    if (!isNaN(Number(value))) {
-                      const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, Number(value)));
-                      setLeverage(clampedValue);
-                      setLeverageInputValue(clampedValue.toFixed(3).replace(/\.?0+$/, ''));
-                      
-                      // Show max leverage alert if we hit the limit
-                      if (clampedValue >= dynamicMaxLeverage && dynamicMaxLeverage < MAX_LEVERAGE) {
-                        setShowMaxLeverageAlert(true);
-                        setTimeout(() => setShowMaxLeverageAlert(false), 5000);
-                      }
-                    }
-                  }}
-                />
-              </div>
+                        {/* Marker for current dynamic max if different from MAX_LEVERAGE */}
+                        {dynamicMaxLeverage < MAX_LEVERAGE && (
+                          <div 
+                            className="absolute top-0 h-full w-0.5 bg-white/60"
+                            style={{ 
+                              left: `${((dynamicMaxLeverage - 1) / (MAX_LEVERAGE - 1)) * 100}%`
+                            }}
+                          />
+                        )}
+                      </div>
+                    </Tooltip>
+                  </div>
+                </div>
               
               {/* Risk Indicator */}
               <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5">
@@ -578,7 +610,14 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                     <Check className="w-3 h-3 text-green-400" />
                   )}
                 </div>
-                <p className="text-sm font-medium text-white">${Number(collateralProvided).toFixed(2)}</p>
+                <p className="text-sm font-medium text-white">
+                  ${collateralProvidedUSD.toFixed(2)}
+                  {collateralType !== 'USDC' && Number(collateralProvided) > 0 && (
+                    <span className="text-xs text-white/60 ml-1">
+                      ({Number(collateralProvided).toFixed(collateralType === 'SOL' ? 4 : 2)} {collateralType})
+                    </span>
+                  )}
+                </p>
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-1">
@@ -713,13 +752,13 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                 <div>
                   <p className="text-xs text-white/40 mb-1">Collateralization Ratio</p>
                   <p className="text-sm font-medium text-white">
-                    {requiredCollateral > 0 ? ((Number(collateralProvided) * Number(leverage) / requiredCollateral) * 100).toFixed(1) : '0'}%
+                    {requiredCollateral > 0 ? ((collateralProvidedUSD * Number(leverage) / requiredCollateral) * 100).toFixed(1) : '0'}%
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">Effective Leverage</p>
                   <p className="text-sm font-medium text-white">
-                    {Number(collateralProvided) > 0 ? (requiredCollateral / Number(collateralProvided)).toFixed(2) : '0'}x
+                    {collateralProvidedUSD > 0 ? (requiredCollateral / collateralProvidedUSD).toFixed(2) : '0'}x
                   </p>
                 </div>
                 <div>
@@ -729,7 +768,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                 <div>
                   <p className="text-xs text-white/40 mb-1">Borrowed Amount</p>
                   <p className="text-sm font-medium text-white">
-                    ${Math.max(0, requiredCollateral - Number(collateralProvided) * Number(leverage)).toFixed(2)}
+                    ${Math.max(0, requiredCollateral - collateralProvidedUSD * Number(leverage)).toFixed(2)}
                   </p>
                 </div>
                 <div>

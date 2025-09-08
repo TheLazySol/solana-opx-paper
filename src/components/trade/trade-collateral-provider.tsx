@@ -20,10 +20,7 @@ import { motion } from 'framer-motion'
 import { BASE_ANNUAL_INTEREST_RATE, MAX_LEVERAGE } from '@/constants/constants'
 import { Info, AlertTriangle, TrendingUp, DollarSign, Clock, Zap } from 'lucide-react'
 
-const COLLATERAL_TYPES = [
-  { value: "USDC", label: "USDC", default: true },
-  { value: "SOL", label: "SOL" },
-]
+import { COLLATERAL_TYPES } from '@/constants/constants';
 
 interface TradeCollateralProviderProps {
   selectedOptions: SelectedOption[]
