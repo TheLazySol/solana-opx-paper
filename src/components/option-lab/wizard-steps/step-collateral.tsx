@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -84,6 +84,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     initialCollateralState?.collateralType || COLLATERAL_TYPES[0].value
   );
   const [showMaxLeverageAlert, setShowMaxLeverageAlert] = useState<boolean>(false);
+  const [autoMode, setAutoMode] = useState<boolean>(false);
   const [solPrice, setSolPrice] = useState<number>(0);
   const [collateralPrice, setCollateralPrice] = useState<number>(1); // Price of selected collateral in USD
   
@@ -145,20 +146,50 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
   const strikePrice = formValues.strikePrice;
   const premium = formValues.premium;
 
-  // Update parent state
-  useEffect(() => {
-    const state: CollateralState = {
-      hasEnoughCollateral: hasEnough,
-      collateralProvided,
-      leverage: Number(leverage),
-      collateralType,
-      borrowCost,
-      optionCreationFee,
-      borrowFee,
-      transactionCost,
-      maxProfitPotential
-    };
-    onStateChangeAction(state);
+  // Use ref to store the callback to avoid dependency issues
+  const onStateChangeRef = useRef(onStateChangeAction);
+  onStateChangeRef.current = onStateChangeAction;
+
+  // Use ref to track previous state and prevent unnecessary updates
+  const previousStateRef = useRef<CollateralState | null>(null);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced update function to prevent rapid-fire updates
+  const debouncedUpdateParentState = useCallback(() => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    updateTimeoutRef.current = setTimeout(() => {
+      const state: CollateralState = {
+        hasEnoughCollateral: hasEnough,
+        collateralProvided,
+        leverage: Number(leverage),
+        collateralType,
+        borrowCost,
+        optionCreationFee,
+        borrowFee,
+        transactionCost,
+        maxProfitPotential
+      };
+
+      // Only update if state has actually changed
+      const previousState = previousStateRef.current;
+      if (!previousState || 
+          previousState.hasEnoughCollateral !== state.hasEnoughCollateral ||
+          previousState.collateralProvided !== state.collateralProvided ||
+          previousState.leverage !== state.leverage ||
+          previousState.collateralType !== state.collateralType ||
+          Math.abs(previousState.borrowCost - state.borrowCost) > 0.01 ||
+          Math.abs(previousState.optionCreationFee - state.optionCreationFee) > 0.01 ||
+          Math.abs(previousState.borrowFee - state.borrowFee) > 0.01 ||
+          Math.abs(previousState.transactionCost - state.transactionCost) > 0.01 ||
+          Math.abs(previousState.maxProfitPotential - state.maxProfitPotential) > 0.01) {
+        
+        previousStateRef.current = state;
+        onStateChangeRef.current(state);
+      }
+    }, 10); // Very short debounce, just enough to batch updates
   }, [
     hasEnough,
     collateralProvided,
@@ -168,11 +199,36 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     optionCreationFee,
     borrowFee,
     transactionCost,
-    maxProfitPotential,
-    solPrice,
-    collateralPrice,
-    onStateChangeAction
+    maxProfitPotential
   ]);
+
+  // Update parent state with debouncing
+  useEffect(() => {
+    debouncedUpdateParentState();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [debouncedUpdateParentState]);
+
+  // Reset collateral input when collateral type changes
+  const collateralTypeRef = useRef(collateralType);
+  useEffect(() => {
+    if (collateralTypeRef.current !== collateralType) {
+      collateralTypeRef.current = collateralType;
+      
+      // Use setTimeout to prevent cascading updates
+      setTimeout(() => {
+        setCollateralProvided("0");
+        setLeverage(1);
+        setLeverageInputValue("1");
+        setAutoMode(false); // Also reset auto mode when changing types
+      }, 0);
+    }
+  }, [collateralType]);
 
   // Restore state when initialCollateralState changes (user navigating back)
   useEffect(() => {
@@ -181,6 +237,8 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
       setLeverage(initialCollateralState.leverage);
       setLeverageInputValue(initialCollateralState.leverage.toString());
       setCollateralType(initialCollateralState.collateralType);
+      // Only reset auto mode on initial load, not on every state change
+      // setAutoMode(false); // Commented out to preserve auto mode state
     }
   }, [initialCollateralState]);
 
@@ -220,6 +278,18 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
     // Only allow numbers and decimals
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setCollateralProvided(value);
+      
+      // Auto-adjust leverage when in auto mode
+      if (autoMode && value !== '' && !isNaN(Number(value)) && actualCollateralRequired > 0) {
+        const collateralUSD = Number(value) * collateralPrice;
+        if (collateralUSD > 0) {
+          // Calculate optimal leverage up to 10x to reach 100% coverage
+          const optimalLeverage = Math.min(MAX_LEVERAGE, actualCollateralRequired / collateralUSD);
+          const clampedLeverage = Math.max(1, optimalLeverage);
+          setLeverage(clampedLeverage);
+          setLeverageInputValue(clampedLeverage.toFixed(3).replace(/\.?0+$/, ''));
+        }
+      }
     }
   };
 
@@ -261,6 +331,9 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
 
   // Auto-adjust leverage when collateral changes (but not when leverage itself changes)
   useEffect(() => {
+    // Don't auto-adjust if auto mode is active - let auto mode handle it
+    if (autoMode) return;
+    
     // Calculate required collateral locally to avoid dependency issues
     const currentRequiredCollateral = calculateRequiredCollateral(collateralNeeded, totalPremium);
     
@@ -272,7 +345,7 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
         setLeverageInputValue("1");
       }
     }
-  }, [collateralProvided, collateralNeeded, totalPremium, collateralProvidedUSD, collateralPrice]);
+  }, [collateralProvided, collateralNeeded, totalPremium, collateralProvidedUSD, collateralPrice, autoMode]);
 
 
   return (
@@ -367,23 +440,43 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                 />
                 
                 {/* Auto Select Buttons */}
-                <div className="flex gap-2">
-                  <span className="text-xs text-white/40 mr-2">Auto:</span>
+                <div className="flex gap-2 items-center">
+                  {/* Auto Mode Toggle */}
+                  <Button
+                    size="sm"
+                    variant={autoMode ? "solid" : "flat"}
+                    onPress={() => setAutoMode(!autoMode)}
+                    className={cn(
+                      "text-xs transition-all",
+                      autoMode 
+                        ? "bg-[#4a85ff] text-white shadow-[0_0_12px_rgba(74,133,255,0.6)]" 
+                        : "bg-white/5 hover:bg-white/10"
+                    )}
+                  >
+                    Auto
+                  </Button>
                   
                   {/* Minimum at 10x leverage */}
                   <Button
                     size="sm"
                     variant="flat"
+                    isDisabled={autoMode}
                     onPress={() => {
-                      const minCollateralUSD = actualCollateralRequired / MAX_LEVERAGE;
+                      // Calculate exact collateral needed for 100% coverage at 10x leverage
+                      const targetLeverage = MAX_LEVERAGE;
+                      const minCollateralUSD = Math.ceil(actualCollateralRequired / targetLeverage * 100) / 100; // Round up to ensure 100%+
                       const minCollateral = (minCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
-                      const newLeverage = parseFloat(MAX_LEVERAGE.toFixed(3));
                       
                       setCollateralProvided(minCollateral);
-                      setLeverage(newLeverage);
-                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverage(targetLeverage);
+                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
                     }}
-                    className="bg-white/5 hover:bg-white/10 text-xs"
+                    className={cn(
+                      "text-xs",
+                      autoMode 
+                        ? "bg-white/5 text-white/40 cursor-not-allowed" 
+                        : "bg-white/5 hover:bg-white/10"
+                    )}
                   >
                     Min (10x)
                   </Button>
@@ -392,16 +485,23 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                   <Button
                     size="sm"
                     variant="flat"
+                    isDisabled={autoMode}
                     onPress={() => {
-                      const halfCollateralUSD = actualCollateralRequired / 5;
+                      // Calculate exact collateral needed for 100% coverage at 5x leverage
+                      const targetLeverage = 5;
+                      const halfCollateralUSD = Math.ceil(actualCollateralRequired / targetLeverage * 100) / 100; // Round up to ensure 100%+
                       const halfCollateral = (halfCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
-                      const newLeverage = 5;
                       
                       setCollateralProvided(halfCollateral);
-                      setLeverage(newLeverage);
-                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverage(targetLeverage);
+                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
                     }}
-                    className="bg-white/5 hover:bg-white/10 text-xs"
+                    className={cn(
+                      "text-xs",
+                      autoMode 
+                        ? "bg-white/5 text-white/40 cursor-not-allowed" 
+                        : "bg-white/5 hover:bg-white/10"
+                    )}
                   >
                     Half (5x)
                   </Button>
@@ -410,16 +510,23 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                   <Button
                     size="sm"
                     variant="flat"
+                    isDisabled={autoMode}
                     onPress={() => {
-                      const fullCollateralUSD = actualCollateralRequired;
+                      // Calculate exact collateral needed for 100% coverage at 1x leverage
+                      const targetLeverage = 1;
+                      const fullCollateralUSD = Math.ceil(actualCollateralRequired * 100) / 100; // Round up to ensure 100%+
                       const fullCollateral = (fullCollateralUSD / collateralPrice).toFixed(collateralType === 'SOL' ? 4 : 2);
-                      const newLeverage = 1;
                       
                       setCollateralProvided(fullCollateral);
-                      setLeverage(newLeverage);
-                      setLeverageInputValue(newLeverage.toFixed(3).replace(/\.?0+$/, ''));
+                      setLeverage(targetLeverage);
+                      setLeverageInputValue(targetLeverage.toFixed(3).replace(/\.?0+$/, ''));
                     }}
-                    className="bg-white/5 hover:bg-white/10 text-xs"
+                    className={cn(
+                      "text-xs",
+                      autoMode 
+                        ? "bg-white/5 text-white/40 cursor-not-allowed" 
+                        : "bg-white/5 hover:bg-white/10"
+                    )}
                   >
                     Full (1x)
                   </Button>
@@ -478,6 +585,12 @@ export function StepCollateral({ proMode, onStateChangeAction, initialCollateral
                           // Limit to 3 decimal places and prevent empty values that aren't being typed
                           if (v === '' || /^\d{1,2}(\.\d{0,3})?$/.test(v)) {
                             setLeverageInputValue(v);
+                            // Auto-sync leverage value while typing (if valid number)
+                            if (v !== '' && !isNaN(Number(v))) {
+                              const inputValue = Number(v);
+                              const clampedValue = Math.min(dynamicMaxLeverage, Math.max(1, inputValue));
+                              setLeverage(clampedValue);
+                            }
                           }
                         }}
                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
