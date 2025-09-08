@@ -21,11 +21,26 @@ export const PremiumDisplay = ({
   
   // Get order type from form context, default to 'market' if not set
   const orderType = watch('orderType') || 'market';
+  
+  // Watch for strike price to determine if limit orders are allowed
+  const strikePrice = watch('strikePrice');
+  const hasStrikePrice = strikePrice && strikePrice !== '';
 
   const handleOrderTypeChange = (type: 'market' | 'limit') => {
+    // Don't allow switching to limit if there's no strike price
+    if (type === 'limit' && !hasStrikePrice) {
+      return;
+    }
     setValue('orderType', type);
     onOrderTypeChange?.(type);
   };
+
+  // Switch back to market mode if user is in limit mode but strike price is cleared
+  React.useEffect(() => {
+    if (orderType === 'limit' && !hasStrikePrice) {
+      handleOrderTypeChange('market');
+    }
+  }, [hasStrikePrice, orderType]);
 
   const handlePremiumChange = (value: string) => {
     if (value === "") {
@@ -102,10 +117,13 @@ export const PremiumDisplay = ({
           <Button
             size="sm"
             variant={orderType === 'limit' ? 'solid' : 'bordered'}
+            isDisabled={!hasStrikePrice}
             className={`h-6 min-w-10 text-xs px-2 ${
               orderType === 'limit' 
                 ? 'bg-[#4a85ff]/20 text-[#4a85ff] border-[#4a85ff]/40' 
-                : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
+                : !hasStrikePrice
+                  ? 'bg-transparent border-white/10 text-white/30 cursor-not-allowed'
+                  : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
             }`}
             onClick={() => handleOrderTypeChange('limit')}
           >
@@ -114,10 +132,16 @@ export const PremiumDisplay = ({
         </div>
       </div>
       <Input
-        isReadOnly={orderType === 'market'}
+        isReadOnly={orderType === 'market' || (orderType === 'limit' && !hasStrikePrice)}
         type="text"
         inputMode="decimal"
-        placeholder={orderType === 'market' ? "Calculated premium" : "Enter premium"}
+        placeholder={
+          orderType === 'market' 
+            ? "Calculated premium" 
+            : !hasStrikePrice 
+              ? "Enter strike price first"
+              : "Enter premium"
+        }
         value={
           orderType === 'market' 
             ? (isCalculating || isDebouncing 
@@ -127,7 +151,7 @@ export const PremiumDisplay = ({
                   : 'Enter option details')
             : getValues('premium') || ''
         }
-        onChange={(e) => orderType === 'limit' && handlePremiumChange(e.target.value)}
+        onChange={(e) => orderType === 'limit' && hasStrikePrice && handlePremiumChange(e.target.value)}
         variant="flat"
         startContent={
           orderType === 'market' 
@@ -138,7 +162,11 @@ export const PremiumDisplay = ({
         }
         classNames={{
           base: "max-w-full",
-          input: orderType === 'market' ? "text-white/50" : "text-white",
+          input: orderType === 'market' 
+            ? (getValues('premium') ? "text-white" : "text-white/40") 
+            : !hasStrikePrice 
+              ? "text-white/40"
+              : "text-white",
           inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
         }}
       />

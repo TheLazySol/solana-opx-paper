@@ -29,7 +29,7 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
       shouldValidate: true
     });
     
-    // Update the selected asset in the context
+    // Update the selected asset in the context (this will automatically trigger price refresh)
     setSelectedAsset(value);
   };
 
@@ -49,15 +49,16 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-white/60">Asset</label>
-        {assetPrice > 0 && (
-          <span className="text-sm text-blue-400 font-medium">
-            ${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset) || 2)}
-          </span>
-        )}
+        <span className="text-sm text-blue-400 font-medium">
+          {assetPrice > 0 ? (
+            `$${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset) || 2)}`
+          ) : (
+            <span className="text-white/40">Loading...</span>
+          )}
+        </span>
       </div>
       
       <Select
-        label="Asset"
         selectedKeys={[selectedAsset]}
         onSelectionChange={handleAssetChange}
         className="w-full"

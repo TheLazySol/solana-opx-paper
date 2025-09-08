@@ -331,10 +331,6 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
           }}
         >
           <CardBody className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Info className="w-4 h-4 text-[#4a85ff]" />
-              <h4 className="text-sm font-medium text-white">Advanced Option Details</h4>
-            </div>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
@@ -458,7 +454,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-blue-400">
+                <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
                   ${premium ? Number(premium).toFixed(2) : '0.00'}
                 </p>
               </div>

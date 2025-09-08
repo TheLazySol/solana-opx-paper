@@ -15,7 +15,7 @@ export const TOKENS = {
       displayDecimals: 2,
       symbol: 'SOL',
       name: 'Solana'
-    },
+    }
     // Add more tokens here that we wish to list on the exchange.
   } as const
 
