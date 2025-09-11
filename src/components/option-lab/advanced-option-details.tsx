@@ -29,6 +29,9 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
   const methods = useFormContext();
   const [forceUpdate, setForceUpdate] = useState(0);
   
+  // Currency formatting helper
+  const formatUSD = (n: number, d = 2) => `$${formatNumberWithCommas(n, d)}`;
+  
   // Watch specific fields to ensure reactivity
   const asset = methods.watch('asset');
   const optionType = methods.watch('optionType');
@@ -154,8 +157,8 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
                     <Tooltip 
                       content={
                         <div className="text-xs font-light space-y-1">
-                          <div><span className="text-green-400">Intrinsic Value</span>: ${intrinsicValue.toFixed(2)} ({intrinsicPercentage.toFixed(1)}%)</div>
-                          <div><span className="text-red-400">Extrinsic Value</span>: ${extrinsicValue.toFixed(2)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                          <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(intrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
+                          <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(extrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
                         </div>
                       }
                       placement="top"
@@ -208,7 +211,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
               </Tooltip>
             </div>
             <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
-              ${premium ? Number(premium).toFixed(2) : '0.00'}
+              {premium ? formatUSD(Number(premium)) : '$0.00'}
             </p>
           </div>
           
@@ -227,7 +230,7 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
               </Tooltip>
             </div>
             <p className="text-sm font-medium text-white">
-              ${premium && quantity ? formatNumberWithCommas(Number(premium) * quantity * 100) : '0.00'}
+              {premium && quantity ? formatUSD(Number(premium) * quantity * 100) : '$0.00'}
             </p>
           </div>
         </div>
@@ -272,9 +275,9 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
               </div>
               <p className="text-sm font-medium text-white">
                 {strikePrice && premium ? 
-                  `$${(optionType === 'call' 
+                  formatUSD(optionType === 'call' 
                     ? (Number(strikePrice) + Number(premium))
-                    : (Number(strikePrice) - Number(premium))).toFixed(2)}` 
+                    : (Number(strikePrice) - Number(premium)))
                   : '-'
                 }
               </p>
@@ -297,13 +300,13 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
               <Tooltip 
                 content={
                   <div className="text-xs font-light space-y-1">
-                    <div>Avg. Daily Yield: <span className="text-green-400">${dailyThetaYield.toFixed(2)}</span></div>
+                    <div>Avg. Daily Yield: <span className="text-green-400">{formatUSD(dailyThetaYield)}</span></div>
                   </div>
                 }
                 placement="top"
               >
                 <p className="text-sm font-medium text-green-400 cursor-help underline decoration-dotted decoration-green-400/60 hover:decoration-green-400 transition-colors underline-offset-2">
-                  {premium && quantity ? `$${formatNumberWithCommas(Number(premium) * quantity * 100)}` : '-'}
+                  {premium && quantity ? formatUSD(Number(premium) * quantity * 100) : '-'}
                 </p>
               </Tooltip>
             </div>
@@ -327,20 +330,20 @@ export function AdvancedOptionDetails({ assetPrice, showTitle = true, collateral
                   content={
                     <div className="text-xs font-light space-y-1">
                       <div>Collateral Provided: <span className="text-red-400">
-                        ${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
+                        {formatUSD(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
                       </span></div>
                       {collateralInfo.borrowCost && daysToExpiration > 0 && (
-                        <div>Margin Interest: <span className="text-red-400">${collateralInfo.borrowCost.toFixed(2)}</span></div>
+                        <div>Margin Interest: <span className="text-red-400">{formatUSD(collateralInfo.borrowCost)}</span></div>
                       )}
                       {collateralInfo.borrowFee && (
-                        <div>Borrow Fee: <span className="text-red-400">${collateralInfo.borrowFee.toFixed(2)}</span></div>
+                        <div>Borrow Fee: <span className="text-red-400">{formatUSD(collateralInfo.borrowFee)}</span></div>
                       )}
                     </div>
                   }
                   placement="top"
                 >
                   <p className="text-sm font-medium text-red-400 cursor-help underline decoration-dotted decoration-red-400/60 hover:decoration-red-400 transition-colors underline-offset-2">
-                    ${formatNumberWithCommas(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
+                    {formatUSD(Number(collateralInfo.collateralProvided) * collateralInfo.collateralPrice)}
                   </p>
                 </Tooltip>
               ) : (

@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useMouseGlow } from '@/hooks/useMouseGlow';
 import { Card, CardBody, Chip } from '@heroui/react';
 import { CollateralState } from './collateral-provider';
@@ -20,10 +20,17 @@ export function CostBreakdown({
 }: CostBreakdownProps) {
   const cardRef = useMouseGlow();
   
-  const totalCost = collateralState.borrowCost + 
-                   collateralState.optionCreationFee + 
-                   collateralState.borrowFee + 
-                   collateralState.transactionCost;
+  const totalCost = useMemo(() => {
+    return collateralState.borrowCost + 
+           collateralState.optionCreationFee + 
+           collateralState.borrowFee + 
+           collateralState.transactionCost;
+  }, [
+    collateralState.borrowCost,
+    collateralState.optionCreationFee, 
+    collateralState.borrowFee,
+    collateralState.transactionCost
+  ]);
 
   return (
     <Card 
