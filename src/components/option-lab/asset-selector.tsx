@@ -1,10 +1,9 @@
 import React from 'react';
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { Select, SelectItem } from '@heroui/react';
 import { TOKENS } from '@/lib/api/tokens';
 import { useFormContext } from 'react-hook-form';
 import { useAssetPrice, useAssetPriceInfo } from '@/context/asset-price-provider';
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list';
-import { ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 
 export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: number | null }) => {
@@ -18,7 +17,8 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
   // Use either the prop asset price (for backward compatibility) or the contextualized price
   const assetPrice = propAssetPrice !== null ? propAssetPrice : price;
 
-  const handleAssetChange = (value: string) => {
+  const handleAssetChange = (keys: any) => {
+    const value = Array.from(keys)[0] as string;
     setValue('asset', value, {
       shouldValidate: true,
       shouldDirty: true,
@@ -29,7 +29,7 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
       shouldValidate: true
     });
     
-    // Update the selected asset in the context
+    // Update the selected asset in the context (this will automatically trigger price refresh)
     setSelectedAsset(value);
   };
 
@@ -48,60 +48,32 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-white/80">Asset</label>
-        {assetPrice > 0 && (
-          <span className="text-sm text-blue-400 font-medium">
-            ${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset) || 2)}
-          </span>
-        )}
+        <label className="text-sm font-medium text-white/60">Asset</label>
+        <span className="text-sm text-blue-400 font-medium">
+          {assetPrice > 0 ? (
+            `$${assetPrice.toFixed(getTokenDisplayDecimals(selectedAsset) || 2)}`
+          ) : (
+            <span className="text-white/40">Loading...</span>
+          )}
+        </span>
       </div>
       
-      <Dropdown
+      <Select
+        selectedKeys={[selectedAsset]}
+        onSelectionChange={handleAssetChange}
+        className="w-full"
         classNames={{
-          content: "bg-[#010101] p-0 border-none shadow-none"
+          trigger: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
+          value: "text-white",
+          label: "text-white/60"
         }}
-      >
-        <DropdownTrigger>
-          <Button 
-            variant="bordered" 
-            className="w-full justify-between bg-white/5 border-white/20 hover:border-white/30 h-10 border-[0.5px]"
-            endContent={<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />}
-          >
-            <div className="flex items-center">
-              {selectedToken.symbol.toUpperCase() === 'SOL' && (
-                <Image 
-                  src="/token-logos/solana_logo.png" 
-                  alt="Solana Logo" 
-                  width={20} 
-                  height={20} 
-                  className="mr-2"
-                />
-              )}
-              {selectedToken.symbol.toUpperCase() === 'LABS' && (
-                <Image 
-                  src="/token-logos/epicentral_labs_logo.png" 
-                  alt="Epicentral Labs Logo" 
-                  width={20} 
-                  height={20} 
-                  className="mr-2"
-                />
-              )}
-              <span className="text-white">{selectedToken.name} ({selectedToken.symbol})</span>
-            </div>
-          </Button>
-        </DropdownTrigger>
-        <DropdownMenu 
-          aria-label="Asset selection"
-          onAction={(key) => handleAssetChange(key as string)}
-          className="w-full"
-          classNames={{
-            base: "bg-[#010101] p-0 border-none",
-            list: "bg-[#010101] p-1 border-none"
-          }}
-        >
-          {assets.map((asset) => (
-            <DropdownItem key={asset.id}>
-              <div className="flex items-center">
+        renderValue={(items) => {
+          return items.map((item) => {
+            const asset = assets.find(a => a.id === item.key);
+            if (!asset) return null;
+            
+            return (
+              <div key={item.key} className="flex items-center">
                 {asset.symbol.toUpperCase() === 'SOL' && (
                   <Image 
                     src="/token-logos/solana_logo.png" 
@@ -120,12 +92,38 @@ export const AssetSelector = ({ assetPrice: propAssetPrice }: { assetPrice: numb
                     className="mr-2"
                   />
                 )}
-                <span>{asset.fullName} ({asset.symbol})</span>
+                <span>{asset.name} ({asset.symbol})</span>
               </div>
-            </DropdownItem>
-          ))}
-        </DropdownMenu>
-      </Dropdown>
+            );
+          });
+        }}
+      >
+        {assets.map((asset) => (
+          <SelectItem key={asset.id}>
+            <div className="flex items-center">
+              {asset.symbol.toUpperCase() === 'SOL' && (
+                <Image 
+                  src="/token-logos/solana_logo.png" 
+                  alt="Solana Logo" 
+                  width={20} 
+                  height={20} 
+                  className="mr-2"
+                />
+              )}
+              {asset.symbol.toUpperCase() === 'LABS' && (
+                <Image 
+                  src="/token-logos/epicentral_labs_logo.png" 
+                  alt="Epicentral Labs Logo" 
+                  width={20} 
+                  height={20} 
+                  className="mr-2"
+                />
+              )}
+              <span>{asset.fullName} ({asset.symbol})</span>
+            </div>
+          </SelectItem>
+        ))}
+      </Select>
     </div>
   );
 };

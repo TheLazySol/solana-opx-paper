@@ -9,34 +9,61 @@ export const QuantityInput = () => {
   const handleQuantityChange = (value: string) => {
     if (value === "") {
       setValue('quantity', '');
+      clearErrors('quantity');
       return;
     }
-    const num = parseFloat(value);
+
+    // Allow only numbers and one decimal point
+    const sanitizedValue = value.replace(/[^0-9.]/g, '');
+    
+    // Prevent multiple decimal points
+    const parts = sanitizedValue.split('.');
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
+    }
+    
+    // Limit to 2 decimal places
+    let formattedValue = sanitizedValue;
+    if (parts.length === 2 && parts[1].length > 2) {
+      formattedValue = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    const num = parseFloat(formattedValue);
     if (isNaN(num) || num < 0 || num > 1000) {
       setError('quantity', { 
         message: `Quantity must be between 0.01 and 1000 for submission` 
       });
     } else if (num === 0) {
-      // Allow zero but show a message that it needs to be at least 0.01 for submission
       setError('quantity', { 
         message: `Quantity must be at least 0.01 for submission` 
       });
     } else {
       clearErrors('quantity');
     }
-    setValue('quantity', value);
+    
+    setValue('quantity', formattedValue);
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/80">Quantity</label>
-        <Tooltip content="The number of option contracts to sell. Fractional quantities are supported.">
-          <Info className="w-4 h-4 text-white/40 cursor-help" />
+        <label className="text-sm font-medium text-white/60">
+          Contract Quantity <span className="opacity-50">(1 = 100 Underlying Tokens)</span>
+        </label>
+        <Tooltip 
+          content={
+            <div className="text-xs font-light text-white/70 max-w-xs">
+              The number of option contracts to short sell
+            </div>
+          }
+          placement="top"
+        >
+          <Info className="w-3 h-3 text-white/30 cursor-help" />
         </Tooltip>
       </div>
       <Input
-        type="number"
+        type="text"
+        inputMode="decimal"
         max="10000"
         step="0.01"
         placeholder="Min Qty: 0.01"
@@ -44,8 +71,9 @@ export const QuantityInput = () => {
         onChange={(e) => handleQuantityChange(e.target.value)}
         variant="flat"
         classNames={{
-          input: "font-medium text-white",
-          inputWrapper: "bg-white/5 border border-white/20 rounded-lg backdrop-blur-sm h-10 hover:bg-white/8 data-[hover=true]:bg-white/8 data-[focus=true]:bg-white/10 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none border-[0.5px] hover:border-white/30"
+          base: "max-w-full",
+          input: "text-white",
+          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
         }}
       />
     </div>

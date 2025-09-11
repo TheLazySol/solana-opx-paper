@@ -66,7 +66,24 @@ module.exports = {
       zIndex: {
         '-10': '-10',
       },
+      textShadow: {
+        'green-glow': '0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.4)',
+        'red-glow': '0 0 10px rgba(248, 113, 113, 0.6), 0 0 20px rgba(248, 113, 113, 0.4)',
+      },
     },
   },
-  plugins: [heroui()],
+  plugins: [
+    heroui(),
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.text-shadow-green-glow': {
+          'text-shadow': '0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.4)',
+        },
+        '.text-shadow-red-glow': {
+          'text-shadow': '0 0 10px rgba(248, 113, 113, 0.6), 0 0 20px rgba(248, 113, 113, 0.4)',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 }

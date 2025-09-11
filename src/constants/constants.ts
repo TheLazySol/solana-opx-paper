@@ -63,13 +63,13 @@ export type ExpirationDate = {
 export const ASSET_PRICE_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 // SOL PH Volatility
-export const SOL_PH_VOLATILITY = 1.16;
+export const SOL_PH_VOLATILITY = 0.94; // 94% annual volatility
 
 // SOL PH Risk Free Rate
-export const SOL_PH_RISK_FREE_RATE = 0.08;
+export const SOL_PH_RISK_FREE_RATE = 0.065; // 6.5% annual interest rate
 
 // Option Chain Constants
-export const OPTION_SPREAD_PERCENTAGE = 0.01; // 1% bid-ask spread
+export const OPTION_SPREAD_PERCENTAGE = 0.00; // 0% bid-ask spread
 export const DEFAULT_OPTION_VOLUME = 0;
 export const DEFAULT_OPTION_OPEN_INTEREST = 0;
 
@@ -118,29 +118,54 @@ export const formatSelectedOption = ({
 }
 
 // Option Lab Constants
-export const EDIT_REFRESH_INTERVAL = 1500; // 1.5 second debounce
-export const AUTO_REFRESH_INTERVAL = 3000; // 3 seconds
+export const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce for faster updates
+export const AUTO_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 export const COLLATERAL_TYPES = [
-  { value: "USDC", label: "USDC", default: true }
+  { value: "USDC", label: "USDC", symbol: "$", default: false },
+  { value: "SOL", label: "SOL", symbol: "SOL", default: true }
   // Add more here that we wish to have as a collateral type
 ] as const;
 
 // Financial constants
-export const BASE_ANNUAL_INTEREST_RATE = 0.1456; // 14.56% annual interest rate
+export const BASE_ANNUAL_INTEREST_RATE = 0.1021; // 10.21% annual interest rate
 export const OPTION_CREATION_FEE_RATE = 0.01; // 0.01 SOL
 export const BORROW_FEE_RATE = 0.00035; // 0.035% of the amount borrowed
-export const TRANSACTION_COST_SOL = 0.02; // 0.02 SOL
+export const TRANSACTION_COST_SOL = 0.002; // 0.002 SOL
 export const MAX_LEVERAGE = 10; // 10x leverage
-export const STANDARD_CONTRACT_SIZE = 100; // 100 units of the underlying 
+export const STANDARD_CONTRACT_SIZE = 100; // 100 units of the underlying
+export const DEFAULT_SOL_PRICE = 100; // Default SOL price fallback for calculations 
 
-// Get all bi-weekly expiration dates between two dates for the calendar
+// Get all bi-weekly Friday expiration dates between two dates for the calendar
 export function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
   const dates: Date[] = [];
   let currentDate = new Date(startDate);
+  
+  // Find the first Friday from the start date
+  while (currentDate.getDay() !== 5) { // 5 = Friday
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
   while (currentDate <= endDate) {
     dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
+    currentDate.setDate(currentDate.getDate() + 14); // Add 14 days for bi-weekly
+  }
+  return dates;
+}
+
+// Get all weekly Friday expiration dates between two dates for the calendar
+export function getWeeklyFridayDates(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let currentDate = new Date(startDate);
+  
+  // Find the first Friday from the start date
+  while (currentDate.getDay() !== 5) { // 5 = Friday
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 7); // Add 7 days for weekly
   }
   return dates;
 }

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
+import { formatNumberWithCommas } from '@/utils/utils'
 
 // Helper for formatting quantity with 2 decimal places, hiding .00 when whole numbers
 const formatQuantity = (quantity: number): string => {
@@ -850,7 +851,7 @@ export const OrdersViewOpen = () => {
                                   {(() => {
                                     const filledCount = position.legs.reduce((count, leg) => 
                                       count + (leg.filledQuantity ?? 0), 0);
-                                    return filledCount > 0 ? `$${position.totalValue.toFixed(2)}` : '-';
+                                    return filledCount > 0 ? `$${formatNumberWithCommas(position.totalValue)}` : '-';
                                   })()}
                                 </div>
                               </div>

@@ -11,20 +11,9 @@ import { CalendarIcon, Info } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
+import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
 
-const startDate = new Date(2025, 0, 1); // January 1st, 2025
-const endDate = new Date(2026, 0, 1);   // January 1st, 2026
-const allowedDates = getBiWeeklyDates(startDate, endDate);
-
-function getBiWeeklyDates(startDate: Date, endDate: Date): Date[] {
-  const dates: Date[] = [];
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 14);
-  }
-  return dates;
-}
+const allowedDates = getWeeklyFridayDates(startDate, endDate);
 
 export const ExpirationDatePicker = () => {
   const { getValues, setValue } = useFormContext();
@@ -56,7 +45,7 @@ export const ExpirationDatePicker = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/80">Expiration Date</label>
+        <div id="expiration-date-label" className="text-sm font-medium text-white/60">Expiration Date</div>
         <Tooltip content="The date when the option expires. The option can only be exercised on or before this date.">
           <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
@@ -64,13 +53,15 @@ export const ExpirationDatePicker = () => {
       <Popover placement="bottom">
         <PopoverTrigger>
           <Button
-            variant="bordered"
+            variant="flat"
             className={cn(
-              "w-full justify-start text-left font-normal border-[0.5px]",
-              "bg-white/5 border-white/20 hover:border-white/30",
-              !getValues('expirationDate') && "text-white/40"
+              "w-full justify-start text-left font-normal h-10 rounded-lg",
+              "bg-white/5 border border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10",
+              !getValues('expirationDate') && "text-white/40",
+              getValues('expirationDate') && "text-white"
             )}
             endContent={<CalendarIcon className="h-4 w-4 opacity-50" />}
+            aria-labelledby="expiration-date-label"
           >
             {getValues('expirationDate') ? (
               format(getValues('expirationDate'), "PPP")
