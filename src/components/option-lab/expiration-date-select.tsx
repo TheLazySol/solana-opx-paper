@@ -45,7 +45,7 @@ export const ExpirationDatePicker = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-white/60">Expiration Date</label>
+        <div id="expiration-date-label" className="text-sm font-medium text-white/60">Expiration Date</div>
         <Tooltip content="The date when the option expires. The option can only be exercised on or before this date.">
           <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
@@ -61,6 +61,7 @@ export const ExpirationDatePicker = () => {
               getValues('expirationDate') && "text-white"
             )}
             endContent={<CalendarIcon className="h-4 w-4 opacity-50" />}
+            aria-labelledby="expiration-date-label"
           >
             {getValues('expirationDate') ? (
               format(getValues('expirationDate'), "PPP")

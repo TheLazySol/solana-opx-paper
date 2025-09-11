@@ -14,6 +14,7 @@ import { OptionContractSummary } from '../option-contract-summary';
 import { AdvancedOptionDetails } from '../advanced-option-details';
 import { CostBreakdown } from '../cost-breakdown';
 import { calculateTotalPremium } from '@/constants/option-lab/calculations';
+import { DEFAULT_SOL_PRICE } from '@/constants/constants';
 
 interface StepReviewProps {
   proMode: boolean;
@@ -72,7 +73,7 @@ export function StepReview({
           collateralInfo={{
             collateralProvided: collateralState.collateralProvided,
             collateralType: collateralState.collateralType,
-            collateralPrice: collateralState.collateralType === 'SOL' ? (assetPrice || 100) : 1,
+            collateralPrice: collateralState.collateralType === 'SOL' ? (assetPrice ?? DEFAULT_SOL_PRICE) : 1,
             borrowCost: collateralState.borrowCost,
             borrowFee: collateralState.borrowFee
           }}
