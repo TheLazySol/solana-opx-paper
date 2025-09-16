@@ -458,10 +458,6 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               >
                 <div className="text-center space-y-2">
                   <Hash className="w-8 h-8 text-white/30 mx-auto" />
-                  <div className="space-y-1">
-                    <p className="text-sm text-white/60">Select options to build your order</p>
-                    <p className="text-xs text-white/40">Add options to create your strategy</p>
-                  </div>
                 </div>
               </motion.div>
             ) : (
@@ -486,7 +482,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                           <CardBody className="p-2 space-y-2">
                             {/* Header Row */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <div className="flex items-center gap-1 flex-wrap">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 {option.asset.toUpperCase() === 'SOL' && (
                                   <Image 
                                     src="/token-logos/solana_logo.png" 
@@ -496,14 +492,14 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                     className="rounded-full"
                                   />
                                 )}
-                                <span className="text-xs font-medium text-white/80">
+                                <span className="text-sm font-medium text-white/90">
                                   {option.asset.toUpperCase()}
                                 </span>
                                 <Chip 
                                   size="sm" 
                                   variant="flat"
                                   className={cn(
-                                    "font-medium text-xs",
+                                    "font-medium text-xs h-5 px-2",
                                     option.type === 'bid' 
                                       ? "bg-green-500/20 text-green-400" 
                                       : "bg-red-500/20 text-red-400"
@@ -516,8 +512,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 >
                                   {option.type === 'bid' ? 'Long' : 'Short'} {optionType}
                                 </Chip>
-                                <span className="text-xs text-blue-400 font-medium">
-                                  ${option.strike}
+                                <span className="text-sm text-blue-400 font-medium">
+                                  ${option.strike} Strike
                                 </span>
                               </div>
                               
@@ -585,7 +581,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               </div>
                               
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-purple-400 font-medium">
+                                <span className="text-xs text-white/50 font-normal">
                                   {expiryDate}
                                 </span>
                                 {onRemoveOption && (

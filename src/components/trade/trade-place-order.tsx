@@ -56,6 +56,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   
   // Mouse glow effect hooks for cards
   const metricsCardRef = useMouseGlow()
+  const placeOrderButtonRef = useMouseGlow()
   
   // Check if any selected option has insufficient availability
   useEffect(() => {
@@ -602,18 +603,34 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           content={insufficientOptions ? "There are not enough options available to trade for the quantity selected." : undefined}
           isDisabled={!insufficientOptions}
         >
-          <Button 
-            className={cn(
-              "w-full h-14 font-semibold text-lg transition-all duration-300",
-              !hasSelectedOptions || isPlacingOrder || insufficientOptions
-                ? "bg-white/10 text-white/40 border border-white/20"
-                : orderSuccess
-                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                  : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
-            )}
-            isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
-            onPress={handlePlaceOrder}
+          <div 
+            ref={placeOrderButtonRef}
+            className="relative transition-all duration-300"
+            style={{
+              background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess ? `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(24, 81, 196, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  transparent 50%
+                )
+              ` : 'transparent',
+              borderRadius: '12px',
+              padding: '2px',
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
           >
+            <Button 
+              className={cn(
+                "w-full h-14 font-semibold text-lg transition-all duration-300",
+                !hasSelectedOptions || isPlacingOrder || insufficientOptions
+                  ? "bg-white/10 text-white/40 border border-white/20"
+                  : orderSuccess
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
+                    : "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+              )}
+              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+              onPress={handlePlaceOrder}
+            >
             <motion.div
               className="flex items-center justify-center gap-3"
               initial={{ scale: 1 }}
@@ -647,7 +664,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                 </>
               )}
             </motion.div>
-          </Button>
+            </Button>
+          </div>
         </Tooltip>
       </motion.div>
     </motion.div>
