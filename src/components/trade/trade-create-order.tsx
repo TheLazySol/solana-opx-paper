@@ -1,4 +1,4 @@
-import { FC, useMemo, useState, useEffect } from 'react'
+import { FC, useMemo, useState, useEffect, useCallback } from 'react'
 import { 
   Button, 
   Card, 
@@ -12,7 +12,7 @@ import {
   Divider,
   cn
 } from '@heroui/react'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
 import { 
   calculateIntrinsicValue,
@@ -33,6 +33,7 @@ interface CreateOrderProps {
   onRemoveOption?: (index: number) => void
   onUpdateQuantity?: (index: number, quantity: number) => void
   onUpdateLimitPrice?: (index: number, price: number) => void
+  optionChainData?: OptionContract[]
 }
 
 // Define a type for stable leg identifiers
@@ -42,7 +43,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   selectedOptions = [],
   onRemoveOption,
   onUpdateQuantity,
-  onUpdateLimitPrice
+  onUpdateLimitPrice,
+  optionChainData = []
 }) => {
   // Initialize with empty objects using stable identifiers
   const [orderTypes, setOrderTypes] = useState<Record<LegKey, 'MKT' | 'LMT'>>({});
@@ -52,6 +54,27 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   
   // Mouse glow effect hook for the main card
   const createOrderCardRef = useMouseGlow();
+
+  // Helper function to get live option price from chain data
+  const getLiveOptionPrice = useCallback((option: SelectedOption): number => {
+    // Find the matching option contract from the live chain data
+    const optionContract = optionChainData.find(contract => 
+      contract.strike === option.strike && 
+      contract.expiry === option.expiry
+    );
+
+    if (!optionContract) {
+      // Fallback to stored price if not found in chain
+      return option.limitPrice !== undefined ? option.limitPrice : option.price;
+    }
+
+    // Get live bid/ask price based on option side and type
+    if (option.side === 'call') {
+      return option.type === 'bid' ? optionContract.callBid : optionContract.callAsk;
+    } else {
+      return option.type === 'bid' ? optionContract.putBid : optionContract.putAsk;
+    }
+  }, [optionChainData]);
 
   // Update all state when options change
   useEffect(() => {
@@ -68,13 +91,18 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       return newOrderTypes;
     });
 
-    // Update price input values
+    // Update price input values using live prices
     setInputValues(prev => {
       const newValues = { ...prev };
       selectedOptions.forEach((option) => {
         const legKey = option.index.toString();
-        // Always ensure there's a value
-        newValues[legKey] = prev[legKey] || option.price.toFixed(2);
+        // Always ensure there's a value - use live price if no previous value
+        if (!prev[legKey]) {
+          const livePrice = getLiveOptionPrice(option);
+          newValues[legKey] = livePrice.toFixed(2);
+        } else {
+          newValues[legKey] = prev[legKey];
+        }
       });
       return newValues;
     });
@@ -126,7 +154,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       // Only update if something changed
       return needsUpdate ? newQuantityInputs : prev;
     });
-  }, [selectedOptions, onUpdateQuantity]);
+  }, [selectedOptions, onUpdateQuantity, getLiveOptionPrice]);
 
   // Get unique assets from selected options
   const uniqueAssets = useMemo(() => {
@@ -244,14 +272,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     setOrderTypes(prev => ({ ...prev, [legKey]: type }));
     
     if (type === 'MKT') {
-      // When switching to MKT, set limit price to current market price
+      // When switching to MKT, set limit price to current live market price
+      const livePrice = getLiveOptionPrice(option);
       if (onUpdateLimitPrice) {
-        onUpdateLimitPrice(index, option.price);
+        onUpdateLimitPrice(index, livePrice);
       }
-      // Reset input value to current market price
+      // Reset input value to current live market price
       setInputValues(prev => ({ 
         ...prev, 
-        [legKey]: option.price.toFixed(2) 
+        [legKey]: livePrice.toFixed(2) 
       }));
     }
   };
@@ -282,13 +311,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     }
   };
 
-  // Get the display price for an option
+  // Get the display price for an option using live data
   const getDisplayPrice = (option: SelectedOption): string => {
     const legKey = option.index.toString()
+    const livePrice = getLiveOptionPrice(option);
+    
     if (orderTypes[legKey] === 'MKT') {
-      return option.price.toFixed(2);
+      return livePrice.toFixed(2);
     }
-    return inputValues[legKey] || option.price.toFixed(2); // Ensure always a defined value
+    return inputValues[legKey] || livePrice.toFixed(2); // Ensure always a defined value
   };
 
   // Ensure we have a valid quantity value for display
@@ -332,7 +363,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     const assetPrice = assetPriceMap.get(option.asset);
     if (!assetPrice) return null;
 
-    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
+    const optionPrice = getLiveOptionPrice(option);
     const intrinsicValue = calculateIntrinsicValue(option.side, assetPrice, option.strike);
     const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
     const totalValue = intrinsicValue + extrinsicValue;
@@ -644,7 +675,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                     <div className="flex items-center gap-1 h-6">
                                       <span className="text-xs text-white/60">Premium:</span>
                                       <span className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
-                                        ${option.price.toFixed(2)}
+                                        ${getDisplayPrice(option)}
                                       </span>
                                     </div>
                                   ) : (
@@ -652,7 +683,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                       <span className="text-xs text-white/60">Premium:</span>
                                       <Input
                                         type="text"
-                                        value={inputValues[legKey] || option.price.toFixed(2)}
+                                        value={inputValues[legKey] || getLiveOptionPrice(option).toFixed(2)}
                                         onChange={(e) => handlePriceInputChange(e, index)}
                                         size="sm"
                                         variant="flat"

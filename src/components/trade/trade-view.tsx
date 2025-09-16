@@ -186,6 +186,7 @@ export const TradeView: FC<TradeViewProps> = ({
           onRemoveOption={handleRemoveOption}
           onUpdateQuantity={handleQuantityUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
+          optionChainData={optionChainData}
         />
       </motion.div>
       

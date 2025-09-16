@@ -1,4 +1,4 @@
-import { FC, useMemo, useEffect, useState } from 'react'
+import { FC, useMemo, useEffect, useState, useCallback } from 'react'
 import { 
   Button, 
   Card, 
@@ -94,24 +94,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return total + (option.quantity || 1)
   }, 0)
 
-  // Calculate total debit/credit (multiplied by quantity and contract size)
-  const totalAmount = selectedOptions.reduce((total, option) => {
-    const quantity = option.quantity || 1
-    const contractSize = 100 // Each option contract represents 100 units of underlying
-    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
-    return option.type === 'bid' 
-      ? total - (optionPrice * quantity * contractSize)
-      : total + (optionPrice * quantity * contractSize)
-  }, 0)
-
-  // Calculate volume (USD value of the order)
-  const volume = selectedOptions.reduce((total, option) => {
-    const quantity = option.quantity || 1
-    const contractSize = 100 // Each option contract represents 100 units
-    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
-    return total + (optionPrice * quantity * contractSize)
-  }, 0)
-
   // Calculate collateral needed based on option positions
   const collateralNeeded = (() => {
     if (!hasSelectedOptions) return 0;
@@ -150,15 +132,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return Math.max(0, totalCollateral)
   })()
 
-  // Calculate premium per share/token (without contract size multiplier)
-  const premiumPerShare = selectedOptions.reduce((total, option) => {
-    const quantity = option.quantity || 1
-    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
-    return option.type === 'bid' 
-      ? total - (optionPrice * quantity)
-      : total + (optionPrice * quantity)
-  }, 0)
-
   // Get option chain data - use provided data or generate as fallback
   const currentOptionChainData = useMemo(() => {
     if (optionChainData.length > 0) {
@@ -167,6 +140,60 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     // Fallback: generate data if not provided (for backward compatibility)
     return generateMockOptionData(null, underlyingPrice || 0, 0);
   }, [optionChainData, underlyingPrice]);
+
+  // Helper function to get live option price from chain data
+  const getLiveOptionPrice = useCallback((option: SelectedOption): number => {
+    // Find the matching option contract from the live chain data
+    const optionContract = currentOptionChainData.find(contract => 
+      contract.strike === option.strike && 
+      contract.expiry === option.expiry
+    );
+
+    if (!optionContract) {
+      // Fallback to stored price if not found in chain
+      return option.limitPrice !== undefined ? option.limitPrice : option.price;
+    }
+
+    // Get live bid/ask price based on option side and type
+    if (option.side === 'call') {
+      return option.type === 'bid' ? optionContract.callBid : optionContract.callAsk;
+    } else {
+      return option.type === 'bid' ? optionContract.putBid : optionContract.putAsk;
+    }
+  }, [currentOptionChainData]);
+
+  // Calculate total debit/credit using live option prices (multiplied by quantity and contract size)
+  const totalAmount = useMemo(() => {
+    return selectedOptions.reduce((total, option) => {
+      const quantity = option.quantity || 1
+      const contractSize = 100 // Each option contract represents 100 units of underlying
+      const liveOptionPrice = getLiveOptionPrice(option)
+      return option.type === 'bid' 
+        ? total - (liveOptionPrice * quantity * contractSize)
+        : total + (liveOptionPrice * quantity * contractSize)
+    }, 0)
+  }, [selectedOptions, getLiveOptionPrice])
+
+  // Calculate volume (USD value of the order) using live prices
+  const volume = useMemo(() => {
+    return selectedOptions.reduce((total, option) => {
+      const quantity = option.quantity || 1
+      const contractSize = 100 // Each option contract represents 100 units
+      const liveOptionPrice = getLiveOptionPrice(option)
+      return total + (liveOptionPrice * quantity * contractSize)
+    }, 0)
+  }, [selectedOptions, getLiveOptionPrice])
+
+  // Calculate premium per share/token using live prices (without contract size multiplier)
+  const premiumPerShare = useMemo(() => {
+    return selectedOptions.reduce((total, option) => {
+      const quantity = option.quantity || 1
+      const liveOptionPrice = getLiveOptionPrice(option)
+      return option.type === 'bid' 
+        ? total - (liveOptionPrice * quantity)
+        : total + (liveOptionPrice * quantity)
+    }, 0)
+  }, [selectedOptions, getLiveOptionPrice])
 
   // Calculate total Greeks for the order using live option chain data
   const totalGreeks = useMemo(() => {
@@ -221,18 +248,21 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     };
   }, [hasSelectedOptions, selectedOptions.length, borrowedAmount]);
 
-  // Calculate max profit and max loss potential
+  // Calculate max profit and max loss potential using live prices
   const { maxProfit, maxLoss } = useMemo(() => {
     if (!hasSelectedOptions) {
       return { maxProfit: 0, maxLoss: 0 };
     }
+
+    // Calculate isDebit using live totalAmount
+    const isLiveDebit = totalAmount < 0;
 
     // For option trading (not selling), max profit and loss calculations are different
     let calculatedMaxProfit = 0;
     let calculatedMaxLoss = 0;
 
     // Calculate based on whether this is a net debit or credit position
-    if (isDebit) {
+    if (isLiveDebit) {
       // Net debit position (buyer): Max loss is the premium paid, max profit is theoretically unlimited for calls or limited for puts
       calculatedMaxLoss = Math.abs(totalAmount);
       
@@ -264,7 +294,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       maxProfit: calculatedMaxProfit === Number.POSITIVE_INFINITY ? 0 : calculatedMaxProfit,
       maxLoss: calculatedMaxLoss
     };
-  }, [hasSelectedOptions, isDebit, totalAmount, collateralNeeded, selectedOptions]);
+  }, [hasSelectedOptions, totalAmount, collateralNeeded, selectedOptions]);
 
   // Currency formatting helper
   const formatUSD = (n: number, d = 2) => `$${formatNumberWithCommas(n, d)}`;
@@ -670,68 +700,88 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                       <Info className="w-3 h-3 text-white/30 cursor-help" />
                     </Tooltip>
                   </div>
-                  {/* Value Breakdown Display */}
-                  {hasSelectedOptions && underlyingPrice && selectedOptions.length === 1 && selectedOptions[0].price > 0 ? (
-                    (() => {
-                      const option = selectedOptions[0];
-                      const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
-                      const intrinsicValue = calculateIntrinsicValue(option.side, underlyingPrice, option.strike);
-                      const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
-                      const totalValue = intrinsicValue + extrinsicValue;
-                      const intrinsicPercentage = totalValue > 0 ? (intrinsicValue / totalValue) * 100 : 0;
-                      const extrinsicPercentage = totalValue > 0 ? (extrinsicValue / totalValue) * 100 : 0;
-                      const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+                  {/* Value Breakdown Display - Now supports multiple contracts */}
+                  {(() => {
+                    if (!hasSelectedOptions || !underlyingPrice) {
+                      return <p className="text-sm font-medium text-white">-</p>;
+                    }
+
+                    // Calculate total intrinsic and extrinsic value across all selected options using live prices
+                    let totalIntrinsicValue = 0;
+                    let totalExtrinsicValue = 0;
+
+                    selectedOptions.forEach(option => {
+                      const quantity = option.quantity || 1;
+                      const liveOptionPrice = getLiveOptionPrice(option);
                       
-                      return (
-                        <div className="flex items-center gap-2">
-                          <span 
-                            className={`text-xs font-medium text-green-400 transition-all duration-300 ${
-                              intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
-                            }`}
-                          >
-                            IV
-                          </span>
-                          
-                          <Tooltip 
-                            content={
-                              <div className="text-xs font-light space-y-1">
-                                <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(intrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
-                                <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(extrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
-                              </div>
-                            }
-                            placement="top"
-                          >
-                            <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
-                              <div 
-                                className="absolute left-0 h-full bg-green-400 transition-all duration-300"
-                                style={{ 
-                                  width: `${intrinsicPercentage}%`,
-                                  boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
-                                }}
-                              />
-                              <div 
-                                className="absolute right-0 h-full bg-red-400 transition-all duration-300"
-                                style={{ 
-                                  width: `${extrinsicPercentage}%`,
-                                  boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
-                                }}
-                              />
+                      if (liveOptionPrice > 0) {
+                        const optionIntrinsicValue = calculateIntrinsicValue(option.side, underlyingPrice, option.strike);
+                        const optionExtrinsicValue = calculateExtrinsicValue(liveOptionPrice, optionIntrinsicValue);
+                        
+                        // Weight by quantity (but not contract size since we're showing per-share values)
+                        totalIntrinsicValue += optionIntrinsicValue * quantity;
+                        totalExtrinsicValue += optionExtrinsicValue * quantity;
+                      }
+                    });
+
+                    const totalValue = totalIntrinsicValue + totalExtrinsicValue;
+                    
+                    if (totalValue <= 0) {
+                      return <p className="text-sm font-medium text-white">-</p>;
+                    }
+
+                    const intrinsicPercentage = (totalIntrinsicValue / totalValue) * 100;
+                    const extrinsicPercentage = (totalExtrinsicValue / totalValue) * 100;
+                    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                            intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                          }`}
+                        >
+                          IV
+                        </span>
+                        
+                        <Tooltip 
+                          content={
+                            <div className="text-xs font-light space-y-1">
+                              <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(totalIntrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
+                              <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(totalExtrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                              <div className="text-white/60">Total Portfolio Value: {formatUSD(totalValue)}</div>
                             </div>
-                          </Tooltip>
-                          
-                          <span 
-                            className={`text-xs font-medium text-red-400 transition-all duration-300 ${
-                              !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
-                            }`}
-                          >
-                            EV
-                          </span>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <p className="text-sm font-medium text-white">-</p>
-                  )}
+                          }
+                          placement="top"
+                        >
+                          <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
+                            <div 
+                              className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                              style={{ 
+                                width: `${intrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                              }}
+                            />
+                            <div 
+                              className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                              style={{ 
+                                width: `${extrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                              }}
+                            />
+                          </div>
+                        </Tooltip>
+                        
+                        <span 
+                          className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                            !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                          }`}
+                        >
+                          EV
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 <div>
