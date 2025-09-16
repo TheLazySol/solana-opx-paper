@@ -71,33 +71,30 @@ export function CostBreakdown({
         )}
         
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white/60">Borrow Cost</span>
-            <span className="text-sm font-medium text-white">${collateralState.borrowCost.toFixed(4)}</span>
-          </div>
+          {/* Only show Borrow Cost if there's actual borrowing */}
+          {collateralState.borrowCost > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/60">Borrow Cost</span>
+              <span className="text-sm font-medium text-white">${collateralState.borrowCost.toFixed(4)}</span>
+            </div>
+          )}
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Option Creation Fee</span>
             <span className="text-sm font-medium text-white">${collateralState.optionCreationFee.toFixed(4)}</span>
           </div>
           
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white/60">Borrow Fee</span>
-            <span className="text-sm font-medium text-white">${collateralState.borrowFee.toFixed(4)}</span>
-          </div>
+          {/* Only show Borrow Fee if there's actual borrowing */}
+          {collateralState.borrowFee > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/60">Borrow Fee</span>
+              <span className="text-sm font-medium text-white">${collateralState.borrowFee.toFixed(4)}</span>
+            </div>
+          )}
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Transaction Cost</span>
             <span className="text-sm font-medium text-white">${collateralState.transactionCost.toFixed(4)}</span>
-          </div>
-          
-          <div className="pt-3 mt-3 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white">Max Profit Potential</span>
-              <span className="text-sm font-bold text-green-400">
-                ${formatNumberWithCommas(Math.abs(collateralState.maxProfitPotential))}
-              </span>
-            </div>
           </div>
         </div>
       </CardBody>

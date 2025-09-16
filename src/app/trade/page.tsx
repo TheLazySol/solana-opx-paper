@@ -88,7 +88,7 @@ export default function TradePage() {
   }, [])
 
   return (
-    <div className={`py-2 sm:py-4 transform transition-all duration-500 ease-out ${
+    <div className={`py-2 sm:py-4 transform transition-all duration-500 ease-out overflow-hidden ${
       isPageVisible 
         ? 'translate-y-0 opacity-100' 
         : 'translate-y-4 opacity-0'
@@ -118,12 +118,12 @@ export default function TradePage() {
               </div>
               
               {/* Asset Chart */}
-              <div className="mb-3 sm:mb-4 overflow-x-auto">
+              <div className="mb-3 sm:mb-4 overflow-hidden">
                 <AssetChart selectedAsset={selectedAsset} />
               </div>
               
               {/* Option Chain with Expiration Selector */}
-              <div className="-mx-2 px-2 overflow-x-auto" ref={optionChainControlsRef}>
+              <div className="-mx-2 px-2 overflow-hidden" ref={optionChainControlsRef}>
                 <OptionChainControls 
                   key={`option-chain-controls-${volumeUpdateTrigger}`}
                   assetId={selectedAsset} 
@@ -144,15 +144,17 @@ export default function TradePage() {
             : 'translate-x-8 opacity-0'
         }`}>
           <div className="lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] overflow-hidden">
-            <TradeViewContainer 
-              selectedOptions={selectedOptions}
-              onOptionsChange={handleOptionsChange}
-              onOrderPlaced={handleOrderPlaced}
-              activeView={activeView}
-              setActiveView={setActiveView}
-              activeOrderTab={activeOrderTab}
-              setActiveOrderTab={setActiveOrderTab}
-            />
+            <div className="h-full overflow-hidden">
+              <TradeViewContainer 
+                selectedOptions={selectedOptions}
+                onOptionsChange={handleOptionsChange}
+                onOrderPlaced={handleOrderPlaced}
+                activeView={activeView}
+                setActiveView={setActiveView}
+                activeOrderTab={activeOrderTab}
+                setActiveOrderTab={setActiveOrderTab}
+              />
+            </div>
           </div>
         </div>
       </div>

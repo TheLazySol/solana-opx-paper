@@ -27,10 +27,6 @@ export function TradeCostBreakdown({
   
   // Convert trade fees structure to CollateralState interface
   const collateralState = useMemo((): CollateralState => {
-    // Calculate a mock max profit potential for trading
-    // This could be enhanced based on the specific trade strategy
-    const maxProfitPotential = hasSelectedOptions ? 1000 : 0; // Placeholder value
-    
     return {
       hasEnoughCollateral: true, // Not directly relevant for trade cost breakdown
       collateralProvided: "0", // Not directly relevant for trade cost breakdown
@@ -40,9 +36,9 @@ export function TradeCostBreakdown({
       optionCreationFee: fees.optionCreationFee,
       borrowFee: fees.borrowFee,
       transactionCost: fees.transactionCost,
-      maxProfitPotential: maxProfitPotential
+      maxProfitPotential: 0 // Not used in trade context - calculated in trade-order-details.tsx
     };
-  }, [fees, hasSelectedOptions]);
+  }, [fees]);
 
   return (
     <CostBreakdown
