@@ -107,9 +107,9 @@ export default function TradePage() {
         : 'translate-y-4 opacity-0'
     }`}>
       {/* Desktop: Two-column layout | Mobile: Stacked single column */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 sm:gap-4">
-        {/* Left Column: Main content (Chart + Option Chain) - 4/5 width */}
-        <div className={`lg:col-span-4 transform transition-all duration-600 ease-out ${
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-2 sm:gap-4">
+        {/* Left Column: Main content (Chart + Option Chain) - 70% width */}
+        <div className={`lg:col-span-7 transform transition-all duration-600 ease-out ${
           isPageVisible 
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
@@ -166,8 +166,8 @@ export default function TradePage() {
           </Card>
         </div>
         
-        {/* Right Column: Trading Controls Panel - 1/5 width */}
-        <div className={`lg:col-span-1 transform transition-all duration-600 ease-out delay-200 ${
+        {/* Right Column: Trading Controls Panel - 30% width */}
+        <div className={`lg:col-span-3 transform transition-all duration-600 ease-out delay-200 ${
           isPageVisible 
             ? 'translate-x-0 opacity-100' 
             : 'translate-x-8 opacity-0'

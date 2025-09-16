@@ -14,7 +14,12 @@ import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
-import { calculateMaxProfitPotential, calculateTotalPremium } from '@/constants/option-lab/calculations'
+import { 
+  calculateMaxProfitPotential, 
+  calculateTotalPremium,
+  calculateIntrinsicValue,
+  calculateExtrinsicValue
+} from '@/constants/option-lab/calculations'
 import { formatNumberWithCommas } from '@/utils/utils'
 import { toast } from "@/hooks/useToast"
 import { TradeCostBreakdown } from './trade-cost-breakdown'
@@ -492,6 +497,84 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               
               <div>
                 <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Moneyness</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Shows how much of the option&apos;s premium comes from immediate profit (IV) vs time/volatility value (EV). Helps assess risk and pricing efficiency.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                {/* Value Breakdown Display */}
+                {hasSelectedOptions && underlyingPrice && selectedOptions.length === 1 && selectedOptions[0].price > 0 ? (
+                  (() => {
+                    const option = selectedOptions[0];
+                    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
+                    const intrinsicValue = calculateIntrinsicValue(option.side, underlyingPrice, option.strike);
+                    const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
+                    const totalValue = intrinsicValue + extrinsicValue;
+                    const intrinsicPercentage = totalValue > 0 ? (intrinsicValue / totalValue) * 100 : 0;
+                    const extrinsicPercentage = totalValue > 0 ? (extrinsicValue / totalValue) * 100 : 0;
+                    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                            intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                          }`}
+                        >
+                          IV
+                        </span>
+                        
+                        <Tooltip 
+                          content={
+                            <div className="text-xs font-light space-y-1">
+                              <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(intrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
+                              <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(extrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                            </div>
+                          }
+                          placement="top"
+                        >
+                          <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
+                            <div 
+                              className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                              style={{ 
+                                width: `${intrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                              }}
+                            />
+                            <div 
+                              className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                              style={{ 
+                                width: `${extrinsicPercentage}%`,
+                                boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                              }}
+                            />
+                          </div>
+                        </Tooltip>
+                        
+                        <span 
+                          className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                            !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                          }`}
+                        >
+                          EV
+                        </span>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm font-medium text-white">-</p>
+                )}
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-1 mb-1">
                   <p className="text-xs text-white/40">Premium</p>
                 </div>
                 <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
@@ -501,11 +584,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Est. Max Profit</p>
+                  <p className="text-xs text-white/40">Type</p>
                   <Tooltip 
                     content={
                       <div className="text-xs font-light text-white/70 max-w-xs">
-                        Maximum potential profit for this options strategy. For long positions, this may be unlimited for calls. For short positions, this is typically the premium received.
+                        Debit means you pay premium to enter the position. Credit means you receive premium when opening the position.
                       </div>
                     }
                     placement="top"
@@ -513,27 +596,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-green-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] hover:drop-shadow-[0_0_12px_rgba(34,197,94,1)]">
-                  {hasSelectedOptions ? (maxProfit === 0 ? 'Unlimited' : formatUSD(maxProfit)) : '--'}
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Est. Max Loss</p>
-                  <Tooltip 
-                    content={
-                      <div className="text-xs font-light text-white/70 max-w-xs">
-                        Maximum potential loss for this options strategy. For long positions, this is typically the premium paid. For short positions, this could be substantial.
-                      </div>
-                    }
-                    placement="top"
-                  >
-                    <Info className="w-3 h-3 text-white/30 cursor-help" />
-                  </Tooltip>
-                </div>
-                <p className="text-sm font-medium text-red-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] hover:drop-shadow-[0_0_12px_rgba(248,113,113,1)]">
-                  {hasSelectedOptions ? formatUSD(maxLoss) : '--'}
+                <p className={cn(
+                  "text-sm font-medium",
+                  isDebit ? "text-red-400" : "text-green-400"
+                )}>
+                  {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
                 </p>
               </div>
             </div>
@@ -542,11 +609,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <p className="text-xs text-white/40">Type</p>
+                    <p className="text-xs text-white/40">Est. Max Profit</p>
                     <Tooltip 
                       content={
                         <div className="text-xs font-light text-white/70 max-w-xs">
-                          Debit means you pay premium to enter the position. Credit means you receive premium when opening the position.
+                          Maximum potential profit for this options strategy. For long positions, this may be unlimited for calls. For short positions, this is typically the premium received.
                         </div>
                       }
                       placement="top"
@@ -554,21 +621,18 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                       <Info className="w-3 h-3 text-white/30 cursor-help" />
                     </Tooltip>
                   </div>
-                  <p className={cn(
-                    "text-sm font-medium",
-                    isDebit ? "text-red-400" : "text-green-400"
-                  )}>
-                    {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
+                  <p className="text-sm font-medium text-green-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] hover:drop-shadow-[0_0_12px_rgba(34,197,94,1)]">
+                    {hasSelectedOptions ? (maxProfit === 0 ? 'Unlimited' : formatUSD(maxProfit)) : '--'}
                   </p>
                 </div>
                 
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <p className="text-xs text-white/40">Collateral Required</p>
+                    <p className="text-xs text-white/40">Est. Max Loss</p>
                     <Tooltip 
                       content={
                         <div className="text-xs font-light text-white/70 max-w-xs">
-                          Amount of collateral needed to cover short option positions. This represents the maximum risk for covered positions.
+                          Maximum potential loss for this options strategy. For long positions, this is typically the premium paid. For short positions, this could be substantial.
                         </div>
                       }
                       placement="top"
@@ -576,8 +640,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                       <Info className="w-3 h-3 text-white/30 cursor-help" />
                     </Tooltip>
                   </div>
-                  <p className="text-sm font-medium text-white">
-                    {hasSelectedOptions && collateralNeeded > 0 ? formatUSD(collateralNeeded) : '--'}
+                  <p className="text-sm font-medium text-red-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] hover:drop-shadow-[0_0_12px_rgba(248,113,113,1)]">
+                    {hasSelectedOptions ? formatUSD(maxLoss) : '--'}
                   </p>
                 </div>
               </div>

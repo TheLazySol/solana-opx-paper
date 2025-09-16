@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from 'react'
 import { CreateOrder } from './trade-create-order'
-import { PlaceTradeOrder } from './trade-place-order'
+import { PlaceTradeOrder } from './trade-order-details'
 import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption } from './option-data'
 import { toast } from "@/hooks/useToast"

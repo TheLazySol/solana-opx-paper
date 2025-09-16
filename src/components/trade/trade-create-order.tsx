@@ -14,7 +14,11 @@ import {
 } from '@heroui/react'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
-import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign, Settings, Hash } from 'lucide-react'
+import { 
+  calculateIntrinsicValue,
+  calculateExtrinsicValue
+} from '@/constants/option-lab/calculations'
+import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign, Settings, Hash, Info } from 'lucide-react'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
@@ -320,6 +324,34 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     return "∞"; // Unlimited for ask options
   };
 
+  // Currency formatting helper
+  const formatUSD = (n: number, d = 2) => `$${n.toFixed(d)}`;
+
+  // Get moneyness display for an option
+  const getMoneynesDisplay = (option: SelectedOption) => {
+    const assetPrice = assetPriceMap.get(option.asset);
+    if (!assetPrice) return null;
+
+    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
+    const intrinsicValue = calculateIntrinsicValue(option.side, assetPrice, option.strike);
+    const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
+    const totalValue = intrinsicValue + extrinsicValue;
+    
+    if (totalValue <= 0) return null;
+    
+    const intrinsicPercentage = (intrinsicValue / totalValue) * 100;
+    const extrinsicPercentage = (extrinsicValue / totalValue) * 100;
+    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+    
+    return {
+      intrinsicValue,
+      extrinsicValue,
+      intrinsicPercentage,
+      extrinsicPercentage,
+      intrinsicDominant
+    };
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -456,6 +488,69 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                 <span className="text-xs text-blue-400 font-medium">
                                   ${option.strike}
                                 </span>
+                              </div>
+                              
+                              {/* Moneyness Display - Center */}
+                              <div className="flex items-center justify-center">
+                                {(() => {
+                                  const moneynessData = getMoneynesDisplay(option);
+                                  
+                                  if (!moneynessData) {
+                                    return (
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs text-white/40">Moneyness</span>
+                                        <span className="text-xs text-white/30">-</span>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <span 
+                                        className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                                          moneynessData.intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                                        }`}
+                                      >
+                                        IV
+                                      </span>
+                                      
+                                      <Tooltip 
+                                        content={
+                                          <div className="text-xs font-light space-y-1">
+                                            <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(moneynessData.intrinsicValue)} ({moneynessData.intrinsicPercentage.toFixed(1)}%)</div>
+                                            <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(moneynessData.extrinsicValue)} ({moneynessData.extrinsicPercentage.toFixed(1)}%)</div>
+                                          </div>
+                                        }
+                                        placement="top"
+                                      >
+                                        <div className="relative h-2 w-14 bg-white/10 rounded-full overflow-hidden cursor-help">
+                                          <div 
+                                            className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                                            style={{ 
+                                              width: `${moneynessData.intrinsicPercentage}%`,
+                                              boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                                            }}
+                                          />
+                                          <div 
+                                            className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                                            style={{ 
+                                              width: `${moneynessData.extrinsicPercentage}%`,
+                                              boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                                            }}
+                                          />
+                                        </div>
+                                      </Tooltip>
+                                      
+                                      <span 
+                                        className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                                          !moneynessData.intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                                        }`}
+                                      >
+                                        EV
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                               
                               <div className="flex items-center gap-2">
