@@ -479,90 +479,102 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                             <Divider className="bg-white/10" />
 
                             {/* Quantity and Order Type Row */}
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-white/60">Qty:</span>
-                                <Input
-                                  type="text"
-                                  value={getDisplayQuantity(option)}
-                                  onChange={(e) => handleQuantityInputChange(e, index)}
-                                  size="sm"
-                                  variant="flat"
-                                  classNames={{
-                                    base: "max-w-full",
-                                    input: "text-xs text-center text-white",
-                                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-14"
-                                  }}
-                                />
+                            <div className="flex items-start justify-between gap-4">
+                              {/* Left side - Quantity */}
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-white/60">Qty:</span>
+                                  <Input
+                                    type="text"
+                                    value={getDisplayQuantity(option)}
+                                    onChange={(e) => handleQuantityInputChange(e, index)}
+                                    size="sm"
+                                    variant="flat"
+                                    classNames={{
+                                      base: "max-w-full",
+                                      input: "text-xs text-center text-white py-0",
+                                      inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-12 h-6 min-h-6 px-1"
+                                    }}
+                                  />
+                                </div>
+                                {/* Available Options aligned with Premium */}
+                                <div className="flex items-center gap-1 h-6">
+                                  {option.type === 'bid' && (
+                                    <>
+                                      <span className="text-xs text-white/60">OA:</span>
+                                      <span className="text-xs text-white/40">
+                                        {getOptionsAvailableDisplay(option)}
+                                      </span>
+                                    </>
+                                  )}
+                                  {availabilityWarning && (
+                                    <span className="text-amber-400 text-xs">{availabilityWarning}</span>
+                                  )}
+                                </div>
                               </div>
 
-                              <ButtonGroup size="sm" variant="flat">
-                                <Button
-                                  className={cn(
-                                    "transition-all text-xs px-2",
-                                    orderTypes[legKey] === 'MKT' 
-                                      ? "bg-blue-500/20 text-blue-400" 
-                                      : "bg-black/40 text-white/60 hover:bg-black/50"
-                                  )}
-                                  onPress={() => handleOrderTypeChange(index, 'MKT')}
-                                >
-                                  MKT
-                                </Button>
-                                <Button
-                                  className={cn(
-                                    "transition-all text-xs px-2",
-                                    orderTypes[legKey] === 'LMT' 
-                                      ? "bg-blue-500/20 text-blue-400" 
-                                      : "bg-black/40 text-white/60 hover:bg-black/50"
-                                  )}
-                                  onPress={() => handleOrderTypeChange(index, 'LMT')}
-                                >
-                                  LMT
-                                </Button>
-                              </ButtonGroup>
+                              {/* Right side - Order Type and Premium */}
+                              <div className="flex flex-col gap-2 items-end">
+                                {/* Order Type Buttons */}
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant={orderTypes[legKey] === 'MKT' ? 'solid' : 'bordered'}
+                                    className={`h-6 min-w-10 text-xs px-2 ${
+                                      orderTypes[legKey] === 'MKT' 
+                                        ? 'bg-[#4a85ff]/20 text-[#4a85ff] border-[#4a85ff]/40' 
+                                        : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
+                                    }`}
+                                    onPress={() => handleOrderTypeChange(index, 'MKT')}
+                                  >
+                                    MKT
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={orderTypes[legKey] === 'LMT' ? 'solid' : 'bordered'}
+                                    className={`h-6 min-w-10 text-xs px-2 ${
+                                      orderTypes[legKey] === 'LMT' 
+                                        ? 'bg-[#4a85ff]/20 text-[#4a85ff] border-[#4a85ff]/40' 
+                                        : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
+                                    }`}
+                                    onPress={() => handleOrderTypeChange(index, 'LMT')}
+                                  >
+                                    LMT
+                                  </Button>
+                                </div>
 
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                {orderTypes[legKey] === 'MKT' ? (
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-xs text-white/60">Premium:</span>
-                                    <span className="text-xs font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
-                                      ${option.price.toFixed(2)}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <span className="text-xs text-white/60">Limit:</span>
-                                    <Input
-                                      type="text"
-                                      value={inputValues[legKey] || option.price.toFixed(2)}
-                                      onChange={(e) => handlePriceInputChange(e, index)}
-                                      size="sm"
-                                      variant="flat"
-                                      classNames={{
-                                        base: "max-w-full",
-                                        input: cn(
-                                          "text-xs",
-                                          option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                        ),
-                                        inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-16"
-                                      }}
-                                      startContent={<span className="text-white/40 text-xs">$</span>}
-                                    />
-                                  </>
-                                )}
+                                {/* Premium under Order Type Buttons */}
+                                <div className="flex items-center gap-2 h-6">
+                                  {orderTypes[legKey] === 'MKT' ? (
+                                    <div className="flex items-center gap-1 h-6">
+                                      <span className="text-xs text-white/60">Premium:</span>
+                                      <span className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
+                                        ${option.price.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1 h-6">
+                                      <span className="text-xs text-white/60">Premium:</span>
+                                      <Input
+                                        type="text"
+                                        value={inputValues[legKey] || option.price.toFixed(2)}
+                                        onChange={(e) => handlePriceInputChange(e, index)}
+                                        size="sm"
+                                        variant="flat"
+                                        classNames={{
+                                          base: "max-w-full",
+                                          input: cn(
+                                            "text-xs py-0",
+                                            option.type === 'bid' ? "text-green-400" : "text-red-400"
+                                          ),
+                                          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-14 h-6 min-h-6 px-1"
+                                        }}
+                                        startContent={<span className="text-white/40 text-xs">$</span>}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-
-                            {/* Available Options Row */}
-                            <div className="flex items-center justify-end gap-2 text-xs">
-                              {option.type === 'bid' && (
-                                <span className="text-white/40">
-                                  Avail: {getOptionsAvailableDisplay(option)}
-                                </span>
-                              )}
-                              {availabilityWarning && (
-                                <span className="text-amber-400">{availabilityWarning}</span>
-                              )}
                             </div>
                           </CardBody>
                         </Card>
