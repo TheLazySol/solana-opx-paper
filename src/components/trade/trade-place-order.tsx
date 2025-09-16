@@ -10,6 +10,7 @@ import {
   Progress,
   cn
 } from '@heroui/react'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
@@ -48,6 +49,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [insufficientOptions, setInsufficientOptions] = useState(false)
+  
+  // Mouse glow effect hooks for cards
+  const summaryCardRef = useMouseGlow()
+  const metricsCardRef = useMouseGlow()
+  const feesCardRef = useMouseGlow()
   
   // Check if any selected option has insufficient availability
   useEffect(() => {
@@ -357,207 +363,289 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     }
   };
 
-  return (
-    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between w-full">
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
-              Order Summary
-            </h3>
-          {hasSelectedOptions && (
-            <Chip 
-              size="sm" 
-              variant="flat"
-              className={cn(
-                "font-medium",
-                isDebit 
-                  ? "bg-red-500/20 text-red-400" 
-                  : "bg-green-500/20 text-green-400"
-              )}
-              startContent={
-                isDebit ? 
-                  <TrendingDown className="w-3 h-3" /> : 
-                  <TrendingUp className="w-3 h-3" />
-              }
-            >
-              {isDebit ? 'Debit' : 'Credit'}
-            </Chip>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardBody className="gap-4">
-        {/* Order Metrics */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-3"
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
-              <Target className="w-4 h-4 text-white/60 mb-1" />
-              <span className="text-xs text-white/60">Quantity</span>
-              <span className="text-sm font-semibold text-white">
-                {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
-              </span>
-            </div>
-            <div className="flex flex-col items-center p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
-              <DollarSign className="w-4 h-4 text-white/60 mb-1" />
-              <span className="text-xs text-white/60">Volume</span>
-              <span className="text-sm font-semibold text-white">
-                {hasSelectedOptions ? `$${formattedVolume}` : '--'}
-              </span>
-            </div>
-          </div>
-        </motion.div>
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
 
-        <Divider className="bg-white/10" />
-          
-        {/* Fees Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="space-y-3 p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  }
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-4"
+    >
+      {/* Order Summary Header */}
+      <motion.div variants={itemVariants}>
+        <Card 
+          ref={summaryCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
         >
-          <div className="flex items-center gap-2 mb-2">
-            <Receipt className="w-4 h-4 text-white/60" />
-            <span className="text-sm font-medium text-white/80">Fees & Costs</span>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-white/60">Option Creation</span>
-              <span className="text-xs font-medium text-white/80">
-                {hasSelectedOptions ? `-- SOL` : '--'}
-              </span>
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Receipt className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Order Summary</h3>
+              </div>
+              {hasSelectedOptions && (
+                <Chip 
+                  size="sm" 
+                  variant="flat"
+                  className={cn(
+                    "font-medium",
+                    isDebit 
+                      ? "bg-red-500/20 text-red-400 border border-red-500/30" 
+                      : "bg-green-500/20 text-green-400 border border-green-500/30"
+                  )}
+                  startContent={
+                    isDebit ? 
+                      <TrendingDown className="w-3 h-3" /> : 
+                      <TrendingUp className="w-3 h-3" />
+                  }
+                >
+                  {isDebit ? 'Debit' : 'Credit'}
+                </Chip>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+      </motion.div>
+
+      {/* Order Metrics */}
+      <motion.div variants={itemVariants}>
+        <Card 
+          ref={metricsCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
+        >
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Target className="w-3 h-3 text-[#4a85ff]" />
+              </div>
+              <h4 className="text-sm font-medium text-white">Order Metrics</h4>
             </div>
             
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-white/60">Transaction Cost</span>
-              <span className="text-xs font-medium text-white/80">
-                {hasSelectedOptions ? `-- SOL` : '--'}
-              </span>
-            </div>
-            
-            {borrowedAmount > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-white/60">Borrow Fee</span>
-                <span className="text-xs font-medium text-amber-400">
-                  ${fees.borrowFee.toFixed(2)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col items-center p-4 rounded-lg bg-black/20 border border-white/10">
+                <Target className="w-5 h-5 text-white/60 mb-2" />
+                <span className="text-xs text-white/60 mb-1">Total Quantity</span>
+                <span className="text-lg font-semibold text-white">
+                  {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
                 </span>
               </div>
-            )}
-            
-            <Divider className="bg-white/10" />
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-white/80">Total Fees</span>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-white">
-                  {hasSelectedOptions ? `-- SOL` : '--'}
-                </div>
-                {borrowedAmount > 0 && (
-                  <div className="text-xs text-amber-400">
-                    +${fees.borrowFee.toFixed(2)} USDC
-                  </div>
-                )}
+              <div className="flex flex-col items-center p-4 rounded-lg bg-black/20 border border-white/10">
+                <DollarSign className="w-5 h-5 text-white/60 mb-2" />
+                <span className="text-xs text-white/60 mb-1">Volume</span>
+                <span className="text-lg font-semibold text-white">
+                  {hasSelectedOptions ? `$${formattedVolume}` : '--'}
+                </span>
               </div>
             </div>
-          </div>
-        </motion.div>
 
-        <Divider className="bg-white/10" />
-        
-        {/* Premium Amount */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="p-4 rounded-lg bg-black/40 backdrop-blur-md border border-white/10"
-        >
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <DollarSign className={cn(
-                "w-5 h-5",
-                isDebit ? "text-red-400" : "text-green-400"
-              )} />
-              <span className={cn(
-                "text-sm font-medium",
-                isDebit ? "text-red-400" : "text-green-400"
-              )}>
-                Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : ''}
-              </span>
+            {/* Premium Amount */}
+            <div className="mt-6 p-4 rounded-lg bg-black/20 border border-white/10">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <DollarSign className={cn(
+                    "w-5 h-5",
+                    isDebit ? "text-red-400" : "text-green-400"
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium",
+                    isDebit ? "text-red-400" : "text-green-400"
+                  )}>
+                    Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : ''}
+                  </span>
+                </div>
+                <span className={cn(
+                  "text-2xl font-bold",
+                  isDebit ? "text-red-400" : "text-green-400"
+                )}>
+                  {hasSelectedOptions ? `$${formattedAmount}` : '--'}
+                </span>
+              </div>
             </div>
-            <span className={cn(
-              "text-xl font-bold",
-              isDebit ? "text-red-400" : "text-green-400"
-            )}>
-              {hasSelectedOptions ? `$${formattedAmount}` : '--'}
-            </span>
-          </div>
-        </motion.div>
+          </CardBody>
+        </Card>
+      </motion.div>
+          
+      {/* Fees Section */}
+      <motion.div variants={itemVariants}>
+        <Card 
+          ref={feesCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
+        >
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Receipt className="w-3 h-3 text-[#4a85ff]" />
+              </div>
+              <h4 className="text-sm font-medium text-white">Fees & Costs</h4>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/10">
+                <span className="text-sm text-white/70">Option Creation</span>
+                <span className="text-sm font-medium text-white">
+                  {hasSelectedOptions ? `-- SOL` : '--'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/10">
+                <span className="text-sm text-white/70">Transaction Cost</span>
+                <span className="text-sm font-medium text-white">
+                  {hasSelectedOptions ? `-- SOL` : '--'}
+                </span>
+              </div>
+              
+              {borrowedAmount > 0 && (
+                <div className="flex justify-between items-center p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-sm text-amber-300">Borrow Fee</span>
+                  <span className="text-sm font-medium text-amber-400">
+                    ${fees.borrowFee.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              
+              <Divider className="bg-white/10" />
+              
+              <div className="flex justify-between items-center p-4 rounded-lg bg-black/30 border border-white/20">
+                <span className="text-lg font-semibold text-white">Total Fees</span>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-white">
+                    {hasSelectedOptions ? `-- SOL` : '--'}
+                  </div>
+                  {borrowedAmount > 0 && (
+                    <div className="text-sm text-amber-400">
+                      +${fees.borrowFee.toFixed(2)} USDC
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </motion.div>
 
-        {/* Place Order Button */}
+      {/* Place Order Button */}
+      <motion.div variants={itemVariants}>
         <Tooltip 
           content={insufficientOptions ? "There are not enough options available to trade for the quantity selected." : undefined}
           isDisabled={!insufficientOptions}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="w-full"
+          <Button 
+            className={cn(
+              "w-full h-14 font-semibold text-lg transition-all duration-300",
+              !hasSelectedOptions || isPlacingOrder || insufficientOptions
+                ? "bg-white/10 text-white/40 border border-white/20"
+                : orderSuccess
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
+                  : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
+            )}
+            isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+            onPress={handlePlaceOrder}
           >
-            <Button 
-              className={cn(
-                "w-full h-12 font-semibold text-base transition-all duration-300",
-                !hasSelectedOptions || isPlacingOrder || insufficientOptions
-                  ? "bg-white/10 text-white/40 border border-white/20"
-                  : orderSuccess
-                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                    : "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 hover:scale-[1.02] active:scale-[0.98]"
-              )}
-              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
-              onPress={handlePlaceOrder}
+            <motion.div
+              className="flex items-center justify-center gap-3"
+              initial={{ scale: 1 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.1 }}
             >
-              <motion.div
-                className="flex items-center justify-center gap-2"
-                initial={{ scale: 1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.1 }}
-              >
-                {isPlacingOrder ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Processing Order...</span>
-                  </>
-                ) : orderSuccess ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>Order Placed Successfully!</span>
-                  </>
-                ) : insufficientOptions ? (
-                  <>
-                    <AlertTriangle className="w-5 h-5" />
-                    <span>Insufficient Options</span>
-                  </>
-                ) : hasSelectedOptions ? (
-                  <>
-                    <Zap className="w-5 h-5" />
-                    <span>Place Order</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-5 h-5" />
-                    <span>No Options Selected</span>
-                  </>
-                )}
-              </motion.div>
-            </Button>
-          </motion.div>
+              {isPlacingOrder ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Processing Order...</span>
+                </>
+              ) : orderSuccess ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>Order Placed Successfully!</span>
+                </>
+              ) : insufficientOptions ? (
+                <>
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>Insufficient Options</span>
+                </>
+              ) : hasSelectedOptions ? (
+                <>
+                  <Zap className="w-5 h-5" />
+                  <span>Place Order</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-5 h-5" />
+                  <span>No Options Selected</span>
+                </>
+              )}
+            </motion.div>
+          </Button>
         </Tooltip>
-      </CardBody>
-    </Card>
+      </motion.div>
+    </motion.div>
   )
 }

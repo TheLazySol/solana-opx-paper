@@ -1,5 +1,4 @@
 import { FC, useState, useEffect, useRef } from 'react'
-import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-place-order'
 import { TradeCollateralProvider } from './trade-collateral-provider'
@@ -224,20 +223,6 @@ export const TradeView: FC<TradeViewProps> = ({
         )}
       </AnimatePresence>
       
-      {/* PnL Chart - Only show when options are selected */}
-      <AnimatePresence>
-        {selectedOptions.length > 0 && (
-          <motion.div
-            key="pnl-chart"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <TradePnLChart selectedOptions={selectedOptions} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

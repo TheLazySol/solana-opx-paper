@@ -14,11 +14,12 @@ import {
 } from '@heroui/react'
 import { SelectedOption } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
-import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign } from 'lucide-react'
+import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign, Settings, Hash } from 'lucide-react'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { optionsAvailabilityTracker } from './option-data'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 // Define minimum quantity constant
 const MIN_QTY = 0.1 // 1/10th contract
@@ -44,6 +45,9 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const [inputValues, setInputValues] = useState<Record<LegKey, string>>({});
   const [quantityInputs, setQuantityInputs] = useState<Record<LegKey, string>>({});
   const [maxAvailableOptions, setMaxAvailableOptions] = useState<Record<LegKey, number>>({});
+  
+  // Mouse glow effect hook for the main card
+  const createOrderCardRef = useMouseGlow();
 
   // Update all state when options change
   useEffect(() => {
@@ -316,239 +320,264 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     return "∞"; // Unlimited for ask options
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  }
+
   return (
-    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
-            Create Order
-          </h3>
-          <Chip 
-            size="sm" 
-            variant="flat" 
-            className="bg-white/10 text-white/70"
-          >
-            {selectedOptions.length}/{MAX_OPTION_LEGS} legs
-          </Chip>
-        </div>
-      </CardHeader>
-      
-      <CardBody className="gap-3">
-        {selectedOptions.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="min-h-[120px] flex items-center justify-center"
-          >
-            <div className="text-center space-y-2">
-              <p className="text-white/60">Select from the option chain to build your order</p>
-              <p className="text-sm text-white/40">Start adding options to create your strategy</p>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-4"
+    >
+      <motion.div variants={itemVariants}>
+        <Card 
+          ref={createOrderCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Settings className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Create Order</h3>
+              </div>
+              <Chip 
+                size="sm" 
+                variant="flat" 
+                className="bg-white/10 text-white/70 border border-white/20"
+              >
+                {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+              </Chip>
             </div>
-          </motion.div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            <div className="space-y-3">
-              {selectedOptions.map((option, index) => {
-                const legKey = option.index.toString()
-                const availabilityWarning = getAvailableOptionsWarning(option)
-                const optionType = option.side === 'call' ? 'Call' : 'Put'
-                const expiryDate = option.expiry.split('T')[0]
-                
-                return (
-                  <motion.div
-                    key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Card className="bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200">
-                      <CardBody className="p-4 space-y-3">
-                        {/* Header Row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {option.asset.toUpperCase() === 'SOL' && (
-                              <Image 
-                                src="/token-logos/solana_logo.png" 
-                                alt="Solana" 
-                                width={24} 
-                                height={24}
-                                className="rounded-full"
-                              />
-                            )}
-                            <Chip size="sm" variant="flat" className="bg-white/10">
-                              {option.asset.toUpperCase()}
-                            </Chip>
-                            <Chip 
-                              size="sm" 
-                              variant="flat"
-                              className={cn(
-                                "font-medium",
-                                option.type === 'bid' 
-                                  ? "bg-green-500/20 text-green-400" 
-                                  : "bg-red-500/20 text-red-400"
-                              )}
-                              startContent={
-                                option.type === 'bid' ? 
-                                  <TrendingUp className="w-3 h-3" /> : 
-                                  <TrendingDown className="w-3 h-3" />
-                              }
-                            >
-                              {option.type === 'bid' ? 'Long' : 'Short'} {optionType}
-                            </Chip>
-                            <Chip 
-                              size="sm" 
-                              variant="flat" 
-                              className="bg-blue-500/20 text-blue-400"
-                              startContent={<DollarSign className="w-3 h-3" />}
-                            >
-                              ${option.strike}
-                            </Chip>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Chip 
-                              size="sm" 
-                              variant="flat" 
-                              className="bg-purple-500/20 text-purple-400"
-                              startContent={<Calendar className="w-3 h-3" />}
-                            >
-                              {expiryDate}
-                            </Chip>
-                            {onRemoveOption && (
-                              <Button
-                                isIconOnly
-                                size="sm"
-                                variant="light"
-                                className="text-white/60 hover:text-red-400 hover:bg-red-500/10"
-                                onPress={() => onRemoveOption(index)}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <Divider className="bg-white/10" />
-
-                        {/* Order Type and Price Row */}
-                        <div className="flex items-center gap-4">
-                          <ButtonGroup size="sm" variant="flat">
-                            <Button
-                              className={cn(
-                                "transition-all backdrop-blur-md",
-                                orderTypes[legKey] === 'MKT' 
-                                  ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-black/40 text-white/60 hover:bg-black/50"
-                              )}
-                              onPress={() => handleOrderTypeChange(index, 'MKT')}
-                            >
-                              MKT
-                            </Button>
-                            <Button
-                              className={cn(
-                                "transition-all backdrop-blur-md",
-                                orderTypes[legKey] === 'LMT' 
-                                  ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-black/40 text-white/60 hover:bg-black/50"
-                              )}
-                              onPress={() => handleOrderTypeChange(index, 'LMT')}
-                            >
-                              LMT
-                            </Button>
-                          </ButtonGroup>
-
-                          <div className="flex items-center gap-2 flex-1">
-                            {orderTypes[legKey] === 'MKT' ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-white/60">Market Price:</span>
-                                <span className={cn(
-                                  "text-sm font-semibold",
-                                  option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                )}>
-                                  ${option.price.toFixed(2)}
+          </CardHeader>
+          
+          <CardBody className="p-3">
+            {selectedOptions.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="min-h-[80px] flex items-center justify-center"
+              >
+                <div className="text-center space-y-2">
+                  <Hash className="w-8 h-8 text-white/30 mx-auto" />
+                  <div className="space-y-1">
+                    <p className="text-sm text-white/60">Select options to build your order</p>
+                    <p className="text-xs text-white/40">Add options to create your strategy</p>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                <div className="space-y-2">
+                  {selectedOptions.map((option, index) => {
+                    const legKey = option.index.toString()
+                    const availabilityWarning = getAvailableOptionsWarning(option)
+                    const optionType = option.side === 'call' ? 'Call' : 'Put'
+                    const expiryDate = option.expiry.split('T')[0]
+                    
+                    return (
+                      <motion.div
+                        key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Card className="bg-black/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200">
+                          <CardBody className="p-2 space-y-2">
+                            {/* Header Row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {option.asset.toUpperCase() === 'SOL' && (
+                                  <Image 
+                                    src="/token-logos/solana_logo.png" 
+                                    alt="Solana" 
+                                    width={16} 
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                )}
+                                <span className="text-xs font-medium text-white/80">
+                                  {option.asset.toUpperCase()}
+                                </span>
+                                <Chip 
+                                  size="sm" 
+                                  variant="flat"
+                                  className={cn(
+                                    "font-medium text-xs",
+                                    option.type === 'bid' 
+                                      ? "bg-green-500/20 text-green-400" 
+                                      : "bg-red-500/20 text-red-400"
+                                  )}
+                                  startContent={
+                                    option.type === 'bid' ? 
+                                      <TrendingUp className="w-2 h-2" /> : 
+                                      <TrendingDown className="w-2 h-2" />
+                                  }
+                                >
+                                  {option.type === 'bid' ? 'Long' : 'Short'} {optionType}
+                                </Chip>
+                                <span className="text-xs text-blue-400 font-medium">
+                                  ${option.strike}
                                 </span>
                               </div>
-                            ) : (
-                              <>
-                                <span className="text-sm text-white/60">Limit Price:</span>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-purple-400 font-medium">
+                                  {expiryDate}
+                                </span>
+                                {onRemoveOption && (
+                                  <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="light"
+                                    className="text-white/60 hover:text-red-400 hover:bg-red-500/10 min-w-6 h-6"
+                                    onPress={() => onRemoveOption(index)}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            <Divider className="bg-white/10" />
+
+                            {/* Quantity and Order Type Row */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-white/60">Qty:</span>
                                 <Input
                                   type="text"
-                                  value={inputValues[legKey] || option.price.toFixed(2)}
-                                  onChange={(e) => handlePriceInputChange(e, index)}
+                                  value={getDisplayQuantity(option)}
+                                  onChange={(e) => handleQuantityInputChange(e, index)}
                                   size="sm"
                                   variant="flat"
                                   classNames={{
-                                    input: cn(
-                                      "text-sm font-semibold",
-                                      option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                    ),
-                                    inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-24"
+                                    base: "max-w-full",
+                                    input: "text-xs text-center text-white",
+                                    inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-14"
                                   }}
-                                  startContent={<span className="text-white/40">$</span>}
                                 />
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Quantity Row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-white/60">Quantity:</span>
-                            <ButtonGroup size="sm" variant="flat">
-                              <Button
-                                isIconOnly
-                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
-                                onPress={() => handleQuantityChange(index, -MIN_QTY)}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <Input
-                                type="text"
-                                value={getDisplayQuantity(option)}
-                                onChange={(e) => handleQuantityInputChange(e, index)}
-                                size="sm"
-                                variant="flat"
-                                classNames={{
-                                  input: "text-sm text-center font-medium text-white",
-                                  inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-20"
-                                }}
-                              />
-                              <Button
-                                isIconOnly
-                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
-                                onPress={() => handleQuantityChange(index, MIN_QTY)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </ButtonGroup>
-                          </div>
-
-                          <div className="flex flex-col items-end gap-1">
-                            {option.type === 'bid' && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-white/40">Available:</span>
-                                <span className="text-xs font-medium text-white/60">
-                                  {getOptionsAvailableDisplay(option)}
-                                </span>
                               </div>
-                            )}
-                            {availabilityWarning && (
-                              <span className="text-xs text-amber-400">{availabilityWarning}</span>
-                            )}
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </AnimatePresence>
-        )}
-      </CardBody>
-    </Card>
+
+                              <ButtonGroup size="sm" variant="flat">
+                                <Button
+                                  className={cn(
+                                    "transition-all text-xs px-2",
+                                    orderTypes[legKey] === 'MKT' 
+                                      ? "bg-blue-500/20 text-blue-400" 
+                                      : "bg-black/40 text-white/60 hover:bg-black/50"
+                                  )}
+                                  onPress={() => handleOrderTypeChange(index, 'MKT')}
+                                >
+                                  MKT
+                                </Button>
+                                <Button
+                                  className={cn(
+                                    "transition-all text-xs px-2",
+                                    orderTypes[legKey] === 'LMT' 
+                                      ? "bg-blue-500/20 text-blue-400" 
+                                      : "bg-black/40 text-white/60 hover:bg-black/50"
+                                  )}
+                                  onPress={() => handleOrderTypeChange(index, 'LMT')}
+                                >
+                                  LMT
+                                </Button>
+                              </ButtonGroup>
+
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {orderTypes[legKey] === 'MKT' ? (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-white/60">Market:</span>
+                                    <span className={cn(
+                                      "text-xs font-medium",
+                                      option.type === 'bid' ? "text-green-400" : "text-red-400"
+                                    )}>
+                                      ${option.price.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="text-xs text-white/60">Limit:</span>
+                                    <Input
+                                      type="text"
+                                      value={inputValues[legKey] || option.price.toFixed(2)}
+                                      onChange={(e) => handlePriceInputChange(e, index)}
+                                      size="sm"
+                                      variant="flat"
+                                      classNames={{
+                                        base: "max-w-full",
+                                        input: cn(
+                                          "text-xs",
+                                          option.type === 'bid' ? "text-green-400" : "text-red-400"
+                                        ),
+                                        inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-16"
+                                      }}
+                                      startContent={<span className="text-white/40 text-xs">$</span>}
+                                    />
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Available Options Row */}
+                            <div className="flex items-center justify-end gap-2 text-xs">
+                              {option.type === 'bid' && (
+                                <span className="text-white/40">
+                                  Avail: {getOptionsAvailableDisplay(option)}
+                                </span>
+                              )}
+                              {availabilityWarning && (
+                                <span className="text-amber-400">{availabilityWarning}</span>
+                              )}
+                            </div>
+                          </CardBody>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              </AnimatePresence>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
+    </motion.div>
   )
 }

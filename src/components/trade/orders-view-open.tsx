@@ -11,6 +11,7 @@ import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
 import { formatNumberWithCommas } from '@/utils/utils'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 // Helper for formatting quantity with 2 decimal places, hiding .00 when whole numbers
 const formatQuantity = (quantity: number): string => {
@@ -135,6 +136,9 @@ export const OrdersViewOpen = () => {
   const [expandedAssets, setExpandedAssets] = useState<string[]>([])
   const [positions, setPositions] = useState<AssetPosition[]>([])
   const [forceUpdate, setForceUpdate] = useState(0)
+  
+  // Mouse glow effect hooks
+  const headerCardRef = useMouseGlow()
   
   // Get current asset prices for all assets in positions
   const { price: solPrice } = useAssetPriceInfo('SOL')
@@ -714,373 +718,303 @@ export const OrdersViewOpen = () => {
     }
   };
 
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
+    <div className="space-y-4">
       {/* Header - Only show detailed header when there are positions */}
       {positions.length > 0 && (
-        <motion.div 
-          className="flex items-center gap-3 px-4 py-4 mb-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+        <Card 
+          ref={headerCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
         >
-          <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-            <Activity className="h-5 w-5 text-blue-400" />
+          <div className="flex items-center gap-3 p-4">
+            <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+              <Activity className="w-3 h-3 text-[#4a85ff]" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">Open Positions</h3>
+              <p className="text-sm text-white/60 mt-0.5">
+                {positions.length} active position{positions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
-              Open Positions
-            </h3>
-            <p className="text-sm text-white/60 mt-0.5">
-              {positions.length} active position{positions.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        </motion.div>
+        </Card>
       )}
         
       {/* Content */}
-        {positions.length === 0 ? (
-            <motion.div 
-              className="flex flex-col items-center justify-center min-h-[450px] px-6 py-12"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
-              <div className="flex flex-col items-center space-y-6">
+      {positions.length === 0 ? (
+        <Card className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm">
+          <CardBody>
+            <div className="flex flex-col items-center justify-center min-h-[300px] py-8">
+              <div className="flex flex-col items-center space-y-4">
                 <div className="p-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/20">
-                  <Activity className="h-6 w-6 text-blue-400" />
+                  <Activity className="h-8 w-8 text-blue-400" />
                 </div>
                 <div className="text-center space-y-2">
-                  <p className="text-xl font-semibold text-white/90">No Open Positions</p>
+                  <p className="text-lg font-semibold text-white/90">No Open Positions</p>
                   <p className="text-sm text-white/60 max-w-sm">Your active trades will appear here once you place orders</p>
                 </div>
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+            </div>
+          </CardBody>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {positions.map((position, index) => (
+            <div 
+              key={position.id}
+              className="group relative bg-black/20 backdrop-blur-md rounded-xl border border-white/10 hover:border-blue-500/30 transition-all duration-300 overflow-hidden"
             >
-              <div className="space-y-4">
-                <AnimatePresence mode="popLayout">
-                  {positions.map((position, index) => (
-                    <motion.div 
-                      key={position.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1, duration: 0.4 }}
-                      className="group relative"
-                    >
-                      <div className="relative bg-black/20 backdrop-blur-md rounded-xl border border-white/10 
-                        hover:border-blue-500/30 transition-all duration-300 overflow-hidden">
-                        
-                        {/* Position Header */}
-                        <motion.div 
-                          className="p-4 cursor-pointer hover:bg-white/5 dark:hover:bg-black/20 transition-all duration-300"
-                          onClick={() => toggleAsset(position.id)}
-                          whileTap={{ scale: 0.99 }}
-                        >
-                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            {/* Asset Info */}
-                            <div className="flex items-center gap-4">
-                              <motion.div
-                                animate={{ rotate: expandedAssets.includes(position.id) ? 90 : 0 }}
-                                transition={{ duration: 0.3, ease: "easeInOut" }}
-                                className="p-2 rounded-lg bg-white/10 hover:bg-blue-500/20 transition-all duration-200"
-                              >
-                                <ChevronRight className="h-4 w-4 text-white/70" />
-                              </motion.div>
-                              
-                              <div className="flex items-center gap-3">
-                                {position.asset.toUpperCase() === 'SOL' && (
-                                  <div className="p-2 rounded-lg bg-[#4a85ff]/20 backdrop-blur-sm">
-                                    <Image 
-                                      src="/token-logos/solana_logo.png" 
-                                      alt="Solana Logo" 
-                                      width={24} 
-                                      height={24} 
-                                      className="drop-shadow-lg"
-                                    />
-                                  </div>
-                                )}
-                                <Chip 
-                                  variant="flat" 
-                                  className="bg-blue-500/20 text-blue-400 border border-blue-500/30 capitalize font-medium"
-                                >
-                                  {position.asset}
-                                </Chip>
-                              </div>
-                            </div>
+              {/* Position Header */}
+              <div 
+                className="p-4 cursor-pointer hover:bg-white/5 transition-all duration-300"
+                onClick={() => toggleAsset(position.id)}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Asset Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-lg bg-white/10 hover:bg-blue-500/20 transition-all duration-200">
+                      <ChevronRight className={`h-4 w-4 text-white/70 transition-transform duration-300 ${expandedAssets.includes(position.id) ? 'rotate-90' : ''}`} />
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      {position.asset.toUpperCase() === 'SOL' && (
+                        <div className="p-2 rounded-lg bg-[#4a85ff]/20 backdrop-blur-sm">
+                          <Image 
+                            src="/token-logos/solana_logo.png" 
+                            alt="Solana Logo" 
+                            width={24} 
+                            height={24} 
+                            className="drop-shadow-lg"
+                          />
+                        </div>
+                      )}
+                      <Chip 
+                        variant="flat" 
+                        className="bg-blue-500/20 text-blue-400 border border-blue-500/30 capitalize font-medium"
+                      >
+                        {position.asset}
+                      </Chip>
+                    </div>
+                  </div>
 
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                        <DollarSign className="h-3 w-3" />
+                        <span>Price</span>
+                      </div>
+                      <div className="text-white/90 font-semibold">${position.marketPrice.toFixed(2)}</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                        <Target className="h-3 w-3" />
+                        <span>Filled/Open</span>
+                      </div>
+                      <div className="text-white/90 font-semibold">
+                        {(() => {
+                          const filled = position.legs.reduce((count, leg) => 
+                            count + (leg.filledQuantity ?? 0), 0);
+                          const pending = position.legs.reduce((count, leg) => 
+                            count + (leg.pendingQuantity ?? 0), 0);
+                          return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
+                        })()}
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-white/60 text-sm mb-1">Total Value</div>
+                      <div className="font-semibold text-white/90">
+                        {(() => {
+                          const filledCount = position.legs.reduce((count, leg) => 
+                            count + (leg.filledQuantity ?? 0), 0);
+                          return filledCount > 0 ? `$${formatNumberWithCommas(position.totalValue)}` : '-';
+                        })()}
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
+                        {position.totalPnl >= 0 ? (
+                          <TrendingUp className="h-3 w-3 text-green-400" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 text-red-400" />
+                        )}
+                        <span>P/L</span>
+                      </div>
+                      <div className={`font-semibold ${position.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {(() => {
+                          const filledCount = position.legs.reduce((count, leg) => 
+                            count + (leg.filledQuantity ?? 0), 0);
+                          return filledCount > 0 
+                            ? <>{position.totalPnl >= 0 ? '+$' : '-$'}{Math.abs(position.totalPnl).toFixed(2)}</>
+                            : '-';
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    onPress={() => handleCloseAll(position.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200"
+                  >
+                    Close All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Expanded Content */}
+              {expandedAssets.includes(position.id) && (
+                <div className="px-4 pb-4 space-y-4 border-t border-white/10">
+                  {/* Greeks Summary */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/10 mt-4">
+                    <div className="text-center">
+                      <div className="text-xs text-white/60 mb-2">Delta</div>
+                      <div className="font-semibold text-white/90">{position.netDelta.toFixed(2)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-white/60 mb-2">Theta</div>
+                      <div className="font-semibold text-white/90">{position.netTheta.toFixed(3)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-white/60 mb-2">Gamma</div>
+                      <div className="font-semibold text-white/90">{position.netGamma.toFixed(3)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-white/60 mb-2">Vega</div>
+                      <div className="font-semibold text-white/90">{position.netVega.toFixed(3)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-white/60 mb-2">Rho</div>
+                      <div className="font-semibold text-white/90">{position.netRho.toFixed(3)}</div>
+                    </div>
+                  </div>
+
+                  {/* Individual Legs */}
+                  <div className="space-y-3">
+                    {position.legs.map((leg, idx) => (
+                      <div 
+                        key={`${position.id}-leg-${idx}`}
+                        className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all duration-300"
+                      >
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                          {/* Leg Details */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Chip 
+                              size="sm" 
+                              variant="flat"
+                              className={leg.position > 0 
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                                : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              }
+                            >
+                              {leg.position > 0 ? 'Long' : 'Short'}
+                            </Chip>
+                            <Chip 
+                              size="sm" 
+                              variant="flat"
+                              className={leg.type === 'Call' 
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" 
+                                : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                              }
+                            >
+                              {leg.type}
+                            </Chip>
+                            <Chip size="sm" variant="flat" className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                              ${leg.strike}
+                            </Chip>
+                            <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
+                              {leg.expiry.split('T')[0]}
+                            </Chip>
+                            <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
+                              Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
+                            </Chip>
+                          </div>
+                          
+                          {/* Pricing and Actions */}
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                               <div className="text-center">
-                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  <span>Price</span>
-                                </div>
-                                <div className="text-white/90 font-semibold">${position.marketPrice.toFixed(2)}</div>
+                                <p className="text-white/60 mb-1">Avg Price</p>
+                                <p className="font-semibold text-white/90">
+                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
+                                </p>
                               </div>
-                              
                               <div className="text-center">
-                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
-                                  <Target className="h-3 w-3" />
-                                  <span>Filled/Open</span>
-                                </div>
-                                <div className="text-white/90 font-semibold">
-                                  {(() => {
-                                    const filled = position.legs.reduce((count, leg) => 
-                                      count + (leg.filledQuantity ?? 0), 0);
-                                    const pending = position.legs.reduce((count, leg) => 
-                                      count + (leg.pendingQuantity ?? 0), 0);
-                                    return `${formatQuantity(filled)} / ${formatQuantity(pending)}`;
-                                  })()}
-                                </div>
+                                <p className="text-white/60 mb-1">Market</p>
+                                <p className="font-semibold text-white/90">
+                                  {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.marketPrice.toFixed(2)}`}
+                                </p>
                               </div>
-                              
                               <div className="text-center">
-                                <div className="text-white/60 text-sm mb-1">Total Value</div>
-                                <div className="font-semibold text-white/90">
-                                  {(() => {
-                                    const filledCount = position.legs.reduce((count, leg) => 
-                                      count + (leg.filledQuantity ?? 0), 0);
-                                    return filledCount > 0 ? `$${formatNumberWithCommas(position.totalValue)}` : '-';
-                                  })()}
-                                </div>
+                                <p className="text-white/60 mb-1">Value</p>
+                                <p className="font-semibold text-white/90">
+                                  {(leg.filledQuantity ?? 0) === 0
+                                    ? '-' 
+                                    : `$${(leg.marketPrice * 100 * (leg.filledQuantity ?? 0) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
+                                </p>
                               </div>
-                              
                               <div className="text-center">
-                                <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-1">
-                                  {position.totalPnl >= 0 ? (
-                                    <TrendingUp className="h-3 w-3 text-green-400" />
-                                  ) : (
-                                    <TrendingDown className="h-3 w-3 text-red-400" />
+                                <p className="text-white/60 mb-1">P/L</p>
+                                <div className="flex items-center justify-center gap-1">
+                                  {(leg.filledQuantity ?? 0) > 0 && (
+                                    <>
+                                      {leg.pnl >= 0 ? (
+                                        <TrendingUp className="h-3 w-3 text-green-400" />
+                                      ) : (
+                                        <TrendingDown className="h-3 w-3 text-red-400" />
+                                      )}
+                                    </>
                                   )}
-                                  <span>P/L</span>
-                                </div>
-                                <div className={`font-semibold ${position.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                  {(() => {
-                                    const filledCount = position.legs.reduce((count, leg) => 
-                                      count + (leg.filledQuantity ?? 0), 0);
-                                    return filledCount > 0 
-                                      ? <>{position.totalPnl >= 0 ? '+$' : '-$'}{Math.abs(position.totalPnl).toFixed(2)}</>
-                                      : '-';
-                                  })()}
+                                  <span className={`font-semibold ${leg.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {(leg.filledQuantity ?? 0) === 0
+                                      ? '-' 
+                                      : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
+                                  </span>
                                 </div>
                               </div>
                             </div>
                             
-                            <motion.div
-                              whileTap={{ scale: 0.95 }}
-                              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                            <Button
+                              variant="flat"
+                              size="sm"
+                              onPress={() => handleCloseLeg(position.id, idx)}
+                              className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200"
                             >
-                              <Button
-                                variant="flat"
-                                size="sm"
-                                onPress={() => handleCloseAll(position.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 
-                                  transition-all duration-200 relative overflow-hidden group"
-                              >
-                                <motion.span
-                                  className="relative z-10"
-                                  initial={{ y: 0 }}
-                                  whileTap={{ y: 0.5 }}
-                                  transition={{ duration: 0.1 }}
-                                >
-                                  Close All
-                                </motion.span>
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/20 to-transparent"
-                                  initial={{ x: "-100%" }}
-                                  whileHover={{ x: "100%" }}
-                                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                                />
-                              </Button>
-                            </motion.div>
+                              Close
+                            </Button>
                           </div>
-                        </motion.div>
-
-                        {/* Expanded Content */}
-                        <AnimatePresence>
-                          {expandedAssets.includes(position.id) && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.4, ease: "easeInOut" }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-4 pb-4 space-y-4 border-t border-white/10">
-                                {/* Greeks Summary */}
-                                <motion.div 
-                                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 rounded-lg 
-                                    bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/10 mt-4"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.1, duration: 0.3 }}
-                                >
-                                  <div className="text-center">
-                                    <div className="text-xs text-white/60 mb-2">Delta</div>
-                                    <div className="font-semibold text-white/90">{position.netDelta.toFixed(2)}</div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-xs text-white/60 mb-2">Theta</div>
-                                    <div className="font-semibold text-white/90">{position.netTheta.toFixed(3)}</div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-xs text-white/60 mb-2">Gamma</div>
-                                    <div className="font-semibold text-white/90">{position.netGamma.toFixed(3)}</div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-xs text-white/60 mb-2">Vega</div>
-                                    <div className="font-semibold text-white/90">{position.netVega.toFixed(3)}</div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-xs text-white/60 mb-2">Rho</div>
-                                    <div className="font-semibold text-white/90">{position.netRho.toFixed(3)}</div>
-                                  </div>
-                                </motion.div>
-
-                                {/* Individual Legs */}
-                                <div className="space-y-3">
-                                  {position.legs.map((leg, idx) => (
-                                    <motion.div 
-                                      key={`${position.id}-leg-${idx}`}
-                                      initial={{ opacity: 0, x: -20 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                      className="p-4 rounded-lg bg-white/5 border border-white/10
-                                        hover:border-blue-500/30 transition-all duration-300"
-                                    >
-                                      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                                        {/* Leg Details */}
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <Chip 
-                                            size="sm" 
-                                            variant="flat"
-                                            className={leg.position > 0 
-                                              ? "bg-green-500/20 text-green-400 border border-green-500/30" 
-                                              : "bg-red-500/20 text-red-400 border border-red-500/30"
-                                            }
-                                          >
-                                            {leg.position > 0 ? 'Long' : 'Short'}
-                                          </Chip>
-                                          <Chip 
-                                            size="sm" 
-                                            variant="flat"
-                                            className={leg.type === 'Call' 
-                                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" 
-                                              : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                                            }
-                                          >
-                                            {leg.type}
-                                          </Chip>
-                                          <Chip size="sm" variant="flat" className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                            ${leg.strike}
-                                          </Chip>
-                                          <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
-                                            {leg.expiry.split('T')[0]}
-                                          </Chip>
-                                          <Chip size="sm" variant="flat" className="bg-white/10 text-white/80 border border-white/20">
-                                            Qty: {`${formatQuantity(leg.filledQuantity ?? 0)} / ${formatQuantity(leg.pendingQuantity ?? 0)}`}
-                                          </Chip>
-                                        </div>
-                                        
-                                        {/* Pricing and Actions */}
-                                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
-                                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                                            <div className="text-center">
-                                              <p className="text-white/60 mb-1">Avg Price</p>
-                                              <p className="font-semibold text-white/90">
-                                                {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.entryPrice.toFixed(2)}`}
-                                              </p>
-                                            </div>
-                                            <div className="text-center">
-                                              <p className="text-white/60 mb-1">Market</p>
-                                              <p className="font-semibold text-white/90">
-                                                {(leg.filledQuantity ?? 0) === 0 ? '-' : `$${leg.marketPrice.toFixed(2)}`}
-                                              </p>
-                                            </div>
-                                            <div className="text-center">
-                                              <p className="text-white/60 mb-1">Value</p>
-                                              <p className="font-semibold text-white/90">
-                                                {(leg.filledQuantity ?? 0) === 0
-                                                  ? '-' 
-                                                  : `$${(leg.marketPrice * 100 * (leg.filledQuantity ?? 0) * (leg.position > 0 ? 1 : -1)).toFixed(2)}`}
-                                              </p>
-                                            </div>
-                                            <div className="text-center">
-                                              <p className="text-white/60 mb-1">P/L</p>
-                                              <div className="flex items-center justify-center gap-1">
-                                                {(leg.filledQuantity ?? 0) > 0 && (
-                                                  <>
-                                                    {leg.pnl >= 0 ? (
-                                                      <TrendingUp className="h-3 w-3 text-green-400" />
-                                                    ) : (
-                                                      <TrendingDown className="h-3 w-3 text-red-400" />
-                                                    )}
-                                                  </>
-                                                )}
-                                                <span className={`font-semibold ${leg.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                  {(leg.filledQuantity ?? 0) === 0
-                                                    ? '-' 
-                                                    : `${leg.pnl >= 0 ? '+$' : '-$'}${Math.abs(leg.pnl).toFixed(2)}`}
-                                                </span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          
-                                          <motion.div
-                                            whileTap={{ scale: 0.95 }}
-                                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                                          >
-                                            <Button
-                                              variant="flat"
-                                              size="sm"
-                                              onPress={() => handleCloseLeg(position.id, idx)}
-                                              className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:text-red-300 
-                                                transition-all duration-200 relative overflow-hidden group"
-                                            >
-                                              <motion.span
-                                                className="relative z-10"
-                                                initial={{ y: 0 }}
-                                                whileTap={{ y: 0.5 }}
-                                                transition={{ duration: 0.1 }}
-                                              >
-                                                Close
-                                              </motion.span>
-                                              <motion.div
-                                                className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/20 to-transparent"
-                                                initial={{ x: "-100%" }}
-                                                whileHover={{ x: "100%" }}
-                                                transition={{ duration: 0.6, ease: "easeInOut" }}
-                                              />
-                                            </Button>
-                                          </motion.div>
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          )}
-    </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 } 
