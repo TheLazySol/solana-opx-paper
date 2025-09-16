@@ -51,7 +51,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const [insufficientOptions, setInsufficientOptions] = useState(false)
   
   // Mouse glow effect hooks for cards
-  const summaryCardRef = useMouseGlow()
   const metricsCardRef = useMouseGlow()
   const feesCardRef = useMouseGlow()
   
@@ -390,59 +389,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       animate="visible"
       className="space-y-4"
     >
-      {/* Order Summary Header */}
-      <motion.div variants={itemVariants}>
-        <Card 
-          ref={summaryCardRef}
-          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
-          style={{
-            background: `
-              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
-                transparent 75%
-              ),
-              linear-gradient(to bottom right, 
-                rgb(15 23 42 / 0.4), 
-                rgb(30 41 59 / 0.3), 
-                rgb(51 65 85 / 0.2)
-              )
-            `,
-            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
-          }}
-        >
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
-                  <Receipt className="w-3 h-3 text-[#4a85ff]" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Order Summary</h3>
-              </div>
-              {hasSelectedOptions && (
-                <Chip 
-                  size="sm" 
-                  variant="flat"
-                  className={cn(
-                    "font-medium",
-                    isDebit 
-                      ? "bg-red-500/20 text-red-400 border border-red-500/30" 
-                      : "bg-green-500/20 text-green-400 border border-green-500/30"
-                  )}
-                  startContent={
-                    isDebit ? 
-                      <TrendingDown className="w-3 h-3" /> : 
-                      <TrendingUp className="w-3 h-3" />
-                  }
-                >
-                  {isDebit ? 'Debit' : 'Credit'}
-                </Chip>
-              )}
-            </div>
-          </CardHeader>
-        </Card>
-      </motion.div>
 
       {/* Order Metrics */}
       <motion.div variants={itemVariants}>
@@ -466,7 +412,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
           }}
         >
-          <CardBody className="p-6">
+          <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
                 <Target className="w-3 h-3 text-[#4a85ff]" />
@@ -474,46 +420,44 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <h4 className="text-sm font-medium text-white">Order Metrics</h4>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col items-center p-4 rounded-lg bg-black/20 border border-white/10">
-                <Target className="w-5 h-5 text-white/60 mb-2" />
-                <span className="text-xs text-white/60 mb-1">Total Quantity</span>
-                <span className="text-lg font-semibold text-white">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 justify-items-center">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Total Quantity</p>
+                </div>
+                <p className="text-sm font-medium text-white">
                   {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
-                </span>
+                </p>
               </div>
-              <div className="flex flex-col items-center p-4 rounded-lg bg-black/20 border border-white/10">
-                <DollarSign className="w-5 h-5 text-white/60 mb-2" />
-                <span className="text-xs text-white/60 mb-1">Volume</span>
-                <span className="text-lg font-semibold text-white">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Volume</p>
+                </div>
+                <p className="text-sm font-medium text-white">
                   {hasSelectedOptions ? `$${formattedVolume}` : '--'}
-                </span>
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Premium</p>
+                </div>
+                <p className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
+                  {hasSelectedOptions ? `$${formattedAmount}` : '--'}
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Type</p>
+                </div>
+                <p className={cn(
+                  "text-sm font-medium",
+                  isDebit ? "text-red-400" : "text-green-400"
+                )}>
+                  {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
+                </p>
               </div>
             </div>
 
-            {/* Premium Amount */}
-            <div className="mt-6 p-4 rounded-lg bg-black/20 border border-white/10">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <DollarSign className={cn(
-                    "w-5 h-5",
-                    isDebit ? "text-red-400" : "text-green-400"
-                  )} />
-                  <span className={cn(
-                    "text-sm font-medium",
-                    isDebit ? "text-red-400" : "text-green-400"
-                  )}>
-                    Premium {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : ''}
-                  </span>
-                </div>
-                <span className={cn(
-                  "text-2xl font-bold",
-                  isDebit ? "text-red-400" : "text-green-400"
-                )}>
-                  {hasSelectedOptions ? `$${formattedAmount}` : '--'}
-                </span>
-              </div>
-            </div>
           </CardBody>
         </Card>
       </motion.div>
@@ -540,7 +484,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
           }}
         >
-          <CardBody className="p-6">
+          <CardBody className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
                 <Receipt className="w-3 h-3 text-[#4a85ff]" />

@@ -524,11 +524,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {orderTypes[legKey] === 'MKT' ? (
                                   <div className="flex items-center gap-1">
-                                    <span className="text-xs text-white/60">Market:</span>
-                                    <span className={cn(
-                                      "text-xs font-medium",
-                                      option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                    )}>
+                                    <span className="text-xs text-white/60">Premium:</span>
+                                    <span className="text-xs font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
                                       ${option.price.toFixed(2)}
                                     </span>
                                   </div>
