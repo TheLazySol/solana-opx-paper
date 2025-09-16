@@ -14,7 +14,10 @@ import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
+import { calculateMaxProfitPotential, calculateTotalPremium } from '@/constants/option-lab/calculations'
+import { formatNumberWithCommas } from '@/utils/utils'
 import { toast } from "@/hooks/useToast"
+import { TradeCostBreakdown } from './trade-cost-breakdown'
 import { 
   CheckCircle2, 
   AlertCircle, 
@@ -25,7 +28,8 @@ import {
   Zap,
   Loader2,
   AlertTriangle,
-  Target
+  Target,
+  Info
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -52,7 +56,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   
   // Mouse glow effect hooks for cards
   const metricsCardRef = useMouseGlow()
-  const feesCardRef = useMouseGlow()
   
   // Check if any selected option has insufficient availability
   useEffect(() => {
@@ -158,6 +161,54 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       totalFees: optionCreationFee + borrowFee + transactionCost
     };
   }, [hasSelectedOptions, selectedOptions.length, borrowedAmount]);
+
+  // Calculate max profit and max loss potential
+  const { maxProfit, maxLoss } = useMemo(() => {
+    if (!hasSelectedOptions) {
+      return { maxProfit: 0, maxLoss: 0 };
+    }
+
+    // For option trading (not selling), max profit and loss calculations are different
+    let calculatedMaxProfit = 0;
+    let calculatedMaxLoss = 0;
+
+    // Calculate based on whether this is a net debit or credit position
+    if (isDebit) {
+      // Net debit position (buyer): Max loss is the premium paid, max profit is theoretically unlimited for calls or limited for puts
+      calculatedMaxLoss = Math.abs(totalAmount);
+      
+      // For max profit, we need to consider the position type
+      // This is a simplified calculation - in reality it depends on the specific strategy
+      const hasLongCalls = selectedOptions.some(opt => opt.type === 'bid' && opt.side === 'call');
+      const hasLongPuts = selectedOptions.some(opt => opt.type === 'bid' && opt.side === 'put');
+      
+      if (hasLongCalls && !hasLongPuts) {
+        // Long calls only - theoretically unlimited profit
+        calculatedMaxProfit = Number.POSITIVE_INFINITY;
+      } else if (hasLongPuts && !hasLongCalls) {
+        // Long puts only - max profit is strikes minus premium paid
+        const maxStrike = Math.max(...selectedOptions.filter(opt => opt.type === 'bid' && opt.side === 'put').map(opt => opt.strike));
+        calculatedMaxProfit = (maxStrike * 100) - Math.abs(totalAmount);
+      } else {
+        // Complex strategy - use a conservative estimate
+        calculatedMaxProfit = Math.abs(totalAmount) * 2; // Conservative 2:1 risk/reward estimate
+      }
+    } else {
+      // Net credit position (seller): Max profit is the premium received, max loss is potentially unlimited
+      calculatedMaxProfit = totalAmount;
+      
+      // Max loss for sellers is typically the collateral at risk
+      calculatedMaxLoss = collateralNeeded > 0 ? collateralNeeded : totalAmount * 10; // Conservative estimate if no collateral calculated
+    }
+
+    return {
+      maxProfit: calculatedMaxProfit === Number.POSITIVE_INFINITY ? 0 : calculatedMaxProfit,
+      maxLoss: calculatedMaxLoss
+    };
+  }, [hasSelectedOptions, isDebit, totalAmount, collateralNeeded, selectedOptions]);
+
+  // Currency formatting helper
+  const formatUSD = (n: number, d = 2) => `$${formatNumberWithCommas(n, d)}`;
 
   // Notify parent component of order data changes
   useEffect(() => {
@@ -420,41 +471,84 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <h4 className="text-sm font-medium text-white">Order Metrics</h4>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 justify-items-center">
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Total Quantity</p>
+            <div className="space-y-4">
+              {/* First Row - Basic Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 justify-items-center">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Total Quantity</p>
+                  </div>
+                  <p className="text-sm font-medium text-white">
+                    {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
-                </p>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Volume</p>
+                  </div>
+                  <p className="text-sm font-medium text-white">
+                    {hasSelectedOptions ? `$${formattedVolume}` : '--'}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Premium</p>
+                  </div>
+                  <p className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
+                    {hasSelectedOptions ? `$${formattedAmount}` : '--'}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Type</p>
+                  </div>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    isDebit ? "text-red-400" : "text-green-400"
+                  )}>
+                    {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Volume</p>
+
+              {/* Second Row - Risk Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Est. Max Profit</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70 max-w-xs">
+                          Maximum potential profit for this options strategy. For long positions, this may be unlimited for calls. For short positions, this is typically the premium received.
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
+                  <p className="text-sm font-medium text-green-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] hover:drop-shadow-[0_0_12px_rgba(34,197,94,1)]">
+                    {hasSelectedOptions ? (maxProfit === 0 ? 'Unlimited' : formatUSD(maxProfit)) : '--'}
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? `$${formattedVolume}` : '--'}
-                </p>
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Premium</p>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Est. Max Loss</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70 max-w-xs">
+                          Maximum potential loss for this options strategy. For long positions, this is typically the premium paid. For short positions, this could be substantial.
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
+                  <p className="text-sm font-medium text-red-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] hover:drop-shadow-[0_0_12px_rgba(248,113,113,1)]">
+                    {hasSelectedOptions ? formatUSD(maxLoss) : '--'}
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
-                  {hasSelectedOptions ? `$${formattedAmount}` : '--'}
-                </p>
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Type</p>
-                </div>
-                <p className={cn(
-                  "text-sm font-medium",
-                  isDebit ? "text-red-400" : "text-green-400"
-                )}>
-                  {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
-                </p>
               </div>
             </div>
 
@@ -464,76 +558,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           
       {/* Fees Section */}
       <motion.div variants={itemVariants}>
-        <Card 
-          ref={feesCardRef}
-          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
-          style={{
-            background: `
-              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
-                transparent 75%
-              ),
-              linear-gradient(to bottom right, 
-                rgb(15 23 42 / 0.4), 
-                rgb(30 41 59 / 0.3), 
-                rgb(51 65 85 / 0.2)
-              )
-            `,
-            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
-          }}
-        >
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
-                <Receipt className="w-3 h-3 text-[#4a85ff]" />
-              </div>
-              <h4 className="text-sm font-medium text-white">Fees & Costs</h4>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/10">
-                <span className="text-sm text-white/70">Option Creation</span>
-                <span className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? `-- SOL` : '--'}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/10">
-                <span className="text-sm text-white/70">Transaction Cost</span>
-                <span className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? `-- SOL` : '--'}
-                </span>
-              </div>
-              
-              {borrowedAmount > 0 && (
-                <div className="flex justify-between items-center p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <span className="text-sm text-amber-300">Borrow Fee</span>
-                  <span className="text-sm font-medium text-amber-400">
-                    ${fees.borrowFee.toFixed(2)}
-                  </span>
-                </div>
-              )}
-              
-              <Divider className="bg-white/10" />
-              
-              <div className="flex justify-between items-center p-4 rounded-lg bg-black/30 border border-white/20">
-                <span className="text-lg font-semibold text-white">Total Fees</span>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-white">
-                    {hasSelectedOptions ? `-- SOL` : '--'}
-                  </div>
-                  {borrowedAmount > 0 && (
-                    <div className="text-sm text-amber-400">
-                      +${fees.borrowFee.toFixed(2)} USDC
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+        <TradeCostBreakdown
+          fees={fees}
+          hasSelectedOptions={hasSelectedOptions}
+          borrowedAmount={borrowedAmount}
+        />
       </motion.div>
 
       {/* Place Order Button */}
