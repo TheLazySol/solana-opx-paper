@@ -576,7 +576,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">
                   {hasSelectedOptions ? totalGreeks.delta.toFixed(3) : '--'}
                 </p>
               </div>
@@ -595,7 +595,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">
                   {hasSelectedOptions ? totalGreeks.theta.toFixed(3) : '--'}
                 </p>
               </div>
@@ -614,7 +614,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">
                   {hasSelectedOptions ? totalGreeks.gamma.toFixed(3) : '--'}
                 </p>
               </div>
@@ -633,7 +633,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">
                   {hasSelectedOptions ? totalGreeks.vega.toFixed(3) : '--'}
                 </p>
               </div>
@@ -652,7 +652,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">
                   {hasSelectedOptions ? totalGreeks.rho.toFixed(3) : '--'}
                 </p>
               </div>
@@ -682,7 +682,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <p className="text-xs text-white/40">Premium</p>
                   </div>
                   <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
-                    {hasSelectedOptions ? `$${formattedAmount}` : '--'}
+                    {hasSelectedOptions ? `$${formattedPremiumPerShare}` : '--'}
                   </p>
                 </div>
                 
