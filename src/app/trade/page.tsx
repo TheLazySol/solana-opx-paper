@@ -7,7 +7,7 @@ import { AssetType } from '@/components/trade/asset-underlying'
 import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { SelectedOption } from '@/components/trade/option-data'
+import { SelectedOption, OptionContract } from '@/components/trade/option-data'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardBody, Divider } from '@heroui/react'
 
@@ -18,6 +18,7 @@ export default function TradePage() {
   const [activeView, setActiveView] = useState('trade')
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
+  const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
   
   // Get search parameters to determine which tabs to show
@@ -87,6 +88,11 @@ export default function TradePage() {
     setActiveView('trade')
   }, [])
 
+  // Handle option chain data updates
+  const handleOptionChainDataChange = useCallback((data: OptionContract[]) => {
+    setOptionChainData(data)
+  }, [])
+
   return (
     <div className={`py-2 sm:py-4 transform transition-all duration-500 ease-out overflow-hidden ${
       isPageVisible 
@@ -131,6 +137,7 @@ export default function TradePage() {
                   selectedOptions={selectedOptions}
                   onOrderPlaced={handleOrderPlaced}
                   onSwitchToCreateOrder={handleSwitchToCreateOrder}
+                  onOptionChainDataChange={handleOptionChainDataChange}
                 />
               </div>
             </CardBody>
@@ -153,6 +160,7 @@ export default function TradePage() {
                 setActiveView={setActiveView}
                 activeOrderTab={activeOrderTab}
                 setActiveOrderTab={setActiveOrderTab}
+                optionChainData={optionChainData}
               />
             </div>
           </div>

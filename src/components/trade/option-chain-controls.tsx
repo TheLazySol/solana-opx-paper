@@ -5,7 +5,7 @@ import { cn } from '@/utils/utils'
 import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters, loadFiltersFromStorage, loadGreekSymbolsFromStorage, DEFAULT_FILTERS } from './option-chain-user-settings'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 
 
 interface OptionChainControlsProps {
@@ -14,6 +14,7 @@ interface OptionChainControlsProps {
   selectedOptions?: SelectedOption[]
   onOrderPlaced?: () => void
   onSwitchToCreateOrder?: () => void
+  onOptionChainDataChange?: (data: OptionContract[]) => void
 }
 
 export const OptionChainControls: FC<OptionChainControlsProps> = ({ 
@@ -21,7 +22,8 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   onOptionsChange,
   selectedOptions = [],
   onOrderPlaced,
-  onSwitchToCreateOrder
+  onSwitchToCreateOrder,
+  onOptionChainDataChange
 }) => {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null)
   const [greekFilters, setGreekFilters] = useState<GreekFilters>(DEFAULT_FILTERS)
@@ -272,6 +274,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
             onOrderPlaced={handleOrderPlaced}
             onSwitchToCreateOrder={onSwitchToCreateOrder}
             isParentVisible={isVisible}
+            onOptionChainDataChange={onOptionChainDataChange}
           />
         </div>
       </div>

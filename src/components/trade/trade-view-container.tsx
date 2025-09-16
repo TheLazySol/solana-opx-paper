@@ -3,7 +3,7 @@ import { Card, Tabs, Tab, cn } from '@heroui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TradeView } from './trade-view'
 import { OrdersView } from './orders-view'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 import { TrendingUp, FileText } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 
@@ -15,6 +15,7 @@ interface TradeViewContainerProps {
   setActiveView?: (view: string) => void
   activeOrderTab?: string
   setActiveOrderTab?: (tab: string) => void
+  optionChainData?: OptionContract[]
 }
 
 export const TradeViewContainer: FC<TradeViewContainerProps> = ({
@@ -24,7 +25,8 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   activeView: externalActiveView,
   setActiveView: externalSetActiveView,
   activeOrderTab,
-  setActiveOrderTab
+  setActiveOrderTab,
+  optionChainData = []
 }) => {
   // Use internal state if no external state is provided
   const [internalActiveView, setInternalActiveView] = useState('trade')
@@ -153,6 +155,7 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
                 initialSelectedOptions={selectedOptions} 
                 onOptionsUpdate={handleOptionsUpdate}
                 onTabChange={handleTabChange}
+                optionChainData={optionChainData}
               />
             )}
             {activeView === 'orders' && (

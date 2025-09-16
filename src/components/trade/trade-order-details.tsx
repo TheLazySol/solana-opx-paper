@@ -11,7 +11,7 @@ import {
   cn
 } from '@heroui/react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
-import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions } from './option-data'
+import { SelectedOption, updateOptionVolume, updateOptionOpenInterest, optionsAvailabilityTracker, matchBuyOrderWithMintedOptions, OptionContract, generateMockOptionData } from './option-data'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { OPTION_CREATION_FEE_RATE, BORROW_FEE_RATE, TRANSACTION_COST_SOL } from '@/constants/constants'
 import { 
@@ -44,6 +44,7 @@ interface PlaceTradeOrderProps {
   onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
   borrowedAmount?: number
   onOrderPlaced?: (options: SelectedOption[]) => void
+  optionChainData?: OptionContract[]
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
@@ -51,7 +52,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedAsset,
   onOrderDataChange,
   borrowedAmount = 0,
-  onOrderPlaced
+  onOrderPlaced,
+  optionChainData = []
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -148,8 +150,60 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return Math.max(0, totalCollateral)
   })()
 
+  // Calculate premium per share/token (without contract size multiplier)
+  const premiumPerShare = selectedOptions.reduce((total, option) => {
+    const quantity = option.quantity || 1
+    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price
+    return option.type === 'bid' 
+      ? total - (optionPrice * quantity)
+      : total + (optionPrice * quantity)
+  }, 0)
+
+  // Get option chain data - use provided data or generate as fallback
+  const currentOptionChainData = useMemo(() => {
+    if (optionChainData.length > 0) {
+      return optionChainData;
+    }
+    // Fallback: generate data if not provided (for backward compatibility)
+    return generateMockOptionData(null, underlyingPrice || 0, 0);
+  }, [optionChainData, underlyingPrice]);
+
+  // Calculate total Greeks for the order using live option chain data
+  const totalGreeks = useMemo(() => {
+    if (!hasSelectedOptions || !currentOptionChainData.length) {
+      return { delta: 0, theta: 0, gamma: 0, vega: 0, rho: 0 };
+    }
+
+    return selectedOptions.reduce((totals, option) => {
+      const quantity = option.quantity || 1;
+      const positionMultiplier = option.type === 'bid' ? 1 : -1; // Long positions are positive, short positions are negative
+      
+      // Find the matching option contract from the live chain data
+      const optionContract = currentOptionChainData.find(contract => 
+        contract.strike === option.strike && 
+        contract.expiry === option.expiry
+      );
+
+      if (!optionContract) {
+        return totals; // Skip if contract not found
+      }
+
+      // Get the correct Greeks based on option side (call or put)
+      const greeks = option.side === 'call' ? optionContract.callGreeks : optionContract.putGreeks;
+
+      return {
+        delta: totals.delta + (greeks.delta * quantity * positionMultiplier),
+        theta: totals.theta + (greeks.theta * quantity * positionMultiplier),
+        gamma: totals.gamma + (greeks.gamma * quantity * positionMultiplier),
+        vega: totals.vega + (greeks.vega * quantity * positionMultiplier),
+        rho: totals.rho + (greeks.rho * quantity * positionMultiplier)
+      };
+    }, { delta: 0, theta: 0, gamma: 0, vega: 0, rho: 0 });
+  }, [hasSelectedOptions, selectedOptions, currentOptionChainData]);
+
   const isDebit = totalAmount < 0
   const formattedAmount = Math.abs(totalAmount).toFixed(2)
+  const formattedPremiumPerShare = Math.abs(premiumPerShare).toFixed(2)
   const formattedVolume = volume.toFixed(2)
   const formattedCollateral = collateralNeeded.toFixed(2)
 
@@ -473,35 +527,18 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
                 <Target className="w-3 h-3 text-[#4a85ff]" />
               </div>
-              <h4 className="text-sm font-medium text-white">Order Metrics</h4>
+              <h4 className="text-sm font-medium text-white">Option Greeks</h4>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 justify-items-center">
+            {/* Option Greeks Section */}
+            <div className="grid grid-cols-5 gap-4 justify-items-center mb-6">
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Total Quantity</p>
-                </div>
-                <p className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Volume</p>
-                </div>
-                <p className="text-sm font-medium text-white">
-                  {hasSelectedOptions ? `$${formattedVolume}` : '--'}
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Moneyness</p>
+                  <p className="text-xs text-white/40">Delta</p>
                   <Tooltip 
                     content={
                       <div className="text-xs font-light text-white/70 max-w-xs">
-                        Shows how much of the option&apos;s premium comes from immediate profit (IV) vs time/volatility value (EV). Helps assess risk and pricing efficiency.
+                        Measures the rate of change of the option&apos;s price with respect to changes in the underlying asset&apos;s price.
                       </div>
                     }
                     placement="top"
@@ -509,104 +546,194 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     <Info className="w-3 h-3 text-white/30 cursor-help" />
                   </Tooltip>
                 </div>
-                {/* Value Breakdown Display */}
-                {hasSelectedOptions && underlyingPrice && selectedOptions.length === 1 && selectedOptions[0].price > 0 ? (
-                  (() => {
-                    const option = selectedOptions[0];
-                    const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
-                    const intrinsicValue = calculateIntrinsicValue(option.side, underlyingPrice, option.strike);
-                    const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
-                    const totalValue = intrinsicValue + extrinsicValue;
-                    const intrinsicPercentage = totalValue > 0 ? (intrinsicValue / totalValue) * 100 : 0;
-                    const extrinsicPercentage = totalValue > 0 ? (extrinsicValue / totalValue) * 100 : 0;
-                    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className={`text-xs font-medium text-green-400 transition-all duration-300 ${
-                            intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
-                          }`}
-                        >
-                          IV
-                        </span>
-                        
-                        <Tooltip 
-                          content={
-                            <div className="text-xs font-light space-y-1">
-                              <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(intrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
-                              <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(extrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                  {hasSelectedOptions ? totalGreeks.delta.toFixed(3) : '--'}
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Theta</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Measures the rate of decline in the value of an option due to the passage of time (time decay).
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                  {hasSelectedOptions ? totalGreeks.theta.toFixed(3) : '--'}
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Gamma</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Measures the rate of change of delta with respect to changes in the underlying price.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                  {hasSelectedOptions ? totalGreeks.gamma.toFixed(3) : '--'}
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Vega</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Measures sensitivity to volatility. Shows how much an option&apos;s price will change for a 1% change in implied volatility.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                  {hasSelectedOptions ? totalGreeks.vega.toFixed(3) : '--'}
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <p className="text-xs text-white/40">Rho</p>
+                  <Tooltip 
+                    content={
+                      <div className="text-xs font-light text-white/70 max-w-xs">
+                        Measures sensitivity to interest rate changes. Shows how much an option&apos;s price will change for a 1% change in interest rates.
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <Info className="w-3 h-3 text-white/30 cursor-help" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm font-medium text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(255,255,255,1)]">
+                  {hasSelectedOptions ? totalGreeks.rho.toFixed(3) : '--'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Receipt className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h4 className="text-sm font-medium text-white">Order Summary</h4>
+              </div>
+              
+              {/* Order Summary Section */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 justify-items-center">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Total Quantity</p>
+                  </div>
+                  <p className="text-sm font-medium text-white">
+                    {hasSelectedOptions ? totalQuantity.toFixed(2) : '--'}
+                  </p>
+                </div>
+                
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Premium</p>
+                  </div>
+                  <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
+                    {hasSelectedOptions ? `$${formattedAmount}` : '--'}
+                  </p>
+                </div>
+                
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-white/40">Moneyness</p>
+                    <Tooltip 
+                      content={
+                        <div className="text-xs font-light text-white/70 max-w-xs">
+                          Shows how much of the option&apos;s premium comes from immediate profit (IV) vs time/volatility value (EV). Helps assess risk and pricing efficiency.
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <Info className="w-3 h-3 text-white/30 cursor-help" />
+                    </Tooltip>
+                  </div>
+                  {/* Value Breakdown Display */}
+                  {hasSelectedOptions && underlyingPrice && selectedOptions.length === 1 && selectedOptions[0].price > 0 ? (
+                    (() => {
+                      const option = selectedOptions[0];
+                      const optionPrice = option.limitPrice !== undefined ? option.limitPrice : option.price;
+                      const intrinsicValue = calculateIntrinsicValue(option.side, underlyingPrice, option.strike);
+                      const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
+                      const totalValue = intrinsicValue + extrinsicValue;
+                      const intrinsicPercentage = totalValue > 0 ? (intrinsicValue / totalValue) * 100 : 0;
+                      const extrinsicPercentage = totalValue > 0 ? (extrinsicValue / totalValue) * 100 : 0;
+                      const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+                      
+                      return (
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                              intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                            }`}
+                          >
+                            IV
+                          </span>
+                          
+                          <Tooltip 
+                            content={
+                              <div className="text-xs font-light space-y-1">
+                                <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(intrinsicValue)} ({intrinsicPercentage.toFixed(1)}%)</div>
+                                <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(extrinsicValue)} ({extrinsicPercentage.toFixed(1)}%)</div>
+                              </div>
+                            }
+                            placement="top"
+                          >
+                            <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
+                              <div 
+                                className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                                style={{ 
+                                  width: `${intrinsicPercentage}%`,
+                                  boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                                }}
+                              />
+                              <div 
+                                className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                                style={{ 
+                                  width: `${extrinsicPercentage}%`,
+                                  boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                                }}
+                              />
                             </div>
-                          }
-                          placement="top"
-                        >
-                          <div className="relative h-2 w-16 bg-white/10 rounded-full overflow-hidden cursor-help">
-                            <div 
-                              className="absolute left-0 h-full bg-green-400 transition-all duration-300"
-                              style={{ 
-                                width: `${intrinsicPercentage}%`,
-                                boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
-                              }}
-                            />
-                            <div 
-                              className="absolute right-0 h-full bg-red-400 transition-all duration-300"
-                              style={{ 
-                                width: `${extrinsicPercentage}%`,
-                                boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
-                              }}
-                            />
-                          </div>
-                        </Tooltip>
-                        
-                        <span 
-                          className={`text-xs font-medium text-red-400 transition-all duration-300 ${
-                            !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
-                          }`}
-                        >
-                          EV
-                        </span>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <p className="text-sm font-medium text-white">-</p>
-                )}
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Premium</p>
+                          </Tooltip>
+                          
+                          <span 
+                            className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                              !intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                            }`}
+                          >
+                            EV
+                          </span>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <p className="text-sm font-medium text-white">-</p>
+                  )}
                 </div>
-                <p className="text-sm font-medium text-blue-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] hover:drop-shadow-[0_0_12px_rgba(96,165,250,1)]">
-                  {hasSelectedOptions ? `$${formattedAmount}` : '--'}
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <p className="text-xs text-white/40">Type</p>
-                  <Tooltip 
-                    content={
-                      <div className="text-xs font-light text-white/70 max-w-xs">
-                        Debit means you pay premium to enter the position. Credit means you receive premium when opening the position.
-                      </div>
-                    }
-                    placement="top"
-                  >
-                    <Info className="w-3 h-3 text-white/30 cursor-help" />
-                  </Tooltip>
-                </div>
-                <p className={cn(
-                  "text-sm font-medium",
-                  isDebit ? "text-red-400" : "text-green-400"
-                )}>
-                  {hasSelectedOptions ? (isDebit ? 'Debit' : 'Credit') : '--'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
+                
                 <div>
                   <div className="flex items-center gap-1 mb-1">
                     <p className="text-xs text-white/40">Est. Max Profit</p>
