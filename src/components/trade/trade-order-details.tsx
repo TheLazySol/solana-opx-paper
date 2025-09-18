@@ -1,3 +1,5 @@
+'use client'
+
 import { FC, useMemo, useEffect, useState, useCallback } from 'react'
 import { 
   Button, 

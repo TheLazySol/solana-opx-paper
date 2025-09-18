@@ -359,7 +359,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const formatUSD = (n: number, d = 2) => `$${n.toFixed(d)}`;
 
   // Get moneyness display for an option
-  const getMoneynesDisplay = (option: SelectedOption) => {
+  const getMoneynessDisplay = (option: SelectedOption) => {
     const assetPrice = assetPriceMap.get(option.asset);
     if (!assetPrice) return null;
 
@@ -520,7 +520,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                               {/* Moneyness Display - Center */}
                               <div className="flex items-center justify-center">
                                 {(() => {
-                                  const moneynessData = getMoneynesDisplay(option);
+                                  const moneynessData = getMoneynessDisplay(option);
                                   
                                   if (!moneynessData) {
                                     return (
