@@ -784,7 +784,17 @@ export const OrdersViewOpen = () => {
               {/* Position Header */}
               <div 
                 className="p-4 cursor-pointer hover:bg-white/5 transition-all duration-300"
+                role="button"
+                tabIndex={0}
+                aria-expanded={expandedAssets.includes(position.id)}
+                aria-controls={`panel-${position.id}`}
                 onClick={() => toggleAsset(position.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleAsset(position.id);
+                  }
+                }}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Asset Info */}
@@ -886,7 +896,10 @@ export const OrdersViewOpen = () => {
 
               {/* Expanded Content */}
               {expandedAssets.includes(position.id) && (
-                <div className="px-4 pb-4 space-y-4 border-t border-white/10">
+                <div 
+                  id={`panel-${position.id}`}
+                  className="px-4 pb-4 space-y-4 border-t border-white/10"
+                >
                   {/* Greeks Summary */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/10 mt-4">
                     <div className="text-center">
