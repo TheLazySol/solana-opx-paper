@@ -328,7 +328,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     }
 
     return {
-      maxProfit: calculatedMaxProfit === Number.POSITIVE_INFINITY ? 0 : calculatedMaxProfit,
+      maxProfit: calculatedMaxProfit,
       maxLoss: calculatedMaxLoss
     };
   }, [hasSelectedOptions, totalAmount, collateralNeeded, selectedOptions]);
@@ -836,7 +836,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     </Tooltip>
                   </div>
                   <p className="text-sm font-medium text-green-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] hover:drop-shadow-[0_0_12px_rgba(34,197,94,1)]">
-                    {hasSelectedOptions ? (maxProfit === 0 ? 'Unlimited' : formatUSD(maxProfit)) : '--'}
+                    {hasSelectedOptions ? (!Number.isFinite(maxProfit) ? 'Unlimited' : formatUSD(maxProfit)) : '--'}
                   </p>
                 </div>
                 

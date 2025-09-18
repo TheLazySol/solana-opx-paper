@@ -1,6 +1,6 @@
 {
   "name": "solana-opx-paper",
-  "version": "1.0.0-beta",
+  "version": "3.0.0-beta",
   "private": true,
   "scripts": {
     "anchor": "cd anchor && anchor",
