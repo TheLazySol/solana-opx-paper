@@ -7,7 +7,7 @@ import { AssetType } from '@/components/trade/asset-underlying'
 import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { SelectedOption } from '@/components/trade/option-data'
+import { SelectedOption, OptionContract } from '@/components/trade/option-data'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardBody, Divider } from '@heroui/react'
 
@@ -18,6 +18,7 @@ export default function TradePage() {
   const [activeView, setActiveView] = useState('trade')
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
+  const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
   
   // Get search parameters to determine which tabs to show
@@ -33,19 +34,6 @@ export default function TradePage() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Additional timer to control when scrollbars can appear
-  const [allowScrollbars, setAllowScrollbars] = useState(false)
-  useEffect(() => {
-    if (isPageVisible) {
-      const timer = setTimeout(() => {
-        setAllowScrollbars(true)
-      }, 1500) // Wait for all animations to complete
-      
-      return () => clearTimeout(timer)
-    } else {
-      setAllowScrollbars(false)
-    }
-  }, [isPageVisible])
 
   // On component mount, check for view and tab params
   useEffect(() => {
@@ -100,30 +88,27 @@ export default function TradePage() {
     setActiveView('trade')
   }, [])
 
+  // Handle option chain data updates
+  const handleOptionChainDataChange = useCallback((data: OptionContract[]) => {
+    setOptionChainData(data)
+  }, [])
+
   return (
-    <div className={`py-2 sm:py-4 transform transition-all duration-500 ease-out ${
+    <div className={`py-2 sm:py-4 transform transition-all duration-500 ease-out overflow-hidden ${
       isPageVisible 
         ? 'translate-y-0 opacity-100' 
         : 'translate-y-4 opacity-0'
     }`}>
       {/* Desktop: Two-column layout | Mobile: Stacked single column */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 sm:gap-4">
-        {/* Left Column: Main content (Chart + Option Chain) - 4/5 width */}
-        <div className={`lg:col-span-4 transform transition-all duration-600 ease-out ${
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-2 sm:gap-4">
+        {/* Left Column: Main content (Chart + Option Chain) - 70% width */}
+        <div className={`lg:col-span-7 transform transition-all duration-600 ease-out ${
           isPageVisible 
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
         }`}>
-          <Card className={`card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full ${
-            isPageVisible 
-              ? '' 
-              : 'overflow-hidden'
-          }`}>
-            <CardBody className={`p-2 sm:p-4 ${
-              isPageVisible 
-                ? '' 
-                : 'overflow-hidden'
-            }`}>
+          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
+            <CardBody className="p-2 sm:p-4">
               {/* Asset Type Selector and Token Info Panel */}
               <div className={`flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 
                 transform transition-all duration-500 ease-out delay-100 ${
@@ -139,20 +124,12 @@ export default function TradePage() {
               </div>
               
               {/* Asset Chart */}
-              <div className={`mb-3 sm:mb-4 ${
-                allowScrollbars 
-                  ? 'overflow-x-auto' 
-                  : 'overflow-hidden'
-              }`}>
+              <div className="mb-3 sm:mb-4 overflow-hidden">
                 <AssetChart selectedAsset={selectedAsset} />
               </div>
               
               {/* Option Chain with Expiration Selector */}
-              <div className={`-mx-2 px-2 ${
-                allowScrollbars 
-                  ? 'overflow-x-auto' 
-                  : 'overflow-hidden'
-              }`} ref={optionChainControlsRef}>
+              <div className="-mx-2 px-2 overflow-hidden" ref={optionChainControlsRef}>
                 <OptionChainControls 
                   key={`option-chain-controls-${volumeUpdateTrigger}`}
                   assetId={selectedAsset} 
@@ -160,32 +137,32 @@ export default function TradePage() {
                   selectedOptions={selectedOptions}
                   onOrderPlaced={handleOrderPlaced}
                   onSwitchToCreateOrder={handleSwitchToCreateOrder}
+                  onOptionChainDataChange={handleOptionChainDataChange}
                 />
               </div>
             </CardBody>
           </Card>
         </div>
         
-        {/* Right Column: Trading Controls Panel - 1/5 width */}
-        <div className={`lg:col-span-1 transform transition-all duration-600 ease-out delay-200 ${
+        {/* Right Column: Trading Controls Panel - 30% width */}
+        <div className={`lg:col-span-3 transform transition-all duration-600 ease-out delay-200 ${
           isPageVisible 
             ? 'translate-x-0 opacity-100' 
             : 'translate-x-8 opacity-0'
         }`}>
-          <div className={`lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] ${
-            allowScrollbars 
-              ? 'lg:overflow-y-auto' 
-              : 'overflow-hidden'
-          }`}>
-            <TradeViewContainer 
-              selectedOptions={selectedOptions}
-              onOptionsChange={handleOptionsChange}
-              onOrderPlaced={handleOrderPlaced}
-              activeView={activeView}
-              setActiveView={setActiveView}
-              activeOrderTab={activeOrderTab}
-              setActiveOrderTab={setActiveOrderTab}
-            />
+          <div className="lg:sticky lg:top-20 h-full lg:max-h-[calc(100vh-6rem)] overflow-hidden">
+            <div className="h-full overflow-hidden">
+              <TradeViewContainer 
+                selectedOptions={selectedOptions}
+                onOptionsChange={handleOptionsChange}
+                onOrderPlaced={handleOrderPlaced}
+                activeView={activeView}
+                setActiveView={setActiveView}
+                activeOrderTab={activeOrderTab}
+                setActiveOrderTab={setActiveOrderTab}
+                optionChainData={optionChainData}
+              />
+            </div>
           </div>
         </div>
       </div>

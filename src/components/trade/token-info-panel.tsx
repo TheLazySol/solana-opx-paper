@@ -79,16 +79,21 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
         <div className="text-neutral-400 text-xs mb-1">{selectedToken.symbol} Price</div>
         <motion.div 
           className="font-bold text-white px-1 rounded"
+          initial={{
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            color: 'hsl(0 0% 98%)',
+            boxShadow: '0 0 0px rgba(0, 0, 0, 0)'
+          }}
           animate={{
             backgroundColor: highlightEffect === 'up' ? '#10b981' :
                             highlightEffect === 'down' ? '#ef4444' :
-                            'transparent',
+                            'rgba(0, 0, 0, 0)',
             color: highlightEffect ? '#ffffff' : 'hsl(0 0% 98%)',
             boxShadow: highlightEffect === 'up'
               ? '0 0 15px rgba(16, 185, 129, 0.6)'
               : highlightEffect === 'down'
                 ? '0 0 15px rgba(239, 68, 68, 0.6)'
-                : '0 0 0px transparent'
+                : '0 0 0px rgba(0, 0, 0, 0)'
           }}
           transition={{
             duration: 0.1,

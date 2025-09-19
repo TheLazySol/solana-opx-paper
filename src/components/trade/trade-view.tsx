@@ -1,9 +1,8 @@
 import { FC, useState, useEffect, useRef } from 'react'
-import { TradePnLChart } from './trade-pnl-chart'
 import { CreateOrder } from './trade-create-order'
-import { PlaceTradeOrder } from './trade-place-order'
+import { PlaceTradeOrder } from './trade-order-details'
 import { TradeCollateralProvider } from './trade-collateral-provider'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,12 +11,14 @@ interface TradeViewProps {
   initialSelectedOptions?: SelectedOption[]
   onOptionsUpdate?: (options: SelectedOption[]) => void
   onTabChange?: (tab: string) => void
+  optionChainData?: OptionContract[]
 }
 
 export const TradeView: FC<TradeViewProps> = ({
   initialSelectedOptions = [],
   onOptionsUpdate,
-  onTabChange
+  onTabChange,
+  optionChainData = []
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
@@ -185,6 +186,7 @@ export const TradeView: FC<TradeViewProps> = ({
           onRemoveOption={handleRemoveOption}
           onUpdateQuantity={handleQuantityUpdate}
           onUpdateLimitPrice={handleLimitPriceUpdate}
+          optionChainData={optionChainData}
         />
       </motion.div>
       
@@ -200,6 +202,7 @@ export const TradeView: FC<TradeViewProps> = ({
           onOrderDataChange={setOrderData}
           borrowedAmount={borrowedAmount}
           onOrderPlaced={handleOrderPlaced}
+          optionChainData={optionChainData}
         />
       </motion.div>
       
@@ -224,20 +227,6 @@ export const TradeView: FC<TradeViewProps> = ({
         )}
       </AnimatePresence>
       
-      {/* PnL Chart - Only show when options are selected */}
-      <AnimatePresence>
-        {selectedOptions.length > 0 && (
-          <motion.div
-            key="pnl-chart"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <TradePnLChart selectedOptions={selectedOptions} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

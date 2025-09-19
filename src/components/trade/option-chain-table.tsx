@@ -32,6 +32,7 @@ interface OptionChainTableProps {
   onOrderPlaced?: () => void
   onSwitchToCreateOrder?: () => void
   isParentVisible?: boolean
+  onOptionChainDataChange?: (data: OptionContract[]) => void
 }
 
 export const OptionChainTable: FC<OptionChainTableProps> = ({ 
@@ -52,7 +53,8 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   useGreekSymbols = false,
   onOrderPlaced,
   onSwitchToCreateOrder,
-  isParentVisible = true
+  isParentVisible = true,
+  onOptionChainDataChange
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
@@ -128,6 +130,13 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
     generateMockOptionData(expirationDate || null, spotPrice || 0, refreshVolume),
     [expirationDate, refreshVolume, spotPrice]
   );
+
+  // Expose option chain data to parent components when it changes
+  useEffect(() => {
+    if (onOptionChainDataChange && mockData.length > 0) {
+      onOptionChainDataChange(mockData);
+    }
+  }, [mockData, onOptionChainDataChange]);
 
   // Calculate the position for the price indicator line
   const priceIndicatorPosition = useMemo(() => {

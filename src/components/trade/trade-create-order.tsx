@@ -1,4 +1,4 @@
-import { FC, useMemo, useState, useEffect } from 'react'
+import { FC, useMemo, useState, useEffect, useCallback } from 'react'
 import { 
   Button, 
   Card, 
@@ -12,13 +12,18 @@ import {
   Divider,
   cn
 } from '@heroui/react'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 import { formatSelectedOption, MAX_OPTION_LEGS } from '@/constants/constants'
-import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign } from 'lucide-react'
+import { 
+  calculateIntrinsicValue,
+  calculateExtrinsicValue
+} from '@/constants/option-lab/calculations'
+import { X, Plus, Minus, TrendingUp, TrendingDown, Calendar, DollarSign, Settings, Hash, Info } from 'lucide-react'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { optionsAvailabilityTracker } from './option-data'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 // Define minimum quantity constant
 const MIN_QTY = 0.1 // 1/10th contract
@@ -28,6 +33,7 @@ interface CreateOrderProps {
   onRemoveOption?: (index: number) => void
   onUpdateQuantity?: (index: number, quantity: number) => void
   onUpdateLimitPrice?: (index: number, price: number) => void
+  optionChainData?: OptionContract[]
 }
 
 // Define a type for stable leg identifiers
@@ -37,13 +43,38 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   selectedOptions = [],
   onRemoveOption,
   onUpdateQuantity,
-  onUpdateLimitPrice
+  onUpdateLimitPrice,
+  optionChainData = []
 }) => {
   // Initialize with empty objects using stable identifiers
   const [orderTypes, setOrderTypes] = useState<Record<LegKey, 'MKT' | 'LMT'>>({});
   const [inputValues, setInputValues] = useState<Record<LegKey, string>>({});
   const [quantityInputs, setQuantityInputs] = useState<Record<LegKey, string>>({});
   const [maxAvailableOptions, setMaxAvailableOptions] = useState<Record<LegKey, number>>({});
+  
+  // Mouse glow effect hook for the main card
+  const createOrderCardRef = useMouseGlow();
+
+  // Helper function to get live option price from chain data
+  const getLiveOptionPrice = useCallback((option: SelectedOption): number => {
+    // Find the matching option contract from the live chain data
+    const optionContract = optionChainData.find(contract => 
+      contract.strike === option.strike && 
+      contract.expiry === option.expiry
+    );
+
+    if (!optionContract) {
+      // Fallback to stored price if not found in chain
+      return option.limitPrice !== undefined ? option.limitPrice : option.price;
+    }
+
+    // Get live bid/ask price based on option side and type
+    if (option.side === 'call') {
+      return option.type === 'bid' ? optionContract.callBid : optionContract.callAsk;
+    } else {
+      return option.type === 'bid' ? optionContract.putBid : optionContract.putAsk;
+    }
+  }, [optionChainData]);
 
   // Update all state when options change
   useEffect(() => {
@@ -60,13 +91,18 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       return newOrderTypes;
     });
 
-    // Update price input values
+    // Update price input values using live prices
     setInputValues(prev => {
       const newValues = { ...prev };
       selectedOptions.forEach((option) => {
         const legKey = option.index.toString();
-        // Always ensure there's a value
-        newValues[legKey] = prev[legKey] || option.price.toFixed(2);
+        // Always ensure there's a value - use live price if no previous value
+        if (!prev[legKey]) {
+          const livePrice = getLiveOptionPrice(option);
+          newValues[legKey] = livePrice.toFixed(2);
+        } else {
+          newValues[legKey] = prev[legKey];
+        }
       });
       return newValues;
     });
@@ -118,7 +154,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       // Only update if something changed
       return needsUpdate ? newQuantityInputs : prev;
     });
-  }, [selectedOptions, onUpdateQuantity]);
+  }, [selectedOptions, onUpdateQuantity, getLiveOptionPrice]);
 
   // Get unique assets from selected options
   const uniqueAssets = useMemo(() => {
@@ -236,14 +272,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     setOrderTypes(prev => ({ ...prev, [legKey]: type }));
     
     if (type === 'MKT') {
-      // When switching to MKT, set limit price to current market price
+      // When switching to MKT, set limit price to current live market price
+      const livePrice = getLiveOptionPrice(option);
       if (onUpdateLimitPrice) {
-        onUpdateLimitPrice(index, option.price);
+        onUpdateLimitPrice(index, livePrice);
       }
-      // Reset input value to current market price
+      // Reset input value to current live market price
       setInputValues(prev => ({ 
         ...prev, 
-        [legKey]: option.price.toFixed(2) 
+        [legKey]: livePrice.toFixed(2) 
       }));
     }
   };
@@ -274,13 +311,15 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     }
   };
 
-  // Get the display price for an option
+  // Get the display price for an option using live data
   const getDisplayPrice = (option: SelectedOption): string => {
     const legKey = option.index.toString()
+    const livePrice = getLiveOptionPrice(option);
+    
     if (orderTypes[legKey] === 'MKT') {
-      return option.price.toFixed(2);
+      return livePrice.toFixed(2);
     }
-    return inputValues[legKey] || option.price.toFixed(2); // Ensure always a defined value
+    return inputValues[legKey] || livePrice.toFixed(2); // Ensure always a defined value
   };
 
   // Ensure we have a valid quantity value for display
@@ -316,239 +355,360 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     return "∞"; // Unlimited for ask options
   };
 
+  // Currency formatting helper
+  const formatUSD = (n: number, d = 2) => `$${n.toFixed(d)}`;
+
+  // Get moneyness display for an option
+  const getMoneynessDisplay = (option: SelectedOption) => {
+    const assetPrice = assetPriceMap.get(option.asset);
+    if (!assetPrice) return null;
+
+    const optionPrice = getLiveOptionPrice(option);
+    const intrinsicValue = calculateIntrinsicValue(option.side, assetPrice, option.strike);
+    const extrinsicValue = calculateExtrinsicValue(optionPrice, intrinsicValue);
+    const totalValue = intrinsicValue + extrinsicValue;
+    
+    if (totalValue <= 0) return null;
+    
+    const intrinsicPercentage = (intrinsicValue / totalValue) * 100;
+    const extrinsicPercentage = (extrinsicValue / totalValue) * 100;
+    const intrinsicDominant = intrinsicPercentage > extrinsicPercentage;
+    
+    return {
+      intrinsicValue,
+      extrinsicValue,
+      intrinsicPercentage,
+      extrinsicPercentage,
+      intrinsicDominant
+    };
+  };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  }
+
   return (
-    <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
-            Create Order
-          </h3>
-          <Chip 
-            size="sm" 
-            variant="flat" 
-            className="bg-white/10 text-white/70"
-          >
-            {selectedOptions.length}/{MAX_OPTION_LEGS} legs
-          </Chip>
-        </div>
-      </CardHeader>
-      
-      <CardBody className="gap-3">
-        {selectedOptions.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="min-h-[120px] flex items-center justify-center"
-          >
-            <div className="text-center space-y-2">
-              <p className="text-white/60">Select from the option chain to build your order</p>
-              <p className="text-sm text-white/40">Start adding options to create your strategy</p>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-4"
+    >
+      <motion.div variants={itemVariants}>
+        <Card 
+          ref={createOrderCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                  <Settings className="w-3 h-3 text-[#4a85ff]" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Create Order</h3>
+              </div>
+              <Chip 
+                size="sm" 
+                variant="flat" 
+                className="bg-white/10 text-white/70 border border-white/20"
+              >
+                {selectedOptions.length}/{MAX_OPTION_LEGS} legs
+              </Chip>
             </div>
-          </motion.div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            <div className="space-y-3">
-              {selectedOptions.map((option, index) => {
-                const legKey = option.index.toString()
-                const availabilityWarning = getAvailableOptionsWarning(option)
-                const optionType = option.side === 'call' ? 'Call' : 'Put'
-                const expiryDate = option.expiry.split('T')[0]
-                
-                return (
-                  <motion.div
-                    key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Card className="bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200">
-                      <CardBody className="p-4 space-y-3">
-                        {/* Header Row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {option.asset.toUpperCase() === 'SOL' && (
-                              <Image 
-                                src="/token-logos/solana_logo.png" 
-                                alt="Solana" 
-                                width={24} 
-                                height={24}
-                                className="rounded-full"
-                              />
-                            )}
-                            <Chip size="sm" variant="flat" className="bg-white/10">
-                              {option.asset.toUpperCase()}
-                            </Chip>
-                            <Chip 
-                              size="sm" 
-                              variant="flat"
-                              className={cn(
-                                "font-medium",
-                                option.type === 'bid' 
-                                  ? "bg-green-500/20 text-green-400" 
-                                  : "bg-red-500/20 text-red-400"
-                              )}
-                              startContent={
-                                option.type === 'bid' ? 
-                                  <TrendingUp className="w-3 h-3" /> : 
-                                  <TrendingDown className="w-3 h-3" />
-                              }
-                            >
-                              {option.type === 'bid' ? 'Long' : 'Short'} {optionType}
-                            </Chip>
-                            <Chip 
-                              size="sm" 
-                              variant="flat" 
-                              className="bg-blue-500/20 text-blue-400"
-                              startContent={<DollarSign className="w-3 h-3" />}
-                            >
-                              ${option.strike}
-                            </Chip>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Chip 
-                              size="sm" 
-                              variant="flat" 
-                              className="bg-purple-500/20 text-purple-400"
-                              startContent={<Calendar className="w-3 h-3" />}
-                            >
-                              {expiryDate}
-                            </Chip>
-                            {onRemoveOption && (
-                              <Button
-                                isIconOnly
-                                size="sm"
-                                variant="light"
-                                className="text-white/60 hover:text-red-400 hover:bg-red-500/10"
-                                onPress={() => onRemoveOption(index)}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <Divider className="bg-white/10" />
-
-                        {/* Order Type and Price Row */}
-                        <div className="flex items-center gap-4">
-                          <ButtonGroup size="sm" variant="flat">
-                            <Button
-                              className={cn(
-                                "transition-all backdrop-blur-md",
-                                orderTypes[legKey] === 'MKT' 
-                                  ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-black/40 text-white/60 hover:bg-black/50"
-                              )}
-                              onPress={() => handleOrderTypeChange(index, 'MKT')}
-                            >
-                              MKT
-                            </Button>
-                            <Button
-                              className={cn(
-                                "transition-all backdrop-blur-md",
-                                orderTypes[legKey] === 'LMT' 
-                                  ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                                  : "bg-black/40 text-white/60 hover:bg-black/50"
-                              )}
-                              onPress={() => handleOrderTypeChange(index, 'LMT')}
-                            >
-                              LMT
-                            </Button>
-                          </ButtonGroup>
-
-                          <div className="flex items-center gap-2 flex-1">
-                            {orderTypes[legKey] === 'MKT' ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-white/60">Market Price:</span>
-                                <span className={cn(
-                                  "text-sm font-semibold",
-                                  option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                )}>
-                                  ${option.price.toFixed(2)}
+          </CardHeader>
+          
+          <CardBody className="p-3">
+            {selectedOptions.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="min-h-[80px] flex items-center justify-center"
+              >
+                <div className="text-center space-y-2">
+                  <Hash className="w-8 h-8 text-white/30 mx-auto" />
+                </div>
+              </motion.div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                <div className="space-y-2">
+                  {selectedOptions.map((option, index) => {
+                    const legKey = option.index.toString()
+                    const availabilityWarning = getAvailableOptionsWarning(option)
+                    const optionType = option.side === 'call' ? 'Call' : 'Put'
+                    const expiryDate = option.expiry.split('T')[0]
+                    
+                    return (
+                      <motion.div
+                        key={`${option.asset}-${option.side}-${option.strike}-${option.expiry}-${option.index}`}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Card className="bg-black/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200">
+                          <CardBody className="p-2 space-y-2">
+                            {/* Header Row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {option.asset.toUpperCase() === 'SOL' && (
+                                  <Image 
+                                    src="/token-logos/solana_logo.png" 
+                                    alt="Solana" 
+                                    width={16} 
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                )}
+                                <span className="text-sm font-medium text-white/90">
+                                  {option.asset.toUpperCase()}
                                 </span>
-                              </div>
-                            ) : (
-                              <>
-                                <span className="text-sm text-white/60">Limit Price:</span>
-                                <Input
-                                  type="text"
-                                  value={inputValues[legKey] || option.price.toFixed(2)}
-                                  onChange={(e) => handlePriceInputChange(e, index)}
-                                  size="sm"
+                                <Chip 
+                                  size="sm" 
                                   variant="flat"
-                                  classNames={{
-                                    input: cn(
-                                      "text-sm font-semibold",
-                                      option.type === 'bid' ? "text-green-400" : "text-red-400"
-                                    ),
-                                    inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-24"
-                                  }}
-                                  startContent={<span className="text-white/40">$</span>}
-                                />
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Quantity Row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-white/60">Quantity:</span>
-                            <ButtonGroup size="sm" variant="flat">
-                              <Button
-                                isIconOnly
-                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
-                                onPress={() => handleQuantityChange(index, -MIN_QTY)}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <Input
-                                type="text"
-                                value={getDisplayQuantity(option)}
-                                onChange={(e) => handleQuantityInputChange(e, index)}
-                                size="sm"
-                                variant="flat"
-                                classNames={{
-                                  input: "text-sm text-center font-medium text-white",
-                                  inputWrapper: "bg-black/40 border border-transparent rounded-lg backdrop-blur-md h-10 hover:bg-black/50 data-[hover=true]:bg-black/50 data-[focus=true]:bg-black/60 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:shadow-none data-[focus=true]:ring-0 data-[focus=true]:shadow-none w-20"
-                                }}
-                              />
-                              <Button
-                                isIconOnly
-                                className="bg-black/40 hover:bg-black/50 backdrop-blur-md"
-                                onPress={() => handleQuantityChange(index, MIN_QTY)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </ButtonGroup>
-                          </div>
-
-                          <div className="flex flex-col items-end gap-1">
-                            {option.type === 'bid' && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-white/40">Available:</span>
-                                <span className="text-xs font-medium text-white/60">
-                                  {getOptionsAvailableDisplay(option)}
+                                  className={cn(
+                                    "font-medium text-xs h-5 px-2",
+                                    option.type === 'bid' 
+                                      ? "bg-green-500/20 text-green-400" 
+                                      : "bg-red-500/20 text-red-400"
+                                  )}
+                                  startContent={
+                                    option.type === 'bid' ? 
+                                      <TrendingUp className="w-2 h-2" /> : 
+                                      <TrendingDown className="w-2 h-2" />
+                                  }
+                                >
+                                  {option.type === 'bid' ? 'Long' : 'Short'} {optionType}
+                                </Chip>
+                                <span className="text-sm text-blue-400 font-medium">
+                                  ${option.strike} Strike
                                 </span>
                               </div>
-                            )}
-                            {availabilityWarning && (
-                              <span className="text-xs text-amber-400">{availabilityWarning}</span>
-                            )}
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </AnimatePresence>
-        )}
-      </CardBody>
-    </Card>
+                              
+                              {/* Moneyness Display - Center */}
+                              <div className="flex items-center justify-center">
+                                {(() => {
+                                  const moneynessData = getMoneynessDisplay(option);
+                                  
+                                  if (!moneynessData) {
+                                    return (
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs text-white/40">Moneyness</span>
+                                        <span className="text-xs text-white/30">-</span>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <span 
+                                        className={`text-xs font-medium text-green-400 transition-all duration-300 ${
+                                          moneynessData.intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]' : ''
+                                        }`}
+                                      >
+                                        IV
+                                      </span>
+                                      
+                                      <Tooltip 
+                                        content={
+                                          <div className="text-xs font-light space-y-1">
+                                            <div><span className="text-green-400">Intrinsic Value</span>: {formatUSD(moneynessData.intrinsicValue)} ({moneynessData.intrinsicPercentage.toFixed(1)}%)</div>
+                                            <div><span className="text-red-400">Extrinsic Value</span>: {formatUSD(moneynessData.extrinsicValue)} ({moneynessData.extrinsicPercentage.toFixed(1)}%)</div>
+                                          </div>
+                                        }
+                                        placement="top"
+                                      >
+                                        <div className="relative h-2 w-14 bg-white/10 rounded-full overflow-hidden cursor-help">
+                                          <div 
+                                            className="absolute left-0 h-full bg-green-400 transition-all duration-300"
+                                            style={{ 
+                                              width: `${moneynessData.intrinsicPercentage}%`,
+                                              boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)'
+                                            }}
+                                          />
+                                          <div 
+                                            className="absolute right-0 h-full bg-red-400 transition-all duration-300"
+                                            style={{ 
+                                              width: `${moneynessData.extrinsicPercentage}%`,
+                                              boxShadow: '0 0 8px rgba(248, 113, 113, 0.6)'
+                                            }}
+                                          />
+                                        </div>
+                                      </Tooltip>
+                                      
+                                      <span 
+                                        className={`text-xs font-medium text-red-400 transition-all duration-300 ${
+                                          !moneynessData.intrinsicDominant ? 'drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]' : ''
+                                        }`}
+                                      >
+                                        EV
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-white/50 font-normal">
+                                  {expiryDate}
+                                </span>
+                                {onRemoveOption && (
+                                  <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="light"
+                                    className="text-white/60 hover:text-red-400 hover:bg-red-500/10 min-w-6 h-6"
+                                    onPress={() => onRemoveOption(index)}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            <Divider className="bg-white/10" />
+
+                            {/* Quantity and Order Type Row */}
+                            <div className="flex items-start justify-between gap-4">
+                              {/* Left side - Quantity */}
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-white/60">Qty:</span>
+                                  <Input
+                                    type="text"
+                                    value={getDisplayQuantity(option)}
+                                    onChange={(e) => handleQuantityInputChange(e, index)}
+                                    size="sm"
+                                    variant="flat"
+                                    classNames={{
+                                      base: "max-w-full",
+                                      input: "text-xs text-center text-white py-0",
+                                      inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-12 h-6 min-h-6 px-1"
+                                    }}
+                                  />
+                                </div>
+                                {/* Available Options aligned with Premium */}
+                                <div className="flex items-center gap-1 h-6">
+                                  {option.type === 'bid' && (
+                                    <>
+                                      <span className="text-xs text-white/60">OA:</span>
+                                      <span className="text-xs text-white/40">
+                                        {getOptionsAvailableDisplay(option)}
+                                      </span>
+                                    </>
+                                  )}
+                                  {availabilityWarning && (
+                                    <span className="text-amber-400 text-xs">{availabilityWarning}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Right side - Order Type and Premium */}
+                              <div className="flex flex-col gap-2 items-end">
+                                {/* Order Type Buttons */}
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant={orderTypes[legKey] === 'MKT' ? 'solid' : 'bordered'}
+                                    className={`h-6 min-w-10 text-xs px-2 ${
+                                      orderTypes[legKey] === 'MKT' 
+                                        ? 'bg-[#4a85ff]/20 text-[#4a85ff] border-[#4a85ff]/40' 
+                                        : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
+                                    }`}
+                                    onPress={() => handleOrderTypeChange(index, 'MKT')}
+                                  >
+                                    MKT
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={orderTypes[legKey] === 'LMT' ? 'solid' : 'bordered'}
+                                    className={`h-6 min-w-10 text-xs px-2 ${
+                                      orderTypes[legKey] === 'LMT' 
+                                        ? 'bg-[#4a85ff]/20 text-[#4a85ff] border-[#4a85ff]/40' 
+                                        : 'bg-transparent border-white/20 text-white/60 hover:border-white/30'
+                                    }`}
+                                    onPress={() => handleOrderTypeChange(index, 'LMT')}
+                                  >
+                                    LMT
+                                  </Button>
+                                </div>
+
+                                {/* Premium under Order Type Buttons */}
+                                <div className="flex items-center gap-2 h-6">
+                                  {orderTypes[legKey] === 'MKT' ? (
+                                    <div className="flex items-center gap-1 h-6">
+                                      <span className="text-xs text-white/60">Premium:</span>
+                                      <span className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
+                                        ${getDisplayPrice(option)}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1 h-6">
+                                      <span className="text-xs text-white/60">Premium:</span>
+                                      <Input
+                                        type="text"
+                                        value={inputValues[legKey] || getLiveOptionPrice(option).toFixed(2)}
+                                        onChange={(e) => handlePriceInputChange(e, index)}
+                                        size="sm"
+                                        variant="flat"
+                                        classNames={{
+                                          base: "max-w-full",
+                                          input: cn(
+                                            "text-xs py-0",
+                                            option.type === 'bid' ? "text-green-400" : "text-red-400"
+                                          ),
+                                          inputWrapper: "bg-white/5 border-white/20 hover:border-white/30 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10 w-14 h-6 min-h-6 px-1"
+                                        }}
+                                        startContent={<span className="text-white/40 text-xs">$</span>}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              </AnimatePresence>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
+    </motion.div>
   )
 }
