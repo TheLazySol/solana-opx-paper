@@ -35,6 +35,7 @@ import {
   DEFAULT_OPTION_VOLUME,
   DEFAULT_OPTION_OPEN_INTEREST
 } from '@/constants/constants'
+import { calculateTimeUntilExpiryUTC } from '@/utils/time-utils'
 import { calculateAverageEntryPrice } from '@/constants/option-lab/calculations'
 
 // Volume Tracker - keeps track of traded option volumes
@@ -240,29 +241,8 @@ export const decreaseOptionOpenInterest = (strike: number, expiry: string, side:
   );
 };
 
-// Helper function to calculate time until expiry in seconds
-/**
- * Calculates the time remaining until option expiry in seconds.
- * 
- * @param expiryDate - The expiration date string for the option
- * @returns The number of seconds until expiry, with a minimum of 0 seconds
- * 
- * This function:
- * 1. Converts the expiry date string to a Date object
- * 2. Gets the current time
- * 3. Calculates difference in milliseconds and converts to seconds
- * 4. Returns max of 0 or the calculated time to prevent negative values
- */
-function calculateTimeUntilExpiry(expiryDate: string): number {
-  const expiry = new Date(expiryDate)
-  const now = new Date()
-  
-  // Convert both dates to UTC
-  const utcExpiry = new Date(expiry.getTime() + expiry.getTimezoneOffset() * 60000)
-  const utcNow = new Date(now.getTime() + now.getTimezoneOffset() * 60000)
-  
-  return Math.max(0, Math.floor((utcExpiry.getTime() - utcNow.getTime()) / 1000))
-}
+// Use the shared UTC time calculation helper
+const calculateTimeUntilExpiry = calculateTimeUntilExpiryUTC;
 
 // Helper function to calculate option data for a given strike
 function calculateOptionData(strike: number, expiryDate: string, spotPrice: number): OptionContract {

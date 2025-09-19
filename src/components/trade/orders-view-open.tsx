@@ -9,6 +9,7 @@ import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel'
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE } from '@/constants/constants'
+import { calculateTimeUntilExpiryUTC } from '@/utils/time-utils'
 import { updateOptionVolume, decreaseOptionOpenInterest } from './option-data'
 import { formatNumberWithCommas } from '@/utils/utils'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
@@ -151,16 +152,9 @@ export const OrdersViewOpen = () => {
     }
   }, [solPrice])
 
-  // Helper function to calculate time until expiry in seconds
+  // Use the shared UTC time calculation helper
   const calculateTimeUntilExpiry = useCallback((expiryDate: string): number => {
-    const expiry = new Date(expiryDate)
-    const now = new Date()
-    
-    // Convert both dates to UTC
-    const utcExpiry = new Date(expiry.getTime() + expiry.getTimezoneOffset() * 60000)
-    const utcNow = new Date(now.getTime() + now.getTimezoneOffset() * 60000)
-    
-    return Math.max(0, Math.floor((utcExpiry.getTime() - utcNow.getTime()) / 1000))
+    return calculateTimeUntilExpiryUTC(expiryDate);
   }, [])
 
   // Calculate option price using Black-Scholes model
