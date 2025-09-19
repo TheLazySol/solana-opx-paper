@@ -257,11 +257,8 @@ function calculateTimeUntilExpiry(expiryDate: string): number {
   const expiry = new Date(expiryDate)
   const now = new Date()
   
-  // Convert both dates to UTC
-  const utcExpiry = new Date(expiry.getTime() + expiry.getTimezoneOffset() * 60000)
-  const utcNow = new Date(now.getTime() + now.getTimezoneOffset() * 60000)
-  
-  return Math.max(0, Math.floor((utcExpiry.getTime() - utcNow.getTime()) / 1000))
+  // Calculate time difference without timezone adjustments to match option lab wizard
+  return Math.max(0, Math.floor((expiry.getTime() - now.getTime()) / 1000))
 }
 
 // Helper function to calculate option data for a given strike
