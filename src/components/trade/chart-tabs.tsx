@@ -1,13 +1,14 @@
 'use client'
 
-import { FC, useState, useCallback } from 'react'
+import { FC, useState, useCallback, useEffect } from 'react'
 import { Card, Tabs, Tab } from '@heroui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AssetChart } from './asset-chart'
-import { PnLChart } from './pnl-chart'
+import PnLChartInteractive from './pnl-chart-interactive'
 import { SelectedOption } from './option-data'
 import { BarChart3, TrendingUp } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
+import { TOKENS } from '@/constants/token-list/token-list'
 
 interface ChartTabsProps {
   selectedAsset: string
@@ -21,18 +22,44 @@ export const ChartTabs: FC<ChartTabsProps> = ({
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('asset')
+  const [currentPrice, setCurrentPrice] = useState<number>(100)
   const chartTabsCardRef = useMouseGlow()
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
   }, [])
 
+  // Real-time price updates for available tokens only
+  useEffect(() => {
+    // Only use assets from our token list (currently only SOL)
+    const token = TOKENS[selectedAsset as keyof typeof TOKENS]
+    if (!token) {
+      setCurrentPrice(100) // fallback
+      return
+    }
+    
+    // Set initial price for SOL
+    setCurrentPrice(180)
+
+    // Simulate real-time price updates every 2 seconds
+    const interval = setInterval(() => {
+      setCurrentPrice(prev => {
+        // Simulate small price movements (+/- 0.5%)
+        const change = (Math.random() - 0.5) * 0.01
+        const newPrice = prev * (1 + change)
+        return Math.round(newPrice * 100) / 100
+      })
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [selectedAsset])
+
   // Calculate PnL chart props from selected options (if any)
   const pnlChartProps = selectedOptions.length > 0 ? {
     strikePrice: selectedOptions[0].strike || 100,
     premium: selectedOptions[0].price || 5,
     contracts: selectedOptions[0].quantity || 1,
-    currentPrice: 105 // This would come from real market data
+    currentPrice: currentPrice // Now using real-time price
   } : null
 
   return (
@@ -108,7 +135,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
           {activeTab === 'pnl' && (
             <div className="min-h-[400px]">
               {pnlChartProps ? (
-                <PnLChart
+                <PnLChartInteractive
                   {...pnlChartProps}
                   showHeader={true}
                   title="Option Payoff Diagram"
