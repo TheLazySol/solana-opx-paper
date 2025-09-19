@@ -2,7 +2,7 @@
 
 import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
-import { AssetChart } from '@/components/trade/asset-chart'
+import { ChartTabs } from '@/components/trade/chart-tabs'
 import { AssetType } from '@/components/trade/asset-underlying'
 import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
@@ -123,9 +123,12 @@ export default function TradePage() {
                 <TokenInfoPanel selectedAsset={selectedAsset} />
               </div>
               
-              {/* Asset Chart */}
+              {/* Chart Tabs (Asset Chart + P&L Chart) */}
               <div className="mb-3 sm:mb-4 overflow-hidden">
-                <AssetChart selectedAsset={selectedAsset} />
+                <ChartTabs 
+                  selectedAsset={selectedAsset} 
+                  selectedOptions={selectedOptions}
+                />
               </div>
               
               {/* Option Chain with Expiration Selector */}

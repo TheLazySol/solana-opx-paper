@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader, Tooltip, Chip } from '@heroui/react'
 import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
-import { MakerPnlChart } from "./maker-pnl-chart"
+import { PnLChart } from "../trade/pnl-chart"
 import { formatNumberWithCommas } from '@/utils/utils'
 import { useMemo } from "react"
 import { Activity, Target, TrendingUp, TrendingDown } from 'lucide-react'
@@ -258,13 +258,17 @@ export function MakerSummary({
               className="space-y-3"
             >
               <div className="h-[300px]">
-                <MakerPnlChart 
-                  options={options}
-                  collateralProvided={collateralProvided}
-                  leverage={leverage}
-                  assetPrice={assetPrice}
-                  liquidationPrices={liquidationPrices}
-                />
+                {options.length > 0 && (
+                  <PnLChart
+                    strikePrice={Number(options[0].strikePrice)}
+                    premium={Number(options[0].premium)}
+                    contracts={Number(options[0].quantity)}
+                    currentPrice={assetPrice || 100}
+                    showHeader={false}
+                    title="Maker P&L Analysis"
+                    className="h-full"
+                  />
+                )}
               </div>
             </motion.div>
 
