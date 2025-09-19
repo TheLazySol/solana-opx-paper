@@ -12,23 +12,45 @@ export const OPTION_EXPIRY_SECOND_UTC = 0; // 0 seconds
  * @returns The number of seconds until expiry (minimum 0)
  */
 export function calculateTimeUntilExpiryUTC(expiryDate: Date | string): number {
-  const expiry = expiryDate instanceof Date ? expiryDate : new Date(expiryDate);
-  const now = new Date();
+  let year: number, month: number, day: number;
   
-  // Create UTC expiry date with standardized time using UTC methods to avoid timezone issues
+  if (typeof expiryDate === 'string') {
+    // Handle date-only strings like "2025-01-31" by parsing as UTC
+    const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateOnlyPattern.test(expiryDate)) {
+      // Parse YYYY-MM-DD as UTC by appending timezone
+      const expiry = new Date(expiryDate + 'T00:00:00Z');
+      year = expiry.getUTCFullYear();
+      month = expiry.getUTCMonth();
+      day = expiry.getUTCDate();
+    } else {
+      // For other string formats, parse and extract UTC components
+      const expiry = new Date(expiryDate);
+      year = expiry.getUTCFullYear();
+      month = expiry.getUTCMonth();
+      day = expiry.getUTCDate();
+    }
+  } else {
+    // For Date objects, extract UTC components
+    year = expiryDate.getUTCFullYear();
+    month = expiryDate.getUTCMonth();
+    day = expiryDate.getUTCDate();
+  }
+  
+  // Create UTC expiry date with standardized time
   const utcExpiry = new Date(Date.UTC(
-    expiry.getUTCFullYear(),
-    expiry.getUTCMonth(), 
-    expiry.getUTCDate(),
+    year,
+    month,
+    day,
     OPTION_EXPIRY_HOUR_UTC,
     OPTION_EXPIRY_MINUTE_UTC,
     OPTION_EXPIRY_SECOND_UTC
   ));
   
-  // Get current time in UTC
-  const utcNow = new Date();
+  // Get current time as explicit UTC millisecond timestamp
+  const utcNowTimestamp = Date.now();
   
-  return Math.max(0, Math.floor((utcExpiry.getTime() - utcNow.getTime()) / 1000));
+  return Math.max(0, Math.floor((utcExpiry.getTime() - utcNowTimestamp) / 1000));
 }
 
 /**
