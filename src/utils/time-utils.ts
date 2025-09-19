@@ -15,11 +15,11 @@ export function calculateTimeUntilExpiryUTC(expiryDate: Date | string): number {
   const expiry = expiryDate instanceof Date ? expiryDate : new Date(expiryDate);
   const now = new Date();
   
-  // Create UTC expiry date with standardized time
+  // Create UTC expiry date with standardized time using UTC methods to avoid timezone issues
   const utcExpiry = new Date(Date.UTC(
-    expiry.getFullYear(),
-    expiry.getMonth(), 
-    expiry.getDate(),
+    expiry.getUTCFullYear(),
+    expiry.getUTCMonth(), 
+    expiry.getUTCDate(),
     OPTION_EXPIRY_HOUR_UTC,
     OPTION_EXPIRY_MINUTE_UTC,
     OPTION_EXPIRY_SECOND_UTC
