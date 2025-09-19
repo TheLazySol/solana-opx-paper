@@ -12,6 +12,7 @@ import { cn } from "@/utils/utils";
 import { useFormContext } from 'react-hook-form';
 import { format } from "date-fns";
 import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
+import { getExpiryTimeDisplay } from '@/utils/time-utils';
 
 const allowedDates = getWeeklyFridayDates(startDate, endDate);
 
@@ -46,7 +47,7 @@ export const ExpirationDatePicker = () => {
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <div id="expiration-date-label" className="text-sm font-medium text-white/60">Expiration Date</div>
-        <Tooltip content="The date when the option expires. The option can only be exercised on or before this date.">
+        <Tooltip content={`Options expire at ${getExpiryTimeDisplay()}. The option can only be exercised on or before this date and time.`}>
           <Info className="w-4 h-4 text-white/40 cursor-help" />
         </Tooltip>
       </div>

@@ -13,6 +13,7 @@ import { QuantityInput } from '../quantity-input';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { calculateIntrinsicValue, calculateExtrinsicValue } from '@/constants/option-lab/calculations';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
+import { calculateTimeUntilExpiryUTC } from '@/utils/time-utils';
 import { formatNumberWithCommas } from '@/utils/utils';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { Info, TrendingUp, TrendingDown, Calendar, DollarSign, Hash, HelpCircle, CheckCircle2 } from 'lucide-react';
@@ -163,9 +164,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
     }
     
     setIsCalculatingPremium(true);
-    const timeUntilExpiry = Math.floor(
-      (values.expirationDate.getTime() - Date.now()) / 1000
-    );
+    const timeUntilExpiry = calculateTimeUntilExpiryUTC(values.expirationDate);
     
     try {
       const volatility = SOL_PH_VOLATILITY;

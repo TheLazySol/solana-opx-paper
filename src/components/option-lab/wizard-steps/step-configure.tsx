@@ -15,6 +15,7 @@ import { OptionContractSummary } from '../option-contract-summary';
 import { AdvancedOptionDetails } from '../advanced-option-details';
 import { calculateOption } from '@/lib/option-pricing-model/blackScholesModel';
 import { SOL_PH_VOLATILITY, SOL_PH_RISK_FREE_RATE, EDIT_REFRESH_INTERVAL } from '@/constants/constants';
+import { calculateTimeUntilExpiryUTC } from '@/utils/time-utils';
 import { formatNumberWithCommas } from '@/utils/utils';
 import { calculateIntrinsicValue, calculateExtrinsicValue, calculateMoneyness } from '@/constants/option-lab/calculations';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
@@ -58,9 +59,7 @@ export function StepConfigure({ assetPrice: propAssetPrice, proMode }: StepConfi
     }
     
     setIsCalculatingPremium(true);
-    const timeUntilExpiry = Math.floor(
-      (values.expirationDate.getTime() - Date.now()) / 1000
-    );
+    const timeUntilExpiry = calculateTimeUntilExpiryUTC(values.expirationDate);
     
     try {
       const volatility = SOL_PH_VOLATILITY;
