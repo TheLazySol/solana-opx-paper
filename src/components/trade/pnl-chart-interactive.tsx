@@ -805,6 +805,31 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                     ))}
                   </div>
                 </div>
+              ) : validatedInputs.options.length === 1 ? (
+                <div className="bg-black/40 rounded-lg p-2 relative group cursor-pointer">
+                  <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
+                  <span className="text-xs sm:text-sm font-semibold text-white/80">
+                    ${validatedInputs.strike}
+                  </span>
+                  {/* Hover tooltip for single strike */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-[#4a85ff]/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg" style={{ minWidth: '140px' }}>
+                    {validatedInputs.options.map((option, index) => (
+                      <div key={index} className="flex items-center justify-between mb-1 last:mb-0" style={{ minWidth: '100%' }}>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${option.side === 'call' ? 'text-green-400' : 'text-red-400'}`}>
+                            {option.side.toUpperCase()}
+                          </span>
+                          <span className="text-white/80 font-medium">${option.strike}</span>
+                        </div>
+                        {'expiry' in option && option.expiry && (
+                          <span className="text-white/60 text-[10px] font-medium text-right">
+                            {new Date(option.expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="bg-black/40 rounded-lg p-2">
                   <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
