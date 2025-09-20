@@ -3,7 +3,6 @@
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { Card, CardBody } from '@heroui/react'
-import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
 import { SelectedOption } from './option-data'
@@ -16,6 +15,9 @@ interface PnLChartProps {
   // Optional props with defaults
   maxPrice?: number
   contractMultiplier?: number
+  optionType?: 'call' | 'put'
+  position?: 'long' | 'short'
+  collateralProvided?: number // For short positions - max loss calculation
   
   // Styling props
   className?: string
@@ -49,6 +51,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   currentPrice,
   maxPrice,
   contractMultiplier = 100,
+  optionType = 'call',
+  position = 'long',
+  collateralProvided,
   className = '',
   showHeader = true,
   title = 'Payoff Diagram',
@@ -58,7 +63,6 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   contracts,
   legs
 }) => {
-  const chartCardRef = useMouseGlow()
   const chartRef = useRef<ReactECharts>(null)
   const [hoveredValue, setHoveredValue] = useState<{ price: number; pnl: number } | null>(null)
   const lastTooltipUpdate = useRef<number>(0)
@@ -98,9 +102,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             strike: validStrike,
             premium: validPremium,
             contracts: validContracts, // validContracts is already validated to be at least 1
-            side: 'call' as const,
-            type: 'bid' as const,
-            position: 'long' as const
+            side: optionType,
+            type: position === 'long' ? 'bid' as const : 'ask' as const,
+            position: position
           }],
           current: validCurrent,
           max: legacyValidMax,
@@ -225,29 +229,22 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     options.forEach(option => {
       const { strike, premium, contracts, side, position } = option
       
-      let legPnL = 0
+      let payoff = 0
       
+      // Calculate payoff based on option type
       if (side === 'call') {
-        // Call option P&L
-        const intrinsicValue = Math.max(0, underlyingPrice - strike)
-        if (position === 'long') {
-          // Long call: profit when price > strike, max loss = premium paid
-          legPnL = (intrinsicValue - premium) * contracts * multiplier
-        } else {
-          // Short call: profit when price < strike, max profit = premium received
-          legPnL = (premium - intrinsicValue) * contracts * multiplier
-        }
+        payoff = Math.max(0, underlyingPrice - strike)
       } else {
-        // Put option P&L  
-        const intrinsicValue = Math.max(0, strike - underlyingPrice)
-        if (position === 'long') {
-          // Long put: profit when price < strike, max loss = premium paid
-          legPnL = (intrinsicValue - premium) * contracts * multiplier
-        } else {
-          // Short put: profit when price > strike, max profit = premium received
-          legPnL = (premium - intrinsicValue) * contracts * multiplier
-        }
+        payoff = Math.max(0, strike - underlyingPrice)
       }
+      
+      // Apply position (long = +1, short = -1)
+      const positionMultiplier = position === 'long' ? 1 : -1
+      payoff *= positionMultiplier
+      
+      // Calculate P&L by subtracting premium cost/credit
+      const premiumImpact = position === 'long' ? premium : -premium
+      const legPnL = (payoff - premiumImpact) * contracts * multiplier
       
       totalPnL += legPnL
     })
@@ -416,30 +413,53 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     
     // Calculate total premium paid/received and max loss
     let totalPremiumPaid = 0
-    let maxLoss = 0
+    let totalPremiumReceived = 0
+    let maxLoss: number | 'Unlimited' = 0
+    let maxProfit: number | 'Unlimited' = 0
     
     options.forEach(option => {
-      const { premium, contracts, position, side } = option
+      const { premium, contracts, position } = option
       const legCost = premium * contracts * multiplier
       
       if (position === 'long') {
-        // Long positions: premium is paid (cost)
         totalPremiumPaid += legCost
-        // Max loss for long positions is the premium paid
-        maxLoss += legCost
       } else {
-        // Short positions: premium is received (credit)
-        totalPremiumPaid -= legCost
-        // For short positions, max loss could be unlimited (calls) or limited (puts)
-        if (side === 'call') {
-          // Short call has unlimited loss potential
-          maxLoss = Infinity
-        } else {
-          // Short put max loss = strike - premium received
-          maxLoss += Math.max(0, (option.strike - premium) * contracts * multiplier)
-        }
+        totalPremiumReceived += legCost
       }
     })
+    
+    // For short positions, max loss should be limited by collateral provided
+    if (totalPremiumReceived > 0) {
+      // We have short positions
+      maxProfit = totalPremiumReceived - totalPremiumPaid // Net premium received
+      
+      if (collateralProvided && collateralProvided > 0) {
+        // Max loss is limited to collateral provided for short positions
+        maxLoss = -collateralProvided
+      } else {
+        // Fallback to theoretical unlimited loss if no collateral specified
+        maxLoss = 'Unlimited'
+      }
+    } else {
+      // Only long positions
+      maxLoss = -totalPremiumPaid // Max loss is premium paid
+      
+      // Calculate max profit for long positions
+      const hasLongCalls = options.some(opt => opt.side === 'call' && opt.position === 'long')
+      if (hasLongCalls) {
+        maxProfit = 'Unlimited'
+      } else {
+        // For long puts, max profit is strike - premium
+        const longPuts = options.filter(opt => opt.side === 'put' && opt.position === 'long')
+        if (longPuts.length > 0) {
+          maxProfit = longPuts.reduce((sum, opt) => 
+            sum + ((opt.strike - opt.premium) * opt.contracts * multiplier), 0
+          ) - totalPremiumPaid
+        } else {
+          maxProfit = 'Unlimited'
+        }
+      }
+    }
     
     // Calculate Y-axis range based on percentage limits (-100% to +100%)
     const absPremium = Math.abs(totalPremiumPaid)
@@ -449,22 +469,23 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     const yAxisMax = absPremium || 100 // This represents +100% gain
     
     return {
-      maxLoss: maxLoss === Infinity ? 'Unlimited' : Math.round(maxLoss * 100) / 100,
+      maxLoss: typeof maxLoss === 'number' ? Math.round(maxLoss * 100) / 100 : maxLoss,
       breakeven: breakevenPrices.length > 0 ? Math.round(breakevenPrices[0] * 100) / 100 : Math.round(breakeven * 100) / 100,
       breakevenPrices: breakevenPrices.map(bp => Math.round(bp * 100) / 100),
       currentPnL: Math.round(currentPnL * 100) / 100,
-      maxProfit: 'Unlimited', // Could be calculated more precisely for specific strategies
+      maxProfit: typeof maxProfit === 'number' ? Math.round(maxProfit * 100) / 100 : maxProfit,
       yAxisMin: Math.round(yAxisMin * 100) / 100,
       yAxisMax: Math.round(yAxisMax * 100) / 100,
-      totalPremiumPaid: Math.round(Math.abs(totalPremiumPaid) * 100) / 100
+      totalPremiumPaid: Math.round(Math.abs(totalPremiumPaid - totalPremiumReceived) * 100) / 100
     }
-  }, [validatedInputs, calculatePnL, breakevenPrices])
+  }, [validatedInputs, calculatePnL, breakevenPrices, collateralProvided])
 
   // ECharts configuration
   const getOption = useCallback(() => {
     const lineData = chartData.map(d => [d.price, d.pnl])
     
     return {
+      backgroundColor: 'transparent', // Make chart background transparent
       animation: true,
       animationDuration: 600, // Even faster initial animation
       animationEasing: 'cubicOut',
@@ -472,7 +493,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       animationDelay: 0, // No delay for faster initial render
       hoverLayerThreshold: 3000, // Optimize hover performance for large datasets
       grid: {
-          top: 10,
+          top: 20,
           right: 20, // Increased right padding to prevent number cutoff
           bottom: 10,
           left: 10,
@@ -763,24 +784,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       className={className}
     >
       <Card 
-        ref={chartCardRef}
-        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
-        style={{
-          background: `
-            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
-              transparent 75%
-            ),
-            linear-gradient(to bottom right, 
-              rgb(15 23 42 / 0.4), 
-              rgb(30 41 59 / 0.3), 
-              rgb(51 65 85 / 0.2)
-            )
-          `,
-          transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
-        }}
+        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm"
       >
         {/* Removed header completely */}
         
@@ -809,7 +813,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               </div>
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
-                <span className="text-xs sm:text-sm font-semibold text-green-400">{metrics.maxProfit}</span>
+                <span className="text-xs sm:text-sm font-semibold text-green-400">
+                  {typeof metrics.maxProfit === 'number' ? `$${metrics.maxProfit}` : metrics.maxProfit}
+                </span>
               </div>
               
               {/* Strikes with hover for multiple strikes */}
