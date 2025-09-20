@@ -446,14 +446,22 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           type: 'cross',
           animation: true,
           label: {
-            backgroundColor: '#4a85ff',
-            borderColor: '#4a85ff',
-            shadowBlur: 0
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            color: '#fff',
+            shadowBlur: 0,
+            formatter: (params: any) => {
+              if (params.axisDimension === 'x') {
+                return `$${params.value.toFixed(2)}`
+              } else {
+                return `$${params.value.toFixed(2)}`
+              }
+            }
           },
           crossStyle: {
-            color: '#4a85ff',
+            color: 'rgba(255,255,255,0.3)',
             width: 1,
-            type: 'solid'
+            type: 'dashed'
           }
         },
         backgroundColor: 'rgba(8, 8, 8, 0.92)',
@@ -484,20 +492,20 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           }
           
           return `
-            <div style="padding: 4px 0;">
-              <div style="display: flex; align-items: center; justify-between; gap: 16px; margin-bottom: 6px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">Price at Expiration</span>
-                <span style="color: #fff; font-weight: 600; font-size: 12px;">$${price.toFixed(2)}</span>
+            <div style="padding: 4px 0; min-width: 140px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="color: #FFBA4A; font-size: 11px; font-weight: 500;">Breakeven Price</span>
+                <span style="color: #fff; font-weight: 600; font-size: 12px; text-align: right;">$${price.toFixed(2)}</span>
               </div>
-              <div style="display: flex; align-items: center; justify-between; gap: 16px; margin-bottom: 6px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">P/L</span>
-                <span style="color: ${pnl >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500;">P/L</span>
+                <span style="color: ${pnl >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px; text-align: right;">
                   ${pnl >= 0 ? '+' : ''}${formatPnL(pnl)}
                 </span>
               </div>
-              <div style="display: flex; align-items: center; justify-between; gap: 16px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">Gain/Loss</span>
-                <span style="color: ${percentageGain >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500;">Gain/Loss</span>
+                <span style="color: ${percentageGain >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px; text-align: right;">
                   ${percentageGain >= 0 ? '+' : ''}${percentageGain.toFixed(1)}%
                 </span>
               </div>
@@ -541,11 +549,25 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           }
         },
         axisLabel: {
-          color: 'rgba(255,255,255,0.7)',
           fontSize: 11,
+          rich: {
+            positive: {
+              color: '#4AFFBA'
+            },
+            negative: {
+              color: '#ef4444'
+            },
+            neutral: {
+              color: 'rgba(255,255,255,0.7)'
+            }
+          },
           formatter: (value: number) => {
             const percentage = calculatePercentageGain(value)
-            return `$${Math.round(value)} (${percentage >= 0 ? '+' : ''}${percentage.toFixed(0)}%)`
+            if (percentage === 0) {
+              return `{neutral|${percentage.toFixed(0)}%}`
+            }
+            const color = percentage > 0 ? 'positive' : 'negative'
+            return `{${color}|${percentage > 0 ? '+' : ''}${percentage.toFixed(0)}%}`
           }
         },
         splitLine: {
@@ -566,7 +588,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           symbol: 'none',
           lineStyle: {
             color: '#4a85ff',
-            width: 3,
+            width: 2,
             shadowBlur: 10,
             shadowColor: 'rgba(74, 133, 255, 0.3)'
           },
@@ -608,13 +630,19 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               // Current price line
               {
                 xAxis: validatedInputs.current,
-                lineStyle: { color: '#8b5cf6', type: 'dashed' },
-                label: { show: false }
+                lineStyle: { color: '#8D4AFF', type: 'solid', width: 1, opacity: 0.5 },
+                label: { 
+                  show: true,
+                  formatter: `Current: $${validatedInputs.current.toFixed(2)}`,
+                  color: 'rgba(141, 74, 255, 0.5)',
+                  fontSize: 10,
+                  position: 'insideEndBottom'
+                }
               },
-              // Breakeven line(s) (grey-white color) - supports multiple breakevens for multi-leg strategies
+              // Breakeven line(s) - supports multiple breakevens for multi-leg strategies
               ...(metrics.breakevenPrices || []).map((breakevenPrice, index) => ({
                 xAxis: breakevenPrice,
-                lineStyle: { color: '#FFBA4A', type: 'dashed' },
+                lineStyle: { color: '#FFBA4A', type: 'dashed', width: 1 },
                 label: { show: false }
               }))
             ]
@@ -706,35 +734,35 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             {/* Simple metrics below chart */}
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white/60 block">Max Loss</span>
+                <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
                 <span className="text-xs sm:text-sm font-semibold text-red-400">
                   {typeof metrics.maxLoss === 'string' ? metrics.maxLoss : `$${Math.abs(metrics.maxLoss)}`}
                 </span>
               </div>
               <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white/60 block">Max Profit</span>
+                <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
                 <span className="text-xs sm:text-sm font-semibold text-green-400">{metrics.maxProfit}</span>
               </div>
               
               {/* Strikes with hover for multiple strikes */}
               {validatedInputs.options.length > 1 ? (
                 <div className="bg-black/40 rounded-lg p-2 relative group cursor-pointer">
-                  <span className="text-[10px] sm:text-xs text-white/60 block">Strikes</span>
+                  <span className="text-[10px] sm:text-xs text-white block">Strikes</span>
                   <span className="text-xs sm:text-sm font-semibold text-white/80">
                     {validatedInputs.options.length}
                   </span>
                   {/* Hover tooltip for multiple strikes */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-[#4a85ff]/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg">
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-[#4a85ff]/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg" style={{ minWidth: '140px' }}>
                     {validatedInputs.options.map((option, index) => (
-                      <div key={index} className="flex items-center justify-between gap-4 mb-1 last:mb-0 min-w-[140px]">
+                      <div key={index} className="flex items-center justify-between mb-1 last:mb-0" style={{ minWidth: '100%' }}>
                         <div className="flex items-center gap-2">
-                          <span className={option.side === 'call' ? 'text-green-400' : 'text-red-400'}>
+                          <span className={`font-medium ${option.side === 'call' ? 'text-green-400' : 'text-red-400'}`}>
                             {option.side.toUpperCase()}
                           </span>
-                          <span className="text-white/80">${option.strike}</span>
+                          <span className="text-white/80 font-medium">${option.strike}</span>
                         </div>
                         {'expiry' in option && option.expiry && (
-                          <span className="text-white/60 text-[10px]">
+                          <span className="text-white/60 text-[10px] font-medium text-right">
                             {new Date(option.expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
                         )}
@@ -744,7 +772,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                 </div>
               ) : (
                 <div className="bg-black/40 rounded-lg p-2">
-                  <span className="text-[10px] sm:text-xs text-white/60 block">Strike Price</span>
+                  <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
                   <span className="text-xs sm:text-sm font-semibold text-white/80">
                     ${validatedInputs.strike}
                   </span>
@@ -755,10 +783,10 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               {/* Breakeven with hover for multiple breakevens */}
               {(metrics.breakevenPrices || []).length > 0 && (
                 <div className="bg-black/40 rounded-lg p-2 relative group cursor-pointer">
-                  <span className="text-[10px] sm:text-xs text-white/60 block">
+                  <span className="text-[10px] sm:text-xs text-white block">
                     {(metrics.breakevenPrices || []).length > 1 ? 'Breakevens' : 'Breakeven'}
                   </span>
-                  <span className="text-xs sm:text-sm font-semibold text-gray-300">
+                  <span className="text-xs sm:text-sm font-semibold text-[#FFBA4A]">
                     {(metrics.breakevenPrices || []).length === 1 
                       ? `$${(metrics.breakevenPrices || [])[0]}` 
                       : `${(metrics.breakevenPrices || []).length} points`
