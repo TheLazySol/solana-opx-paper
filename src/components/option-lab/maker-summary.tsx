@@ -1,6 +1,7 @@
 import { Card, CardBody, CardHeader, Tooltip, Chip } from '@heroui/react'
 import { calculateTotalPremium, calculateLiquidationPrice } from "@/constants/option-lab/calculations"
-import { PnLChart } from "../trade/pnl-chart"
+import { PnLChartInteractive } from "../trade/pnl-chart-interactive"
+import { SelectedOption } from "../trade/option-data"
 import { formatNumberWithCommas } from '@/utils/utils'
 import { useMemo } from "react"
 import { Activity, Target, TrendingUp, TrendingDown } from 'lucide-react'
@@ -30,6 +31,20 @@ export function MakerSummary({
   assetPrice = null
 }: MakerSummaryProps) {
   const totalPremium = calculateTotalPremium(options);
+  
+  // Convert OptionPosition[] to SelectedOption[] for the chart
+  const selectedOptions: SelectedOption[] = useMemo(() => {
+    return options.map((option, index) => ({
+      index,
+      asset: option.asset,
+      strike: Number(option.strikePrice),
+      expiry: "2024-12-31", // Default expiry - you may want to add this to OptionPosition interface
+      type: 'ask' as const, // For makers/sellers, they're providing asks
+      side: option.optionType.toLowerCase() as 'call' | 'put',
+      price: Number(option.premium),
+      quantity: option.quantity
+    }));
+  }, [options]);
   
   // Calculate PnL data points similar to the PnL chart
   const pnlPoints = useMemo(() => {
@@ -259,14 +274,13 @@ export function MakerSummary({
             >
               <div className="h-[300px]">
                 {options.length > 0 && (
-                  <PnLChart
-                    strikePrice={Number(options[0].strikePrice)}
-                    premium={Number(options[0].premium)}
-                    contracts={Number(options[0].quantity)}
+                  <PnLChartInteractive
+                    selectedOptions={selectedOptions}
                     currentPrice={assetPrice || 100}
                     showHeader={false}
                     title="Maker P&L Analysis"
                     className="h-full"
+                    collateralProvided={collateralProvided}
                   />
                 )}
               </div>
