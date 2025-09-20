@@ -2,8 +2,7 @@
 
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Card, CardBody, CardHeader, Chip } from '@heroui/react'
-import { TrendingUp, TrendingDown, Target, Activity, DollarSign, Move } from 'lucide-react'
+import { Card, CardBody } from '@heroui/react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
@@ -386,13 +385,13 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       animation: true,
       animationDuration: 1500,
       animationEasing: 'cubicOut',
-      grid: {
-        top: 10,
-        right: 10,
-        bottom: 60, // Increased from 50 to 60 to accommodate taller slider
-        left: 60,
-        containLabel: false
-      },
+        grid: {
+          top: 10,
+          right: 10,
+          bottom: 50,
+          left: 60,
+          containLabel: false
+        },
       tooltip: {
         trigger: 'axis',
         axisPointer: {
@@ -520,46 +519,6 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         min: metrics.yAxisMin,
         max: metrics.yAxisMax
       },
-      dataZoom: [
-        // X-axis zoom (horizontal)
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          filterMode: 'none',
-          start: 0,
-          end: 100
-        },
-        {
-          type: 'slider',
-          xAxisIndex: 0,
-          filterMode: 'none',
-          start: 0,
-          end: 100,
-          height: 30, // Increased height from 20 to 30
-          bottom: 8,
-          borderColor: 'rgba(255,255,255,0.1)',
-          backgroundColor: 'rgba(0,0,0,0.2)',
-          fillerColor: 'rgba(74,133,255,0.2)',
-          handleStyle: {
-            color: '#4a85ff',
-            borderColor: '#4a85ff'
-          },
-          textStyle: {
-            color: 'rgba(255,255,255,0.7)'
-          }
-        },
-        // Y-axis zoom (vertical) - enables dragging up/down (inside only, no slider)
-        {
-          type: 'inside',
-          yAxisIndex: 0,
-          filterMode: 'none',
-          start: 0,
-          end: 100,
-          zoomOnMouseWheel: 'shift', // Hold shift to zoom Y-axis
-          moveOnMouseMove: true, // Enable dragging
-          moveOnMouseWheel: true // Enable wheel scrolling
-        }
-      ],
       series: [
         // Main P&L line
         {
@@ -610,7 +569,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                 label: { 
                   formatter: `${option.side.toUpperCase()} $${option.strike}`,
                   color: option.side === 'call' ? '#10b981' : '#ef4444',
-                  fontSize: 10
+                  fontSize: 10,
+                  position: 'insideEndBottom'
                 }
               })),
               // Current price line
@@ -619,7 +579,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                 lineStyle: { color: '#8b5cf6', type: 'dashed' },
                 label: { 
                   formatter: `Current: $${validatedInputs.current.toFixed(2)}`,
-                  color: '#8b5cf6'
+                  color: '#8b5cf6',
+                  position: 'insideStartTop'
                 }
               },
               // Breakeven line(s) (grey-white color) - supports multiple breakevens for multi-leg strategies
@@ -631,7 +592,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                     ? `B/E${index + 1}: $${breakevenPrice.toFixed(2)}`
                     : `B/E: $${breakevenPrice.toFixed(2)}`,
                   color: 'rgba(156, 163, 175, 0.9)',
-                  fontSize: 10
+                  fontSize: 10,
+                  position: 'insideStartTop'
                 }
               }))
             ]
@@ -705,38 +667,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
         }}
       >
-        {showHeader && (
-          <CardHeader className="pb-2 px-4">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
-                  <Activity className="w-3 h-3 text-[#4a85ff]" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{title}</h3>
-              </div>
-              
-              {/* Compact Inline Metrics */}
-              <div className="flex items-center gap-2">
-                <Chip 
-                  size="sm" 
-                  variant="flat" 
-                  className="bg-white/10 text-white/70"
-                  startContent={<Target className="w-3 h-3" />}
-                >
-                  B/E: ${metrics.breakeven}
-                </Chip>
-                <Chip 
-                  size="sm" 
-                  variant="flat" 
-                  className={metrics.currentPnL >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                  startContent={metrics.currentPnL >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                >
-                  P/L: {metrics.currentPnL >= 0 ? '+' : ''}${metrics.currentPnL}
-                </Chip>
-              </div>
-            </div>
-          </CardHeader>
-        )}
+        {/* Removed header completely */}
         
         <CardBody className="p-2">
           <div className="relative">
@@ -763,25 +694,50 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                 <span className="text-[10px] sm:text-xs text-white/60 block">Max Profit</span>
                 <span className="text-xs sm:text-sm font-semibold text-green-400">{metrics.maxProfit}</span>
               </div>
-              <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white/60 block">
-                  {validatedInputs.options.length > 1 ? 'Legs' : 'Strike'}
-                </span>
-                <span className="text-xs sm:text-sm font-semibold text-white/80">
-                  {validatedInputs.options.length > 1 
-                    ? `${validatedInputs.options.length}` 
-                    : `$${validatedInputs.strike}`
-                  }
-                </span>
-              </div>
+              
+              {/* Legs/Strike with hover for multiple legs */}
+              {validatedInputs.options.length > 1 ? (
+                <div className="bg-black/40 rounded-lg p-2 relative group cursor-pointer">
+                  <span className="text-[10px] sm:text-xs text-white/60 block">Legs</span>
+                  <span className="text-xs sm:text-sm font-semibold text-white/80">
+                    {validatedInputs.options.length}
+                  </span>
+                  {/* Hover tooltip for multiple legs */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-white/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    {validatedInputs.options.map((option, index) => (
+                      <div key={index} className="flex items-center gap-2 mb-1 last:mb-0">
+                        <span className={option.side === 'call' ? 'text-green-400' : 'text-red-400'}>
+                          {option.side.toUpperCase()}
+                        </span>
+                        <span className="text-white/80">${option.strike}</span>
+                        {'expiry' in option && option.expiry && (
+                          <span className="text-white/60 text-[10px]">
+                            {new Date(option.expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-black/40 rounded-lg p-2">
+                  <span className="text-[10px] sm:text-xs text-white/60 block">Strike</span>
+                  <span className="text-xs sm:text-sm font-semibold text-white/80">
+                    ${validatedInputs.strike}
+                  </span>
+                </div>
+              )}
+              
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white/60 block">Net Premium</span>
                 <span className="text-xs sm:text-sm font-semibold text-white/80">
                   ${metrics.totalPremiumPaid}
                 </span>
               </div>
+              
+              {/* Breakeven with hover for multiple breakevens */}
               {(metrics.breakevenPrices || []).length > 0 && (
-                <div className="bg-black/40 rounded-lg p-2">
+                <div className="bg-black/40 rounded-lg p-2 relative group cursor-pointer">
                   <span className="text-[10px] sm:text-xs text-white/60 block">
                     {(metrics.breakevenPrices || []).length > 1 ? 'Breakevens' : 'Breakeven'}
                   </span>
@@ -791,6 +747,16 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                       : `${(metrics.breakevenPrices || []).length} points`
                     }
                   </span>
+                  {/* Hover tooltip for multiple breakevens */}
+                  {(metrics.breakevenPrices || []).length > 1 && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-white/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      {(metrics.breakevenPrices || []).map((price, index) => (
+                        <div key={index} className="text-gray-300">
+                          B/E{index + 1}: ${price.toFixed(2)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
