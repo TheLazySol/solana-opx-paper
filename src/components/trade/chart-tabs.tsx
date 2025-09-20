@@ -23,11 +23,24 @@ export const ChartTabs: FC<ChartTabsProps> = ({
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('asset')
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false)
   const chartTabsCardRef = useMouseGlow()
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
   }, [])
+
+  // Automatically switch to P&L chart when options are first selected
+  useEffect(() => {
+    if (selectedOptions.length > 0 && !hasAutoSwitched) {
+      setActiveTab('pnl')
+      setHasAutoSwitched(true)
+    }
+    // Reset auto-switch flag when no options are selected
+    if (selectedOptions.length === 0) {
+      setHasAutoSwitched(false)
+    }
+  }, [selectedOptions.length, hasAutoSwitched])
 
   // Get real-time price from asset price provider
   const { price: currentPrice } = useAssetPriceInfo(selectedAsset)
