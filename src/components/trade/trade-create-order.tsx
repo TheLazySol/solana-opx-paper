@@ -36,7 +36,7 @@ interface CreateOrderProps {
   optionChainData?: OptionContract[]
 }
 
-// Define a type for stable leg identifiers
+  // Define a type for stable leg identifiers
 type LegKey = string; // option.index as string
 
 export const CreateOrder: FC<CreateOrderProps> = ({ 
@@ -84,7 +84,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     // Update order types
     setOrderTypes(prev => {
       const newOrderTypes: Record<LegKey, 'MKT' | 'LMT'> = {};
-      selectedOptions.forEach((option) => {
+      selectedOptions.forEach((option, index) => {
         const legKey = option.index.toString();
         newOrderTypes[legKey] = prev[legKey] || 'MKT';
       });
@@ -94,7 +94,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     // Update price input values using live prices
     setInputValues(prev => {
       const newValues = { ...prev };
-      selectedOptions.forEach((option) => {
+      selectedOptions.forEach((option, index) => {
         const legKey = option.index.toString();
         // Always ensure there's a value - use live price if no previous value
         if (!prev[legKey]) {
@@ -112,24 +112,24 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       const newQuantityInputs = { ...prev };
       let needsUpdate = false;
       
-      selectedOptions.forEach((option) => {
+      selectedOptions.forEach((option, index) => {
         const legKey = option.index.toString();
-        
+
         // Preserve existing quantity input or initialize with current option quantity
         if (!newQuantityInputs[legKey]) {
           const safeQuantity = option.quantity || MIN_QTY;
           newQuantityInputs[legKey] = safeQuantity.toFixed(2);
           needsUpdate = true;
         }
-        
+
         // If option type is 'bid', get the maximum available
         if (option.type === 'bid') {
           const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
-            option.strike, 
-            option.expiry, 
+            option.strike,
+            option.expiry,
             option.side
           );
-          
+
           // Store the max available (default to 0 if undefined)
           const safeAvailableOptions = availableOptions ?? 0;
           newMaxAvailable[legKey] = safeAvailableOptions;
@@ -139,7 +139,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
           if (qtyRequested > safeAvailableOptions && safeAvailableOptions > 0) {
             // Update the quantity in parent component
             if (onUpdateQuantity) {
-              onUpdateQuantity(selectedOptions.findIndex(opt => opt.index === option.index), safeAvailableOptions);
+              onUpdateQuantity(index, safeAvailableOptions);
               // Also update the local input value to match
               newQuantityInputs[legKey] = safeAvailableOptions.toFixed(2);
               needsUpdate = true;
@@ -268,7 +268,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const handleOrderTypeChange = (index: number, type: 'MKT' | 'LMT') => {
     const option = selectedOptions[index]
     const legKey = option.index.toString()
-    
+
     setOrderTypes(prev => ({ ...prev, [legKey]: type }));
     
     if (type === 'MKT') {
@@ -289,7 +289,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const option = selectedOptions[index]
     const legKey = option.index.toString()
-    
+
     if (!onUpdateLimitPrice || orderTypes[legKey] === 'MKT') return;
     
     const inputValue = e.target.value;
@@ -312,7 +312,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   };
 
   // Get the display price for an option using live data
-  const getDisplayPrice = (option: SelectedOption): string => {
+  const getDisplayPrice = (option: SelectedOption, index: number): string => {
     const legKey = option.index.toString()
     const livePrice = getLiveOptionPrice(option);
     
@@ -323,13 +323,22 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   };
 
   // Ensure we have a valid quantity value for display
-  const getDisplayQuantity = (option: SelectedOption): string => {
+  const getDisplayQuantity = (option: SelectedOption, index: number): string => {
     const legKey = option.index.toString()
-    return quantityInputs[legKey] || option.quantity.toFixed(2);
+    // First check if quantityInputs has a value (including "0" string)
+    if (quantityInputs[legKey] !== null && quantityInputs[legKey] !== undefined) {
+      return quantityInputs[legKey];
+    }
+    // Then check if option.quantity exists and is valid
+    if (option.quantity !== null && option.quantity !== undefined) {
+      return option.quantity.toFixed(2);
+    }
+    // Return empty string as fallback
+    return "";
   };
 
   // Get available options warning if needed
-  const getAvailableOptionsWarning = (option: SelectedOption): string | null => {
+  const getAvailableOptionsWarning = (option: SelectedOption, index: number): string | null => {
     const legKey = option.index.toString()
     if (option.type === 'bid') {
       const availableQty = maxAvailableOptions[legKey] ?? 0
@@ -346,7 +355,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   };
 
   // Get available options display
-  const getOptionsAvailableDisplay = (option: SelectedOption): string => {
+  const getOptionsAvailableDisplay = (option: SelectedOption, index: number): string => {
     const legKey = option.index.toString()
     if (option.type === 'bid') {
       const availableQty = maxAvailableOptions[legKey] ?? 0
@@ -465,7 +474,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                 <div className="space-y-2">
                   {selectedOptions.map((option, index) => {
                     const legKey = option.index.toString()
-                    const availabilityWarning = getAvailableOptionsWarning(option)
+                    const availabilityWarning = getAvailableOptionsWarning(option, index)
                     const optionType = option.side === 'call' ? 'Call' : 'Put'
                     const expiryDate = option.expiry.split('T')[0]
                     
@@ -608,7 +617,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                   <span className="text-xs text-white/60">Qty:</span>
                                   <Input
                                     type="text"
-                                    value={getDisplayQuantity(option)}
+                                    value={getDisplayQuantity(option, index)}
                                     onChange={(e) => handleQuantityInputChange(e, index)}
                                     size="sm"
                                     variant="flat"
@@ -625,7 +634,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                     <>
                                       <span className="text-xs text-white/60">OA:</span>
                                       <span className="text-xs text-white/40">
-                                        {getOptionsAvailableDisplay(option)}
+                                        {getOptionsAvailableDisplay(option, index)}
                                       </span>
                                     </>
                                   )}
@@ -671,7 +680,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
                                     <div className="flex items-center gap-1 h-6">
                                       <span className="text-xs text-white/60">Premium:</span>
                                       <span className="text-sm font-medium text-[#4a85ff] transition-all duration-300 drop-shadow-[0_0_8px_rgba(74,133,255,0.8)] hover:drop-shadow-[0_0_12px_rgba(74,133,255,1)]">
-                                        ${getDisplayPrice(option)}
+                                        ${getDisplayPrice(option, index)}
                                       </span>
                                     </div>
                                   ) : (

@@ -38,9 +38,10 @@ export const PremiumDisplay = ({
   // Switch back to market mode if user is in limit mode but strike price is cleared
   React.useEffect(() => {
     if (orderType === 'limit' && !hasStrikePrice) {
-      handleOrderTypeChange('market');
+      setValue('orderType', 'market');
+      onOrderTypeChange?.('market');
     }
-  }, [hasStrikePrice, orderType]);
+  }, [hasStrikePrice, orderType, setValue, onOrderTypeChange]);
 
   const handlePremiumChange = (value: string) => {
     if (value === "") {
