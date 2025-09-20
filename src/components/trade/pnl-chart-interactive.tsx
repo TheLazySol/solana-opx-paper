@@ -814,7 +814,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
                 <span className="text-xs sm:text-sm font-semibold text-green-400">
-                  {typeof metrics.maxProfit === 'number' ? `$${metrics.maxProfit}` : metrics.maxProfit}
+                  {(() => {
+                    const vals = chartData.map(d => d.pnl)
+                    const m = vals.length ? Math.max(...vals) : 0
+                    return Number.isFinite(m) ? `$${Math.round(m * 100) / 100}` : 'Unlimited'
+                  })()}
                 </span>
               </div>
               

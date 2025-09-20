@@ -325,7 +325,16 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   // Ensure we have a valid quantity value for display
   const getDisplayQuantity = (option: SelectedOption, index: number): string => {
     const legKey = option.index.toString()
-    return quantityInputs[legKey] || option.quantity.toFixed(2);
+    // First check if quantityInputs has a value (including "0" string)
+    if (quantityInputs[legKey] !== null && quantityInputs[legKey] !== undefined) {
+      return quantityInputs[legKey];
+    }
+    // Then check if option.quantity exists and is valid
+    if (option.quantity !== null && option.quantity !== undefined) {
+      return option.quantity.toFixed(2);
+    }
+    // Return empty string as fallback
+    return "";
   };
 
   // Get available options warning if needed
