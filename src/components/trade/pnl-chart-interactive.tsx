@@ -335,14 +335,42 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     const points: ChartDataPoint[] = []
     
     // Higher resolution for smoother curves
-    const numPoints = 500
+    const numPoints = Math.max(10, 500) // Ensure minimum points to avoid division by zero
     const range = max - xAxisMin
+    
+    // Handle degenerate case where range is 0 or negative
+    if (range <= 0) {
+      const pnl = calculatePnL(xAxisMin)
+      points.push({
+        price: Math.round(xAxisMin * 100) / 100,
+        pnl: Math.round(pnl * 100) / 100,
+        isProfit: pnl >= 0
+      })
+      return points
+    }
+    
     const step = range / numPoints
     
-    for (let price = xAxisMin; price <= max; price += step) {
-      const pnl = calculatePnL(price)
+    // Guard against invalid step values
+    if (!isFinite(step) || step <= 0) {
+      const pnl = calculatePnL(xAxisMin)
       points.push({
-        price: Math.round(price * 100) / 100,
+        price: Math.round(xAxisMin * 100) / 100,
+        pnl: Math.round(pnl * 100) / 100,
+        isProfit: pnl >= 0
+      })
+      return points
+    }
+    
+    // Use index-based loop to prevent floating-point rounding issues
+    for (let i = 0; i <= numPoints; i++) {
+      const price = xAxisMin + (i * step)
+      // Clamp to max to avoid overshooting due to floating-point precision
+      const clampedPrice = Math.min(price, max)
+      
+      const pnl = calculatePnL(clampedPrice)
+      points.push({
+        price: Math.round(clampedPrice * 100) / 100,
         pnl: Math.round(pnl * 100) / 100,
         isProfit: pnl >= 0
       })
