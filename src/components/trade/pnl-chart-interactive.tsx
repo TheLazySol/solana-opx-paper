@@ -61,6 +61,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   const chartCardRef = useMouseGlow()
   const chartRef = useRef<ReactECharts>(null)
   const [hoveredValue, setHoveredValue] = useState<{ price: number; pnl: number } | null>(null)
+  const lastTooltipUpdate = useRef<number>(0)
+  const lastTooltipContent = useRef<string>('')
 
   // Input validation and processing
   const validatedInputs = useMemo(() => {
@@ -253,32 +255,32 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     return totalPnL
   }, [validatedInputs])
 
-  // Calculate percentage gain/loss for a given P&L
-  const calculatePercentageGain = useCallback((pnl: number): number => {
+  // Pre-calculate total premium for performance optimization
+  const totalPremiumPaid = useMemo(() => {
     const { options, multiplier } = validatedInputs
     
     if (!options || options.length === 0) return 0
     
-    // Calculate total premium paid/received for all legs
-    let totalPremiumPaid = 0
-    
+    let total = 0
     options.forEach(option => {
       const { premium, contracts, position } = option
       if (position === 'long') {
         // Long positions: premium is paid (cost)
-        totalPremiumPaid += premium * contracts * multiplier
+        total += premium * contracts * multiplier
       } else {
         // Short positions: premium is received (credit)
-        totalPremiumPaid -= premium * contracts * multiplier
+        total -= premium * contracts * multiplier
       }
     })
     
-    // For percentage calculation, we use absolute value of total premium
-    const absTotal = Math.abs(totalPremiumPaid)
-    if (absTotal === 0) return 0
-    
-    return (pnl / absTotal) * 100
+    return Math.abs(total)
   }, [validatedInputs])
+
+  // Calculate percentage gain/loss for a given P&L (optimized for hover performance)
+  const calculatePercentageGain = useCallback((pnl: number): number => {
+    if (totalPremiumPaid === 0) return 0
+    return (pnl / totalPremiumPaid) * 100
+  }, [totalPremiumPaid])
 
   // Calculate precise breakeven price(s) for multi-leg strategies
   const breakevenPrices = useMemo((): number[] => {
@@ -431,8 +433,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     
     return {
       animation: true,
-      animationDuration: 1500,
+      animationDuration: 600, // Even faster initial animation
       animationEasing: 'cubicOut',
+      animationDurationUpdate: 0, // Disable animation on updates to prevent hover slowdown
+      animationDelay: 0, // No delay for faster initial render
+      hoverLayerThreshold: 3000, // Optimize hover performance for large datasets
         grid: {
           top: 10,
           right: 10,
@@ -442,9 +447,13 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
       tooltip: {
         trigger: 'axis',
+        triggerOn: 'mousemove', // More responsive than default 'mousemove|click'
+        showDelay: 0, // No delay for showing tooltip
+        hideDelay: 100, // Small delay for hiding to prevent flickering
+        enterable: false, // Prevent mouse from entering tooltip area
         axisPointer: {
           type: 'cross',
-          animation: true,
+          animation: false, // Disable axis pointer animation to prevent slowdown
           label: {
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
             borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -475,6 +484,14 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
         formatter: (params: any) => {
           if (!params || params.length === 0) return ''
+          
+          // Throttle tooltip updates to improve performance during rapid mouse movements
+          const now = Date.now()
+          if (now - lastTooltipUpdate.current < 16) { // ~60fps throttling
+            return lastTooltipContent.current // Return cached content
+          }
+          lastTooltipUpdate.current = now
+          
           const price = params[0].value[0]
           const pnl = params[0].value[1]
           const percentageGain = calculatePercentageGain(pnl)
@@ -491,7 +508,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             }
           }
           
-          return `
+          const tooltipContent = `
             <div style="padding: 4px 0; min-width: 140px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                 <span style="color: #FFBA4A; font-size: 11px; font-weight: 500;">Breakeven Price</span>
@@ -511,6 +528,10 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               </div>
             </div>
           `
+          
+          // Cache the content for performance
+          lastTooltipContent.current = tooltipContent
+          return tooltipContent
         }
       },
       xAxis: {
@@ -594,8 +615,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           },
           emphasis: {
             lineStyle: {
-              width: 4
-            }
+              width: 2 // Keep the same width as the normal state
+            },
+            animation: false // Disable emphasis animation to prevent hover slowdown
           },
           markLine: {
             silent: true,
@@ -727,7 +749,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                 option={getOption()}
                 style={{ height: '100%', width: '100%' }}
                 theme="dark"
-                opts={{ renderer: 'canvas' }}
+                opts={{ 
+                  renderer: 'canvas'
+                }}
               />
             </div>
             
