@@ -438,9 +438,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       animationDurationUpdate: 0, // Disable animation on updates to prevent hover slowdown
       animationDelay: 0, // No delay for faster initial render
       hoverLayerThreshold: 3000, // Optimize hover performance for large datasets
-        grid: {
+      grid: {
           top: 10,
-          right: 10,
+          right: 20, // Increased right padding to prevent number cutoff
           bottom: 10,
           left: 10,
           containLabel: true
@@ -555,7 +555,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           show: false
         },
         min: validatedInputs.xAxisMin,
-        max: validatedInputs.max
+        max: validatedInputs.max,
+        interval: 'auto', // Let ECharts automatically determine optimal spacing
+        splitNumber: 5 // Suggest ~5 evenly spaced ticks
       },
       yAxis: {
         type: 'value',
@@ -584,8 +586,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           },
           formatter: (value: number) => {
             const percentage = calculatePercentageGain(value)
-            if (percentage === 0) {
-              return `{neutral|${percentage.toFixed(0)}%}`
+            if (Math.abs(percentage) < 0.1) {
+              return `{neutral|0%}`
             }
             const color = percentage > 0 ? 'positive' : 'negative'
             return `{${color}|${percentage > 0 ? '+' : ''}${percentage.toFixed(0)}%}`
@@ -597,7 +599,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           }
         },
         min: metrics.yAxisMin,
-        max: metrics.yAxisMax
+        max: metrics.yAxisMax,
+        interval: metrics.yAxisMax / 4, // Create 4 intervals for 0%, ±25%, ±50%, ±75%, ±100%
+        splitNumber: 9 // 9 splits for -100%, -75%, -50%, -25%, 0%, +25%, +50%, +75%, +100%
       },
       series: [
         // Main P&L line
@@ -652,7 +656,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               // Current price line
               {
                 xAxis: validatedInputs.current,
-                lineStyle: { color: '#8D4AFF', type: 'solid', width: 1, opacity: 0.5 },
+                lineStyle: { color: '#8D4AFF', type: 'solid', width: 1, opacity: 0.70 },
                 label: { 
                   show: true,
                   formatter: `Current: $${validatedInputs.current.toFixed(2)}`,
