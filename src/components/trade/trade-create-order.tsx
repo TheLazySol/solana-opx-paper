@@ -36,8 +36,8 @@ interface CreateOrderProps {
   optionChainData?: OptionContract[]
 }
 
-// Define a type for stable leg identifiers
-type LegKey = string; // array index as string
+  // Define a type for stable leg identifiers
+type LegKey = string; // option.index as string
 
 export const CreateOrder: FC<CreateOrderProps> = ({ 
   selectedOptions = [],
@@ -85,7 +85,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     setOrderTypes(prev => {
       const newOrderTypes: Record<LegKey, 'MKT' | 'LMT'> = {};
       selectedOptions.forEach((option, index) => {
-        const legKey = index.toString();
+        const legKey = option.index.toString();
         newOrderTypes[legKey] = prev[legKey] || 'MKT';
       });
       return newOrderTypes;
@@ -95,7 +95,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     setInputValues(prev => {
       const newValues = { ...prev };
       selectedOptions.forEach((option, index) => {
-        const legKey = index.toString();
+        const legKey = option.index.toString();
         // Always ensure there's a value - use live price if no previous value
         if (!prev[legKey]) {
           const livePrice = getLiveOptionPrice(option);
@@ -113,23 +113,23 @@ export const CreateOrder: FC<CreateOrderProps> = ({
       let needsUpdate = false;
       
       selectedOptions.forEach((option, index) => {
-        const legKey = index.toString();
-        
+        const legKey = option.index.toString();
+
         // Preserve existing quantity input or initialize with current option quantity
         if (!newQuantityInputs[legKey]) {
           const safeQuantity = option.quantity || MIN_QTY;
           newQuantityInputs[legKey] = safeQuantity.toFixed(2);
           needsUpdate = true;
         }
-        
+
         // If option type is 'bid', get the maximum available
         if (option.type === 'bid') {
           const availableOptions = optionsAvailabilityTracker.getOptionsAvailable(
-            option.strike, 
-            option.expiry, 
+            option.strike,
+            option.expiry,
             option.side
           );
-          
+
           // Store the max available (default to 0 if undefined)
           const safeAvailableOptions = availableOptions ?? 0;
           newMaxAvailable[legKey] = safeAvailableOptions;
@@ -204,7 +204,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     let newQuantity = Math.max(MIN_QTY, +(currentQuantity + delta).toFixed(2)) // Ensure quantity doesn't go below MIN_QTY
     
     // If bidding (buying), check maximum available
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     if (option.type === 'bid') {
       const maxAvailable = maxAvailableOptions[legKey] ?? 0
       if (maxAvailable > 0 && newQuantity > maxAvailable) {
@@ -227,7 +227,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
     if (!onUpdateQuantity) return
 
     const option = selectedOptions[index]
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     const inputValue = e.target.value;
 
     // Allow empty field, numbers, and decimal numbers with up to 2 decimal places
@@ -267,8 +267,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   // Handle switching between MKT and LMT
   const handleOrderTypeChange = (index: number, type: 'MKT' | 'LMT') => {
     const option = selectedOptions[index]
-    const legKey = index.toString()
-    
+    const legKey = option.index.toString()
+
     setOrderTypes(prev => ({ ...prev, [legKey]: type }));
     
     if (type === 'MKT') {
@@ -288,8 +288,8 @@ export const CreateOrder: FC<CreateOrderProps> = ({
   // Handle price input changes
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const option = selectedOptions[index]
-    const legKey = index.toString()
-    
+    const legKey = option.index.toString()
+
     if (!onUpdateLimitPrice || orderTypes[legKey] === 'MKT') return;
     
     const inputValue = e.target.value;
@@ -313,7 +313,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
   // Get the display price for an option using live data
   const getDisplayPrice = (option: SelectedOption, index: number): string => {
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     const livePrice = getLiveOptionPrice(option);
     
     if (orderTypes[legKey] === 'MKT') {
@@ -324,13 +324,13 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
   // Ensure we have a valid quantity value for display
   const getDisplayQuantity = (option: SelectedOption, index: number): string => {
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     return quantityInputs[legKey] || option.quantity.toFixed(2);
   };
 
   // Get available options warning if needed
   const getAvailableOptionsWarning = (option: SelectedOption, index: number): string | null => {
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     if (option.type === 'bid') {
       const availableQty = maxAvailableOptions[legKey] ?? 0
       if (availableQty === 0) {
@@ -347,7 +347,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
 
   // Get available options display
   const getOptionsAvailableDisplay = (option: SelectedOption, index: number): string => {
-    const legKey = index.toString()
+    const legKey = option.index.toString()
     if (option.type === 'bid') {
       const availableQty = maxAvailableOptions[legKey] ?? 0
       return availableQty.toFixed(2);
@@ -464,7 +464,7 @@ export const CreateOrder: FC<CreateOrderProps> = ({
               <AnimatePresence mode="popLayout">
                 <div className="space-y-2">
                   {selectedOptions.map((option, index) => {
-                    const legKey = index.toString()
+                    const legKey = option.index.toString()
                     const availabilityWarning = getAvailableOptionsWarning(option, index)
                     const optionType = option.side === 'call' ? 'Call' : 'Put'
                     const expiryDate = option.expiry.split('T')[0]

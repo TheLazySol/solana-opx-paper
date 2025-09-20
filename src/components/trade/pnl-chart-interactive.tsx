@@ -304,10 +304,15 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     // For multi-leg strategies, find where P&L = 0 by testing price points
     const breakevenResults: number[] = []
     const testRange = validatedInputs.max
-    const testStep = testRange / 2000 // Test 2000 points for precision
+    const startPrice = Math.max(0, validatedInputs.xAxisMin)
+    const effectiveRange = Math.max(1e-6, testRange - startPrice)
+    const testStep = effectiveRange / 2000 // Test 2000 points for precision
     
-    let prevPnL = calculatePnL(0)
-    for (let price = testStep; price <= testRange; price += testStep) {
+    // Guard against degenerate cases
+    if (!isFinite(testStep) || testStep <= 0) return []
+    
+    let prevPnL = calculatePnL(startPrice)
+    for (let price = startPrice + testStep; price <= startPrice + effectiveRange; price += testStep) {
       const currentPnL = calculatePnL(price)
       
       // Check if P&L crossed zero (sign change)

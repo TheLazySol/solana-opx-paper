@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState, useCallback, useEffect } from 'react'
+import { FC, useState, useCallback, useEffect, useMemo } from 'react'
 import { Card, Tabs, Tab } from '@heroui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AssetChart } from './asset-chart'
@@ -37,7 +37,10 @@ export const ChartTabs: FC<ChartTabsProps> = ({
       setHasAutoSwitched(true)
     }
     // Reset auto-switch flag when no options are selected
-    if (selectedOptions.length === 0) {
+    if (selectedOptions.length === 0 && hasAutoSwitched) {
+      setActiveTab('asset')
+      setHasAutoSwitched(false)
+    } else if (selectedOptions.length === 0) {
       setHasAutoSwitched(false)
     }
   }, [selectedOptions.length, hasAutoSwitched])
@@ -45,11 +48,13 @@ export const ChartTabs: FC<ChartTabsProps> = ({
   // Get real-time price from asset price provider
   const { price: currentPrice } = useAssetPriceInfo(selectedAsset)
 
-  // Pass selected options directly to PnL chart
-  const pnlChartProps = selectedOptions.length > 0 ? {
-    selectedOptions: selectedOptions,
-    currentPrice: currentPrice // Now using real asset price from context
-  } : null
+  // Pass selected options directly to PnL chart - memoized to prevent unnecessary re-renders
+  const pnlChartProps = useMemo(() => {
+    return selectedOptions.length > 0 ? {
+      selectedOptions: selectedOptions,
+      currentPrice: currentPrice // Now using real asset price from context
+    } : null
+  }, [selectedOptions, currentPrice])
 
   return (
     <div className={`space-y-3 ${className}`}>
