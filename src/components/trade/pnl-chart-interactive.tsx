@@ -84,6 +84,13 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         )
         const validMax = Math.max(defaultMax, maxPrice || defaultMax)
         
+        const legacyBreakevenAnchor = breakeven || validCurrent || 100
+        const legacyIsMobile = typeof window !== 'undefined' && window.innerWidth < 768
+        const legacyRangeMultiplier = legacyIsMobile ? 0.25 : 0.5
+        const legacyXAxisMin = Math.max(0, legacyBreakevenAnchor * (1 - legacyRangeMultiplier))
+        const legacyXAxisMax = legacyBreakevenAnchor * (1 + legacyRangeMultiplier)
+        const legacyValidMax = maxPrice && maxPrice > legacyXAxisMax ? maxPrice : legacyXAxisMax
+        
         return {
           options: [{
             strike: validStrike,
@@ -94,26 +101,39 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             position: 'long' as const
           }],
           current: validCurrent,
-          max: validMax,
+          max: legacyValidMax,
           multiplier: validMultiplier,
           // Legacy compatibility
           strike: validStrike,
           premium: validPremium,
           contracts: validContracts,
-          breakeven
+          breakeven,
+          breakevenAnchor: legacyBreakevenAnchor,
+          xAxisMin: legacyXAxisMin,
+          isMobile: legacyIsMobile
         }
       }
       
       // Return empty state
+      const emptyAnchor = validCurrent || 100
+      const emptyIsMobile = typeof window !== 'undefined' && window.innerWidth < 768
+      const emptyRangeMultiplier = emptyIsMobile ? 0.25 : 0.5
+      const emptyXAxisMin = Math.max(0, emptyAnchor * (1 - emptyRangeMultiplier))
+      const emptyXAxisMax = emptyAnchor * (1 + emptyRangeMultiplier)
+      const emptyMax = maxPrice && maxPrice > emptyXAxisMax ? maxPrice : emptyXAxisMax
+      
       return {
         options: [],
         current: validCurrent,
-        max: Math.max(validCurrent * 2, 100),
+        max: emptyMax,
         multiplier: validMultiplier,
         strike: 0,
         premium: 0,
         contracts: 0,
-        breakeven: 0
+        breakeven: 0,
+        breakevenAnchor: emptyAnchor,
+        xAxisMin: emptyXAxisMin,
+        isMobile: emptyIsMobile
       }
     }
     
@@ -140,16 +160,40 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         : primaryOption.strike - primaryOption.premium
     ) : 0
     
-    // Calculate max price for X-axis based on all strikes
-    const strikes = processedOptions.map(opt => opt.strike).filter(s => s > 0)
-    const maxStrike = strikes.length > 0 ? Math.max(...strikes) : 100
-    const defaultMax = Math.max(
-      maxStrike * 2,
-      simpleBreakeven * 1.5,
-      validCurrent * 1.5,
-      100 // Minimum reasonable max
-    )
-    const validMax = Math.max(defaultMax, maxPrice || defaultMax)
+    // Calculate X-axis range based on breakeven points with +/- 100% range (50% on mobile)
+    // First, we need to calculate breakeven points properly for range calculation
+    let breakevenAnchor = 0
+    
+    if (processedOptions.length === 1) {
+      const option = processedOptions[0]
+      if (option.side === 'call') {
+        breakevenAnchor = option.strike + option.premium
+      } else {
+        breakevenAnchor = option.strike - option.premium
+      }
+    } else if (processedOptions.length > 1) {
+      // For multi-leg strategies, we'll calculate a simple average of strikes as anchor
+      // This is a simplified approach - more complex strategies would need specific calculations
+      const strikes = processedOptions.map(opt => opt.strike).filter(s => s > 0)
+      breakevenAnchor = strikes.length > 0 ? strikes.reduce((sum, strike) => sum + strike, 0) / strikes.length : validCurrent
+    } else {
+      breakevenAnchor = validCurrent
+    }
+    
+    // Use window width to determine if mobile (simplified approach)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    const rangeMultiplier = isMobile ? 0.25 : 0.5 // 25% for mobile, 50% for desktop
+    
+    // Ensure breakeven anchor is valid
+    if (breakevenAnchor <= 0) {
+      breakevenAnchor = validCurrent || 100
+    }
+    
+    const xAxisMin = Math.max(0, breakevenAnchor * (1 - rangeMultiplier))
+    const xAxisMax = breakevenAnchor * (1 + rangeMultiplier)
+    
+    // Only use maxPrice if it's explicitly provided and larger than our calculated range
+    const validMax = maxPrice && maxPrice > xAxisMax ? maxPrice : xAxisMax
     
     return {
       options: processedOptions,
@@ -160,7 +204,10 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       strike: primaryOption?.strike || 0,
       premium: primaryOption?.premium || 0,
       contracts: primaryOption?.contracts || 0,
-      breakeven: simpleBreakeven
+      breakeven: simpleBreakeven,
+      breakevenAnchor,
+      xAxisMin,
+      isMobile
     }
   }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts])
 
@@ -277,14 +324,15 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
 
   // Generate chart data points with higher resolution
   const chartData = useMemo((): ChartDataPoint[] => {
-    const { max, strike, breakeven, current } = validatedInputs
+    const { max, xAxisMin } = validatedInputs
     const points: ChartDataPoint[] = []
     
     // Higher resolution for smoother curves
-    const numPoints = 500 // Increased from 50
-    const step = max / numPoints
+    const numPoints = 500
+    const range = max - xAxisMin
+    const step = range / numPoints
     
-    for (let price = 0; price <= max; price += step) {
+    for (let price = xAxisMin; price <= max; price += step) {
       const pnl = calculatePnL(price)
       points.push({
         price: Math.round(price * 100) / 100,
@@ -388,9 +436,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         grid: {
           top: 10,
           right: 10,
-          bottom: 50,
-          left: 60,
-          containLabel: false
+          bottom: 10,
+          left: 10,
+          containLabel: true
         },
       tooltip: {
         trigger: 'axis',
@@ -405,14 +453,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           crossStyle: {
             color: '#4a85ff',
             width: 1,
-            type: 'dashed'
+            type: 'solid'
           }
         },
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        borderWidth: 1,
+        backgroundColor: 'rgba(8, 8, 8, 0.92)',
+        borderColor: 'rgba(74, 133, 255, 0.2)',
+        borderWidth: 0.5,
+        borderRadius: 8,
+        padding: 6,
         textStyle: {
-          color: '#fff'
+          color: '#fff',
+          fontSize: 10
         },
         formatter: (params: any) => {
           if (!params || params.length === 0) return ''
@@ -433,20 +484,20 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           }
           
           return `
-            <div style="padding: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Price at Expiration</span>
-                <span style="color: #fff; font-weight: 600;">$${price.toFixed(2)}</span>
+            <div style="padding: 4px 0;">
+              <div style="display: flex; align-items: center; justify-between; gap: 12px; margin-bottom: 6px;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">Price at Expiration</span>
+                <span style="color: #fff; font-weight: 600; font-size: 12px;">$${price.toFixed(2)}</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 12px;">P/L</span>
-                <span style="color: ${pnl >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">
+              <div style="display: flex; align-items: center; justify-between; gap: 12px; margin-bottom: 6px;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">P/L</span>
+                <span style="color: ${pnl >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px;">
                   ${pnl >= 0 ? '+' : ''}${formatPnL(pnl)}
                 </span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Gain/Loss</span>
-                <span style="color: ${percentageGain >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">
+              <div style="display: flex; align-items: center; justify-between; gap: 12px;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">Gain/Loss</span>
+                <span style="color: ${percentageGain >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px;">
                   ${percentageGain >= 0 ? '+' : ''}${percentageGain.toFixed(1)}%
                 </span>
               </div>
@@ -456,13 +507,6 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       },
       xAxis: {
         type: 'value',
-        name: 'Price at Expiration ($)',
-        nameLocation: 'middle',
-        nameGap: 35,
-        nameTextStyle: {
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: 12
-        },
         axisLine: {
           lineStyle: {
             color: 'rgba(255,255,255,0.3)'
@@ -476,23 +520,16 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         axisLabel: {
           color: 'rgba(255,255,255,0.7)',
           fontSize: 11,
-          formatter: (value: number) => `$${value}`
+          formatter: (value: number) => `$${Math.round(value)}`
         },
         splitLine: {
           show: false
         },
-        min: 0,
+        min: validatedInputs.xAxisMin,
         max: validatedInputs.max
       },
       yAxis: {
         type: 'value',
-        name: 'Profit / Loss ($)',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameTextStyle: {
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: 12
-        },
         axisLine: {
           lineStyle: {
             color: 'rgba(255,255,255,0.3)'
@@ -508,7 +545,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           fontSize: 11,
           formatter: (value: number) => {
             const percentage = calculatePercentageGain(value)
-            return `$${value} (${percentage >= 0 ? '+' : ''}${percentage.toFixed(0)}%)`
+            return `$${Math.round(value)} (${percentage >= 0 ? '+' : ''}${percentage.toFixed(0)}%)`
           }
         },
         splitLine: {
@@ -703,13 +740,15 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                     {validatedInputs.options.length}
                   </span>
                   {/* Hover tooltip for multiple legs */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-white/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-[#4a85ff]/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg">
                     {validatedInputs.options.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2 mb-1 last:mb-0">
-                        <span className={option.side === 'call' ? 'text-green-400' : 'text-red-400'}>
-                          {option.side.toUpperCase()}
-                        </span>
-                        <span className="text-white/80">${option.strike}</span>
+                      <div key={index} className="flex items-center justify-between gap-3 mb-1 last:mb-0 min-w-[120px]">
+                        <div className="flex items-center gap-2">
+                          <span className={option.side === 'call' ? 'text-green-400' : 'text-red-400'}>
+                            {option.side.toUpperCase()}
+                          </span>
+                          <span className="text-white/80">${option.strike}</span>
+                        </div>
                         {'expiry' in option && option.expiry && (
                           <span className="text-white/60 text-[10px]">
                             {new Date(option.expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -749,9 +788,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                   </span>
                   {/* Hover tooltip for multiple breakevens */}
                   {(metrics.breakevenPrices || []).length > 1 && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-white/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 border border-[#4a85ff]/20 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg">
                       {(metrics.breakevenPrices || []).map((price, index) => (
-                        <div key={index} className="text-gray-300">
+                        <div key={index} className="text-gray-300 py-0.5">
                           B/E{index + 1}: ${price.toFixed(2)}
                         </div>
                       ))}
