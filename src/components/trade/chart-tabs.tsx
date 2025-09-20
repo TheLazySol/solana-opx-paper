@@ -54,11 +54,9 @@ export const ChartTabs: FC<ChartTabsProps> = ({
     return () => clearInterval(interval)
   }, [selectedAsset])
 
-  // Calculate PnL chart props from selected options (if any)
+  // Pass selected options directly to PnL chart
   const pnlChartProps = selectedOptions.length > 0 ? {
-    strikePrice: selectedOptions[0].strike || 100,
-    premium: selectedOptions[0].price || 5,
-    contracts: selectedOptions[0].quantity || 1,
+    selectedOptions: selectedOptions,
     currentPrice: currentPrice // Now using real-time price
   } : null
 
