@@ -556,8 +556,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
         min: validatedInputs.xAxisMin,
         max: validatedInputs.max,
-        interval: 'auto', // Let ECharts automatically determine optimal spacing
-        splitNumber: 5 // Suggest ~5 evenly spaced ticks
+        interval: (validatedInputs.max - validatedInputs.xAxisMin) / 4, // Create 4 equal intervals for quartiles
+        splitNumber: 5, // 5 tick marks: min, 25%, 50%, 75%, max
+        axisPointer: {
+          snap: true // Snap to tick marks for better precision
+        }
       },
       yAxis: {
         type: 'value',
