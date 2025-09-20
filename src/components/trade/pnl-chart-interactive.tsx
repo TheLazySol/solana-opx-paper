@@ -97,7 +97,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           options: [{
             strike: validStrike,
             premium: validPremium,
-            contracts: validContracts,
+            contracts: validContracts, // validContracts is already validated to be at least 1
             side: 'call' as const,
             type: 'bid' as const,
             position: 'long' as const
@@ -139,17 +139,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Process selected options - normalize to full contract quantities for display
+    // Process selected options - use actual quantities for accurate P&L calculations
     const processedOptions = selectedOptions.map(option => ({
       strike: Math.max(0, option.strike || 0),
       premium: Math.max(0, option.price || 0),
-      contracts: 1, // Always show PnL for 1 full contract for clarity
+      contracts: Math.max(1, option.quantity || 1), // Use actual quantity for fractional options, default to 1 contract
       side: option.side,
       type: option.type,
       position: option.type === 'bid' ? 'long' as const : 'short' as const, // Buying = long, selling = short
       expiry: option.expiry,
       asset: option.asset,
-      originalQuantity: option.quantity || 0.01 // Keep track of original selected quantity
+      originalQuantity: option.quantity || 1 // Keep track of original selected quantity
     }))
     
     // For multi-leg support, we'll use the first option for basic calculations
@@ -508,14 +508,18 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             }
           }
           
+          // Calculate total quantity for display
+          const totalQuantity = validatedInputs.options.reduce((sum, option) => sum + (option.contracts || 0), 0);
+          const showQuantityInfo = totalQuantity !== 1.0; // Show quantity info if not exactly 1 contract
+          
           const tooltipContent = `
             <div style="padding: 4px 0; min-width: 140px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <span style="color: #FFBA4A; font-size: 11px; font-weight: 500;">Breakeven Price</span>
+                <span style="color: #fff; font-size: 11px; font-weight: 500;">Asset Price</span>
                 <span style="color: #fff; font-weight: 600; font-size: 12px; text-align: right;">$${price.toFixed(2)}</span>
               </div>
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <span style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500;">P/L</span>
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500;">P/L${showQuantityInfo ? ` (${totalQuantity.toFixed(2)} contracts)` : ''}</span>
                 <span style="color: ${pnl >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 12px; text-align: right;">
                   ${pnl >= 0 ? '+' : ''}${formatPnL(pnl)}
                 </span>
