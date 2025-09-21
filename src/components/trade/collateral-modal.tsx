@@ -41,6 +41,7 @@ export interface CollateralData {
   leverage: number
   borrowedAmount: number
   hasEnoughCollateral: boolean
+  shortOptionIds?: string[] // Track which short options this collateral is for
 }
 
 // Helper function to format leverage value to 3 decimal places, removing trailing zeros
@@ -254,12 +255,19 @@ export const CollateralModal: FC<CollateralModalProps> = ({
 
   // Handle confirm
   const handleConfirm = () => {
+    // Get identifiers for short options to track which positions this collateral is for
+    const shortOptionIds = selectedOptions
+      .filter(option => option.type === 'ask')
+      .map(option => `${option.asset}-${option.side}-${option.strike}-${option.expiry}`)
+      .sort();
+
     const collateralData: CollateralData = {
       collateralProvided,
       collateralType,
       leverage,
       borrowedAmount,
-      hasEnoughCollateral
+      hasEnoughCollateral,
+      shortOptionIds
     }
     onConfirm(collateralData)
     onClose()

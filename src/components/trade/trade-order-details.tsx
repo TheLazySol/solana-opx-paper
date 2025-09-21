@@ -353,6 +353,32 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     return selectedOptions.some(option => option.type === 'ask')
   }, [selectedOptions])
 
+  // Reset collateral data when short positions are removed or changed
+  useEffect(() => {
+    // If there are no short positions anymore, reset collateral data
+    if (!hasShortPositions && collateralData) {
+      setCollateralData(null);
+      return;
+    }
+
+    // If short positions changed (different strikes/expiries), reset collateral data
+    if (hasShortPositions && collateralData) {
+      // Get current short option identifiers
+      const currentShortOptionIds = selectedOptions
+        .filter(option => option.type === 'ask')
+        .map(option => `${option.asset}-${option.side}-${option.strike}-${option.expiry}`)
+        .sort();
+      
+      // Check if we have stored short option identifiers to compare against
+      const storedShortOptionIds = collateralData.shortOptionIds || [];
+      
+      // If the short options have changed, reset collateral data
+      if (JSON.stringify(currentShortOptionIds) !== JSON.stringify(storedShortOptionIds)) {
+        setCollateralData(null);
+      }
+    }
+  }, [hasShortPositions, selectedOptions, collateralData]);
+
   const isCollateralRequired = hasShortPositions && collateralNeeded > 0 && !collateralData?.hasEnoughCollateral
 
   // Handle collateral modal confirmation
