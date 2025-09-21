@@ -225,6 +225,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     
     let totalPnL = 0
     
+    // Check if we have short positions that need collateral limiting
+    const hasShortPositions = options.some(option => option.position === 'short')
+    
     // Calculate P&L for each option leg
     options.forEach(option => {
       const { strike, premium, contracts, side, position } = option
@@ -249,8 +252,14 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       totalPnL += legPnL
     })
     
+    // For short positions, cap the loss at the collateral provided (for on-chain options)
+    if (hasShortPositions && collateralProvided && collateralProvided > 0) {
+      // Max loss is limited to the collateral provided
+      totalPnL = Math.max(totalPnL, -collateralProvided)
+    }
+    
     return totalPnL
-  }, [validatedInputs])
+  }, [validatedInputs, collateralProvided])
 
   // Pre-calculate total premium for performance optimization
   const totalPremiumPaid = useMemo(() => {
@@ -414,8 +423,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     // Calculate total premium paid/received and max loss
     let totalPremiumPaid = 0
     let totalPremiumReceived = 0
-    let maxLoss: number | 'Unlimited' = 0
-    let maxProfit: number | 'Unlimited' = 0
+    let maxLoss: number | string = 0
+    let maxProfit: number | string = 0
+    
+    // Check if we have any short positions
+    const hasShortPositions = options.some(option => option.position === 'short')
     
     options.forEach(option => {
       const { premium, contracts, position } = option
@@ -428,17 +440,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     })
     
-    // For short positions, max loss should be limited by collateral provided
-    if (totalPremiumReceived > 0) {
-      // We have short positions
+    // Handle short positions differently for on-chain options
+    if (hasShortPositions) {
+      // For short positions, max profit is the total premium received (when option expires worthless)
       maxProfit = totalPremiumReceived - totalPremiumPaid // Net premium received
       
       if (collateralProvided && collateralProvided > 0) {
         // Max loss is limited to collateral provided for short positions
         maxLoss = -collateralProvided
       } else {
-        // Fallback to theoretical unlimited loss if no collateral specified
-        maxLoss = 'Unlimited'
+        // Show "-" until collateral is provided for short positions
+        maxLoss = '-'
       }
     } else {
       // Only long positions
@@ -461,12 +473,20 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Calculate Y-axis range based on percentage limits (-100% to +100%)
-    const absPremium = Math.abs(totalPremiumPaid)
-    // For Y-axis, -100% should be the maximum possible loss (premium paid or collateral)
-    // +100% should be 100% gain on the premium paid/collateral
-    const yAxisMin = -absPremium // This represents -100% (total loss of premium/collateral)
-    const yAxisMax = absPremium || 100 // This represents +100% gain
+    // Calculate Y-axis range for percentage-based display (-100% to +100%)
+    let yAxisMin = -100
+    let yAxisMax = 100
+    
+    if (hasShortPositions && collateralProvided && collateralProvided > 0) {
+      // For short positions with collateral, base the percentage on collateral provided
+      yAxisMin = -collateralProvided // -100% is total loss of collateral
+      yAxisMax = totalPremiumReceived // +100% is total premium earned
+    } else if (!hasShortPositions) {
+      // For long positions, base on premium paid
+      const absPremium = Math.abs(totalPremiumPaid)
+      yAxisMin = -absPremium // This represents -100% (total loss of premium)
+      yAxisMax = absPremium || 100 // This represents +100% gain
+    }
     
     return {
       maxLoss: typeof maxLoss === 'number' ? Math.round(maxLoss * 100) / 100 : maxLoss,
@@ -476,7 +496,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       maxProfit: typeof maxProfit === 'number' ? Math.round(maxProfit * 100) / 100 : maxProfit,
       yAxisMin: Math.round(yAxisMin * 100) / 100,
       yAxisMax: Math.round(yAxisMax * 100) / 100,
-      totalPremiumPaid: Math.round(Math.abs(totalPremiumPaid - totalPremiumReceived) * 100) / 100
+      totalPremiumPaid: Math.round(Math.abs(totalPremiumPaid - totalPremiumReceived) * 100) / 100,
+      hasShortPositions
     }
   }, [validatedInputs, calculatePnL, breakevenPrices, collateralProvided])
 
@@ -548,7 +569,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           
           const price = params[0].value[0]
           const pnl = params[0].value[1]
-          const percentageGain = calculatePercentageGain(pnl)
+          
+          // Calculate percentage gain based on position type
+          let percentageGain = 0
+          if (metrics.hasShortPositions && collateralProvided && collateralProvided > 0) {
+            // For short positions with collateral, percentage is based on collateral
+            percentageGain = (pnl / collateralProvided) * 100
+          } else if (metrics.totalPremiumPaid > 0) {
+            // For long positions or fallback, percentage is based on premium
+            percentageGain = calculatePercentageGain(pnl)
+          }
+          
           setHoveredValue({ price, pnl })
           
           // Format PnL with proper precision for USD values
@@ -646,12 +677,21 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             }
           },
           formatter: (value: number) => {
-            const percentage = calculatePercentageGain(value)
+            // For short positions, calculate percentage based on collateral or premium
+            let percentage = 0
+            if (metrics.hasShortPositions && collateralProvided && collateralProvided > 0) {
+              // For short positions with collateral, percentage is based on collateral
+              percentage = (value / collateralProvided) * 100
+            } else if (metrics.totalPremiumPaid > 0) {
+              // For long positions or fallback, percentage is based on premium
+              percentage = calculatePercentageGain(value)
+            }
+            
             if (Math.abs(percentage) < 0.1) {
               return `{neutral|0%}`
             }
             const color = percentage > 0 ? 'positive' : 'negative'
-            return `{${color}|${percentage > 0 ? '+' : ''}${percentage.toFixed(0)}%}`
+            return `{${color}|${percentage > 0 ? '+' : ''}${Math.round(percentage)}%}`
           }
         },
         splitLine: {
@@ -661,8 +701,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
         min: metrics.yAxisMin,
         max: metrics.yAxisMax,
-        interval: metrics.yAxisMax / 4, // Create 4 intervals for 0%, ±25%, ±50%, ±75%, ±100%
-        splitNumber: 9 // 9 splits for -100%, -75%, -50%, -25%, 0%, +25%, +50%, +75%, +100%
+        interval: (metrics.yAxisMax - metrics.yAxisMin) / 4, // Create 4 equal intervals
+        splitNumber: 5 // 5 tick marks for clean display
       },
       series: [
         // Main P&L line
@@ -808,16 +848,24 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
                 <span className="text-xs sm:text-sm font-semibold text-red-400">
-                  {typeof metrics.maxLoss === 'string' ? metrics.maxLoss : `$${Math.abs(metrics.maxLoss)}`}
+                  {metrics.maxLoss === '-' ? '-' : 
+                   typeof metrics.maxLoss === 'string' ? metrics.maxLoss : 
+                   `$${Math.abs(Number(metrics.maxLoss))}`}
                 </span>
               </div>
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
                 <span className="text-xs sm:text-sm font-semibold text-green-400">
                   {(() => {
-                    const vals = chartData.map(d => d.pnl)
-                    const m = vals.length ? Math.max(...vals) : 0
-                    return Number.isFinite(m) ? `$${Math.round(m * 100) / 100}` : 'Unlimited'
+                    // For short positions, max profit is the premium received when option expires worthless
+                    if (metrics.hasShortPositions) {
+                      return typeof metrics.maxProfit === 'number' ? `$${Math.round(Number(metrics.maxProfit) * 100) / 100}` : String(metrics.maxProfit)
+                    } else {
+                      // For long positions, calculate from chart data
+                      const vals = chartData.map(d => d.pnl)
+                      const m = vals.length ? Math.max(...vals) : 0
+                      return Number.isFinite(m) ? `$${Math.round(m * 100) / 100}` : 'Unlimited'
+                    }
                   })()}
                 </span>
               </div>

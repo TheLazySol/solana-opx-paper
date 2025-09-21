@@ -36,15 +36,16 @@ import {
   Loader2,
   AlertTriangle,
   Target,
-  Info
+  Info,
+  Shield
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { CollateralModal, CollateralData } from './collateral-modal'
 
 interface PlaceTradeOrderProps {
   selectedOptions: SelectedOption[]
   selectedAsset: string
   onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
-  borrowedAmount?: number
   onOrderPlaced?: (options: SelectedOption[]) => void
   optionChainData?: OptionContract[]
 }
@@ -53,7 +54,6 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedOptions = [],
   selectedAsset,
   onOrderDataChange,
-  borrowedAmount = 0,
   onOrderPlaced,
   optionChainData = []
 }) => {
@@ -62,6 +62,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [insufficientOptions, setInsufficientOptions] = useState(false)
+  const [isCollateralModalOpen, setIsCollateralModalOpen] = useState(false)
+  const [collateralData, setCollateralData] = useState<CollateralData | null>(null)
   
   // Mouse glow effect hooks for cards
   const metricsCardRef = useMouseGlow()
@@ -274,7 +276,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   // Calculate fees
   const fees = useMemo(() => {
     const optionCreationFee = hasSelectedOptions ? OPTION_CREATION_FEE_RATE * selectedOptions.length : 0;
-    const borrowFee = borrowedAmount * BORROW_FEE_RATE;
+    const borrowFee = (collateralData?.borrowedAmount || 0) * BORROW_FEE_RATE;
     const transactionCost = hasSelectedOptions ? TRANSACTION_COST_SOL : 0;
 
     return {
@@ -283,7 +285,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       transactionCost,
       totalFees: optionCreationFee + borrowFee + transactionCost
     };
-  }, [hasSelectedOptions, selectedOptions.length, borrowedAmount]);
+  }, [hasSelectedOptions, selectedOptions.length, collateralData?.borrowedAmount]);
 
   // Calculate max profit and max loss potential using live prices
   const { maxProfit, maxLoss } = useMemo(() => {
@@ -346,9 +348,32 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
     setOrderSuccess(false);
   }, [selectedOptions]);
 
+  // Check if collateral is required for short positions
+  const hasShortPositions = useMemo(() => {
+    return selectedOptions.some(option => option.type === 'ask')
+  }, [selectedOptions])
+
+  const isCollateralRequired = hasShortPositions && collateralNeeded > 0 && !collateralData?.hasEnoughCollateral
+
+  // Handle collateral modal confirmation
+  const handleCollateralConfirm = (data: CollateralData) => {
+    setCollateralData(data)
+  }
+
+  // Handle collateral modal close
+  const handleCollateralModalClose = () => {
+    setIsCollateralModalOpen(false)
+  }
+
   // Handle placing an order
   const handlePlaceOrder = () => {
     if (!hasSelectedOptions) return;
+
+    // If collateral is required for short positions, open modal instead
+    if (isCollateralRequired) {
+      setIsCollateralModalOpen(true)
+      return
+    }
 
     setIsPlacingOrder(true);
 
@@ -870,7 +895,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         <TradeCostBreakdown
           fees={fees}
           hasSelectedOptions={hasSelectedOptions}
-          borrowedAmount={borrowedAmount}
+          borrowedAmount={collateralData?.borrowedAmount || 0}
         />
       </motion.div>
 
@@ -930,10 +955,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   <span>Insufficient Options</span>
                 </>
               ) : hasSelectedOptions ? (
-                <>
-                  <Zap className="w-5 h-5" />
-                  <span>Place Order</span>
-                </>
+                isCollateralRequired ? (
+                  <>
+                    <Shield className="w-5 h-5" />
+                    <span>Provide Collateral for Short Position</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5" />
+                    <span>Place Order</span>
+                  </>
+                )
               ) : (
                 <>
                   <AlertCircle className="w-5 h-5" />
@@ -945,6 +977,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
           </div>
         </Tooltip>
       </motion.div>
+
+      {/* Collateral Modal */}
+      <CollateralModal
+        isOpen={isCollateralModalOpen}
+        onClose={handleCollateralModalClose}
+        onConfirm={handleCollateralConfirm}
+        selectedOptions={selectedOptions}
+        selectedAsset={selectedAsset}
+        isDebit={isDebit}
+        externalCollateralNeeded={collateralNeeded}
+      />
     </motion.div>
   )
 }
