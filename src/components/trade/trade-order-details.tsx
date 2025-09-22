@@ -36,7 +36,8 @@ import {
   Loader2,
   AlertTriangle,
   Target,
-  Info
+  Info,
+  Shield
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { CollateralModal, CollateralData } from './collateral-modal'
@@ -938,8 +939,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                       <Info className="w-3 h-3 text-white/30 cursor-help" />
                     </Tooltip>
                   </div>
-                  <p className="text-sm font-medium text-red-400 transition-all duration-300 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] hover:drop-shadow-[0_0_12px_rgba(248,113,113,1)]">
-                    {hasSelectedOptions ? formatUSD(maxLoss) : '--'}
+                  <p className={cn(
+                    "text-sm font-medium transition-all duration-300",
+                    hasShortPositions && !collateralData?.hasEnoughCollateral
+                      ? "text-white/40"
+                      : "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] hover:drop-shadow-[0_0_12px_rgba(248,113,113,1)]"
+                  )}>
+                    {hasSelectedOptions ? (
+                      hasShortPositions && !collateralData?.hasEnoughCollateral 
+                        ? "Collateral Amount"
+                        : formatUSD(maxLoss)
+                    ) : '--'}
                   </p>
                 </div>
               </div>
@@ -958,83 +968,137 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         />
       </motion.div>
 
-      {/* Place Order Button */}
+      {/* Action Buttons */}
       <motion.div variants={itemVariants}>
-        <Tooltip 
-          content={
-            insufficientOptions 
-              ? "There are not enough options available to trade for the quantity selected." 
-              : isCollateralRequired 
-                ? "Short positions require collateral. Please provide collateral to proceed with the order."
-                : undefined
-          }
-          isDisabled={!insufficientOptions && !isCollateralRequired}
-        >
-          <div 
-            ref={placeOrderButtonRef}
-            className="relative transition-all duration-300"
-            style={{
-              background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess && !isCollateralRequired ? `
-                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                  rgba(74, 133, 255, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-                  rgba(24, 81, 196, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-                  transparent 50%
-                )
-              ` : 'transparent',
-              borderRadius: '12px',
-              padding: '2px',
-              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
-            }}
+        <div className="flex gap-3">
+          {/* Provide/Adjust Collateral Button */}
+          {hasShortPositions && (
+            <Tooltip 
+              content={
+                collateralData?.hasEnoughCollateral 
+                  ? "Modify your collateral settings for short positions"
+                  : "Short positions require collateral. Click to provide collateral."
+              }
+            >
+              <div 
+                className="relative transition-all duration-300"
+                style={{
+                  background: hasSelectedOptions && !isPlacingOrder && !orderSuccess ? `
+                    radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                      rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                      rgba(24, 81, 196, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                      transparent 50%
+                    )
+                  ` : 'transparent',
+                  borderRadius: '12px',
+                  padding: '2px',
+                  transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+                }}
+              >
+                <Button 
+                  className={cn(
+                    "h-14 font-semibold text-base transition-all duration-300 px-6",
+                    "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40"
+                  )}
+                  isDisabled={!hasSelectedOptions || isPlacingOrder}
+                  onPress={handleOpenCollateralModal}
+                >
+                  <motion.div
+                    className="flex items-center justify-center gap-2"
+                    initial={{ scale: 1 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>
+                      {collateralData?.hasEnoughCollateral ? "Adjust Collateral" : "Provide Collateral"}
+                    </span>
+                  </motion.div>
+                </Button>
+              </div>
+            </Tooltip>
+          )}
+
+          {/* Place Order Button */}
+          <Tooltip 
+            content={
+              insufficientOptions 
+                ? "There are not enough options available to trade for the quantity selected." 
+                : isCollateralRequired 
+                  ? "Short positions require collateral. Please provide collateral to proceed with the order."
+                  : undefined
+            }
+            isDisabled={!insufficientOptions && !isCollateralRequired}
           >
-            <Button 
+            <div 
+              ref={placeOrderButtonRef}
               className={cn(
-                "w-full h-14 font-semibold text-lg transition-all duration-300",
-                !hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired
-                  ? "bg-white/10 text-white/40 border border-white/20"
-                  : orderSuccess
-                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                    : "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+                "relative transition-all duration-300",
+                hasShortPositions ? "flex-1" : "w-full"
               )}
-              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired}
-              onPress={handlePlaceOrder}
+              style={{
+                background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess && !isCollateralRequired ? `
+                  radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(74, 133, 255, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                    rgba(24, 81, 196, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                    transparent 50%
+                  )
+                ` : 'transparent',
+                borderRadius: '12px',
+                padding: '2px',
+                transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+              }}
             >
-            <motion.div
-              className="flex items-center justify-center gap-3"
-              initial={{ scale: 1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.1 }}
-            >
-              {isPlacingOrder ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Processing Order...</span>
-                </>
-              ) : orderSuccess ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Order Placed Successfully!</span>
-                </>
-              ) : insufficientOptions ? (
-                <>
-                  <AlertTriangle className="w-5 h-5" />
-                  <span>Insufficient Options</span>
-                </>
-              ) : hasSelectedOptions ? (
-                <>
-                  <Zap className="w-5 h-5" />
-                  <span>Place Order</span>
-                </>
-              
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5" />
-                  <span>No Options Selected</span>
-                </>
-              )}
-            </motion.div>
-            </Button>
-          </div>
-        </Tooltip>
+              <Button 
+                className={cn(
+                  "w-full h-14 font-semibold text-lg transition-all duration-300",
+                  !hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired
+                    ? "bg-white/10 text-white/40 border border-white/20"
+                    : orderSuccess
+                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
+                      : "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+                )}
+                isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired}
+                onPress={handlePlaceOrder}
+              >
+              <motion.div
+                className="flex items-center justify-center gap-3"
+                initial={{ scale: 1 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.1 }}
+              >
+                {isPlacingOrder ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing Order...</span>
+                  </>
+                ) : orderSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Order Placed Successfully!</span>
+                  </>
+                ) : insufficientOptions ? (
+                  <>
+                    <AlertTriangle className="w-5 h-5" />
+                    <span>Insufficient Options</span>
+                  </>
+                ) : hasSelectedOptions ? (
+                  <>
+                    <Zap className="w-5 h-5" />
+                    <span>Place Order</span>
+                  </>
+                
+                ) : (
+                  <>
+                    <AlertCircle className="w-5 h-5" />
+                    <span>No Options Selected</span>
+                  </>
+                )}
+              </motion.div>
+              </Button>
+            </div>
+          </Tooltip>
+        </div>
       </motion.div>
 
       {/* Collateral Modal */}

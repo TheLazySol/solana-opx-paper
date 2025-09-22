@@ -2,10 +2,9 @@
 
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Card, CardBody, Button } from '@heroui/react'
+import { Card, CardBody } from '@heroui/react'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
-import { Shield, AlertTriangle } from 'lucide-react'
 import { SelectedOption } from './option-data'
 
 interface PnLChartProps {
@@ -222,56 +221,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     }
   }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts])
 
-  // Check if we should show collateral placeholder
-  const shouldShowCollateralPlaceholder = useMemo(() => {
-    const { options } = validatedInputs
-    
-    // Check if there are any short positions (ask type = selling = short)
-    const shortPositions = options.filter(option => option.type === 'ask')
-    const longPositions = options.filter(option => option.type === 'bid')
-    
-    if (shortPositions.length === 0) {
-      return false // No short positions, no collateral needed
-    }
-    
-    // Check if collateral has been provided
-    const hasCollateral = collateralProvided && collateralProvided > 0
-    
-    // Analyze if short positions are covered by long positions
-    let hasNakedShorts = false
-    
-    shortPositions.forEach(shortOption => {
-      let isCovered = false
-      
-      // Check if this short option is covered by a long option
-      longPositions.forEach(longOption => {
-        // Same option type (call or put)
-        if (shortOption.side === longOption.side) {
-          if (shortOption.side === 'call') {
-            // For calls: short is covered if long strike >= short strike
-            // (long call at higher strike covers short call at lower strike)
-            if (longOption.strike >= shortOption.strike) {
-              isCovered = true
-            }
-          } else if (shortOption.side === 'put') {
-            // For puts: short is covered if long strike <= short strike  
-            // (long put at lower strike covers short put at higher strike)
-            if (longOption.strike <= shortOption.strike) {
-              isCovered = true
-            }
-          }
-        }
-      })
-      
-      // If this short option is not covered, we have naked shorts
-      if (!isCovered) {
-        hasNakedShorts = true
-      }
-    })
-    
-    // Show placeholder only if there are naked shorts and no collateral
-    return hasNakedShorts && !hasCollateral
-  }, [validatedInputs, collateralProvided])
+  // Always show the chart - collateral requirement is enforced at order placement time, not visualization time
 
   // Calculate P&L for a given underlying price
   const calculatePnL = useCallback((underlyingPrice: number): number => {
@@ -505,8 +455,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         // Max loss is limited to collateral provided for short positions
         maxLoss = -collateralProvided
       } else {
-        // Show "-" until collateral is provided for short positions
-        maxLoss = '-'
+        // For visualization purposes, show theoretical unlimited loss potential
+        // In practice, this would be limited by collateral when actually placing the order
+        maxLoss = 'Unlimited'
       }
     } else {
       // Only long positions
@@ -555,7 +506,9 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     
     // Calculate max loss amount for consistent percentage calculations
     const maxLossAmount = typeof maxLoss === 'number' ? Math.abs(maxLoss) : 
-                         (collateralProvided && collateralProvided > 0 ? collateralProvided : totalPremiumReceived || 100)
+                         (collateralProvided && collateralProvided > 0 ? collateralProvided : 
+                          // For unlimited loss scenarios (short positions without collateral), use premium as baseline for percentage calculations
+                          totalPremiumReceived || 100)
 
     return {
       maxLoss: typeof maxLoss === 'number' ? Math.round(maxLoss * 100) / 100 : maxLoss,
@@ -903,70 +856,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   }, [chartData, profitData, lossData, validatedInputs, calculatePnL, calculatePercentageGain, metrics])
 
 
-  // If short position needs collateral, show placeholder
-  if (shouldShowCollateralPlaceholder) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className={className}
-      >
-        <Card 
-          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm"
-        >
-          <CardBody className="p-2">
-            {/* Match exact chart container dimensions */}
-            <div className="h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full flex flex-col items-center justify-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                <AlertTriangle className="w-8 h-8 text-orange-400" />
-              </div>
-              
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium text-white/90">
-                  Short Position Detected
-                </h3>
-                <p className="text-sm text-white/60 max-w-md">
-                  This is a Short Position. Please provide collateral to see accurate PnL.
-                </p>
-              </div>
-              
-              {onProvideCollateral && (
-                <Button
-                  className="bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white font-semibold shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 transition-all duration-300"
-                  size="md"
-                  startContent={<Shield className="w-4 h-4" />}
-                  onPress={onProvideCollateral}
-                >
-                  Provide Collateral
-                </Button>
-              )}
-            </div>
-            
-            {/* Add matching metrics below - empty state */}
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-              <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Potential Max Loss</span>
-                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
-              </div>
-              <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Potential Max Profit</span>
-                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
-              </div>
-              <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
-                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
-              </div>
-              <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Breakeven</span>
-                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </motion.div>
-    )
-  }
+  // Always show the chart - removed collateral placeholder as per user request
 
   return (
     <motion.div
@@ -1000,8 +890,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
               <div className="bg-black/40 rounded-lg p-2">
                 <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
                 <span className="text-xs sm:text-sm font-semibold text-red-400">
-                  {metrics.maxLoss === '-' ? '-' : 
-                   typeof metrics.maxLoss === 'string' ? metrics.maxLoss : 
+                  {typeof metrics.maxLoss === 'string' ? metrics.maxLoss : 
                    `$${Math.abs(Number(metrics.maxLoss))}`}
                 </span>
               </div>
