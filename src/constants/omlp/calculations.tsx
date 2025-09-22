@@ -21,10 +21,10 @@ export function calculateUtilization(borrowed: number, supply: number): number {
 export function calculateSupplyApy(
   baseApy: number, 
   utilization: number, 
-  utilizationMultiplier: number = OMLP_POOL_CONFIG.UTILIZATION_RATE_MULTIPLIER
+  utilizationMultiplier: number = SOL_POOL_CONFIG.utilizationRateMultiplier
 ): number {
   // Supply APY increases with utilization
-  const utilizationBonus = Math.max(0, utilization - OMLP_POOL_CONFIG.MIN_UTILIZATION_FOR_DYNAMIC_RATES) * utilizationMultiplier
+  const utilizationBonus = Math.max(0, utilization - SOL_POOL_CONFIG.minUtilizationForDynamicRates) * utilizationMultiplier
   return Number((baseApy + utilizationBonus).toFixed(2))
 }
 
@@ -38,14 +38,14 @@ export function calculateSupplyApy(
 export function calculateBorrowApy(
   baseApy: number, 
   utilization: number, 
-  utilizationMultiplier: number = OMLP_POOL_CONFIG.UTILIZATION_RATE_MULTIPLIER
+  utilizationMultiplier: number = SOL_POOL_CONFIG.utilizationRateMultiplier
 ): number {
   // Borrow APY increases more aggressively with high utilization
   const utilizationPenalty = utilization * utilizationMultiplier * 1.5 // 1.5x multiplier for borrow rates
   
   // Additional penalty for high utilization (>90%)
-  const highUtilizationPenalty = utilization > OMLP_POOL_CONFIG.MAX_UTILIZATION_THRESHOLD 
-    ? (utilization - OMLP_POOL_CONFIG.MAX_UTILIZATION_THRESHOLD) * 0.5 
+  const highUtilizationPenalty = utilization > SOL_POOL_CONFIG.maxUtilizationThreshold 
+    ? (utilization - SOL_POOL_CONFIG.maxUtilizationThreshold) * 0.5 
     : 0
   
   return Number((baseApy + utilizationPenalty + highUtilizationPenalty).toFixed(2))
@@ -61,15 +61,6 @@ export function calculateBorrowedAmount(supply: number, utilizationPercentage: n
   return (supply * utilizationPercentage) / 100
 }
 
-/**
- * Calculate the supply limit for a pool
- * @param initialSupply - Initial pool supply
- * @param multiplier - Supply limit multiplier
- * @returns Supply limit
- */
-export function calculateSupplyLimit(initialSupply: number, multiplier: number): number {
-  return initialSupply * multiplier
-}
 
 /**
  * Generate a complete SOL pool object with calculated values
@@ -83,9 +74,8 @@ export function generateSolPoolData(tokenPrice: number, customSupply?: number) {
   const supply = customSupply ?? config.initialSupply
   const borrowed = calculateBorrowedAmount(supply, config.initialBorrowedPercentage)
   const utilization = calculateUtilization(borrowed, supply)
-  const supplyApy = calculateSupplyApy(config.baseSupplyApy, utilization, config.utilizationMultiplier)
-  const borrowApy = calculateBorrowApy(config.baseBorrowApy, utilization, config.utilizationMultiplier)
-  const supplyLimit = calculateSupplyLimit(config.initialSupply, config.supplyLimitMultiplier)
+  const supplyApy = calculateSupplyApy(config.baseSupplyApy, utilization, config.utilizationRateMultiplier)
+  const borrowApy = calculateBorrowApy(config.baseBorrowApy, utilization, config.utilizationRateMultiplier)
 
   return {
     token: config.token,
@@ -94,7 +84,7 @@ export function generateSolPoolData(tokenPrice: number, customSupply?: number) {
     borrowed,
     borrowApy,
     utilization: Number(utilization.toFixed(2)),
-    supplyLimit,
+    supplyLimit: config.supplyLimit, // Use static supply limit directly from config
     tokenPrice,
   }
 }
@@ -133,7 +123,7 @@ export function calculateCompoundInterest(principal: number, apy: number, timeIn
 export function calculateHealthFactor(
   collateralValue: number, 
   borrowedValue: number, 
-  liquidationThreshold: number = OMLP_POOL_CONFIG.LIQUIDATION_THRESHOLD
+  liquidationThreshold: number = SOL_POOL_CONFIG.liquidationThreshold
 ): number {
   if (borrowedValue === 0) return Infinity
   return (collateralValue * liquidationThreshold / 100) / borrowedValue
