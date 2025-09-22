@@ -473,19 +473,26 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Calculate Y-axis range for percentage-based display (-100% to +100%)
+    // Calculate Y-axis range for percentage-based display (-125% to +125%)
     let yAxisMin = -100
     let yAxisMax = 100
     
-    if (hasShortPositions && collateralProvided && collateralProvided > 0) {
-      // For short positions with collateral, base the percentage on collateral provided
-      yAxisMin = -collateralProvided // -100% is total loss of collateral
-      yAxisMax = totalPremiumReceived // +100% is total premium earned
-    } else if (!hasShortPositions) {
-      // For long positions, base on premium paid
-      const absPremium = Math.abs(totalPremiumPaid)
-      yAxisMin = -absPremium // This represents -100% (total loss of premium)
-      yAxisMax = absPremium || 100 // This represents +100% gain
+    if (hasShortPositions) {
+      if (collateralProvided && collateralProvided > 0) {
+        // For short positions with collateral, set range to ±125% of collateral
+        yAxisMin = -collateralProvided * 1.25 // -125% of collateral
+        yAxisMax = collateralProvided * 1.25  // +125% of collateral
+      } else {
+        // For short positions without collateral, use premium as base for ±125% range
+        const absPremium = Math.abs(totalPremiumPaid) || 100
+        yAxisMin = -absPremium * 1.25 // -125% of premium
+        yAxisMax = absPremium * 1.25  // +125% of premium
+      }
+    } else {
+      // For long positions, set range to ±125% of premium paid
+      const absPremium = Math.abs(totalPremiumPaid) || 100
+      yAxisMin = -absPremium * 1.25 // -125% of premium
+      yAxisMax = absPremium * 1.25  // +125% of premium
     }
     
     return {
@@ -572,9 +579,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           
           // Calculate percentage gain based on position type
           let percentageGain = 0
-          if (metrics.hasShortPositions && collateralProvided && collateralProvided > 0) {
-            // For short positions with collateral, percentage is based on collateral
-            percentageGain = (pnl / collateralProvided) * 100
+          if (metrics.hasShortPositions) {
+            if (collateralProvided && collateralProvided > 0) {
+              // For short positions with collateral, percentage is based on collateral
+              // Cap the loss at -100% (total loss of collateral)
+              percentageGain = Math.max((pnl / collateralProvided) * 100, -100)
+            } else {
+              // For short positions without collateral, use the total premium as base
+              // This allows proper percentage scaling for short option positions
+              const premiumBase = Math.abs(metrics.totalPremiumPaid) || 100
+              percentageGain = (pnl / premiumBase) * 100
+            }
           } else if (metrics.totalPremiumPaid > 0) {
             // For long positions or fallback, percentage is based on premium
             percentageGain = calculatePercentageGain(pnl)
@@ -679,9 +694,17 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           formatter: (value: number) => {
             // For short positions, calculate percentage based on collateral or premium
             let percentage = 0
-            if (metrics.hasShortPositions && collateralProvided && collateralProvided > 0) {
-              // For short positions with collateral, percentage is based on collateral
-              percentage = (value / collateralProvided) * 100
+            if (metrics.hasShortPositions) {
+              if (collateralProvided && collateralProvided > 0) {
+                // For short positions with collateral, percentage is based on collateral
+                // Cap the loss at -100% (total loss of collateral)
+                percentage = Math.max((value / collateralProvided) * 100, -100)
+              } else {
+                // For short positions without collateral, use the total premium as base
+                // This allows proper percentage scaling for short option positions
+                const premiumBase = Math.abs(metrics.totalPremiumPaid) || 100
+                percentage = (value / premiumBase) * 100
+              }
             } else if (metrics.totalPremiumPaid > 0) {
               // For long positions or fallback, percentage is based on premium
               percentage = calculatePercentageGain(value)
@@ -701,8 +724,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
         min: metrics.yAxisMin,
         max: metrics.yAxisMax,
-        interval: (metrics.yAxisMax - metrics.yAxisMin) / 4, // Create 4 equal intervals
-        splitNumber: 5 // 5 tick marks for clean display
+        interval: (metrics.yAxisMax - metrics.yAxisMin) / 5, // Create 5 equal intervals for ±125% range
+        splitNumber: 6 // 6 tick marks: -125%, -75%, -25%, +25%, +75%, +125%
       },
       series: [
         // Main P&L line

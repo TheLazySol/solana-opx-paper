@@ -2,6 +2,7 @@ import { FC, useState, useEffect, useRef } from 'react'
 import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-order-details'
 import { SelectedOption, OptionContract } from './option-data'
+import { CollateralData } from './collateral-modal'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,13 +12,17 @@ interface TradeViewProps {
   onOptionsUpdate?: (options: SelectedOption[]) => void
   onTabChange?: (tab: string) => void
   optionChainData?: OptionContract[]
+  collateralData?: CollateralData | null
+  onCollateralDataChange?: (data: CollateralData | null) => void
 }
 
 export const TradeView: FC<TradeViewProps> = ({
   initialSelectedOptions = [],
   onOptionsUpdate,
   onTabChange,
-  optionChainData = []
+  optionChainData = [],
+  collateralData,
+  onCollateralDataChange
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
@@ -196,6 +201,8 @@ export const TradeView: FC<TradeViewProps> = ({
           onOrderDataChange={setOrderData}
           onOrderPlaced={handleOrderPlaced}
           optionChainData={optionChainData}
+          collateralData={collateralData}
+          onCollateralDataChange={onCollateralDataChange}
         />
       </motion.div>
       

@@ -10,16 +10,19 @@ import { BarChart3, TrendingUp } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { CollateralData } from './collateral-modal'
 
 interface ChartTabsProps {
   selectedAsset: string
   selectedOptions: SelectedOption[]
+  collateralData?: CollateralData | null
   className?: string
 }
 
 export const ChartTabs: FC<ChartTabsProps> = ({
   selectedAsset,
   selectedOptions,
+  collateralData,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('asset')
@@ -50,11 +53,24 @@ export const ChartTabs: FC<ChartTabsProps> = ({
 
   // Pass selected options directly to PnL chart - memoized to prevent unnecessary re-renders
   const pnlChartProps = useMemo(() => {
-    return selectedOptions.length > 0 ? {
+    if (selectedOptions.length === 0) return null
+    
+    const props: any = {
       selectedOptions: selectedOptions,
       currentPrice: currentPrice // Now using real asset price from context
-    } : null
-  }, [selectedOptions, currentPrice])
+    }
+    
+    // Add collateral amount if available for short positions
+    if (collateralData && collateralData.collateralProvided) {
+      // Convert collateral to USD value for the chart
+      const collateralUSD = Number(collateralData.collateralProvided) * 
+        (collateralData.collateralType === 'SOL' ? currentPrice : 1) * 
+        collateralData.leverage
+      props.collateralProvided = collateralUSD
+    }
+    
+    return props
+  }, [selectedOptions, currentPrice, collateralData])
 
   return (
     <div className={`space-y-3 ${className}`}>

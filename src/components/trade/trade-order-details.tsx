@@ -48,6 +48,8 @@ interface PlaceTradeOrderProps {
   onOrderDataChange?: (data: { isDebit: boolean; collateralNeeded: number }) => void
   onOrderPlaced?: (options: SelectedOption[]) => void
   optionChainData?: OptionContract[]
+  collateralData?: CollateralData | null
+  onCollateralDataChange?: (data: CollateralData | null) => void
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
@@ -55,7 +57,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   selectedAsset,
   onOrderDataChange,
   onOrderPlaced,
-  optionChainData = []
+  optionChainData = [],
+  collateralData: externalCollateralData,
+  onCollateralDataChange
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -63,7 +67,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [insufficientOptions, setInsufficientOptions] = useState(false)
   const [isCollateralModalOpen, setIsCollateralModalOpen] = useState(false)
-  const [collateralData, setCollateralData] = useState<CollateralData | null>(null)
+  // Use external collateral data instead of local state
+  const collateralData = externalCollateralData
   
   // Mouse glow effect hooks for cards
   const metricsCardRef = useMouseGlow()
@@ -357,7 +362,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   useEffect(() => {
     // If there are no short positions anymore, reset collateral data
     if (!hasShortPositions && collateralData) {
-      setCollateralData(null);
+      if (onCollateralDataChange) {
+        onCollateralDataChange(null);
+      }
       return;
     }
 
@@ -374,16 +381,20 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       
       // If the short options have changed, reset collateral data
       if (JSON.stringify(currentShortOptionIds) !== JSON.stringify(storedShortOptionIds)) {
-        setCollateralData(null);
+        if (onCollateralDataChange) {
+          onCollateralDataChange(null);
+        }
       }
     }
-  }, [hasShortPositions, selectedOptions, collateralData]);
+  }, [hasShortPositions, selectedOptions, collateralData, onCollateralDataChange]);
 
   const isCollateralRequired = hasShortPositions && collateralNeeded > 0 && !collateralData?.hasEnoughCollateral
 
   // Handle collateral modal confirmation
   const handleCollateralConfirm = (data: CollateralData) => {
-    setCollateralData(data)
+    if (onCollateralDataChange) {
+      onCollateralDataChange(data)
+    }
   }
 
   // Handle collateral modal close
