@@ -20,7 +20,8 @@ import {
   Chip,
   Spinner,
   Progress,
-  ButtonGroup,
+  Tabs,
+  Tab,
   useDisclosure
 } from '@heroui/react'
 import { RefreshCw, DollarSign, Coins, BarChart, TrendingUp, Database } from 'lucide-react'
@@ -30,6 +31,7 @@ import { OmlpChart, type PoolHistoricalData } from './omlp-pool-chart'
 import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion } from 'framer-motion'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 export type Pool = {
   token: string
@@ -65,6 +67,9 @@ export function LendingPools({
   const [depositAmount, setDepositAmount] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  // Mouse glow effect hook
+  const cardRef = useMouseGlow()
   
   const tvl = pools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -151,48 +156,74 @@ export function LendingPools({
 
   return (
     <>
-      <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+      <Card 
+        ref={cardRef}
+        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          background: `
+            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+              transparent 75%
+            ),
+            linear-gradient(to bottom right, 
+              rgb(15 23 42 / 0.4), 
+              rgb(30 41 59 / 0.3), 
+              rgb(51 65 85 / 0.2)
+            )
+          `,
+          transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+        }}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20 backdrop-blur-sm">
-                <Database className="h-5 w-5 text-purple-400" />
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Database className="w-4 h-4 text-[#4a85ff]" />
               </div>
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Option Margin Liquidity Pool
+              <h3 className="text-lg font-semibold text-white">
+                Lending Pools
               </h3>
             </div>
             <div className="flex items-center gap-3 ml-auto">
-              <ButtonGroup size="sm" variant="flat">
-                <Button
-                  className={cn(
-                    "transition-all",
-                    showUSD 
-                      ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                      : "bg-white/5 text-white/60 hover:bg-white/10"
-                  )}
-                  onPress={() => setShowUSD(true)}
-                  startContent={<DollarSign className="h-4 w-4" />}
+              <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm rounded-lg p-1">
+                <Tabs
+                  selectedKey={showUSD ? "usd" : "tokens"}
+                  onSelectionChange={(key) => setShowUSD(key === "usd")}
+                  variant="light"
+                  size="sm"
+                  classNames={{
+                    tabList: "gap-1 w-full relative rounded-md p-0",
+                    cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
+                    tab: "px-3 h-8 data-[selected=true]:text-white text-white/60 min-w-0",
+                    tabContent: "group-data-[selected=true]:text-white font-medium text-xs"
+                  }}
                 >
-                  USD
-                </Button>
-                <Button
-                  className={cn(
-                    "transition-all",
-                    !showUSD 
-                      ? "bg-blue-500/20 text-blue-400 border-blue-400/50" 
-                      : "bg-white/5 text-white/60 hover:bg-white/10"
-                  )}
-                  onPress={() => setShowUSD(false)}
-                  startContent={<Coins className="h-4 w-4" />}
-                >
-                  Tokens
-                </Button>
-              </ButtonGroup>
+                  <Tab
+                    key="usd"
+                    title={
+                      <div className="flex items-center gap-1.5">
+                        <DollarSign className="w-3 h-3" />
+                        <span>USD</span>
+                      </div>
+                    }
+                  />
+                  <Tab
+                    key="tokens"
+                    title={
+                      <div className="flex items-center gap-1.5">
+                        <Coins className="w-3 h-3" />
+                        <span>Tokens</span>
+                      </div>
+                    }
+                  />
+                </Tabs>
+              </div>
               <Chip 
                 size="sm" 
                 variant="flat" 
-                className="bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                className="bg-white/10 text-white/80 border border-white/20"
                 startContent={<TrendingUp className="w-3 h-3" />}
               >
                 TVL: ${Math.round(tvl).toLocaleString()}

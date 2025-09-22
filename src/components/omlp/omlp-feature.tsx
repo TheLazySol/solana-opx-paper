@@ -9,6 +9,7 @@ import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { motion } from 'framer-motion'
 import { Card, CardBody } from '@heroui/react'
 import { Wallet, ArrowUpRight } from 'lucide-react'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 import dynamic from 'next/dynamic'
 
 // Dynamically import wallet button with ssr disabled to prevent hydration mismatch
@@ -29,6 +30,9 @@ export function OMLPFeature() {
     fetchHistoricalData
   } = useOmlpService()
 
+  // Mouse glow effect hook
+  const walletCardRef = useMouseGlow()
+
   // Create wrapper functions with correct return type for components
   const handleRefreshPools = useCallback(async (): Promise<void> => {
     await refetchPools()
@@ -46,11 +50,30 @@ export function OMLPFeature() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]"
       >
-        <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl max-w-md">
+        <Card 
+          ref={walletCardRef}
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out max-w-md"
+          style={{
+            background: `
+              radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                transparent 75%
+              ),
+              linear-gradient(to bottom right, 
+                rgb(15 23 42 / 0.4), 
+                rgb(30 41 59 / 0.3), 
+                rgb(51 65 85 / 0.2)
+              )
+            `,
+            transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+          }}
+        >
           <CardBody className="p-8">
             <div className="flex flex-col items-center gap-6">
-              <div className="p-4 rounded-full bg-gradient-to-br from-[#4a85ff]/20 to-[#5829f2]/20 backdrop-blur-sm">
-                <Wallet className="h-8 w-8 text-[#4a85ff]" />
+              <div className="w-12 h-12 rounded-full bg-[#4a85ff]/20 flex items-center justify-center">
+                <Wallet className="h-6 w-6 text-[#4a85ff]" />
               </div>
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
@@ -70,32 +93,33 @@ export function OMLPFeature() {
     )
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
       className="py-10 space-y-8"
     >
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-center space-y-3"
-      >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
-          Option Margin Liquidity Pool
-        </h1>
-        <p className="text-white/60 max-w-2xl mx-auto">
-          Lend tokens to provide liquidity for option market makers and earn competitive yields.
-        </p>
-      </motion.div>
-      
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-      >
+      <motion.div variants={itemVariants}>
         <MyLendingPositions 
           positions={positions}
           isLoading={isLoadingPositions}
@@ -103,11 +127,7 @@ export function OMLPFeature() {
         />
       </motion.div>
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-      >
+      <motion.div variants={itemVariants}>
         <LendingPools 
           pools={pools}
           isLoading={isLoadingPools}

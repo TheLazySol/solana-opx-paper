@@ -27,6 +27,7 @@ import { cn } from '@/utils/utils'
 import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 export type Position = {
   token: string
@@ -49,6 +50,9 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
   const [amount, setAmount] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Mouse glow effect hook
+  const cardRef = useMouseGlow()
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -130,14 +134,33 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
 
   return (
     <>
-      <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
+      <Card 
+        ref={cardRef}
+        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          background: `
+            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+              transparent 75%
+            ),
+            linear-gradient(to bottom right, 
+              rgb(15 23 42 / 0.4), 
+              rgb(30 41 59 / 0.3), 
+              rgb(51 65 85 / 0.2)
+            )
+          `,
+          transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+        }}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-                <Activity className="h-5 w-5 text-blue-400" />
+              <div className="w-6 h-6 rounded-md bg-[#4a85ff]/20 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-[#4a85ff]" />
               </div>
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <h3 className="text-lg font-semibold text-white">
                 My Lendings / Collateral
               </h3>
             </div>
@@ -145,7 +168,7 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
               <Chip 
                 size="sm" 
                 variant="flat" 
-                className="bg-green-500/20 text-green-400 border border-green-500/30"
+                className="bg-white/10 text-white/80 border border-white/20"
                 startContent={<DollarSign className="w-3 h-3" />}
               >
                 TVL: ${totalValue.toFixed(2)}
