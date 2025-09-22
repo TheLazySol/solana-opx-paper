@@ -133,47 +133,71 @@ export const CollateralModal: FC<CollateralModalProps> = ({
     const longCalls = selectedOptions.filter(opt => opt.type === 'bid' && opt.side === 'call')
     const longPuts = selectedOptions.filter(opt => opt.type === 'bid' && opt.side === 'put')
 
-    // Handle short calls
-    shortCalls.forEach(shortCall => {
-      const quantity = shortCall.quantity || 1
-      // Find long calls with lower strike prices (these can cover the short call)
-      const coveringCalls = longCalls.filter(lc => lc.strike <= shortCall.strike)
-      
-      if (coveringCalls.length === 0) {
-        // No covering calls, need full collateral based on strike price
-        totalCollateral += shortCall.strike * contractSize * quantity
-      } else {
-        // Calculate how many contracts are covered by long calls
-        const coveredQuantity = coveringCalls.reduce((total, call) => total + (call.quantity || 1), 0)
-        const uncoveredQuantity = Math.max(0, quantity - coveredQuantity)
-        
-        if (uncoveredQuantity > 0) {
-          // Need collateral for uncovered portion based on strike price
-          totalCollateral += shortCall.strike * contractSize * uncoveredQuantity
-        }
-      }
-    })
+    // Handle short calls with quantity-aware matching
+    if (shortCalls.length > 0) {
+      // Create array of long calls with remaining quantities for tracking
+      const availableLongCalls = longCalls.map(longCall => ({
+        ...longCall,
+        remainingQuantity: longCall.quantity || 1
+      })).sort((a, b) => a.strike - b.strike) // Sort by strike ascending for better matching
 
-    // Handle short puts
-    shortPuts.forEach(shortPut => {
-      const quantity = shortPut.quantity || 1
-      // Find long puts with higher strike prices (these can cover the short put)
-      const coveringPuts = longPuts.filter(lp => lp.strike >= shortPut.strike)
-      
-      if (coveringPuts.length === 0) {
-        // No covering puts, need full collateral based on strike price
-        totalCollateral += shortPut.strike * contractSize * quantity
-      } else {
-        // Calculate how many contracts are covered by long puts
-        const coveredQuantity = coveringPuts.reduce((total, put) => total + (put.quantity || 1), 0)
-        const uncoveredQuantity = Math.max(0, quantity - coveredQuantity)
+      shortCalls.forEach(shortCall => {
+        const shortQuantity = shortCall.quantity || 1
+        let remainingShortQuantity = shortQuantity
         
-        if (uncoveredQuantity > 0) {
-          // Need collateral for uncovered portion based on strike price
-          totalCollateral += shortPut.strike * contractSize * uncoveredQuantity
+        // Try to match with available long calls (strike <= short call strike for coverage)
+        for (const availableLongCall of availableLongCalls) {
+          if (remainingShortQuantity <= 0) break
+          if (availableLongCall.remainingQuantity <= 0) continue
+          if (availableLongCall.strike > shortCall.strike) continue // Can't cover
+          
+          // Calculate how much can be covered by this long call
+          const coveredByThisLong = Math.min(remainingShortQuantity, availableLongCall.remainingQuantity)
+          
+          // Update remaining quantities
+          remainingShortQuantity -= coveredByThisLong
+          availableLongCall.remainingQuantity -= coveredByThisLong
         }
-      }
-    })
+        
+        // Add collateral for any remaining uncovered short quantity
+        if (remainingShortQuantity > 0) {
+          totalCollateral += shortCall.strike * contractSize * remainingShortQuantity
+        }
+      })
+    }
+
+    // Handle short puts with quantity-aware matching
+    if (shortPuts.length > 0) {
+      // Create array of long puts with remaining quantities for tracking
+      const availableLongPuts = longPuts.map(longPut => ({
+        ...longPut,
+        remainingQuantity: longPut.quantity || 1
+      })).sort((a, b) => b.strike - a.strike) // Sort by strike descending for better matching
+
+      shortPuts.forEach(shortPut => {
+        const shortQuantity = shortPut.quantity || 1
+        let remainingShortQuantity = shortQuantity
+        
+        // Try to match with available long puts (strike >= short put strike for coverage)
+        for (const availableLongPut of availableLongPuts) {
+          if (remainingShortQuantity <= 0) break
+          if (availableLongPut.remainingQuantity <= 0) continue
+          if (availableLongPut.strike < shortPut.strike) continue // Can't cover
+          
+          // Calculate how much can be covered by this long put
+          const coveredByThisLong = Math.min(remainingShortQuantity, availableLongPut.remainingQuantity)
+          
+          // Update remaining quantities
+          remainingShortQuantity -= coveredByThisLong
+          availableLongPut.remainingQuantity -= coveredByThisLong
+        }
+        
+        // Add collateral for any remaining uncovered short quantity
+        if (remainingShortQuantity > 0) {
+          totalCollateral += shortPut.strike * contractSize * remainingShortQuantity
+        }
+      })
+    }
 
     return totalCollateral
   }, [selectedOptions])

@@ -120,23 +120,33 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
 
     // Handle short calls with quantity-aware matching
     if (shortCalls.length > 0) {
-      // Create available coverage pool from all long calls
-      let availableCoveragePool = longCalls.reduce((total, longCall) => {
-        return total + (longCall.quantity || 1)
-      }, 0)
+      // Create array of long calls with remaining quantities for tracking
+      const availableLongCalls = longCalls.map(longCall => ({
+        ...longCall,
+        remainingQuantity: longCall.quantity || 1
+      })).sort((a, b) => a.strike - b.strike) // Sort by strike ascending for better matching
 
-      // Process each short call, consuming from the coverage pool
       shortCalls.forEach(shortCall => {
         const shortQuantity = shortCall.quantity || 1
-        const coveredQuantity = Math.min(shortQuantity, availableCoveragePool)
-        const uncoveredQuantity = shortQuantity - coveredQuantity
+        let remainingShortQuantity = shortQuantity
         
-        // Consume coverage from the pool
-        availableCoveragePool = Math.max(0, availableCoveragePool - coveredQuantity)
+        // Try to match with available long calls (strike <= short call strike for coverage)
+        for (const availableLongCall of availableLongCalls) {
+          if (remainingShortQuantity <= 0) break
+          if (availableLongCall.remainingQuantity <= 0) continue
+          if (availableLongCall.strike > shortCall.strike) continue // Can't cover
+          
+          // Calculate how much can be covered by this long call
+          const coveredByThisLong = Math.min(remainingShortQuantity, availableLongCall.remainingQuantity)
+          
+          // Update remaining quantities
+          remainingShortQuantity -= coveredByThisLong
+          availableLongCall.remainingQuantity -= coveredByThisLong
+        }
         
-        // Add collateral for uncovered quantity
-        if (uncoveredQuantity > 0) {
-          totalCollateral += underlyingPrice * contractSize * uncoveredQuantity
+        // Add collateral for any remaining uncovered short quantity
+        if (remainingShortQuantity > 0) {
+          totalCollateral += underlyingPrice * contractSize * remainingShortQuantity
         }
       })
     }
