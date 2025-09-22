@@ -16,6 +16,7 @@ interface ChartTabsProps {
   selectedAsset: string
   selectedOptions: SelectedOption[]
   collateralData?: CollateralData | null
+  onProvideCollateral?: () => void
   className?: string
 }
 
@@ -23,6 +24,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
   selectedAsset,
   selectedOptions,
   collateralData,
+  onProvideCollateral,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('asset')
@@ -149,6 +151,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
                   {...pnlChartProps}
                   showHeader={true}
                   title="Option Payoff Diagram"
+                  onProvideCollateral={onProvideCollateral}
                 />
               ) : (
                 <div className="w-full h-[400px] flex items-center justify-center">

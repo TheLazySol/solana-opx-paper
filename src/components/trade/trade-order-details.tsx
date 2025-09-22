@@ -36,8 +36,7 @@ import {
   Loader2,
   AlertTriangle,
   Target,
-  Info,
-  Shield
+  Info
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { CollateralModal, CollateralData } from './collateral-modal'
@@ -50,6 +49,7 @@ interface PlaceTradeOrderProps {
   optionChainData?: OptionContract[]
   collateralData?: CollateralData | null
   onCollateralDataChange?: (data: CollateralData | null) => void
+  onProvideCollateralRef?: (openModal: () => void) => void
 }
 
 export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
@@ -59,7 +59,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   onOrderPlaced,
   optionChainData = [],
   collateralData: externalCollateralData,
-  onCollateralDataChange
+  onCollateralDataChange,
+  onProvideCollateralRef
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const { price: underlyingPrice } = useAssetPriceInfo(selectedAsset)
@@ -401,6 +402,17 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
   const handleCollateralModalClose = () => {
     setIsCollateralModalOpen(false)
   }
+  
+  const handleOpenCollateralModal = () => {
+    setIsCollateralModalOpen(true)
+  }
+  
+  // Expose the collateral modal opening function to parent
+  useEffect(() => {
+    if (onProvideCollateralRef) {
+      onProvideCollateralRef(handleOpenCollateralModal)
+    }
+  }, [onProvideCollateralRef])
 
   // Handle placing an order
   const handlePlaceOrder = () => {
@@ -939,14 +951,20 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
       {/* Place Order Button */}
       <motion.div variants={itemVariants}>
         <Tooltip 
-          content={insufficientOptions ? "There are not enough options available to trade for the quantity selected." : undefined}
-          isDisabled={!insufficientOptions}
+          content={
+            insufficientOptions 
+              ? "There are not enough options available to trade for the quantity selected." 
+              : isCollateralRequired 
+                ? "Short positions require collateral. Please provide collateral to proceed with the order."
+                : undefined
+          }
+          isDisabled={!insufficientOptions && !isCollateralRequired}
         >
           <div 
             ref={placeOrderButtonRef}
             className="relative transition-all duration-300"
             style={{
-              background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess ? `
+              background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess && !isCollateralRequired ? `
                 radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
                   rgba(74, 133, 255, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
                   rgba(24, 81, 196, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
@@ -961,13 +979,13 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
             <Button 
               className={cn(
                 "w-full h-14 font-semibold text-lg transition-all duration-300",
-                !hasSelectedOptions || isPlacingOrder || insufficientOptions
+                !hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired
                   ? "bg-white/10 text-white/40 border border-white/20"
                   : orderSuccess
                     ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
                     : "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
               )}
-              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions}
+              isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired}
               onPress={handlePlaceOrder}
             >
             <motion.div
@@ -992,17 +1010,11 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                   <span>Insufficient Options</span>
                 </>
               ) : hasSelectedOptions ? (
-                isCollateralRequired ? (
-                  <>
-                    <Shield className="w-5 h-5" />
-                    <span>Provide Collateral for Short Position</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5" />
-                    <span>Place Order</span>
-                  </>
-                )
+                <>
+                  <Zap className="w-5 h-5" />
+                  <span>Place Order</span>
+                </>
+              
               ) : (
                 <>
                   <AlertCircle className="w-5 h-5" />

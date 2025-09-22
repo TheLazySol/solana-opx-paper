@@ -14,6 +14,7 @@ interface TradeViewProps {
   optionChainData?: OptionContract[]
   collateralData?: CollateralData | null
   onCollateralDataChange?: (data: CollateralData | null) => void
+  onProvideCollateralRef?: (openModal: () => void) => void
 }
 
 export const TradeView: FC<TradeViewProps> = ({
@@ -22,7 +23,8 @@ export const TradeView: FC<TradeViewProps> = ({
   onTabChange,
   optionChainData = [],
   collateralData,
-  onCollateralDataChange
+  onCollateralDataChange,
+  onProvideCollateralRef
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
@@ -203,6 +205,7 @@ export const TradeView: FC<TradeViewProps> = ({
           optionChainData={optionChainData}
           collateralData={collateralData}
           onCollateralDataChange={onCollateralDataChange}
+          onProvideCollateralRef={onProvideCollateralRef}
         />
       </motion.div>
       

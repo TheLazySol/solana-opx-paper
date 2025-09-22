@@ -2,9 +2,10 @@
 
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { Card, CardBody } from '@heroui/react'
+import { Card, CardBody, Button } from '@heroui/react'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
+import { Shield, AlertTriangle } from 'lucide-react'
 import { SelectedOption } from './option-data'
 
 interface PnLChartProps {
@@ -23,6 +24,9 @@ interface PnLChartProps {
   className?: string
   showHeader?: boolean
   title?: string
+  
+  // Collateral modal callback for short positions
+  onProvideCollateral?: () => void
   
   // Legacy props for backward compatibility (deprecated)
   strikePrice?: number
@@ -57,6 +61,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   className = '',
   showHeader = true,
   title = 'Payoff Diagram',
+  onProvideCollateral,
   // Legacy props for backward compatibility
   strikePrice,
   premium,
@@ -216,6 +221,20 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       isMobile
     }
   }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts])
+
+  // Check if we should show collateral placeholder
+  const shouldShowCollateralPlaceholder = useMemo(() => {
+    const { options } = validatedInputs
+    
+    // Check if there are any short positions (ask type = selling = short)
+    const hasShortPositions = options.some(option => option.type === 'ask')
+    
+    // Check if collateral has been provided
+    const hasCollateral = collateralProvided && collateralProvided > 0
+    
+    // Show placeholder if there are short positions but no collateral
+    return hasShortPositions && !hasCollateral
+  }, [validatedInputs, collateralProvided])
 
   // Calculate P&L for a given underlying price
   const calculatePnL = useCallback((underlyingPrice: number): number => {
@@ -838,6 +857,71 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     }
   }, [chartData, profitData, lossData, validatedInputs, calculatePnL, calculatePercentageGain, metrics])
 
+
+  // If short position needs collateral, show placeholder
+  if (shouldShowCollateralPlaceholder) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={className}
+      >
+        <Card 
+          className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm"
+        >
+          <CardBody className="p-2">
+            {/* Match exact chart container dimensions */}
+            <div className="h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                <AlertTriangle className="w-8 h-8 text-orange-400" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium text-white/90">
+                  Short Position Detected
+                </h3>
+                <p className="text-sm text-white/60 max-w-md">
+                  This is a Short Position. Please provide collateral to see accurate PnL.
+                </p>
+              </div>
+              
+              {onProvideCollateral && (
+                <Button
+                  className="bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white font-semibold shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40 transition-all duration-300"
+                  size="md"
+                  startContent={<Shield className="w-4 h-4" />}
+                  onPress={onProvideCollateral}
+                >
+                  Provide Collateral
+                </Button>
+              )}
+            </div>
+            
+            {/* Add matching metrics below - empty state */}
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div className="bg-black/40 rounded-lg p-2">
+                <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
+                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+              </div>
+              <div className="bg-black/40 rounded-lg p-2">
+                <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
+                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+              </div>
+              <div className="bg-black/40 rounded-lg p-2">
+                <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
+                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+              </div>
+              <div className="bg-black/40 rounded-lg p-2">
+                <span className="text-[10px] sm:text-xs text-white block">Breakeven</span>
+                <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div

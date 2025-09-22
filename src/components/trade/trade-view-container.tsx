@@ -19,6 +19,7 @@ interface TradeViewContainerProps {
   optionChainData?: OptionContract[]
   collateralData?: CollateralData | null
   onCollateralDataChange?: (data: CollateralData | null) => void
+  onProvideCollateralRef?: (openModal: () => void) => void
 }
 
 export const TradeViewContainer: FC<TradeViewContainerProps> = ({
@@ -31,7 +32,8 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   setActiveOrderTab,
   optionChainData = [],
   collateralData,
-  onCollateralDataChange
+  onCollateralDataChange,
+  onProvideCollateralRef
 }) => {
   // Use internal state if no external state is provided
   const [internalActiveView, setInternalActiveView] = useState('trade')
@@ -163,6 +165,7 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
                 optionChainData={optionChainData}
                 collateralData={collateralData}
                 onCollateralDataChange={onCollateralDataChange}
+                onProvideCollateralRef={onProvideCollateralRef}
               />
             )}
             {activeView === 'orders' && (
