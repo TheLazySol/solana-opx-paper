@@ -62,8 +62,9 @@ export function LendingPools({
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   
-  // Mouse glow effect hook
+  // Mouse glow effect hooks
   const cardRef = useMouseGlow()
+  const modalContentRef = useMouseGlow()
   
   // Get SOL price for mock pool
   const { price: solPrice, refreshPrice } = useAssetPriceInfo('SOL')
@@ -336,89 +337,173 @@ export function LendingPools({
       <Modal 
         isOpen={isDepositModalOpen} 
         onOpenChange={onDepositModalOpenChange}
-        size="md"
-        classNames={{
-          base: "bg-black/90 backdrop-blur-md border border-white/10",
-          header: "border-b border-white/10",
-          body: "py-6",
-          footer: "border-t border-white/10"
+        size="lg"
+        backdrop="blur"
+        motionProps={{
+          variants: {
+            enter: {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              transition: {
+                duration: 0.3,
+                ease: [0.4, 0, 0.2, 1]
+              }
+            },
+            exit: {
+              y: -20,
+              opacity: 0,
+              scale: 0.95,
+              transition: {
+                duration: 0.2,
+                ease: [0.4, 0, 1, 1]
+              }
+            }
+          }
         }}
+        classNames={{
+          base: "bg-transparent",
+          wrapper: "items-center justify-center p-4",
+          body: "p-0"
+        }}
+        hideCloseButton
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
       >
-        <ModalContent>
+        <div ref={modalContentRef}>
+          <ModalContent 
+            className="border border-gray-700/40 backdrop-blur-lg max-h-[90vh] overflow-hidden relative transition-all duration-300 ease-out"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(17 24 39 / 0.9), 
+                  rgb(31 41 55 / 0.8), 
+                  rgb(55 65 81 / 0.7)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Deposit to {selectedPool?.token} Pool
-                </span>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-white/60">Current APY:</span>
-                  <Chip size="sm" variant="flat" className="bg-green-500/20 text-green-400">
-                    {selectedPool?.supplyApy}%
-                  </Chip>
+              <ModalHeader className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#4a85ff]/10 flex items-center justify-center border border-[#4a85ff]/20">
+                    <Database className="w-4 h-4 text-[#4a85ff]" />
+                  </div>
+                  <div>
+                    <span className="text-lg font-medium text-white/90">
+                      {selectedPool?.token} Pool
+                    </span>
+                  </div>
                 </div>
               </ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  <Input
-                    type="number"
-                    label="Deposit Amount"
-                    value={depositAmount}
-                    onValueChange={setDepositAmount}
-                    variant="flat"
-                    placeholder={`0.00 ${selectedPool?.token}`}
-                    min="0"
-                    step="any"
-                    classNames={{
-                      label: "text-white/80",
-                      input: "text-white",
-                      inputWrapper: "bg-white/5 border border-white/10 hover:bg-white/10"
-                    }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span className="text-white/60 text-xs">{selectedPool?.token}</span>
+
+              <ModalBody className="p-6 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {/* Deposit Input Section */}
+                  <div className="space-y-4">
+                    <Input
+                      type="text"
+                      label="Deposit Amount"
+                      value={depositAmount}
+                      onValueChange={(value) => {
+                        // Only allow numbers and decimals
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setDepositAmount(value);
+                        }
+                      }}
+                      placeholder="0.00"
+                      size="lg"
+                      endContent={
+                        <Chip size="sm" variant="flat" className="bg-white/10">
+                          {selectedPool?.token || 'SOL'}
+                        </Chip>
+                      }
+                      classNames={{
+                        base: "max-w-full",
+                        label: "text-white/80",
+                        input: "text-white/90",
+                        inputWrapper: "bg-white/5 border-white/10 hover:border-white/20 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
+                      }}
+                    />
+                    
+                    {selectedPool && (
+                      <div className="p-4 rounded-lg bg-gray-950/60 border border-white/5 space-y-3">
+                        <h4 className="text-sm font-medium text-white/90 mb-2">Pool Information</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-white/60">Pool Supply:</span>
+                            <p className="text-white/90 font-medium">{formatValue(selectedPool.supply, selectedPool.tokenPrice, selectedPool.token)}</p>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Supply Limit:</span>
+                            <p className="text-white/90 font-medium">{formatValue(selectedPool.supplyLimit, selectedPool.tokenPrice, selectedPool.token)}</p>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Utilization:</span>
+                            <p className="text-white/90 font-medium">{calculateUtilization(selectedPool.borrowed, selectedPool.supply).toFixed(2)}%</p>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Supply APY:</span>
+                            <p className="text-green-400 font-medium">{selectedPool.supplyApy}%</p>
+                          </div>
+                        </div>
                       </div>
-                    }
-                  />
-                  {selectedPool && (
-                    <div className="p-3 rounded-lg bg-white/5 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Pool Supply:</span>
-                        <span className="text-white/90">{formatValue(selectedPool.supply, selectedPool.tokenPrice, selectedPool.token)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Utilization:</span>
-                        <span className="text-white/90">{calculateUtilization(selectedPool.borrowed, selectedPool.supply).toFixed(2)}%</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </motion.div>
               </ModalBody>
-              <ModalFooter>
-                <Button 
-                  variant="flat" 
-                  onPress={onClose}
-                  className="bg-white/10 text-white/80 hover:bg-white/20"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  color="primary"
-                  onPress={handleDeposit}
-                  isDisabled={
-                    isProcessing ||
-                    !depositAmount ||
-                    parseFloat(depositAmount) <= 0 ||
-                    Number.isNaN(parseFloat(depositAmount))
-                  }
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  {isProcessing ? "Processing..." : "Deposit"}
-                </Button>
+
+              <ModalFooter className="border-t border-white/5 px-6 py-4">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2 text-sm text-white/60">
+                    <Database className="w-4 h-4" />
+                    <span>Lending Pool Deposit</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="flat"
+                      onPress={onClose}
+                      className="bg-white/5 hover:bg-white/10 border border-white/10"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className={cn(
+                        "font-semibold transition-all duration-300",
+                        (!isProcessing && depositAmount && parseFloat(depositAmount) > 0 && !Number.isNaN(parseFloat(depositAmount)))
+                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
+                          : "bg-white/10 text-white/40 border border-white/10"
+                      )}
+                      isDisabled={
+                        isProcessing ||
+                        !depositAmount ||
+                        parseFloat(depositAmount) <= 0 ||
+                        Number.isNaN(parseFloat(depositAmount))
+                      }
+                      onPress={handleDeposit}
+                    >
+                      {isProcessing ? "Processing..." : "Deposit"}
+                    </Button>
+                  </div>
+                </div>
               </ModalFooter>
             </>
           )}
         </ModalContent>
+        </div>
       </Modal>
     </>
   )
