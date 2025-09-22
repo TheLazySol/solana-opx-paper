@@ -8,7 +8,6 @@ import PnLChartInteractive from './pnl-chart-interactive'
 import { SelectedOption } from './option-data'
 import { BarChart3, TrendingUp } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
-import { TOKENS } from '@/constants/token-list/token-list'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { CollateralData } from './collateral-modal'
 

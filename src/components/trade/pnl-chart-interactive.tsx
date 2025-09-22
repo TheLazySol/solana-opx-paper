@@ -529,30 +529,37 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Calculate Y-axis range for percentage-based display (-125% to +125%)
+    // Calculate Y-axis range by mirroring the smaller extreme value + 5% breathing room
     let yAxisMin = -100
     let yAxisMax = 100
     
     if (hasShortPositions) {
-      if (collateralProvided && collateralProvided > 0) {
-        // For short positions with collateral, set range to ±125% of collateral
-        yAxisMin = -collateralProvided * 1.25 // -125% of collateral
-        yAxisMax = collateralProvided * 1.25  // +125% of collateral
-      } else {
-        // For short positions without collateral, use premium as base for ±125% range
-        const absPremium = Math.abs(totalPremiumPaid) || 100
-        yAxisMin = -absPremium * 1.25 // -125% of premium
-        yAxisMax = absPremium * 1.25  // +125% of premium
-      }
+      // For short positions: Mirror max profit (+/- max profit + 5% breathing room)
+      // This focuses the chart on the realistic profit potential rather than extreme loss scenarios
+      const maxProfitAmount = typeof maxProfit === 'number' ? Math.abs(maxProfit) : (totalPremiumReceived || 100)
+      const breathingRoom = maxProfitAmount * 0.05 // 5% breathing room
+      const rangeAmount = maxProfitAmount + breathingRoom
+      
+      yAxisMin = -rangeAmount // Mirror negative range
+      yAxisMax = rangeAmount   // Positive range with breathing room
     } else {
-      // For long positions, set range to ±125% of premium paid
-      const absPremium = Math.abs(totalPremiumPaid) || 100
-      yAxisMin = -absPremium * 1.25 // -125% of premium
-      yAxisMax = absPremium * 1.25  // +125% of premium
+      // For long positions: Mirror max loss (+/- max loss + 5% breathing room)
+      // This focuses the chart on the realistic loss potential rather than unlimited profit scenarios
+      const maxLossAmount = Math.abs(totalPremiumPaid) || 100 // Max loss is premium paid for long positions
+      const breathingRoom = maxLossAmount * 0.05 // 5% breathing room
+      const rangeAmount = maxLossAmount + breathingRoom
+      
+      yAxisMin = -rangeAmount // Negative range with breathing room  
+      yAxisMax = rangeAmount  // Mirror positive range
     }
     
+    // Calculate max loss amount for consistent percentage calculations
+    const maxLossAmount = typeof maxLoss === 'number' ? Math.abs(maxLoss) : 
+                         (collateralProvided && collateralProvided > 0 ? collateralProvided : totalPremiumReceived || 100)
+
     return {
       maxLoss: typeof maxLoss === 'number' ? Math.round(maxLoss * 100) / 100 : maxLoss,
+      maxLossAmount: Math.round(maxLossAmount * 100) / 100, // Add for consistent calculations
       breakeven: breakevenPrices.length > 0 ? Math.round(breakevenPrices[0] * 100) / 100 : Math.round(breakeven * 100) / 100,
       breakevenPrices: breakevenPrices.map(bp => Math.round(bp * 100) / 100),
       currentPnL: Math.round(currentPnL * 100) / 100,
@@ -560,7 +567,12 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       yAxisMin: Math.round(yAxisMin * 100) / 100,
       yAxisMax: Math.round(yAxisMax * 100) / 100,
       totalPremiumPaid: Math.round(Math.abs(totalPremiumPaid - totalPremiumReceived) * 100) / 100,
-      hasShortPositions
+      totalPremiumReceived: Math.round(totalPremiumReceived * 100) / 100, // Add this for short position calculations
+      hasShortPositions,
+      // Add mirrored range info for reference
+      mirroredRangeBase: hasShortPositions ? 
+        (typeof maxProfit === 'number' ? Math.abs(maxProfit) : totalPremiumReceived || 100) : 
+        (Math.abs(totalPremiumPaid) || 100)
     }
   }, [validatedInputs, calculatePnL, breakevenPrices, collateralProvided])
 
@@ -636,15 +648,12 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
           // Calculate percentage gain based on position type
           let percentageGain = 0
           if (metrics.hasShortPositions) {
-            if (collateralProvided && collateralProvided > 0) {
-              // For short positions with collateral, percentage is based on collateral
-              // Cap the loss at -100% (total loss of collateral)
-              percentageGain = Math.max((pnl / collateralProvided) * 100, -100)
-            } else {
-              // For short positions without collateral, use the total premium as base
-              // This allows proper percentage scaling for short option positions
-              const premiumBase = Math.abs(metrics.totalPremiumPaid) || 100
-              percentageGain = (pnl / premiumBase) * 100
+            // For short positions, percentage is based on max loss potential
+            // This gives proper risk-adjusted percentage: Current P&L / Max Loss * 100
+            if (metrics.maxLossAmount > 0) {
+              percentageGain = (pnl / metrics.maxLossAmount) * 100
+              // Cap the loss at -100% (total loss of max loss amount)
+              percentageGain = Math.max(percentageGain, -100)
             }
           } else if (metrics.totalPremiumPaid > 0) {
             // For long positions or fallback, percentage is based on premium
@@ -748,27 +757,26 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             }
           },
           formatter: (value: number) => {
-            // For short positions, calculate percentage based on collateral or premium
+            // Calculate percentage based on position type and mirrored scaling
             let percentage = 0
             if (metrics.hasShortPositions) {
-              if (collateralProvided && collateralProvided > 0) {
-                // For short positions with collateral, percentage is based on collateral
-                // Cap the loss at -100% (total loss of collateral)
-                percentage = Math.max((value / collateralProvided) * 100, -100)
-              } else {
-                // For short positions without collateral, use the total premium as base
-                // This allows proper percentage scaling for short option positions
-                const premiumBase = Math.abs(metrics.totalPremiumPaid) || 100
-                percentage = (value / premiumBase) * 100
+              // For short positions, percentage is still based on max loss potential for risk context
+              // But the display focuses on the mirrored max profit range
+              if (metrics.maxLossAmount > 0) {
+                percentage = (value / metrics.maxLossAmount) * 100
+                // Cap the loss at -100% (total loss of max loss amount)
+                percentage = Math.max(percentage, -100)
               }
             } else if (metrics.totalPremiumPaid > 0) {
-              // For long positions or fallback, percentage is based on premium
+              // For long positions, percentage is based on premium paid (max loss)
               percentage = calculatePercentageGain(value)
             }
             
+            // For very small percentages, show as neutral
             if (Math.abs(percentage) < 0.1) {
               return `{neutral|0%}`
             }
+            
             const color = percentage > 0 ? 'positive' : 'negative'
             return `{${color}|${percentage > 0 ? '+' : ''}${Math.round(percentage)}%}`
           }
@@ -780,8 +788,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
         },
         min: metrics.yAxisMin,
         max: metrics.yAxisMax,
-        interval: (metrics.yAxisMax - metrics.yAxisMin) / 5, // Create 5 equal intervals for ±125% range
-        splitNumber: 6 // 6 tick marks: -125%, -75%, -25%, +25%, +75%, +125%
+        interval: (metrics.yAxisMax - metrics.yAxisMin) / 4, // Create 4 equal intervals for mirrored range
+        splitNumber: 5 // 5 tick marks: min, -half, zero, +half, max
       },
       series: [
         // Main P&L line

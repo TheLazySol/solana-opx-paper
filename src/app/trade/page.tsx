@@ -21,7 +21,7 @@ export default function TradePage() {
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
   const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
-  const [openCollateralModal, setOpenCollateralModal] = useState<(() => void) | null>(null)
+  const openCollateralModalRef = useRef<(() => void) | null>(null)
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
   
   // Get search parameters to determine which tabs to show
@@ -106,7 +106,7 @@ export default function TradePage() {
 
   // Handle collateral modal opening function reference
   const handleProvideCollateralRef = useCallback((openModal: () => void) => {
-    setOpenCollateralModal(() => openModal)
+    openCollateralModalRef.current = openModal
   }, [])
 
   return (
@@ -145,7 +145,7 @@ export default function TradePage() {
                   selectedAsset={selectedAsset} 
                   selectedOptions={selectedOptions}
                   collateralData={collateralData}
-                  onProvideCollateral={openCollateralModal || undefined}
+                  onProvideCollateral={openCollateralModalRef.current || undefined}
                 />
               </div>
               
