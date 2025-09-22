@@ -33,6 +33,7 @@ interface CollateralModalProps {
   selectedAsset: string
   isDebit: boolean
   externalCollateralNeeded: number
+  existingCollateralData?: CollateralData | null
 }
 
 export interface CollateralData {
@@ -56,7 +57,8 @@ export const CollateralModal: FC<CollateralModalProps> = ({
   selectedOptions = [],
   selectedAsset,
   isDebit,
-  externalCollateralNeeded
+  externalCollateralNeeded,
+  existingCollateralData
 }) => {
   const hasSelectedOptions = selectedOptions.length > 0
   const contractSize = 100 // Each option contract represents 100 units
@@ -79,16 +81,28 @@ export const CollateralModal: FC<CollateralModalProps> = ({
   const [solPrice, setSolPrice] = useState<number>(0);
   const [collateralPrice, setCollateralPrice] = useState<number>(1); // Price of selected collateral in USD
 
-  // Reset state when modal opens
+  // Initialize state when modal opens - preserve existing data if available
   useEffect(() => {
     if (isOpen) {
-      setCollateralProvided("0")
-      setLeverage(1)
-      setLeverageInputValue("1")
-      setAutoMode(false)
-      setShowMaxLeverageAlert(false)
+      if (existingCollateralData && existingCollateralData.hasEnoughCollateral) {
+        // Initialize with existing collateral data for adjustment
+        setCollateralProvided(existingCollateralData.collateralProvided || "0")
+        setLeverage(existingCollateralData.leverage || 1)
+        setLeverageInputValue(formatLeverageValue(existingCollateralData.leverage || 1))
+        setCollateralType(existingCollateralData.collateralType || COLLATERAL_TYPES.find(type => type.default)?.value || "USDC")
+        setAutoMode(false) // Don't auto-enable for adjustments
+        setShowMaxLeverageAlert(false)
+      } else {
+        // Reset to defaults for new collateral provision
+        setCollateralProvided("0")
+        setLeverage(1)
+        setLeverageInputValue("1")
+        setCollateralType(COLLATERAL_TYPES.find(type => type.default)?.value || "USDC")
+        setAutoMode(false)
+        setShowMaxLeverageAlert(false)
+      }
     }
-  }, [isOpen])
+  }, [isOpen, existingCollateralData])
 
   // Fetch SOL price and collateral price
   useEffect(() => {
@@ -945,7 +959,7 @@ export const CollateralModal: FC<CollateralModalProps> = ({
                 className={cn(
                   "font-semibold transition-all duration-300",
                   hasEnoughCollateral
-                    ? "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40"
                     : "bg-white/10 text-white/40 border border-white/10"
                 )}
                 isDisabled={!hasEnoughCollateral}

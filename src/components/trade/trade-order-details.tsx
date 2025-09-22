@@ -983,13 +983,21 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               <div 
                 className="relative transition-all duration-300"
                 style={{
-                  background: hasSelectedOptions && !isPlacingOrder && !orderSuccess ? `
-                    radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                      rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-                      rgba(24, 81, 196, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-                      transparent 50%
-                    )
-                  ` : 'transparent',
+                  background: hasSelectedOptions && !isPlacingOrder && !orderSuccess ? (
+                    collateralData?.hasEnoughCollateral ? `
+                      radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(255, 255, 255, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                        rgba(255, 255, 255, calc(0.05 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                        transparent 50%
+                      )
+                    ` : `
+                      radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(234, 88, 12, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                        rgba(194, 65, 12, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                        transparent 50%
+                      )
+                    `
+                  ) : 'transparent',
                   borderRadius: '12px',
                   padding: '2px',
                   transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
@@ -998,7 +1006,9 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                 <Button 
                   className={cn(
                     "h-14 font-semibold text-base transition-all duration-300 px-6",
-                    "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40"
+                    collateralData?.hasEnoughCollateral
+                      ? "bg-transparent hover:bg-white/5 text-white border-2 border-white/30 hover:border-white/50"
+                      : "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40"
                   )}
                   isDisabled={!hasSelectedOptions || isPlacingOrder}
                   onPress={handleOpenCollateralModal}
@@ -1039,8 +1049,8 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
               style={{
                 background: hasSelectedOptions && !isPlacingOrder && !insufficientOptions && !orderSuccess && !isCollateralRequired ? `
                   radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(74, 133, 255, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-                    rgba(24, 81, 196, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                    rgba(74, 255, 186, calc(0.2 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                    rgba(60, 204, 149, calc(0.1 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
                     transparent 50%
                   )
                 ` : 'transparent',
@@ -1056,7 +1066,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
                     ? "bg-white/10 text-white/40 border border-white/20"
                     : orderSuccess
                       ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25"
-                      : "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+                      : "bg-gradient-to-r from-[#4AFFBA] to-[#3CE695] text-white shadow-lg shadow-[#4AFFBA]/25 hover:shadow-[#4AFFBA]/40"
                 )}
                 isDisabled={!hasSelectedOptions || isPlacingOrder || insufficientOptions || isCollateralRequired}
                 onPress={handlePlaceOrder}
@@ -1110,6 +1120,7 @@ export const PlaceTradeOrder: FC<PlaceTradeOrderProps> = ({
         selectedAsset={selectedAsset}
         isDebit={isDebit}
         externalCollateralNeeded={collateralNeeded}
+        existingCollateralData={collateralData}
       />
     </motion.div>
   )
