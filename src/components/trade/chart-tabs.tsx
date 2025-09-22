@@ -8,18 +8,22 @@ import PnLChartInteractive from './pnl-chart-interactive'
 import { SelectedOption } from './option-data'
 import { BarChart3, TrendingUp } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
-import { TOKENS } from '@/constants/token-list/token-list'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { CollateralData } from './collateral-modal'
 
 interface ChartTabsProps {
   selectedAsset: string
   selectedOptions: SelectedOption[]
+  collateralData?: CollateralData | null
+  onProvideCollateral?: () => void
   className?: string
 }
 
 export const ChartTabs: FC<ChartTabsProps> = ({
   selectedAsset,
   selectedOptions,
+  collateralData,
+  onProvideCollateral,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('asset')
@@ -50,11 +54,24 @@ export const ChartTabs: FC<ChartTabsProps> = ({
 
   // Pass selected options directly to PnL chart - memoized to prevent unnecessary re-renders
   const pnlChartProps = useMemo(() => {
-    return selectedOptions.length > 0 ? {
+    if (selectedOptions.length === 0) return null
+    
+    const props: any = {
       selectedOptions: selectedOptions,
       currentPrice: currentPrice // Now using real asset price from context
-    } : null
-  }, [selectedOptions, currentPrice])
+    }
+    
+    // Add collateral amount if available for short positions
+    if (collateralData && collateralData.collateralProvided) {
+      // Convert collateral to USD value for the chart
+      const collateralUSD = Number(collateralData.collateralProvided) * 
+        (collateralData.collateralType === 'SOL' ? currentPrice : 1) * 
+        collateralData.leverage
+      props.collateralProvided = collateralUSD
+    }
+    
+    return props
+  }, [selectedOptions, currentPrice, collateralData])
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -133,18 +150,43 @@ export const ChartTabs: FC<ChartTabsProps> = ({
                   {...pnlChartProps}
                   showHeader={true}
                   title="Option Payoff Diagram"
+                  onProvideCollateral={onProvideCollateral}
                 />
               ) : (
-                <div className="w-full h-[400px] flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="w-12 h-12 mx-auto rounded-full bg-slate-800/50 flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-white/40" />
+                <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm rounded-xl">
+                  <div className="p-2">
+                    {/* Match exact chart container dimensions */}
+                    <div className="h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center border border-slate-600/20">
+                        <TrendingUp className="w-8 h-8 text-white/40" />
+                      </div>
+                      
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-medium text-white/90">No Option Selected</h3>
+                        <p className="text-sm text-white/60 max-w-md">
+                          Select an option from the chain below to view the payoff diagram
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white/60 text-sm font-medium">No Option Selected</p>
-                      <p className="text-white/40 text-xs mt-1">
-                        Select an option from the chain below to view the payoff diagram
-                      </p>
+                    
+                    {/* Add matching metrics below - empty state */}
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="bg-black/40 rounded-lg p-2">
+                        <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+                      </div>
+                      <div className="bg-black/40 rounded-lg p-2">
+                        <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+                      </div>
+                      <div className="bg-black/40 rounded-lg p-2">
+                        <span className="text-[10px] sm:text-xs text-white block">Strike Price</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+                      </div>
+                      <div className="bg-black/40 rounded-lg p-2">
+                        <span className="text-[10px] sm:text-xs text-white block">Breakeven</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
+                      </div>
                     </div>
                   </div>
                 </div>

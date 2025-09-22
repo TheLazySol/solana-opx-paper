@@ -1,8 +1,8 @@
 import { FC, useState, useEffect, useRef } from 'react'
 import { CreateOrder } from './trade-create-order'
 import { PlaceTradeOrder } from './trade-order-details'
-import { TradeCollateralProvider } from './trade-collateral-provider'
 import { SelectedOption, OptionContract } from './option-data'
+import { CollateralData } from './collateral-modal'
 import { toast } from "@/hooks/useToast"
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,13 +12,19 @@ interface TradeViewProps {
   onOptionsUpdate?: (options: SelectedOption[]) => void
   onTabChange?: (tab: string) => void
   optionChainData?: OptionContract[]
+  collateralData?: CollateralData | null
+  onCollateralDataChange?: (data: CollateralData | null) => void
+  onProvideCollateralRef?: (openModal: () => void) => void
 }
 
 export const TradeView: FC<TradeViewProps> = ({
   initialSelectedOptions = [],
   onOptionsUpdate,
   onTabChange,
-  optionChainData = []
+  optionChainData = [],
+  collateralData,
+  onCollateralDataChange,
+  onProvideCollateralRef
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>(
     initialSelectedOptions.map(opt => ({ ...opt, quantity: 1 }))
@@ -28,7 +34,6 @@ export const TradeView: FC<TradeViewProps> = ({
     isDebit: false,
     collateralNeeded: 0
   })
-  const [borrowedAmount, setBorrowedAmount] = useState<number>(0)
 
   // Update selected options ONLY when initialSelectedOptions actually changes
   useEffect(() => {
@@ -126,10 +131,7 @@ export const TradeView: FC<TradeViewProps> = ({
     }
   }
 
-  // Handle borrowed amount updates from collateral provider
-  const handleBorrowedAmountChange = (amount: number) => {
-    setBorrowedAmount(amount);
-  }
+  // Note: Borrowed amount is now handled in the modal
 
   // Handle order placement from PlaceTradeOrder
   const handleOrderPlaced = (options: SelectedOption[]) => {
@@ -168,8 +170,7 @@ export const TradeView: FC<TradeViewProps> = ({
     };
   }, [onOptionsUpdate]);
 
-  // Determine if collateral is required
-  const isCollateralRequired = selectedOptions.length > 0 && (!orderData.isDebit || orderData.collateralNeeded > 0)
+  // Note: Collateral is now handled through the modal in PlaceTradeOrder component
 
   return (
     <div className="w-full space-y-4">
@@ -200,32 +201,15 @@ export const TradeView: FC<TradeViewProps> = ({
           selectedOptions={selectedOptions} 
           selectedAsset={selectedOptions[0]?.asset || ''} 
           onOrderDataChange={setOrderData}
-          borrowedAmount={borrowedAmount}
           onOrderPlaced={handleOrderPlaced}
           optionChainData={optionChainData}
+          collateralData={collateralData}
+          onCollateralDataChange={onCollateralDataChange}
+          onProvideCollateralRef={onProvideCollateralRef}
         />
       </motion.div>
       
-      {/* Collateral Provider - Only show when required */}
-      <AnimatePresence>
-        {isCollateralRequired && (
-          <motion.div
-            key="collateral"
-            initial={{ opacity: 0, y: 10, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -10, height: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <TradeCollateralProvider 
-              selectedOptions={selectedOptions}
-              selectedAsset={selectedOptions[0]?.asset || ''}
-              isDebit={orderData.isDebit}
-              externalCollateralNeeded={orderData.collateralNeeded}
-              onBorrowedAmountChange={handleBorrowedAmountChange}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Collateral is now handled through the modal in PlaceTradeOrder component */}
       
     </div>
   )

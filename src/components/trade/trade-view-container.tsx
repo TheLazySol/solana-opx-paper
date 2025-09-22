@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { TradeView } from './trade-view'
 import { OrdersView } from './orders-view'
 import { SelectedOption, OptionContract } from './option-data'
+import { CollateralData } from './collateral-modal'
 import { TrendingUp, FileText } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 
@@ -16,6 +17,9 @@ interface TradeViewContainerProps {
   activeOrderTab?: string
   setActiveOrderTab?: (tab: string) => void
   optionChainData?: OptionContract[]
+  collateralData?: CollateralData | null
+  onCollateralDataChange?: (data: CollateralData | null) => void
+  onProvideCollateralRef?: (openModal: () => void) => void
 }
 
 export const TradeViewContainer: FC<TradeViewContainerProps> = ({
@@ -26,7 +30,10 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
   setActiveView: externalSetActiveView,
   activeOrderTab,
   setActiveOrderTab,
-  optionChainData = []
+  optionChainData = [],
+  collateralData,
+  onCollateralDataChange,
+  onProvideCollateralRef
 }) => {
   // Use internal state if no external state is provided
   const [internalActiveView, setInternalActiveView] = useState('trade')
@@ -156,6 +163,9 @@ export const TradeViewContainer: FC<TradeViewContainerProps> = ({
                 onOptionsUpdate={handleOptionsUpdate}
                 onTabChange={handleTabChange}
                 optionChainData={optionChainData}
+                collateralData={collateralData}
+                onCollateralDataChange={onCollateralDataChange}
+                onProvideCollateralRef={onProvideCollateralRef}
               />
             )}
             {activeView === 'orders' && (

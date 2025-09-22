@@ -8,17 +8,20 @@ import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { SelectedOption, OptionContract } from '@/components/trade/option-data'
+import { CollateralData } from '@/components/trade/collateral-modal'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardBody, Divider } from '@heroui/react'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
+  const [collateralData, setCollateralData] = useState<CollateralData | null>(null)
   const [volumeUpdateTrigger, setVolumeUpdateTrigger] = useState(0)
   const [activeView, setActiveView] = useState('trade')
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
   const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
+  const openCollateralModalRef = useRef<(() => void) | null>(null)
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
   
   // Get search parameters to determine which tabs to show
@@ -71,6 +74,8 @@ export default function TradePage() {
   // Handle option changes from both sources (chain table and create order)
   const handleOptionsChange = useCallback((options: SelectedOption[]) => {
     setSelectedOptions(options)
+    // Clear collateral data when options change since it may no longer be valid
+    setCollateralData(null)
   }, [])
 
   // Handle order placement to update volume data
@@ -78,8 +83,9 @@ export default function TradePage() {
     // Increment trigger to force volume data refresh
     setVolumeUpdateTrigger(prev => prev + 1)
     
-    // Clear selected options since order was placed
+    // Clear selected options and collateral data since order was placed
     setSelectedOptions([])
+    setCollateralData(null)
   }, [])
 
   // Function to switch to the trade view when an option is selected
@@ -91,6 +97,16 @@ export default function TradePage() {
   // Handle option chain data updates
   const handleOptionChainDataChange = useCallback((data: OptionContract[]) => {
     setOptionChainData(data)
+  }, [])
+
+  // Handle collateral data updates
+  const handleCollateralDataChange = useCallback((data: CollateralData | null) => {
+    setCollateralData(data)
+  }, [])
+
+  // Handle collateral modal opening function reference
+  const handleProvideCollateralRef = useCallback((openModal: () => void) => {
+    openCollateralModalRef.current = openModal
   }, [])
 
   return (
@@ -128,6 +144,8 @@ export default function TradePage() {
                 <ChartTabs 
                   selectedAsset={selectedAsset} 
                   selectedOptions={selectedOptions}
+                  collateralData={collateralData}
+                  onProvideCollateral={openCollateralModalRef.current || undefined}
                 />
               </div>
               
@@ -164,6 +182,9 @@ export default function TradePage() {
                 activeOrderTab={activeOrderTab}
                 setActiveOrderTab={setActiveOrderTab}
                 optionChainData={optionChainData}
+                collateralData={collateralData}
+                onCollateralDataChange={handleCollateralDataChange}
+                onProvideCollateralRef={handleProvideCollateralRef}
               />
             </div>
           </div>

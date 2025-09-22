@@ -122,8 +122,8 @@ export const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce for faster updat
 export const AUTO_REFRESH_INTERVAL = 1500; // 1.5 seconds
 
 export const COLLATERAL_TYPES = [
-  { value: "USDC", label: "USDC", symbol: "$", default: false },
-  { value: "SOL", label: "SOL", symbol: "SOL", default: true }
+  { value: "SOL", label: "SOL", symbol: "SOL", default: true },
+  // { value: "USDC", label: "USDC", symbol: "$", default: false },
   // Add more here that we wish to have as a collateral type
 ] as const;
 

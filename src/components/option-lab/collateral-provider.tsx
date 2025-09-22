@@ -91,7 +91,7 @@ export function CollateralProvider({
   const [collateralProvided, setCollateralProvided] = useState<string>("");
   const [leverage, setLeverage] = useState<number[]>([1]);
   const [collateralType, setCollateralType] = useState<typeof COLLATERAL_TYPES[number]['value']>(
-    COLLATERAL_TYPES.find(type => type.default)?.value || "USDC"
+    COLLATERAL_TYPES.find(type => type.default)?.value || "SOL"
   );
   const maxLeverage = MAX_LEVERAGE;
   

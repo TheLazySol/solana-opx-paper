@@ -42,7 +42,7 @@ const AssetChartComponent: FC<AssetChartProps> = ({ selectedAsset }) => {
       }`}>
       <iframe 
         className="w-full h-full absolute inset-0"
-        src={`https://birdeye.so/tv-widget/${selectedToken.address}?chain=solana&viewMode=pair&chartInterval=15&chartType=Candle&chartTimezone=America%2FNew_York&chartLeftToolbar=show&theme=dark&cssCustomProperties=--tv-color-platform-background%3A%2332427000&cssCustomProperties=--tv-color-pane-background%3A%2300000020&chartOverrides=paneProperties.backgroundGradientStartColor%3Argba%280%2C+0%2C+0%2C+0.19%29&chartOverrides=paneProperties.backgroundGradientEndColor%3Argba%280%2C+0%2C+0%2C+1%29&chartOverrides=paneProperties.backgroundType%3Agradient&chartOverrides=mainSeriesProperties.candleStyle.upColor%3A%234a85ff&chartOverrides=mainSeriesProperties.candleStyle.borderUpColor%3A%234a85ff&chartOverrides=mainSeriesProperties.candleStyle.wickUpColor%3A%234a85ff&chartOverrides=mainSeriesProperties.candleStyle.downColor%3A%23ff2a3b&chartOverrides=mainSeriesProperties.candleStyle.borderDownColor%3A%23ff2a3b&chartOverrides=mainSeriesProperties.candleStyle.wickDownColor%3A%23ff2a3b`}
+        src={`https://birdeye.so/tv-widget/${selectedToken.address}?chain=solana&viewMode=pair&chartInterval=15&chartType=Candle&chartTimezone=America%2FNew_York&chartLeftToolbar=hide&theme=dark&cssCustomProperties=--tv-color-pane-background%3A%23040404&cssCustomProperties=--tv-color-platform-background%3A%23040404&chartOverrides=paneProperties.backgroundType%3Asolid&chartOverrides=paneProperties.background%3Argba%284%2C+4%2C+4%2C+1%29`}
         frameBorder="0" 
         allowFullScreen
       />
