@@ -227,13 +227,50 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     const { options } = validatedInputs
     
     // Check if there are any short positions (ask type = selling = short)
-    const hasShortPositions = options.some(option => option.type === 'ask')
+    const shortPositions = options.filter(option => option.type === 'ask')
+    const longPositions = options.filter(option => option.type === 'bid')
+    
+    if (shortPositions.length === 0) {
+      return false // No short positions, no collateral needed
+    }
     
     // Check if collateral has been provided
     const hasCollateral = collateralProvided && collateralProvided > 0
     
-    // Show placeholder if there are short positions but no collateral
-    return hasShortPositions && !hasCollateral
+    // Analyze if short positions are covered by long positions
+    let hasNakedShorts = false
+    
+    shortPositions.forEach(shortOption => {
+      let isCovered = false
+      
+      // Check if this short option is covered by a long option
+      longPositions.forEach(longOption => {
+        // Same option type (call or put)
+        if (shortOption.side === longOption.side) {
+          if (shortOption.side === 'call') {
+            // For calls: short is covered if long strike >= short strike
+            // (long call at higher strike covers short call at lower strike)
+            if (longOption.strike >= shortOption.strike) {
+              isCovered = true
+            }
+          } else if (shortOption.side === 'put') {
+            // For puts: short is covered if long strike <= short strike  
+            // (long put at lower strike covers short put at higher strike)
+            if (longOption.strike <= shortOption.strike) {
+              isCovered = true
+            }
+          }
+        }
+      })
+      
+      // If this short option is not covered, we have naked shorts
+      if (!isCovered) {
+        hasNakedShorts = true
+      }
+    })
+    
+    // Show placeholder only if there are naked shorts and no collateral
+    return hasNakedShorts && !hasCollateral
   }, [validatedInputs, collateralProvided])
 
   // Calculate P&L for a given underlying price
@@ -901,11 +938,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
             {/* Add matching metrics below - empty state */}
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Max Loss</span>
+                <span className="text-[10px] sm:text-xs text-white block">Potential Max Loss</span>
                 <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
               </div>
               <div className="bg-black/40 rounded-lg p-2">
-                <span className="text-[10px] sm:text-xs text-white block">Max Profit</span>
+                <span className="text-[10px] sm:text-xs text-white block">Potential Max Profit</span>
                 <span className="text-xs sm:text-sm font-semibold text-white/40">-</span>
               </div>
               <div className="bg-black/40 rounded-lg p-2">
