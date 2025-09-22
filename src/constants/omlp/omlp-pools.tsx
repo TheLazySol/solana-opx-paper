@@ -40,8 +40,8 @@ export const SOL_POOL_CONFIG: BasePoolConfig = {
   maxUtilizationThreshold: 90, // 90% utilization threshold for rate adjustments for SOL
   
   // Risk parameters specific to SOL
-  liquidationThreshold: 80, // 80% loan-to-value ratio for SOL
-  liquidationPenalty: 5, // 5% liquidation penalty for SOL
+  liquidationThreshold: 100, // 100% loan-to-value ratio for SOL
+  liquidationPenalty: 1.5, // 1.5% liquidation penalty for SOL
   
   // Initial state
   initialBorrowedPercentage: 0, // Start with 0% utilization for SOL
@@ -59,7 +59,7 @@ export const POOL_CONFIGS = {
 // Global constants that might be shared across pools (if any)
 export const GLOBAL_OMLP_CONFIG = {
   // Platform-wide settings that don't vary by asset
-  PLATFORM_FEE_RATE: 0.001, // 0.1% platform fee
+  PLATFORM_FEE_RATE: 0.0000, // 0.00% platform fee
   MIN_DEPOSIT_AMOUNT: 0.001, // Minimum deposit amount in native token units
   MAX_POOLS_PER_USER: 10, // Maximum number of pools a user can participate in
 } as const

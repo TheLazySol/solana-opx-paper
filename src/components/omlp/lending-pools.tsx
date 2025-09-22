@@ -302,7 +302,10 @@ export function LendingPools({
                           value={calculateUtilization(pool.borrowed, pool.supply)}
                           className="w-16 h-1"
                           classNames={{
-                            indicator: "bg-gradient-to-r from-blue-400 to-purple-400"
+                            indicator: "bg-white transition-all duration-300"
+                          }}
+                          style={{
+                            filter: `drop-shadow(0 0 ${Math.max(1, calculateUtilization(pool.borrowed, pool.supply) / 25)}px rgba(255, 255, 255, ${Math.min(0.4, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.8)})) drop-shadow(0 0 ${Math.max(2, calculateUtilization(pool.borrowed, pool.supply) / 15)}px rgba(255, 255, 255, ${Math.min(0.3, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.6)}))`
                           }}
                         />
                       </div>
