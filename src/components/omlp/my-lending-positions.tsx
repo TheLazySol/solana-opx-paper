@@ -24,7 +24,6 @@ import {
 import { RefreshCw, TrendingUp, DollarSign, Activity } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/utils/utils'
-import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
@@ -43,13 +42,14 @@ interface MyLendingPositionsProps {
 }
 
 export function MyLendingPositions({ positions, isLoading = false, onRefresh }: MyLendingPositionsProps) {
-  const { deposit, withdraw, isDepositing, isWithdrawing } = useOmlpService()
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
   const {isOpen: isWithdrawModalOpen, onOpen: onWithdrawModalOpen, onOpenChange: onWithdrawModalOpenChange} = useDisclosure()
   const [currentToken, setCurrentToken] = useState('')
   const [amount, setAmount] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isDepositing, setIsDepositing] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
 
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
@@ -91,10 +91,11 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
         return
       }
 
-      await deposit({
-        tokenSymbol: currentToken,
-        amount: numericAmount,
-      })
+      // TODO: Implement actual deposit functionality
+      console.log('Deposit:', { token: currentToken, amount: numericAmount })
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000))
       onDepositModalOpenChange()
       if (onRefresh) await onRefresh()
     } catch (error) {
@@ -116,10 +117,11 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
         throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition?.amount ?? 0}`)
       }
       
-      await withdraw({
-        tokenSymbol: currentToken,
-        amount: numericAmount,
-      })
+      // TODO: Implement actual withdraw functionality
+      console.log('Withdraw:', { token: currentToken, amount: numericAmount })
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000))
       onWithdrawModalOpenChange()
       if (onRefresh) await onRefresh()
     } catch (error) {

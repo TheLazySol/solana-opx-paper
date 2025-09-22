@@ -27,12 +27,10 @@ import {
 import { RefreshCw, DollarSign, Coins, TrendingUp, Database } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/utils/utils'
-import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
-import { AVAILABLE_POOLS, type PoolKey } from '@/constants/omlp/omlp-pools'
-import { generatePoolData, calculateUtilization } from '@/constants/omlp/calculations'
+import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 export type Pool = {
@@ -57,7 +55,6 @@ export function LendingPools({
   isLoading = false, 
   onRefresh
 }: LendingPoolsProps) {
-  const { deposit, isDepositing } = useOmlpService()
   const [showUSD, setShowUSD] = useState(true)
   const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
@@ -77,7 +74,7 @@ export function LendingPools({
     
     // Generate SOL pool using our constants and calculations
     if (solPrice > 0) {
-      const solPool = generatePoolData('SOL', solPrice)
+      const solPool = generateSolPoolData(solPrice)
       mockPools.push(solPool)
     }
     
@@ -137,10 +134,12 @@ export function LendingPools({
 
     try {
       setIsProcessing(true)
-      await deposit({
-        tokenSymbol: selectedPool.token,
-        amount: parseFloat(depositAmount),
-      })
+      // TODO: Implement actual deposit functionality
+      console.log('Deposit:', { token: selectedPool.token, amount: parseFloat(depositAmount) })
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       onDepositModalOpenChange()
       if (onRefresh) await onRefresh()
     } catch (error) {
@@ -318,7 +317,7 @@ export function LendingPools({
                           size="sm"
                           variant="flat"
                           onPress={() => handleOpenDepositModal(pool)}
-                          isDisabled={isDepositing}
+                          isDisabled={isProcessing}
                           className="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
                         >
                           Deposit

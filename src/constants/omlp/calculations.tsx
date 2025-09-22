@@ -1,4 +1,35 @@
-import { OMLP_POOL_CONFIG, POOL_CONFIGS, type PoolKey } from './omlp-pools'
+// OMLP Pool Configuration Constants
+const OMLP_POOL_CONFIG = {
+  // Base interest rates (annualized %)
+  BASE_SUPPLY_APY: 2.5,
+  BASE_BORROW_APY: 5.0,
+  
+  // Interest rate spreads and multipliers
+  UTILIZATION_RATE_MULTIPLIER: 0.15, // How much APY increases per 1% utilization
+  BORROW_SPREAD: 2.5, // Spread between supply and borrow rates
+  
+  // Pool limits and parameters
+  DEFAULT_SUPPLY_LIMIT_MULTIPLIER: 5, // 5x the initial supply
+  MIN_UTILIZATION_FOR_DYNAMIC_RATES: 10, // 10% minimum utilization before dynamic rates kick in
+  MAX_UTILIZATION_THRESHOLD: 90, // 90% utilization threshold for rate adjustments
+  
+  // Risk parameters
+  LIQUIDATION_THRESHOLD: 80, // 80% loan-to-value ratio
+  LIQUIDATION_PENALTY: 5, // 5% liquidation penalty
+} as const
+
+// SOL Pool Configuration
+const SOL_POOL_CONFIG = {
+  token: 'SOL',
+  tokenAddress: 'So11111111111111111111111111111111111111112',
+  initialSupply: 1000, // 1000 SOL initial pool supply
+  baseSupplyApy: OMLP_POOL_CONFIG.BASE_SUPPLY_APY,
+  baseBorrowApy: OMLP_POOL_CONFIG.BASE_BORROW_APY,
+  supplyLimitMultiplier: OMLP_POOL_CONFIG.DEFAULT_SUPPLY_LIMIT_MULTIPLIER,
+  utilizationMultiplier: OMLP_POOL_CONFIG.UTILIZATION_RATE_MULTIPLIER,
+  // Mock initial borrowed amount (30% utilization)
+  initialBorrowedPercentage: 30,
+} as const
 
 /**
  * Calculate the utilization rate of a pool
@@ -72,17 +103,13 @@ export function calculateSupplyLimit(initialSupply: number, multiplier: number):
 }
 
 /**
- * Generate a complete pool object with calculated values
- * @param poolKey - The pool key (e.g., 'SOL')
- * @param tokenPrice - Current token price in USD
+ * Generate a complete SOL pool object with calculated values
+ * @param tokenPrice - Current SOL token price in USD
  * @param customSupply - Optional custom supply amount (defaults to initial supply)
- * @returns Complete pool object with all calculated values
+ * @returns Complete SOL pool object with all calculated values
  */
-export function generatePoolData(poolKey: PoolKey, tokenPrice: number, customSupply?: number) {
-  const config = POOL_CONFIGS[poolKey]
-  if (!config) {
-    throw new Error(`Pool configuration not found for key: ${poolKey}`)
-  }
+export function generateSolPoolData(tokenPrice: number, customSupply?: number) {
+  const config = SOL_POOL_CONFIG
 
   const supply = customSupply ?? config.initialSupply
   const borrowed = calculateBorrowedAmount(supply, config.initialBorrowedPercentage)
