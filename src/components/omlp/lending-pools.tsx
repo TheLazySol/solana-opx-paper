@@ -24,14 +24,16 @@ import {
   Tab,
   useDisclosure
 } from '@heroui/react'
-import { RefreshCw, DollarSign, Coins, BarChart, TrendingUp, Database } from 'lucide-react'
+import { RefreshCw, DollarSign, Coins, TrendingUp, Database } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/utils/utils'
-import { OmlpChart, type PoolHistoricalData } from './omlp-pool-chart'
 import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
+import { AVAILABLE_POOLS, type PoolKey } from '@/constants/omlp/omlp-pools'
+import { generatePoolData, calculateUtilization } from '@/constants/omlp/calculations'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
 
 export type Pool = {
   token: string
@@ -48,21 +50,16 @@ interface LendingPoolsProps {
   pools: Pool[]
   isLoading?: boolean
   onRefresh?: () => Promise<void>
-  onFetchHistoricalData?: (token: string) => Promise<PoolHistoricalData[]>
 }
 
 export function LendingPools({ 
   pools, 
   isLoading = false, 
-  onRefresh,
-  onFetchHistoricalData 
+  onRefresh
 }: LendingPoolsProps) {
   const { deposit, isDepositing } = useOmlpService()
   const [showUSD, setShowUSD] = useState(true)
   const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
-  const [graphOpen, setGraphOpen] = useState(false)
-  const [historicalData, setHistoricalData] = useState<PoolHistoricalData[]>([])
-  const [isLoadingHistorical, setIsLoadingHistorical] = useState(false)
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
   const [depositAmount, setDepositAmount] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -71,19 +68,37 @@ export function LendingPools({
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
   
-  const tvl = pools.reduce((acc, pool) => {
+  // Get SOL price for mock pool
+  const { price: solPrice, refreshPrice } = useAssetPriceInfo('SOL')
+  
+  // Generate mock pools using constants and calculations
+  const generateMockPools = (): Pool[] => {
+    const mockPools: Pool[] = []
+    
+    // Generate SOL pool using our constants and calculations
+    if (solPrice > 0) {
+      const solPool = generatePoolData('SOL', solPrice)
+      mockPools.push(solPool)
+    }
+    
+    return mockPools
+  }
+  
+  // Use mock pools if no pools provided, otherwise use provided pools
+  const displayPools = pools.length > 0 ? pools : generateMockPools()
+  
+  const tvl = displayPools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
     return acc + poolValueUSD
   }, 0)
-
-  const calculateUtilization = (borrowed: number, supply: number) => {
-    return ((borrowed / supply) * 100).toFixed(2)
-  }
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
     
     try {
+      // Refresh SOL price for mock pools
+      await refreshPrice()
+      
       if (onRefresh) {
         await onRefresh()
       }
@@ -110,25 +125,6 @@ export function LendingPools({
     })} ${token}`;
   }
 
-  const handleOpenChart = (pool: Pool) => {
-    setSelectedPool(pool)
-    setGraphOpen(true)
-  }
-
-  const handleChartOpen = async () => {
-    if (selectedPool && onFetchHistoricalData) {
-      try {
-        setIsLoadingHistorical(true)
-        const data = await onFetchHistoricalData(selectedPool.token)
-        setHistoricalData(data)
-      } catch (error) {
-        console.error('Failed to fetch historical data:', error)
-        setHistoricalData([])
-      } finally {
-        setIsLoadingHistorical(false)
-      }
-    }
-  }
 
   const handleOpenDepositModal = (pool: Pool) => {
     setSelectedPool(pool)
@@ -278,7 +274,7 @@ export function LendingPools({
               <TableColumn>ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent={isLoading ? "Loading pools..." : "No pools available"}>
-              {pools.map((pool, i) => (
+              {displayPools.map((pool, i) => (
                   <TableRow key={i}>
                     <TableCell>
                       <Chip variant="flat" className="bg-white/10">
@@ -303,9 +299,9 @@ export function LendingPools({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-white/80">{calculateUtilization(pool.borrowed, pool.supply)}%</span>
+                        <span className="text-white/80">{calculateUtilization(pool.borrowed, pool.supply).toFixed(2)}%</span>
                         <Progress 
-                          value={parseFloat(calculateUtilization(pool.borrowed, pool.supply))}
+                          value={calculateUtilization(pool.borrowed, pool.supply)}
                           className="w-16 h-1"
                           classNames={{
                             indicator: "bg-gradient-to-r from-blue-400 to-purple-400"
@@ -327,16 +323,6 @@ export function LendingPools({
                         >
                           Deposit
                         </Button>
-                        <Button 
-                          size="sm"
-                          variant="flat" 
-                          isIconOnly
-                          onPress={() => handleOpenChart(pool)}
-                          aria-label="Open pool performance chart"
-                          className="bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
-                        >
-                          <BarChart className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -345,17 +331,6 @@ export function LendingPools({
             </TableBody>
           </Table>
         </CardBody>
-        
-        {selectedPool && (
-          <OmlpChart 
-            open={graphOpen} 
-            onOpenChange={setGraphOpen} 
-            poolData={selectedPool}
-            historicalData={historicalData}
-            isLoading={isLoadingHistorical}
-            onChartOpen={handleChartOpen}
-          />
-        )}
       </Card>
 
       {/* Deposit Modal */}
@@ -414,7 +389,7 @@ export function LendingPools({
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Utilization:</span>
-                        <span className="text-white/90">{calculateUtilization(selectedPool.borrowed, selectedPool.supply)}%</span>
+                        <span className="text-white/90">{calculateUtilization(selectedPool.borrowed, selectedPool.supply).toFixed(2)}%</span>
                       </div>
                     </div>
                   )}

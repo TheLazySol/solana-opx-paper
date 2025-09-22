@@ -3,7 +3,6 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { MyLendingPositions, type Position } from './my-lending-positions'
 import { LendingPools, type Pool } from './lending-pools'
-import { type PoolHistoricalData } from './omlp-pool-chart'
 import { useState, useEffect, useCallback } from 'react'
 import { useOmlpService } from '@/solana/utils/useOmlpService'
 import { motion } from 'framer-motion'
@@ -26,8 +25,7 @@ export function OMLPFeature() {
     isLoadingPools, 
     isLoadingPositions, 
     refetchPools, 
-    refetchPositions, 
-    fetchHistoricalData
+    refetchPositions
   } = useOmlpService()
 
   // Mouse glow effect hook
@@ -132,7 +130,6 @@ export function OMLPFeature() {
           pools={pools}
           isLoading={isLoadingPools}
           onRefresh={handleRefreshPools}
-          onFetchHistoricalData={fetchHistoricalData}
         />
       </motion.div>
     </motion.div>

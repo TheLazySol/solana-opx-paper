@@ -21,13 +21,6 @@ export interface PositionData {
   earned: number;
 }
 
-// Pool historical data structure
-export interface PoolHistoricalData {
-  timestamp: number;
-  supplyApy: number;
-  borrowApy: number;
-  utilization: number;
-}
 
 /**
  * OMLP Service - Handles interactions with the Option Margin Liquidity Pool program
@@ -129,59 +122,6 @@ export class OMLPService {
     }
   }
 
-  /**
-   * Fetch historical data for a token pool
-   * @param token Token symbol
-   * @returns Promise with array of historical data
-   */
-  async fetchHistoricalData(token: string): Promise<PoolHistoricalData[]> {
-    try {
-      // In a real implementation, this would fetch actual on-chain historical data
-      // For now, we'll create synthetic data for development
-      
-      const now = Math.floor(Date.now() / 1000);
-      const oneDay = 24 * 60 * 60;
-      const historyDays = 30;
-      
-      // Generate synthetic data for the past 30 days
-      const data: PoolHistoricalData[] = [];
-      
-      let baseSupplyApy, baseBorrowApy, baseUtilization;
-      
-      switch (token) {
-        case 'SOL':
-          baseSupplyApy = 3.5;
-          baseBorrowApy = 5.8;
-          baseUtilization = 70;
-          break;
-        case 'USDC':
-          baseSupplyApy = 5.2;
-          baseBorrowApy = 8.3;
-          baseUtilization = 60;
-          break;
-        default:
-          baseSupplyApy = 12.5;
-          baseBorrowApy = 18.7;
-          baseUtilization = 50;
-      }
-      
-      for (let i = 0; i < historyDays; i++) {
-        const randomFactor = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
-        
-        data.push({
-          timestamp: now - (historyDays - i) * oneDay,
-          supplyApy: baseSupplyApy * randomFactor,
-          borrowApy: baseBorrowApy * randomFactor,
-          utilization: Math.min(100, baseUtilization * randomFactor),
-        });
-      }
-      
-      return data;
-    } catch (error) {
-      console.error(`Failed to fetch historical data for ${token}:`, error);
-      throw error;
-    }
-  }
 
   /**
    * Fetch token price (mock implementation)

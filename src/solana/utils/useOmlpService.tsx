@@ -2,7 +2,7 @@
 
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { OMLPService, PoolData, PositionData, PoolHistoricalData } from './omlpService'
+import { OMLPService, PoolData, PositionData } from './omlpService'
 import { TOKEN_MINTS } from '../constants/omlpProgram'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicKey } from '@solana/web3.js'
@@ -50,14 +50,6 @@ export function useOmlpService() {
     enabled: !!connection && !!publicKey,
     staleTime: 60000, // 1 minute
   })
-  
-  // Function to fetch historical data for a token
-  const fetchHistoricalData = useCallback(
-    async (token: string): Promise<PoolHistoricalData[]> => {
-      return await omlpService.fetchHistoricalData(token)
-    },
-    [omlpService]
-  )
   
   // Mutation for depositing tokens
   const depositMutation = useMutation({
@@ -171,7 +163,6 @@ export function useOmlpService() {
     // Refetch functions
     refetchPools,
     refetchPositions,
-    fetchHistoricalData,
     
     // Mutations
     deposit: depositMutation.mutateAsync,
