@@ -190,8 +190,9 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       
       // Update the position with the new amount (subtract withdrawal)
       const newAmount = selectedPosition.amount - amount
-      if (newAmount <= 0) {
-        // Remove the position completely if withdrawing all
+      // Remove position if amount is 0 or very small (less than $0.01 USD to account for floating point precision)
+      if (newAmount <= 0.01) {
+        // Remove the position completely if withdrawing all or leaving dust
         removePosition(selectedPosition.token)
       } else {
         // Update with remaining amount
@@ -238,8 +239,8 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
         maximumFractionDigits: 2
       }),
       token: tokenAmount.toLocaleString(undefined, { 
-        minimumFractionDigits: 0,
-        maximumFractionDigits: decimals
+        minimumFractionDigits: 4,
+        maximumFractionDigits: Math.max(4, decimals)
       })
     }
   }

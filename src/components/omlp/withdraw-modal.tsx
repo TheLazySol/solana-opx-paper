@@ -87,8 +87,8 @@ export function WithdrawModal({
   const handleWithdraw = async () => {
     if (!selectedPosition || !withdrawAmount || tokenPrice <= 0) return
     
-    if (!Number.isFinite(withdrawTokenAmount) || withdrawTokenAmount <= 0) {
-      console.warn('Invalid amount entered:', withdrawAmount)
+    if (!Number.isFinite(withdrawTokenAmount) || withdrawTokenAmount < 0.0001) {
+      console.warn('Invalid amount entered. Minimum withdrawal is 0.0001:', withdrawAmount)
       return
     }
 
@@ -109,12 +109,10 @@ export function WithdrawModal({
 
   const handleMaxClick = useCallback(() => {
     if (selectedPosition && tokenPrice > 0) {
-      setWithdrawAmount(availableTokenAmount.toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: decimals
-      }).replace(/,/g, ''))
+      // Use maximum precision (9 decimal places) for MAX to ensure full withdrawal
+      setWithdrawAmount(availableTokenAmount.toFixed(9).replace(/\.?0+$/, ''))
     }
-  }, [selectedPosition, tokenPrice, availableTokenAmount, decimals])
+  }, [selectedPosition, tokenPrice, availableTokenAmount])
 
   // Memoized withdraw amount calculations
   const withdrawTokenAmount = useMemo(() => parseFloat(withdrawAmount) || 0, [withdrawAmount])
@@ -266,8 +264,8 @@ export function WithdrawModal({
                           <span className="text-white/60">Available Balance:</span>
                           <div className="text-white/90 font-medium">
                             <p>{availableTokenAmount.toLocaleString(undefined, { 
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: decimals
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: Math.max(4, decimals)
                             })} {selectedPosition.token}</p>
                             <p className="text-white/40 text-xs">
                               (${selectedPosition.amount.toLocaleString(undefined, { 
@@ -285,8 +283,8 @@ export function WithdrawModal({
                           <span className="text-white/60">Total Earned:</span>
                           <div className="text-green-400 font-medium">
                             <p>+{earnedTokenAmount.toLocaleString(undefined, { 
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: decimals
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: Math.max(4, decimals)
                             })} {selectedPosition.token}</p>
                             <p className="text-white/40 text-xs">
                               (+${selectedPosition.earned.toLocaleString(undefined, { 
@@ -300,8 +298,8 @@ export function WithdrawModal({
                           <span className="text-white/60">After Withdraw:</span>
                           <div className="text-white/90 font-medium">
                             <p>{remainingTokenAmount.toLocaleString(undefined, { 
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: decimals
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: Math.max(4, decimals)
                             })} {selectedPosition.token}</p>
                             <p className="text-white/40 text-xs">
                               (${remainingUsdAmount.toLocaleString(undefined, { 
@@ -335,14 +333,14 @@ export function WithdrawModal({
                   <Button
                     className={cn(
                       "font-semibold transition-all duration-300",
-                      (!isProcessing && withdrawAmount && withdrawTokenAmount > 0 && !Number.isNaN(withdrawTokenAmount) && selectedPosition && tokenPrice > 0 && withdrawTokenAmount <= availableTokenAmount)
+                      (!isProcessing && withdrawAmount && withdrawTokenAmount >= 0.0001 && !Number.isNaN(withdrawTokenAmount) && selectedPosition && tokenPrice > 0 && withdrawTokenAmount <= availableTokenAmount)
                         ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:shadow-red-500/40"
                         : "bg-white/10 text-white/40 border border-white/10"
                     )}
                     isDisabled={
                       isProcessing ||
                       !withdrawAmount ||
-                      withdrawTokenAmount <= 0 ||
+                      withdrawTokenAmount < 0.0001 ||
                       Number.isNaN(withdrawTokenAmount) ||
                       !selectedPosition ||
                       tokenPrice <= 0 ||

@@ -138,18 +138,18 @@ export function DepositModal({
               >
                 {/* Deposit Input Section */}
                 <div className="space-y-4">
-                  <Input
-                    type="text"
-                    label="Deposit Amount"
-                    value={depositAmount}
-                    onValueChange={(value) => {
-                      // Only allow numbers and decimals
-                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                        setDepositAmount(value);
-                      }
-                    }}
-                    placeholder="0.00"
-                    size="lg"
+                    <Input
+                      type="text"
+                      label={`Deposit Amount (${selectedPool?.token || 'SOL'})`}
+                      value={depositAmount}
+                      onValueChange={(value) => {
+                        // Only allow numbers and decimals
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setDepositAmount(value);
+                        }
+                      }}
+                      placeholder="0.0000"
+                      size="lg"
                     endContent={
                       <Chip size="sm" variant="flat" className="bg-white/10">
                         {selectedPool?.token || 'SOL'}

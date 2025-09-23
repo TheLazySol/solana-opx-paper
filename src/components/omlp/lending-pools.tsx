@@ -121,8 +121,8 @@ export function LendingPools({
       })}`;
     }
     return `${value.toLocaleString(undefined, { 
-      minimumFractionDigits: 0,
-      maximumFractionDigits: decimals
+      minimumFractionDigits: 4,
+      maximumFractionDigits: Math.max(4, decimals)
     })} ${token}`;
   }
 
