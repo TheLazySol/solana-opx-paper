@@ -5,12 +5,6 @@ import {
   Card, 
   CardBody, 
   CardHeader,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
   Table,
   TableHeader,
   TableBody,
@@ -23,11 +17,16 @@ import {
 } from '@heroui/react'
 import { RefreshCw, TrendingUp, DollarSign, Activity } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/utils/utils'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { useLendingPositions } from '@/context/lending-positions-provider'
+import { DepositModal } from './deposit-modal'
+import { WithdrawModal } from './withdraw-modal'
+import { Pool } from './lending-pools'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { POOL_CONFIGS, GLOBAL_OMLP_CONFIG } from '@/constants/omlp/omlp-pools'
+import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
 
 export type Position = {
   token: string
@@ -44,18 +43,19 @@ interface MyLendingPositionsProps {
 export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPositionsProps) {
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
   const {isOpen: isWithdrawModalOpen, onOpen: onWithdrawModalOpen, onOpenChange: onWithdrawModalOpenChange} = useDisclosure()
-  const [currentToken, setCurrentToken] = useState('')
-  const [amount, setAmount] = useState('')
+  const [selectedPool, setSelectedPool] = useState<Pool | null>(null)
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [isDepositing, setIsDepositing] = useState(false)
-  const [isWithdrawing, setIsWithdrawing] = useState(false)
 
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
   
   // Use lending positions context
   const { positions, addPosition, updatePosition, removePosition } = useLendingPositions()
+  
+  // Get SOL price for calculations
+  const { price: solPrice } = useAssetPriceInfo('SOL')
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -73,35 +73,80 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
     }
   }
 
-  const handleOpenDepositModal = (token: string) => {
-    setCurrentToken(token)
-    setAmount('')
+  // Helper function to create pool data from position using real pool configurations
+  const createPoolFromPosition = (position: Position): Pool => {
+    // Get the real pool config for this token
+    const poolConfig = POOL_CONFIGS[position.token as keyof typeof POOL_CONFIGS]
+    
+    if (!poolConfig) {
+      // Fallback to mock data if pool config not found
+      return {
+        token: position.token,
+        supply: 1000000,
+        supplyApy: position.apy,
+        borrowed: 500000,
+        borrowApy: position.apy + 2,
+        utilization: 50,
+        supplyLimit: 2000000,
+        tokenPrice: 1
+      }
+    }
+
+    // For SOL, use the generated pool data with real price
+    if (position.token === 'SOL' && solPrice > 0) {
+      return generateSolPoolData(solPrice)
+    }
+
+    // Generate realistic pool data based on the configuration
+    const supply = poolConfig.initialSupply
+    const borrowed = supply * (poolConfig.initialBorrowedPercentage / 100)
+    const utilization = calculateUtilization(borrowed, supply)
+    
+    // Calculate dynamic APYs based on utilization
+    const utilizationFactor = Math.max(0, utilization - poolConfig.minUtilizationForDynamicRates) / 100
+    const supplyApy = poolConfig.baseSupplyApy + (utilizationFactor * poolConfig.utilizationRateMultiplier)
+    const borrowApy = supplyApy + poolConfig.borrowSpread
+
+    return {
+      token: position.token,
+      supply,
+      supplyApy,
+      borrowed,
+      borrowApy,
+      utilization,
+      supplyLimit: poolConfig.supplyLimit,
+      tokenPrice: position.token === 'SOL' ? solPrice : 1 // Use real SOL price, fallback to 1 for others
+    }
+  }
+
+  const handleOpenDepositModal = (position: Position) => {
+    const pool = createPoolFromPosition(position)
+    setSelectedPool(pool)
     onDepositModalOpen()
   }
 
-  const handleOpenWithdrawModal = (token: string, maxAmount: number) => {
-    setCurrentToken(token)
-    setAmount(maxAmount.toString())
+  const handleOpenWithdrawModal = (position: Position) => {
+    setSelectedPosition(position)
     onWithdrawModalOpen()
   }
 
-  const handleDeposit = async () => {
+  const handleDeposit = async (amount: number) => {
+    if (!selectedPool) return
+
     try {
       setIsProcessing(true)
-      const numericAmount = parseFloat(amount)
-      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        console.warn('Invalid amount entered:', amount)
-        return
-      }
-
-      // Find the current position to get the APY, or use a default
-      const existingPosition = positions.find(p => p.token === currentToken)
-      const apy = existingPosition?.apy || 5.0 // Default APY if no existing position
       
-      // Add to the user's lending positions
-      addPosition(currentToken, numericAmount, apy)
+      // Convert token amount to USD amount for storage
+      const usdAmount = amount * selectedPool.tokenPrice
       
-      console.log('Deposit successful:', { token: currentToken, amount: numericAmount })
+      // Add to the user's lending positions (stored in USD)
+      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy)
+      
+      console.log('Deposit successful:', { 
+        token: selectedPool.token, 
+        tokenAmount: amount, 
+        usdAmount: usdAmount 
+      })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -114,29 +159,28 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
     }
   }
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = async (amount: number) => {
+    if (!selectedPosition) return
+
     try {
       setIsProcessing(true)
-      const numericAmount = parseFloat(amount)
-      // Find the current position to check the maximum available amount
-      const selectedPosition = positions.find(p => p.token === currentToken)
       
       // Validate withdrawal amount
-      if (!selectedPosition || numericAmount <= 0 || numericAmount > selectedPosition.amount) {
-        throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition?.amount ?? 0}`)
+      if (amount <= 0 || amount > selectedPosition.amount) {
+        throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition.amount}`)
       }
       
       // Update the position with the new amount (subtract withdrawal)
-      const newAmount = selectedPosition.amount - numericAmount
+      const newAmount = selectedPosition.amount - amount
       if (newAmount <= 0) {
         // Remove the position completely if withdrawing all
-        removePosition(currentToken)
+        removePosition(selectedPosition.token)
       } else {
         // Update with remaining amount
-        updatePosition(currentToken, newAmount)
+        updatePosition(selectedPosition.token, newAmount)
       }
       
-      console.log('Withdraw successful:', { token: currentToken, amount: numericAmount })
+      console.log('Withdraw successful:', { token: selectedPosition.token, amount })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -146,6 +190,42 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       console.error('Error withdrawing:', error)
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  // Format value for deposit modal
+  const formatValue = (value: number, tokenPrice: number, token: string) => {
+    const decimals = getTokenDisplayDecimals(token);
+    return `$${(value * tokenPrice).toLocaleString(undefined, { 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  // Helper function to get token price for a specific token
+  const getTokenPrice = (token: string): number => {
+    if (token === 'SOL') {
+      return solPrice
+    }
+    // Add other token prices here as they become available
+    return 1 // Fallback for unknown tokens
+  }
+
+  // Helper function to format combined USD and token amounts
+  const formatCombinedAmount = (usdAmount: number, token: string) => {
+    const tokenPrice = getTokenPrice(token)
+    const tokenAmount = tokenPrice > 0 ? usdAmount / tokenPrice : 0
+    const decimals = getTokenDisplayDecimals(token)
+    
+    return {
+      usd: usdAmount.toLocaleString(undefined, { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }),
+      token: tokenAmount.toLocaleString(undefined, { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals
+      })
     }
   }
 
@@ -258,29 +338,36 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
                       </Chip>
                     </TableCell>
                     <TableCell className="text-white/90 font-medium">
-                      ${position.amount.toLocaleString(undefined, { 
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
+                      <div className="flex flex-col gap-0.5">
+                        <span>${formatCombinedAmount(position.amount, position.token).usd}</span>
+                        <span className="text-white/40 text-xs font-normal">
+                          ({formatCombinedAmount(position.amount, position.token).token} {position.token})
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Chip size="sm" variant="flat" className="bg-green-500/20 text-green-400">
-                        {position.apy.toFixed(2)}%
+                        {(() => {
+                          const pool = createPoolFromPosition(position)
+                          return pool.supplyApy.toFixed(2)
+                        })()}%
                       </Chip>
                     </TableCell>
                     <TableCell className="text-green-400 font-medium">
-                      +${position.earned.toLocaleString(undefined, { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2
-                      })}
+                      <div className="flex flex-col gap-0.5">
+                        <span>+${formatCombinedAmount(position.earned, position.token).usd}</span>
+                        <span className="text-white/40 text-xs font-normal">
+                          (+{formatCombinedAmount(position.earned, position.token).token} {position.token})
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-start gap-2">
                         <Button 
                           size="sm"
                           variant="flat"
-                          onPress={() => handleOpenWithdrawModal(position.token, position.amount)}
-                          isDisabled={isWithdrawing}
+                          onPress={() => handleOpenWithdrawModal(position)}
+                          isDisabled={isProcessing}
                           className="bg-red-500/20 text-red-400 hover:bg-red-500/30"
                         >
                           Withdraw
@@ -288,8 +375,8 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
                         <Button
                           size="sm"
                           variant="flat"
-                          onPress={() => handleOpenDepositModal(position.token)}
-                          isDisabled={isDepositing}
+                          onPress={() => handleOpenDepositModal(position)}
+                          isDisabled={isProcessing}
                           className="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
                         >
                           Deposit
@@ -304,155 +391,24 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
         </CardBody>
       </Card>
 
-      {/* Deposit Modal */}
-      <Modal 
-        isOpen={isDepositModalOpen} 
+      {/* Shared Deposit Modal */}
+      <DepositModal
+        isOpen={isDepositModalOpen}
         onOpenChange={onDepositModalOpenChange}
-        size="md"
-        classNames={{
-          base: "bg-black/90 backdrop-blur-md border border-white/10",
-          header: "border-b border-white/10",
-          body: "py-6",
-          footer: "border-t border-white/10"
-        }}
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Deposit to {currentToken} Pool
-                </span>
-                <span className="text-sm text-white/60">
-                  Enter the amount you would like to deposit
-                </span>
-              </ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  <Input
-                    type="number"
-                    label="Amount"
-                    value={amount}
-                    onValueChange={setAmount}
-                    variant="flat"
-                    placeholder={`0.00 ${currentToken}`}
-                    min="0"
-                    step="any"
-                    classNames={{
-                      label: "text-white/80",
-                      input: "text-white",
-                      inputWrapper: "bg-white/5 border border-white/10 hover:bg-white/10"
-                    }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span className="text-white/60 text-xs">{currentToken}</span>
-                      </div>
-                    }
-                  />
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button 
-                  variant="flat" 
-                  onPress={onClose}
-                  className="bg-white/10 text-white/80 hover:bg-white/20"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  color="primary"
-                  onPress={handleDeposit} 
-                  isDisabled={
-                    !amount || 
-                    isProcessing || 
-                    !Number.isFinite(parseFloat(amount)) ||
-                    parseFloat(amount) <= 0
-                  }
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  {isProcessing ? "Processing..." : "Deposit"}
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+        selectedPool={selectedPool}
+        onDeposit={handleDeposit}
+        formatValue={formatValue}
+        isProcessing={isProcessing}
+      />
 
-      {/* Withdraw Modal */}
-      <Modal 
-        isOpen={isWithdrawModalOpen} 
+      {/* Shared Withdraw Modal */}
+      <WithdrawModal
+        isOpen={isWithdrawModalOpen}
         onOpenChange={onWithdrawModalOpenChange}
-        size="md"
-        classNames={{
-          base: "bg-black/90 backdrop-blur-md border border-white/10",
-          header: "border-b border-white/10",
-          body: "py-6",
-          footer: "border-t border-white/10"
-        }}
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Withdraw from {currentToken} Pool
-                </span>
-                <span className="text-sm text-white/60">
-                  Enter the amount you would like to withdraw
-                </span>
-              </ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  <Input
-                    type="number"
-                    label="Amount"
-                    value={amount}
-                    onValueChange={setAmount}
-                    variant="flat"
-                    placeholder={`0.00 ${currentToken}`}
-                    description={`Maximum: ${positions.find(p => p.token === currentToken)?.amount ?? 0} ${currentToken}`}
-                    min="0"
-                    step="any"
-                    classNames={{
-                      label: "text-white/80",
-                      input: "text-white",
-                      inputWrapper: "bg-white/5 border border-white/10 hover:bg-white/10",
-                      description: "text-white/40"
-                    }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span className="text-white/60 text-xs">{currentToken}</span>
-                      </div>
-                    }
-                  />
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button 
-                  variant="flat" 
-                  onPress={onClose}
-                  className="bg-white/10 text-white/80 hover:bg-white/20"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  color="danger"
-                  onPress={handleWithdraw} 
-                  isDisabled={
-                    !amount || 
-                    isProcessing || 
-                    parseFloat(amount) <= 0 || 
-                    parseFloat(amount) > (positions.find(p => p.token === currentToken)?.amount ?? 0)
-                  }
-                  className="bg-red-500 hover:bg-red-600"
-                >
-                  {isProcessing ? "Processing..." : "Withdraw"}
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+        selectedPosition={selectedPosition}
+        onWithdraw={handleWithdraw}
+        isProcessing={isProcessing}
+      />
     </>
   )
 } 

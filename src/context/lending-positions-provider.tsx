@@ -51,8 +51,8 @@ export function LendingPositionsProvider({ children }: { children: ReactNode }) 
           ? { 
               ...position, 
               amount: newAmount,
-              // Recalculate earned based on new amount
-              earned: newAmount * position.apy / 100 * 0.1
+              // Keep the same earned ratio when updating amount
+              earned: newAmount > 0 ? (position.earned / position.amount) * newAmount : 0
             }
           : position
       ).filter(position => position.amount > 0) // Remove positions with 0 or negative amounts

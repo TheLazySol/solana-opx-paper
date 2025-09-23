@@ -138,10 +138,17 @@ export function LendingPools({
     try {
       setIsProcessing(true)
       
-      // Add the position to the user's lending positions
-      addPosition(selectedPool.token, amount, selectedPool.supplyApy)
+      // Convert token amount to USD amount for storage
+      const usdAmount = amount * selectedPool.tokenPrice
       
-      console.log('Deposit successful:', { token: selectedPool.token, amount })
+      // Add the position to the user's lending positions (stored in USD)
+      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy)
+      
+      console.log('Deposit successful:', { 
+        token: selectedPool.token, 
+        tokenAmount: amount, 
+        usdAmount: usdAmount 
+      })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -293,7 +300,7 @@ export function LendingPools({
                     </TableCell>
                     <TableCell>
                       <Chip size="sm" variant="flat" className="bg-green-500/20 text-green-400">
-                        {pool.supplyApy}%
+                        {pool.supplyApy.toFixed(2)}%
                       </Chip>
                     </TableCell>
                     <TableCell className="text-white/60">
@@ -301,7 +308,7 @@ export function LendingPools({
                     </TableCell>
                     <TableCell>
                       <Chip size="sm" variant="flat" className="bg-red-500/20 text-red-400">
-                        {pool.borrowApy}%
+                        {pool.borrowApy.toFixed(2)}%
                       </Chip>
                     </TableCell>
                     <TableCell>
