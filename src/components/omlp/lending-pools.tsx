@@ -141,8 +141,8 @@ export function LendingPools({
       // Convert token amount to USD amount for storage
       const usdAmount = amount * selectedPool.tokenPrice
       
-      // Add the position to the user's lending positions (stored in USD)
-      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy)
+      // Add the position to the user's lending positions with token amount and deposit price
+      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy, amount, selectedPool.tokenPrice)
       
       console.log('Deposit successful:', { 
         token: selectedPool.token, 

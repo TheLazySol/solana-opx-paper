@@ -30,9 +30,11 @@ import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calc
 
 export type Position = {
   token: string
-  amount: number
+  amount: number // USD amount
   apy: number
-  earned: number
+  earned: number // USD earned
+  tokenAmount: number // Original token amount deposited
+  depositPrice: number // Token price at time of deposit
 }
 
 interface MyLendingPositionsProps {
@@ -157,13 +159,14 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       // Convert token amount to USD amount for storage
       const usdAmount = amount * selectedPool.tokenPrice
       
-      // Add to the user's lending positions (stored in USD)
-      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy)
+      // Add to the user's lending positions with original token amount and deposit price
+      addPosition(selectedPool.token, usdAmount, selectedPool.supplyApy, amount, selectedPool.tokenPrice)
       
       console.log('Deposit successful:', { 
         token: selectedPool.token, 
         tokenAmount: amount, 
-        usdAmount: usdAmount 
+        usdAmount: usdAmount,
+        depositPrice: selectedPool.tokenPrice
       })
       
       // Simulate processing time
@@ -183,23 +186,35 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
     try {
       setIsProcessing(true)
       
-      // Validate withdrawal amount
+      // Validate withdrawal amount (amount is in USD, but check is against token amount logic)
       if (amount <= 0 || amount > selectedPosition.amount) {
         throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition.amount}`)
       }
       
-      // Update the position with the new amount (subtract withdrawal)
-      const newAmount = selectedPosition.amount - amount
-      // Remove position if amount is 0 or very small (less than $0.01 USD to account for floating point precision)
-      if (newAmount <= 0.01) {
+      // Calculate the proportion of tokens being withdrawn
+      const withdrawalProportion = amount / selectedPosition.amount
+      const tokenAmountToWithdraw = selectedPosition.tokenAmount * withdrawalProportion
+      
+      // Update the position with the new amounts
+      const newUsdAmount = selectedPosition.amount - amount
+      const newTokenAmount = selectedPosition.tokenAmount - tokenAmountToWithdraw
+      
+      // Remove position if amount is very small (less than $0.01 USD or 0.0001 tokens)
+      if (newUsdAmount <= 0.01 || newTokenAmount <= 0.0001) {
         // Remove the position completely if withdrawing all or leaving dust
         removePosition(selectedPosition.token)
       } else {
-        // Update with remaining amount
-        updatePosition(selectedPosition.token, newAmount)
+        // Update with remaining amounts
+        updatePosition(selectedPosition.token, newUsdAmount, newTokenAmount)
       }
       
-      console.log('Withdraw successful:', { token: selectedPosition.token, amount })
+      console.log('Withdraw successful:', { 
+        token: selectedPosition.token, 
+        usdAmount: amount,
+        tokenAmount: tokenAmountToWithdraw,
+        remainingUsd: newUsdAmount,
+        remainingTokens: newTokenAmount
+      })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -349,7 +364,10 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
                       <div className="flex flex-col gap-0.5">
                         <span>${formatCombinedAmount(position.amount, position.token).usd}</span>
                         <span className="text-white/40 text-xs font-normal">
-                          ({formatCombinedAmount(position.amount, position.token).token} {position.token})
+                          ({position.tokenAmount.toLocaleString(undefined, { 
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: Math.max(4, getTokenDisplayDecimals(position.token))
+                          })} {position.token})
                         </span>
                       </div>
                     </TableCell>
@@ -365,7 +383,10 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
                       <div className="flex flex-col gap-0.5">
                         <span>+${formatCombinedAmount(position.earned, position.token).usd}</span>
                         <span className="text-white/40 text-xs font-normal">
-                          (+{formatCombinedAmount(position.earned, position.token).token} {position.token})
+                          (+{(position.earned / position.depositPrice).toLocaleString(undefined, { 
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: Math.max(4, getTokenDisplayDecimals(position.token))
+                          })} {position.token})
                         </span>
                       </div>
                     </TableCell>

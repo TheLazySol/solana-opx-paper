@@ -68,15 +68,15 @@ export function WithdrawModal({
     return tokenAmount * tokenPrice
   }, [tokenPrice])
   
-  // Memoized token amounts for display
+  // Use stored token amounts instead of calculating from current price
   const availableTokenAmount = useMemo(() => 
-    selectedPosition ? usdToToken(selectedPosition.amount) : 0, 
-    [selectedPosition, usdToToken]
+    selectedPosition ? selectedPosition.tokenAmount : 0, 
+    [selectedPosition]
   )
   
   const earnedTokenAmount = useMemo(() => 
-    selectedPosition ? usdToToken(selectedPosition.earned) : 0, 
-    [selectedPosition, usdToToken]
+    selectedPosition ? (selectedPosition.earned / selectedPosition.depositPrice) : 0, 
+    [selectedPosition]
   )
   
   const decimals = useMemo(() => 
@@ -97,8 +97,10 @@ export function WithdrawModal({
       return
     }
 
-    // Convert token amount back to USD for the withdrawal call using memoized value
-    await onWithdraw(withdrawUsdEquivalent)
+    // Convert token amount to USD based on the proportion of the position being withdrawn
+    const withdrawalProportion = withdrawTokenAmount / availableTokenAmount
+    const usdAmountToWithdraw = selectedPosition.amount * withdrawalProportion
+    await onWithdraw(usdAmountToWithdraw)
     setWithdrawAmount('')
   }
 
@@ -124,10 +126,11 @@ export function WithdrawModal({
     Math.max(0, availableTokenAmount - withdrawTokenAmount), 
     [availableTokenAmount, withdrawTokenAmount]
   )
-  const remainingUsdAmount = useMemo(() => 
-    tokenToUsd(remainingTokenAmount), 
-    [remainingTokenAmount, tokenToUsd]
-  )
+  const remainingUsdAmount = useMemo(() => {
+    if (!selectedPosition) return 0
+    const withdrawalProportion = withdrawTokenAmount / availableTokenAmount
+    return selectedPosition.amount * (1 - withdrawalProportion)
+  }, [selectedPosition, withdrawTokenAmount, availableTokenAmount])
 
   return (
     <Modal 

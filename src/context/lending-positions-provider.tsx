@@ -5,8 +5,8 @@ import { Position } from '@/components/omlp/my-lending-positions'
 
 interface LendingPositionsContextType {
   positions: Position[]
-  addPosition: (token: string, amount: number, apy: number) => void
-  updatePosition: (token: string, newAmount: number) => void
+  addPosition: (token: string, amount: number, apy: number, tokenAmount: number, depositPrice: number) => void
+  updatePosition: (token: string, newAmount: number, newTokenAmount?: number) => void
   removePosition: (token: string) => void
   getPosition: (token: string) => Position | undefined
 }
@@ -16,7 +16,7 @@ const LendingPositionsContext = createContext<LendingPositionsContextType | unde
 export function LendingPositionsProvider({ children }: { children: ReactNode }) {
   const [positions, setPositions] = useState<Position[]>([])
 
-  const addPosition = (token: string, amount: number, apy: number) => {
+  const addPosition = (token: string, amount: number, apy: number, tokenAmount: number, depositPrice: number) => {
     setPositions(prev => {
       const existingIndex = prev.findIndex(p => p.token === token)
       
@@ -27,6 +27,9 @@ export function LendingPositionsProvider({ children }: { children: ReactNode }) 
         updated[existingIndex] = {
           ...existing,
           amount: existing.amount + amount,
+          tokenAmount: existing.tokenAmount + tokenAmount,
+          // Keep the weighted average price for multiple deposits
+          depositPrice: ((existing.amount * existing.depositPrice) + (amount * depositPrice)) / (existing.amount + amount),
           // Recalculate earned based on time and new amount
           earned: existing.earned + (amount * apy / 100 * 0.1) // Mock earned calculation
         }
@@ -37,20 +40,23 @@ export function LendingPositionsProvider({ children }: { children: ReactNode }) 
           token,
           amount,
           apy,
-          earned: amount * apy / 100 * 0.1 // Mock earned calculation (10% of annual yield)
+          earned: amount * apy / 100 * 0.1, // Mock earned calculation (10% of annual yield)
+          tokenAmount,
+          depositPrice
         }
         return [...prev, newPosition]
       }
     })
   }
 
-  const updatePosition = (token: string, newAmount: number) => {
+  const updatePosition = (token: string, newAmount: number, newTokenAmount?: number) => {
     setPositions(prev => 
       prev.map(position => 
         position.token === token 
           ? { 
               ...position, 
               amount: newAmount,
+              tokenAmount: newTokenAmount !== undefined ? newTokenAmount : (position.tokenAmount / position.amount) * newAmount,
               // Keep the same earned ratio when updating amount
               earned: newAmount > 0 ? (position.earned / position.amount) * newAmount : 0
             }
