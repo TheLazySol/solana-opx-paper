@@ -44,7 +44,7 @@ export const SOL_POOL_CONFIG: BasePoolConfig = {
   liquidationPenalty: 1.5, // 1.5% liquidation penalty for SOL
   
   // Initial state
-  initialBorrowedPercentage: 0, // Start with 0% utilization for SOL
+  initialBorrowedPercentage: 77, // Start with 0% utilization for SOL
 } as const
 
 // Pool configurations organized by asset

@@ -22,7 +22,8 @@ import {
   Progress,
   Tabs,
   Tab,
-  useDisclosure
+  useDisclosure,
+  Tooltip
 } from '@heroui/react'
 import { RefreshCw, DollarSign, Coins, TrendingUp, Database } from 'lucide-react'
 import { useState } from 'react'
@@ -315,19 +316,34 @@ export function LendingPools({
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col items-start gap-1">
-                        <span className="text-white/80">{calculateUtilization(pool.borrowed, pool.supply).toFixed(2)}%</span>
-                        <Progress 
-                          value={calculateUtilization(pool.borrowed, pool.supply)}
-                          className="w-16 h-1"
-                          classNames={{
-                            indicator: "bg-white transition-all duration-300"
-                          }}
-                          style={{
-                            filter: `drop-shadow(0 0 ${Math.max(1, calculateUtilization(pool.borrowed, pool.supply) / 25)}px rgba(255, 255, 255, ${Math.min(0.4, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.8)})) drop-shadow(0 0 ${Math.max(2, calculateUtilization(pool.borrowed, pool.supply) / 15)}px rgba(255, 255, 255, ${Math.min(0.3, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.6)}))`
-                          }}
-                        />
-                      </div>
+                      <Tooltip 
+                        content={
+                          <div className="text-xs font-light">
+                            <span 
+                              className="text-white"
+                              style={{
+                                filter: `drop-shadow(0 0 ${Math.max(1, calculateUtilization(pool.borrowed, pool.supply) / 25)}px rgba(255, 255, 255, ${Math.min(0.4, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.8)})) drop-shadow(0 0 ${Math.max(2, calculateUtilization(pool.borrowed, pool.supply) / 15)}px rgba(255, 255, 255, ${Math.min(0.3, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.6)}))`
+                              }}
+                            >
+                              {calculateUtilization(pool.borrowed, pool.supply).toFixed(2)}%
+                            </span>
+                          </div>
+                        }
+                        placement="top"
+                      >
+                        <div className="cursor-pointer">
+                          <Progress 
+                            value={calculateUtilization(pool.borrowed, pool.supply)}
+                            className="w-16 h-2"
+                            classNames={{
+                              indicator: "bg-white transition-all duration-300"
+                            }}
+                            style={{
+                              filter: `drop-shadow(0 0 ${Math.max(1, calculateUtilization(pool.borrowed, pool.supply) / 25)}px rgba(255, 255, 255, ${Math.min(0.4, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.8)})) drop-shadow(0 0 ${Math.max(2, calculateUtilization(pool.borrowed, pool.supply) / 15)}px rgba(255, 255, 255, ${Math.min(0.3, calculateUtilization(pool.borrowed, pool.supply) / 100 * 0.6)}))`
+                            }}
+                          />
+                        </div>
+                      </Tooltip>
                     </TableCell>
                     <TableCell className="text-white/60">
                       {formatValue(pool.supplyLimit, pool.tokenPrice, pool.token)}
