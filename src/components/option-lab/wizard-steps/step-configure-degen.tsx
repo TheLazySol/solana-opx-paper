@@ -268,7 +268,7 @@ export function StepConfigureDegen({ assetPrice: propAssetPrice }: StepConfigure
     >
       {/* Progress Summary */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-gradient-to-r from-[#4a85ff]/10 to-[#5829f2]/10 border border-[#4a85ff]/20">
+        <Card className="bg-gradient-to-r from-[#4a85ff]/10 to-[#1851c4]/10 border border-[#4a85ff]/20">
           <CardBody className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-white">Your Option Summary</h3>

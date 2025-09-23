@@ -280,7 +280,7 @@ export function OptionLabFormDegen() {
                   value={((currentStep + 1) / steps.length) * 100}
                   className="h-2"
                   classNames={{
-                    indicator: "bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
+                    indicator: "bg-gradient-to-r from-[#4a85ff] to-[#1851c4]"
                   }}
                 />
                 
@@ -298,7 +298,7 @@ export function OptionLabFormDegen() {
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all",
                         index === currentStep
-                          ? "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white"
+                          ? "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white"
                           : index < currentStep
                           ? "bg-green-500/20 text-green-400"
                           : "bg-white/10 text-white/50"
@@ -387,7 +387,7 @@ export function OptionLabFormDegen() {
                     onClick={handleNext}
                     isDisabled={!canProceed(currentStep)}
                     endContent={<ChevronRight className="w-4 h-4" />}
-                    className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white"
+                    className="bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white"
                   >
                     Next
                   </Button>

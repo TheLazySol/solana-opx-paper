@@ -175,7 +175,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
                 wrapper: cn(
                   "group-data-[selected=true]:bg-gradient-to-r",
                   "group-data-[selected=true]:from-[#4a85ff]",
-                  "group-data-[selected=true]:to-[#5829f2]",
+                  "group-data-[selected=true]:to-[#1851c4]",
                   "opacity-50"
                 ),
                 thumb: cn(
@@ -242,7 +242,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
               {index < steps.length - 1 && (
                 <div className="flex-1 h-[2px] bg-white/10 relative mx-4">
                   <motion.div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4]"
                     initial={{ width: 0 }}
                     animate={{ width: completedSteps.has(index) ? '100%' : '0%' }}
                     transition={{ duration: 0.3 }}
@@ -267,7 +267,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
             value={(currentStep + 1) / steps.length * 100}
             className="h-2"
             classNames={{
-              indicator: "bg-gradient-to-r from-[#4a85ff] to-[#5829f2]",
+              indicator: "bg-gradient-to-r from-[#4a85ff] to-[#1851c4]",
               track: "bg-white/10"
             }}
           />
@@ -340,7 +340,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
               className={cn(
                 "w-2 h-2 rounded-full transition-all",
                 index === currentStep
-                  ? "w-8 bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
+                  ? "w-8 bg-gradient-to-r from-[#4a85ff] to-[#1851c4]"
                   : "bg-white/20"
               )}
               animate={{ width: index === currentStep ? 32 : 8 }}
@@ -356,7 +356,7 @@ export function OptionLabWizard({ assetPrice, onSubmitAction, isSubmitting }: Op
             className={cn(
               "min-w-[100px] font-semibold transition-all",
               canProceed(currentStep)
-                ? "bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
+                ? "bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white shadow-lg shadow-[#4a85ff]/25 hover:shadow-[#4a85ff]/40"
                 : "bg-white/10 text-white/40 border border-white/20"
             )}
           >

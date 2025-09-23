@@ -91,7 +91,7 @@ export default function DashboardFeature() {
             >
               Trade
               <br />
-              <span className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent font-bold">
+              <span className="bg-gradient-to-r from-[#4a85ff] to-[#1851c4] bg-clip-text text-transparent font-bold">
                 DeFi Options
               </span>
               <br />
@@ -117,7 +117,7 @@ export default function DashboardFeature() {
             >
             <Button
               size="lg"
-              className="bg-gradient-to-r from-[#4a85ff] to-[#5829f2] text-white font-semibold px-8 py-3 text-xl
+              className="bg-gradient-to-r from-[#4a85ff] to-[#1851c4] text-white font-semibold px-8 py-3 text-xl
                 transition-all duration-200 hover:scale-105 active:scale-95
                 hover:shadow-2xl hover:shadow-[#4a85ff]/40
                 active:shadow-inner active:shadow-[#4a85ff]/60"
@@ -219,7 +219,7 @@ export default function DashboardFeature() {
               <CardHeader className="p-6 pb-2 flex items-center justify-center">
                 <motion.h3 
                   className="text-lg font-semibold text-center transition-all duration-300
-                    bg-gradient-to-r from-[#4a85ff] to-[#5829f2] 
+                    bg-gradient-to-r from-[#4a85ff] to-[#1851c4] 
                     bg-clip-text text-transparent"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -248,9 +248,9 @@ export default function DashboardFeature() {
                   <Button 
                     variant="bordered"
                     className="w-full bg-transparent border border-[#4a85ff]/30 
-                      hover:bg-gradient-to-r hover:from-[#4a85ff]/20 hover:to-[#5829f2]/20
+                      hover:bg-gradient-to-r hover:from-[#4a85ff]/20 hover:to-[#1851c4]/20
                       hover:border-[#4a85ff]/70 hover:shadow-lg hover:shadow-[#4a85ff]/25
-                      active:bg-gradient-to-r active:from-[#4a85ff]/30 active:to-[#5829f2]/30
+                      active:bg-gradient-to-r active:from-[#4a85ff]/30 active:to-[#1851c4]/30
                       active:border-[#4a85ff]/80 active:shadow-inner
                       transition-all duration-200 ease-out
                       group overflow-hidden relative"
@@ -341,8 +341,8 @@ export default function DashboardFeature() {
                 className="px-3 py-1.5 text-sm
                   backdrop-blur-sm bg-white/5 dark:bg-black/20
                   border border-[#4a85ff]/20 
-                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-[#5829f2]/10
-                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-[#5829f2]/20
+                  hover:border-[#4a85ff]/60 hover:bg-gradient-to-r hover:from-[#4a85ff]/10 hover:to-[#1851c4]/10
+                  active:bg-gradient-to-r active:from-[#4a85ff]/20 active:to-[#1851c4]/20
                   active:border-[#4a85ff]/80
                   transition-all duration-200 ease-out
                   hover:shadow-[0_0_20px_rgba(74,133,255,0.3)]
