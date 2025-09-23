@@ -118,8 +118,8 @@ export const formatSelectedOption = ({
 }
 
 // Option Lab Constants
-export const EDIT_REFRESH_INTERVAL = 1000; // 1 second debounce for faster updates
-export const AUTO_REFRESH_INTERVAL = 1500; // 1.5 seconds
+export const EDIT_REFRESH_INTERVAL = 2.5; // 2.5 second debounce for faster updates
+export const AUTO_REFRESH_INTERVAL = 5; // 5 seconds
 
 export const COLLATERAL_TYPES = [
   { value: "SOL", label: "SOL", symbol: "SOL", default: true },
