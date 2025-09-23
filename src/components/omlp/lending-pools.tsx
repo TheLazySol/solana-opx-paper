@@ -251,14 +251,16 @@ export function LendingPools({
         <CardBody className="p-0">
           <Table 
             aria-label="Lending pools"
-            className="min-h-[300px]"
+            className="min-h-[300px] border-collapse"
+            removeWrapper
             classNames={{
               wrapper: "bg-transparent rounded-none",
-              th: "bg-black/20 text-white/80 text-left backdrop-blur-sm px-4 font-medium",
-              td: "text-left px-4",
-              table: "bg-transparent table-fixed",
+              th: "bg-black/20 text-white/80 text-left backdrop-blur-sm px-4 font-medium !border-0",
+              td: "text-left px-4 !border-0",
+              table: "bg-transparent table-fixed !border-0",
               tbody: "bg-transparent",
-              tr: "hover:bg-white/5 transition-colors",
+              tr: "!border-0",
+              thead: "!border-0",
             }}
           >
             <TableHeader>
