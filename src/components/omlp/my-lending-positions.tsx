@@ -16,7 +16,7 @@ import {
   useDisclosure
 } from '@heroui/react'
 import { RefreshCw, TrendingUp, DollarSign, Activity } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
@@ -24,7 +24,7 @@ import { useLendingPositions } from '@/context/lending-positions-provider'
 import { DepositModal } from './deposit-modal'
 import { WithdrawModal } from './withdraw-modal'
 import { Pool } from './lending-pools'
-import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { useAssetPriceInfo, useAssetPrice } from '@/context/asset-price-provider'
 import { POOL_CONFIGS, GLOBAL_OMLP_CONFIG } from '@/constants/omlp/omlp-pools'
 import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
 
@@ -54,13 +54,28 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
   // Use lending positions context
   const { positions, addPosition, updatePosition, removePosition } = useLendingPositions()
   
-  // Get SOL price for calculations
-  const { price: solPrice } = useAssetPriceInfo('SOL')
+  // Get asset price context for multi-asset pricing
+  const { prices, refreshPrice } = useAssetPrice()
+  
+  // Get unique tokens from positions
+  const uniqueTokens = [...new Set(positions.map(pos => pos.token))]
+  
+  // Fetch prices for all unique tokens
+  useEffect(() => {
+    uniqueTokens.forEach(token => {
+      if (!prices[token]) {
+        refreshPrice(token)
+      }
+    })
+  }, [uniqueTokens.length, refreshPrice]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
     
     try {
+      // Refresh prices for all unique tokens
+      await Promise.all(uniqueTokens.map(token => refreshPrice(token)))
+      
       if (onRefresh) {
         await onRefresh()
       }
@@ -93,8 +108,11 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
     }
 
     // For SOL, use the generated pool data with real price
-    if (position.token === 'SOL' && solPrice > 0) {
-      return generateSolPoolData(solPrice)
+    if (position.token === 'SOL') {
+      const solPrice = getTokenPrice('SOL')
+      if (solPrice > 0) {
+        return generateSolPoolData(solPrice)
+      }
     }
 
     // Generate realistic pool data based on the configuration
@@ -115,7 +133,7 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       borrowApy,
       utilization,
       supplyLimit: poolConfig.supplyLimit,
-      tokenPrice: position.token === 'SOL' ? solPrice : 1 // Use real SOL price, fallback to 1 for others
+      tokenPrice: getTokenPrice(position.token) // Use real token price for all assets
     }
   }
 
@@ -204,11 +222,8 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
 
   // Helper function to get token price for a specific token
   const getTokenPrice = (token: string): number => {
-    if (token === 'SOL') {
-      return solPrice
-    }
-    // Add other token prices here as they become available
-    return 1 // Fallback for unknown tokens
+    const priceData = prices[token]
+    return priceData?.price || 1 // Fallback to 1 if price not available
   }
 
   // Helper function to format combined USD and token amounts
@@ -266,20 +281,12 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
             </div>
             <div className="flex items-center gap-3 ml-auto">
               <Chip 
-                size="sm" 
+                size="md" 
                 variant="flat" 
-                className="bg-white/10 text-white/80 border border-white/20"
-                startContent={<DollarSign className="w-3 h-3" />}
-              >
-                TVL: ${totalValue.toFixed(2)}
-              </Chip>
-              <Chip 
-                size="sm" 
-                variant="flat" 
-                className="bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                className="bg-white/10 text-white border border-white/20"
                 startContent={<TrendingUp className="w-3 h-3" />}
               >
-                Earned: ${totalEarned.toFixed(2)}
+                TVL: ${Math.round(totalValue).toLocaleString()}
               </Chip>
               <Button
                 isIconOnly
@@ -299,9 +306,9 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
                   />
                 }
                 aria-label={isRefreshing ? "Refreshing lending positions..." : "Refresh lending positions"}
-                className="w-10 h-10 min-w-10 bg-white/5 hover:bg-white/10 data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
+                className="w-6 h-6 min-w-6 bg-white/5 hover:bg-white/10 data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
               >
-                {!isRefreshing && <RefreshCw className="h-4 w-4 text-foreground-500" />}
+                {!isRefreshing && <RefreshCw className="h-3 w-3 text-foreground-500" />}
               </Button>
             </div>
           </div>

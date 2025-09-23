@@ -196,10 +196,13 @@ export function LendingPools({
             </div>
             <div className="flex items-center gap-3 ml-auto">
               <Chip 
-                size="sm" 
+                size="md" 
                 variant="flat" 
-                className="bg-white/10 text-white/80 border border-white/20"
+                className="bg-white/10 text-white border border-white/20"
                 startContent={<TrendingUp className="w-3 h-3" />}
+                style={{
+                  filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.2))'
+                }}
               >
                 TVL: ${Math.round(tvl).toLocaleString()}
               </Chip>
@@ -254,9 +257,9 @@ export function LendingPools({
                   />
                 }
                 aria-label={isRefreshing ? "Refreshing lending pools..." : "Refresh lending pools"}
-                className="w-10 h-10 min-w-10 bg-white/5 hover:bg-white/10 data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
+                className="w-6 h-6 min-w-6 bg-white/5 hover:bg-white/10 data-[hover=true]:scale-110 data-[pressed=true]:scale-95"
               >
-                {!isRefreshing && <RefreshCw className="h-4 w-4 text-foreground-500" />}
+                {!isRefreshing && <RefreshCw className="h-3 w-3 text-foreground-500" />}
               </Button>
             </div>
           </div>

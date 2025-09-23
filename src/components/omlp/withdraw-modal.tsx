@@ -12,11 +12,13 @@ import {
   Spinner
 } from '@heroui/react'
 import { TrendingDown } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { cn } from '@/utils/utils'
 import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { Position } from './my-lending-positions'
+import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 
 interface WithdrawModalProps {
   isOpen: boolean
@@ -35,22 +37,68 @@ export function WithdrawModal({
 }: WithdrawModalProps) {
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const modalContentRef = useMouseGlow()
+  
+  // Get asset price for the selected position's token
+  const { price: tokenPrice, refreshPrice } = useAssetPriceInfo(selectedPosition?.token || 'SOL')
+  
+  // Fetch price when position changes (but only once per token)
+  useEffect(() => {
+    if (selectedPosition?.token && isOpen) {
+      refreshPrice()
+    }
+  }, [selectedPosition?.token, isOpen]) // Removed refreshPrice from deps to prevent excessive calls
+
+  // Clear withdraw amount when position changes or modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setWithdrawAmount('')
+    }
+  }, [isOpen])
+  
+  useEffect(() => {
+    setWithdrawAmount('')
+  }, [selectedPosition?.token])
+
+  // Memoized helper functions for USD <-> Token conversions
+  const usdToToken = useCallback((usdAmount: number): number => {
+    return tokenPrice > 0 ? usdAmount / tokenPrice : 0
+  }, [tokenPrice])
+  
+  const tokenToUsd = useCallback((tokenAmount: number): number => {
+    return tokenAmount * tokenPrice
+  }, [tokenPrice])
+  
+  // Memoized token amounts for display
+  const availableTokenAmount = useMemo(() => 
+    selectedPosition ? usdToToken(selectedPosition.amount) : 0, 
+    [selectedPosition, usdToToken]
+  )
+  
+  const earnedTokenAmount = useMemo(() => 
+    selectedPosition ? usdToToken(selectedPosition.earned) : 0, 
+    [selectedPosition, usdToToken]
+  )
+  
+  const decimals = useMemo(() => 
+    selectedPosition ? getTokenDisplayDecimals(selectedPosition.token) : 4, 
+    [selectedPosition?.token]
+  )
 
   const handleWithdraw = async () => {
-    if (!selectedPosition || !withdrawAmount) return
+    if (!selectedPosition || !withdrawAmount || tokenPrice <= 0) return
     
-    const numericAmount = parseFloat(withdrawAmount)
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    if (!Number.isFinite(withdrawTokenAmount) || withdrawTokenAmount <= 0) {
       console.warn('Invalid amount entered:', withdrawAmount)
       return
     }
 
-    if (numericAmount > selectedPosition.amount) {
+    if (withdrawTokenAmount > availableTokenAmount) {
       console.warn('Amount exceeds available balance')
       return
     }
 
-    await onWithdraw(numericAmount)
+    // Convert token amount back to USD for the withdrawal call using memoized value
+    await onWithdraw(withdrawUsdEquivalent)
     setWithdrawAmount('')
   }
 
@@ -59,11 +107,29 @@ export function WithdrawModal({
     onOpenChange()
   }
 
-  const handleMaxClick = () => {
-    if (selectedPosition) {
-      setWithdrawAmount(selectedPosition.amount.toString())
+  const handleMaxClick = useCallback(() => {
+    if (selectedPosition && tokenPrice > 0) {
+      setWithdrawAmount(availableTokenAmount.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals
+      }).replace(/,/g, ''))
     }
-  }
+  }, [selectedPosition, tokenPrice, availableTokenAmount, decimals])
+
+  // Memoized withdraw amount calculations
+  const withdrawTokenAmount = useMemo(() => parseFloat(withdrawAmount) || 0, [withdrawAmount])
+  const withdrawUsdEquivalent = useMemo(() => 
+    tokenToUsd(withdrawTokenAmount), 
+    [withdrawTokenAmount, tokenToUsd]
+  )
+  const remainingTokenAmount = useMemo(() => 
+    Math.max(0, availableTokenAmount - withdrawTokenAmount), 
+    [availableTokenAmount, withdrawTokenAmount]
+  )
+  const remainingUsdAmount = useMemo(() => 
+    tokenToUsd(remainingTokenAmount), 
+    [remainingTokenAmount, tokenToUsd]
+  )
 
   return (
     <Modal 
@@ -149,7 +215,7 @@ export function WithdrawModal({
                   <div className="relative">
                     <Input
                       type="text"
-                      label="Withdraw Amount"
+                      label={`Withdraw Amount (${selectedPosition?.token || 'SOL'})`}
                       value={withdrawAmount}
                       onValueChange={(value) => {
                         // Only allow numbers and decimals
@@ -157,7 +223,7 @@ export function WithdrawModal({
                           setWithdrawAmount(value);
                         }
                       }}
-                      placeholder="0.00"
+                      placeholder={`0.${'0'.repeat(Math.min(decimals, 4))}`}
                       size="lg"
                       endContent={
                         <div className="flex items-center gap-2">
@@ -181,20 +247,35 @@ export function WithdrawModal({
                         inputWrapper: "bg-white/5 border-white/10 hover:border-white/20 data-[hover=true]:bg-white/10 data-[focus=true]:!bg-white/10 data-[focus-visible=true]:!bg-white/10 focus:!bg-white/10"
                       }}
                     />
+                    {/* USD Equivalent Display */}
+                    {withdrawAmount && !Number.isNaN(withdrawTokenAmount) && tokenPrice > 0 && (
+                      <p className="text-white/60 text-sm mt-2">
+                        ≈ ${withdrawUsdEquivalent.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} USD
+                      </p>
+                    )}
                   </div>
                   
-                  {selectedPosition && (
+                  {selectedPosition && tokenPrice > 0 && (
                     <div className="p-4 rounded-lg bg-gray-950/60 border border-white/5 space-y-3">
                       <h4 className="text-sm font-medium text-white/90 mb-2">Position Information</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-white/60">Available Balance:</span>
-                          <p className="text-white/90 font-medium">
-                            ${selectedPosition.amount.toLocaleString(undefined, { 
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </p>
+                          <div className="text-white/90 font-medium">
+                            <p>{availableTokenAmount.toLocaleString(undefined, { 
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: decimals
+                            })} {selectedPosition.token}</p>
+                            <p className="text-white/40 text-xs">
+                              (${selectedPosition.amount.toLocaleString(undefined, { 
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })})
+                            </p>
+                          </div>
                         </div>
                         <div>
                           <span className="text-white/60">Current APY:</span>
@@ -202,21 +283,33 @@ export function WithdrawModal({
                         </div>
                         <div>
                           <span className="text-white/60">Total Earned:</span>
-                          <p className="text-green-400 font-medium">
-                            +${selectedPosition.earned.toLocaleString(undefined, { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2
-                            })}
-                          </p>
+                          <div className="text-green-400 font-medium">
+                            <p>+{earnedTokenAmount.toLocaleString(undefined, { 
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: decimals
+                            })} {selectedPosition.token}</p>
+                            <p className="text-white/40 text-xs">
+                              (+${selectedPosition.earned.toLocaleString(undefined, { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2
+                              })})
+                            </p>
+                          </div>
                         </div>
                         <div>
                           <span className="text-white/60">After Withdraw:</span>
-                          <p className="text-white/90 font-medium">
-                            ${Math.max(0, selectedPosition.amount - (parseFloat(withdrawAmount) || 0)).toLocaleString(undefined, { 
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </p>
+                          <div className="text-white/90 font-medium">
+                            <p>{remainingTokenAmount.toLocaleString(undefined, { 
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: decimals
+                            })} {selectedPosition.token}</p>
+                            <p className="text-white/40 text-xs">
+                              (${remainingUsdAmount.toLocaleString(undefined, { 
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })})
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -242,17 +335,18 @@ export function WithdrawModal({
                   <Button
                     className={cn(
                       "font-semibold transition-all duration-300",
-                      (!isProcessing && withdrawAmount && parseFloat(withdrawAmount) > 0 && !Number.isNaN(parseFloat(withdrawAmount)) && selectedPosition && parseFloat(withdrawAmount) <= selectedPosition.amount)
+                      (!isProcessing && withdrawAmount && withdrawTokenAmount > 0 && !Number.isNaN(withdrawTokenAmount) && selectedPosition && tokenPrice > 0 && withdrawTokenAmount <= availableTokenAmount)
                         ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:shadow-red-500/40"
                         : "bg-white/10 text-white/40 border border-white/10"
                     )}
                     isDisabled={
                       isProcessing ||
                       !withdrawAmount ||
-                      parseFloat(withdrawAmount) <= 0 ||
-                      Number.isNaN(parseFloat(withdrawAmount)) ||
+                      withdrawTokenAmount <= 0 ||
+                      Number.isNaN(withdrawTokenAmount) ||
                       !selectedPosition ||
-                      parseFloat(withdrawAmount) > selectedPosition.amount
+                      tokenPrice <= 0 ||
+                      withdrawTokenAmount > availableTokenAmount
                     }
                     onPress={handleWithdraw}
                   >
