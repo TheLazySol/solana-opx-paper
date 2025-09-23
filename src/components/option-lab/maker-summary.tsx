@@ -217,7 +217,7 @@ export function MakerSummary({
     <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#1851c4] bg-clip-text text-transparent">
             Strategy Analysis
           </h3>
           {options.length > 0 && (

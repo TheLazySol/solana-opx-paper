@@ -72,7 +72,7 @@ export function OMLPFeature() {
                 <Wallet className="h-6 w-6 text-[#4a85ff]" />
               </div>
               <div className="text-center space-y-2">
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+                <h2 className="text-xl font-semibold bg-gradient-to-r from-[#4a85ff] to-[#1851c4] bg-clip-text text-transparent">
                   Wallet Connection Required
                 </h2>
                 <p className="text-white/60">

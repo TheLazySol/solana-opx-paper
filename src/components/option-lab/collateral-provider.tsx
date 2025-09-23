@@ -219,7 +219,7 @@ export function CollateralProvider({
   return (
     <Card className="bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl h-full">
       <CardHeader className="pb-2">
-        <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent">
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-[#4a85ff] to-[#1851c4] bg-clip-text text-transparent">
           Open Position
         </h3>
       </CardHeader>
@@ -370,7 +370,7 @@ export function CollateralProvider({
             className="flex-1"
             classNames={{
               track: "bg-white/10",
-              filler: "bg-gradient-to-r from-[#4a85ff] to-[#5829f2]"
+              filler: "bg-gradient-to-r from-[#4a85ff] to-[#1851c4]"
             }}
           />
         </div>

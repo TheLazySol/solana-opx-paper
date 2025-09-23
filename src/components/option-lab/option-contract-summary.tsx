@@ -30,7 +30,7 @@ export function OptionContractSummary({ showDetailedInfo = false }: OptionContra
   }
 
   return (
-    <Card className="bg-gradient-to-r from-[#4a85ff]/10 to-[#5829f2]/10 border border-[#4a85ff]/20">
+    <Card className="bg-gradient-to-r from-[#4a85ff]/10 to-[#1851c4]/10 border border-[#4a85ff]/20">
       <CardBody className="p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
