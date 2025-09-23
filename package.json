@@ -26,6 +26,7 @@
     "@coral-xyz/anchor": "^0.31.1",
     "@heroicons/react": "^2.2.0",
     "@heroui/modal": "^2.2.23",
+    "@heroui/navbar": "^2.2.24",
     "@heroui/react": "^2.8.2",
     "@heroui/theme": "^2.4.20",
     "@hookform/resolvers": "^3.10.0",
