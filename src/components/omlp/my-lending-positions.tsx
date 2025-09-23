@@ -27,6 +27,7 @@ import { cn } from '@/utils/utils'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
+import { useLendingPositions } from '@/context/lending-positions-provider'
 
 export type Position = {
   token: string
@@ -36,12 +37,11 @@ export type Position = {
 }
 
 interface MyLendingPositionsProps {
-  positions: Position[]
   isLoading?: boolean
   onRefresh?: () => Promise<void>
 }
 
-export function MyLendingPositions({ positions, isLoading = false, onRefresh }: MyLendingPositionsProps) {
+export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPositionsProps) {
   const {isOpen: isDepositModalOpen, onOpen: onDepositModalOpen, onOpenChange: onDepositModalOpenChange} = useDisclosure()
   const {isOpen: isWithdrawModalOpen, onOpen: onWithdrawModalOpen, onOpenChange: onWithdrawModalOpenChange} = useDisclosure()
   const [currentToken, setCurrentToken] = useState('')
@@ -53,6 +53,9 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
 
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
+  
+  // Use lending positions context
+  const { positions, addPosition, updatePosition, removePosition } = useLendingPositions()
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -91,8 +94,14 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
         return
       }
 
-      // TODO: Implement actual deposit functionality
-      console.log('Deposit:', { token: currentToken, amount: numericAmount })
+      // Find the current position to get the APY, or use a default
+      const existingPosition = positions.find(p => p.token === currentToken)
+      const apy = existingPosition?.apy || 5.0 // Default APY if no existing position
+      
+      // Add to the user's lending positions
+      addPosition(currentToken, numericAmount, apy)
+      
+      console.log('Deposit successful:', { token: currentToken, amount: numericAmount })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -117,8 +126,17 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
         throw new Error(`Invalid withdrawal amount. Maximum available: ${selectedPosition?.amount ?? 0}`)
       }
       
-      // TODO: Implement actual withdraw functionality
-      console.log('Withdraw:', { token: currentToken, amount: numericAmount })
+      // Update the position with the new amount (subtract withdrawal)
+      const newAmount = selectedPosition.amount - numericAmount
+      if (newAmount <= 0) {
+        // Remove the position completely if withdrawing all
+        removePosition(currentToken)
+      } else {
+        // Update with remaining amount
+        updatePosition(currentToken, newAmount)
+      }
+      
+      console.log('Withdraw successful:', { token: currentToken, amount: numericAmount })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))

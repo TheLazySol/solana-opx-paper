@@ -33,6 +33,7 @@ import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { DepositModal } from './deposit-modal'
+import { useLendingPositions } from '@/context/lending-positions-provider'
 
 export type Pool = {
   token: string
@@ -67,6 +68,9 @@ export function LendingPools({
   
   // Get SOL price for mock pool
   const { price: solPrice, refreshPrice } = useAssetPriceInfo('SOL')
+  
+  // Use lending positions context
+  const { addPosition } = useLendingPositions()
   
   // Generate mock pools using constants and calculations
   const generateMockPools = (): Pool[] => {
@@ -133,8 +137,11 @@ export function LendingPools({
 
     try {
       setIsProcessing(true)
-      // TODO: Implement actual deposit functionality
-      console.log('Deposit:', { token: selectedPool.token, amount })
+      
+      // Add the position to the user's lending positions
+      addPosition(selectedPool.token, amount, selectedPool.supplyApy)
+      
+      console.log('Deposit successful:', { token: selectedPool.token, amount })
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -181,39 +188,6 @@ export function LendingPools({
               </h3>
             </div>
             <div className="flex items-center gap-3 ml-auto">
-              <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm rounded-lg p-1">
-                <Tabs
-                  selectedKey={showUSD ? "usd" : "tokens"}
-                  onSelectionChange={(key) => setShowUSD(key === "usd")}
-                  variant="light"
-                  size="sm"
-                  classNames={{
-                    tabList: "gap-1 w-full relative rounded-md p-0",
-                    cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
-                    tab: "px-3 h-8 data-[selected=true]:text-white text-white/60 min-w-0",
-                    tabContent: "group-data-[selected=true]:text-white font-medium text-xs"
-                  }}
-                >
-                  <Tab
-                    key="usd"
-                    title={
-                      <div className="flex items-center gap-1.5">
-                        <DollarSign className="w-3 h-3" />
-                        <span>USD</span>
-                      </div>
-                    }
-                  />
-                  <Tab
-                    key="tokens"
-                    title={
-                      <div className="flex items-center gap-1.5">
-                        <Coins className="w-3 h-3" />
-                        <span>Tokens</span>
-                      </div>
-                    }
-                  />
-                </Tabs>
-              </div>
               <Chip 
                 size="sm" 
                 variant="flat" 
@@ -222,6 +196,39 @@ export function LendingPools({
               >
                 TVL: ${Math.round(tvl).toLocaleString()}
               </Chip>
+              <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm rounded-lg p-0.5">
+                <Tabs
+                  selectedKey={showUSD ? "usd" : "tokens"}
+                  onSelectionChange={(key) => setShowUSD(key === "usd")}
+                  variant="light"
+                  size="sm"
+                  classNames={{
+                    tabList: "gap-0.5 w-full relative rounded-md p-0",
+                    cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
+                    tab: "px-2 h-6 data-[selected=true]:text-white text-white/60 min-w-0",
+                    tabContent: "group-data-[selected=true]:text-white font-medium text-xs"
+                  }}
+                >
+                  <Tab
+                    key="usd"
+                    title={
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-2.5 h-2.5" />
+                        <span className="text-xs">USD</span>
+                      </div>
+                    }
+                  />
+                  <Tab
+                    key="tokens"
+                    title={
+                      <div className="flex items-center gap-1">
+                        <Coins className="w-2.5 h-2.5" />
+                        <span className="text-xs">Tokens</span>
+                      </div>
+                    }
+                  />
+                </Tabs>
+              </div>
               <Button
                 isIconOnly
                 size="sm"
