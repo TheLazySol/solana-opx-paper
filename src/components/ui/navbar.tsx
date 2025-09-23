@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import * as React from 'react'
 import { WalletButton } from '../solana/user-wallet/wallet-connect'
 import { ClusterUiSelect } from '../solana/user-settings/rpc-dropdown-select'
-import { useTracking } from '@/hooks/useTracking'
 
 interface NavbarProps {
   links: { label: string; path: string }[]
@@ -15,7 +14,6 @@ interface NavbarProps {
 export function Navbar({ links }: NavbarProps) {
   const pathname = usePathname()
   const [mounted, setMounted] = React.useState(false)
-  const { trackButtonClick, trackPageView, isConnected } = useTracking()
 
   React.useEffect(() => {
     setMounted(true)
@@ -23,29 +21,6 @@ export function Navbar({ links }: NavbarProps) {
 
   // Always use the dark theme logo
   const logoSrc = '/epicentral-logo-light.png'
-
-  // Track navigation clicks
-  const handleNavClick = async (label: string, path: string) => {
-    // Track specific important navigation items
-    const trackedItems = ['trade', 'option lab', 'omlp']
-    const normalizedLabel = label.toLowerCase()
-    
-    if (trackedItems.some(item => normalizedLabel.includes(item))) {
-      try {
-        await trackButtonClick(`nav_${normalizedLabel.replace(/\s+/g, '_')}`, {
-          navigationTo: path,
-          fromPath: pathname,
-          timestamp: new Date().toISOString(),
-          walletConnected: isConnected,
-        })
-        
-        console.log(`Navigation tracked: ${label} -> ${path}`)
-      } catch (error) {
-        console.warn(`Failed to track navigation to ${label}:`, error)
-        // Don't prevent navigation if tracking fails
-      }
-    }
-  }
 
   return (
     <div className="border-b">
@@ -75,7 +50,6 @@ export function Navbar({ links }: NavbarProps) {
               <Link
                 key={path}
                 href={path}
-                onClick={() => handleNavClick(label, path)}
                 className={`text-lg font-medium transition-all duration-300 ${
                   (pathname === path || (path !== '/' && pathname.startsWith(path + '/'))) 
                     ? 'bg-gradient-to-r from-[#4a85ff] to-[#5829f2] bg-clip-text text-transparent' 
