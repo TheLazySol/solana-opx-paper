@@ -215,19 +215,19 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
             className="min-h-[200px]"
             classNames={{
               wrapper: "bg-transparent rounded-none",
-              th: "bg-black/20 text-white/80 text-center backdrop-blur-sm",
-              td: "text-center",
-              table: "bg-transparent",
+              th: "bg-black/20 text-white/80 text-left backdrop-blur-sm px-4 font-medium",
+              td: "text-left px-4",
+              table: "bg-transparent table-fixed",
               tbody: "bg-transparent",
               tr: "hover:bg-white/5 transition-colors",
             }}
           >
             <TableHeader>
-              <TableColumn>POOL</TableColumn>
-              <TableColumn>AMOUNT</TableColumn>
-              <TableColumn>APY</TableColumn>
-              <TableColumn>EARNED</TableColumn>
-              <TableColumn>ACTIONS</TableColumn>
+              <TableColumn className="w-[20%]">POOL</TableColumn>
+              <TableColumn className="w-[20%]">AMOUNT</TableColumn>
+              <TableColumn className="w-[20%]">APY</TableColumn>
+              <TableColumn className="w-[20%]">EARNED</TableColumn>
+              <TableColumn className="w-[20%]">ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent={isLoading ? "Loading positions..." : "No active lending positions"}>
               {positions.map((position, i) => (
@@ -255,7 +255,7 @@ export function MyLendingPositions({ positions, isLoading = false, onRefresh }: 
                       })}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-start gap-2">
                         <Button 
                           size="sm"
                           variant="flat"

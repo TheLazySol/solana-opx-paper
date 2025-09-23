@@ -39,12 +39,13 @@ export function OMLPFeature() {
 
   if (!publicKey) {
     return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]"
-      >
+      <div className="w-full max-w-6xl mx-auto px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]"
+        >
         <Card 
           ref={walletCardRef}
           className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out max-w-md"
@@ -84,7 +85,8 @@ export function OMLPFeature() {
             </div>
           </CardBody>
         </Card>
-      </motion.div>
+        </motion.div>
+      </div>
     )
   }
 
@@ -108,12 +110,13 @@ export function OMLPFeature() {
   };
 
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="py-10 space-y-8"
-    >
+    <div className="w-full max-w-6xl mx-auto px-4">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
+      >
       <motion.div variants={itemVariants}>
         <MyLendingPositions 
           positions={positions}
@@ -129,6 +132,7 @@ export function OMLPFeature() {
           onRefresh={handleRefreshPools}
         />
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 } 

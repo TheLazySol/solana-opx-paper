@@ -254,22 +254,22 @@ export function LendingPools({
             className="min-h-[300px]"
             classNames={{
               wrapper: "bg-transparent rounded-none",
-              th: "bg-black/20 text-white/80 text-center backdrop-blur-sm",
-              td: "text-center",
-              table: "bg-transparent",
+              th: "bg-black/20 text-white/80 text-left backdrop-blur-sm px-4 font-medium",
+              td: "text-left px-4",
+              table: "bg-transparent table-fixed",
               tbody: "bg-transparent",
               tr: "hover:bg-white/5 transition-colors",
             }}
           >
             <TableHeader>
-              <TableColumn>POOL</TableColumn>
-              <TableColumn>SUPPLY</TableColumn>
-              <TableColumn>SUPPLY APY</TableColumn>
-              <TableColumn>BORROWED</TableColumn>
-              <TableColumn>BORROW APY</TableColumn>
-              <TableColumn>UTILIZATION</TableColumn>
-              <TableColumn>SUPPLY LIMIT</TableColumn>
-              <TableColumn>ACTIONS</TableColumn>
+              <TableColumn className="w-[12.5%]">POOL</TableColumn>
+              <TableColumn className="w-[12.5%]">SUPPLY</TableColumn>
+              <TableColumn className="w-[12.5%]">SUPPLY APY</TableColumn>
+              <TableColumn className="w-[12.5%]">BORROWED</TableColumn>
+              <TableColumn className="w-[12.5%]">BORROW APY</TableColumn>
+              <TableColumn className="w-[12.5%]">UTILIZATION</TableColumn>
+              <TableColumn className="w-[12.5%]">SUPPLY LIMIT</TableColumn>
+              <TableColumn className="w-[12.5%]">ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent={isLoading ? "Loading pools..." : "No pools available"}>
               {displayPools.map((pool, i) => (
@@ -279,7 +279,7 @@ export function LendingPools({
                         {pool.token}
                       </Chip>
                     </TableCell>
-                    <TableCell className="text-white/90 font-medium">
+                    <TableCell className="text-white/60 font-medium">
                       {formatValue(pool.supply, pool.tokenPrice, pool.token)}
                     </TableCell>
                     <TableCell>
@@ -287,7 +287,7 @@ export function LendingPools({
                         {pool.supplyApy}%
                       </Chip>
                     </TableCell>
-                    <TableCell className="text-white/90">
+                    <TableCell className="text-white/60">
                       {formatValue(pool.borrowed, pool.tokenPrice, pool.token)}
                     </TableCell>
                     <TableCell>
@@ -296,7 +296,7 @@ export function LendingPools({
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-start gap-1">
                         <span className="text-white/80">{calculateUtilization(pool.borrowed, pool.supply).toFixed(2)}%</span>
                         <Progress 
                           value={calculateUtilization(pool.borrowed, pool.supply)}
@@ -310,11 +310,11 @@ export function LendingPools({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="text-white/90">
+                    <TableCell className="text-white/60">
                       {formatValue(pool.supplyLimit, pool.tokenPrice, pool.token)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-start gap-2">
                         <Button 
                           size="sm"
                           variant="flat"
