@@ -35,7 +35,7 @@ export const SOL_POOL_CONFIG: BasePoolConfig = {
   borrowSpread: 5.0, // 5% spread between supply and borrow rates for SOL
   
   // Pool limits and parameters
-  supplyLimit: 5000, // Maximum 5000 SOL can be supplied to the pool
+  supplyLimit: 2500, // Maximum 2500 SOL can be supplied to the pool
   minUtilizationForDynamicRates: 10, // 10% minimum utilization before dynamic rates kick in for SOL
   maxUtilizationThreshold: 90, // 90% utilization threshold for rate adjustments for SOL
   
