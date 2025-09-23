@@ -5,6 +5,7 @@ import { Button } from "@heroui/react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 const additionalResources = [
   {
@@ -38,6 +39,12 @@ const stats = [
 
 export default function DashboardFeature() {
   const router = useRouter()
+  
+  // Mouse glow effect hooks for each card
+  const card1Ref = useMouseGlow()
+  const card2Ref = useMouseGlow()
+  const card3Ref = useMouseGlow()
+  const card4Ref = useMouseGlow()
   
   const cards = [
     {
@@ -196,7 +203,9 @@ export default function DashboardFeature() {
         >
         <div className="absolute inset-0 -z-10">
         </div>
-        {cards.map((card, index) => (
+        {cards.map((card, index) => {
+          const cardRefs = [card1Ref, card2Ref, card3Ref, card4Ref];
+          return (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -207,14 +216,27 @@ export default function DashboardFeature() {
               type: "spring",
               stiffness: 100
             }}
-            whileHover={{ y: -8, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Card
-              className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5
-                transition-all duration-300
-                hover:bg-transparent hover:shadow-2xl hover:shadow-blue-500/10
-                overflow-hidden h-full group"
+              ref={cardRefs[index]}
+              className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out h-full group"
+              style={{
+                background: `
+                  radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                    rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                    rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                    transparent 75%
+                  ),
+                  linear-gradient(to bottom right, 
+                    rgb(15 23 42 / 0.4), 
+                    rgb(30 41 59 / 0.3), 
+                    rgb(51 65 85 / 0.2)
+                  )
+                `,
+                transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+              }}
             >
               <CardHeader className="p-6 pb-2 flex items-center justify-center">
                 <motion.h3 
@@ -290,7 +312,7 @@ export default function DashboardFeature() {
               </CardFooter>
             </Card>
           </motion.div>
-        ))}
+        )})}
         </motion.div>
       </div>
 
