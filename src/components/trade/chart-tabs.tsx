@@ -7,9 +7,9 @@ import { AssetChart } from './asset-chart'
 import PnLChartInteractive from './pnl-chart-interactive'
 import { SelectedOption } from './option-data'
 import { BarChart3, TrendingUp } from 'lucide-react'
-import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { CollateralData } from './collateral-modal'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 interface ChartTabsProps {
   selectedAsset: string
@@ -88,19 +88,19 @@ export const ChartTabs: FC<ChartTabsProps> = ({
     return (
       <Card 
         ref={chartTabsCardRef}
-        className={`w-full bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out p-1 ${className}`}
+        className={`w-full bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-700/40 border border-slate-600/30 backdrop-blur-sm p-1 ${className}`}
         style={{
           background: `
-            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+            radial-gradient(var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(74, 133, 255, calc(0.06 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+              rgba(88, 80, 236, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+              rgba(74, 133, 255, calc(0.01 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
               transparent 75%
             ),
             linear-gradient(to bottom right, 
-              rgb(15 23 42 / 0.4), 
-              rgb(30 41 59 / 0.3), 
-              rgb(51 65 85 / 0.2)
+              rgb(15 23 42 / 0.6), 
+              rgb(30 41 59 / 0.5), 
+              rgb(51 65 85 / 0.4)
             )
           `,
           transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
@@ -145,19 +145,19 @@ export const ChartTabs: FC<ChartTabsProps> = ({
       {/* Tab Navigation */}
       <Card 
         ref={chartTabsCardRef}
-        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out p-1"
+        className="bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-700/40 border border-slate-600/30 backdrop-blur-sm p-1"
         style={{
           background: `
-            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+            radial-gradient(var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(74, 133, 255, calc(0.06 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+              rgba(88, 80, 236, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+              rgba(74, 133, 255, calc(0.01 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
               transparent 75%
             ),
             linear-gradient(to bottom right, 
-              rgb(15 23 42 / 0.4), 
-              rgb(30 41 59 / 0.3), 
-              rgb(51 65 85 / 0.2)
+              rgb(15 23 42 / 0.6), 
+              rgb(30 41 59 / 0.5), 
+              rgb(51 65 85 / 0.4)
             )
           `,
           transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'

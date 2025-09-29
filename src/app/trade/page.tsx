@@ -12,6 +12,7 @@ import { SelectedOption, OptionContract } from '@/components/trade/option-data'
 import { CollateralData } from '@/components/trade/collateral-modal'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardBody, Divider } from '@heroui/react'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
@@ -25,6 +26,8 @@ export default function TradePage() {
   const [chartActiveTab, setChartActiveTab] = useState('asset')
   const openCollateralModalRef = useRef<(() => void) | null>(null)
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
+  const mainChartCardRef = useMouseGlow()
+  const optionChainCardRef = useMouseGlow()
   
   // Get search parameters to determine which tabs to show
   const searchParams = useSearchParams()
@@ -125,7 +128,26 @@ export default function TradePage() {
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
         }`}>
-          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
+          <Card 
+            ref={mainChartCardRef}
+            className="bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-700/40 border border-slate-600/30 backdrop-blur-sm shadow-lg"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.06 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.01 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.6), 
+                  rgb(30 41 59 / 0.5), 
+                  rgb(51 65 85 / 0.4)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-2 sm:p-4">
               {/* Fixed Layout Grid - Prevents horizontal shifting */}
               <div className={`grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 xl:gap-6 mb-3 sm:mb-4 
@@ -175,9 +197,37 @@ export default function TradePage() {
                   optionChainData={optionChainData}
                 />
               </div>
-              
-              {/* Option Chain with Expiration Selector */}
-              <div className="-mx-2 px-2 overflow-hidden" ref={optionChainControlsRef}>
+            </CardBody>
+          </Card>
+
+          {/* Option Chain - Separate Container */}
+          <Card 
+            ref={optionChainCardRef}
+            className={`bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-700/40 border border-slate-600/30 backdrop-blur-sm shadow-lg mt-2 sm:mt-4 min-h-[400px]
+            transform transition-all duration-600 ease-out delay-400 ${
+              isPageVisible 
+                ? 'translate-y-0 opacity-100' 
+                : 'translate-y-8 opacity-0'
+            }`}
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.06 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.01 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.6), 
+                  rgb(30 41 59 / 0.5), 
+                  rgb(51 65 85 / 0.4)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
+            <CardBody className="p-2 sm:p-4">
+              <div className="overflow-hidden" ref={optionChainControlsRef}>
                 <OptionChainControls 
                   key={`option-chain-controls-${volumeUpdateTrigger}`}
                   assetId={selectedAsset} 
