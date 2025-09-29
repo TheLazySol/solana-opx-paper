@@ -330,7 +330,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           onMouseEnter={() => setHoveredPrice({ index, side, type: 'bid' })}
           onMouseLeave={() => setHoveredPrice(null)}
           className={cn(
-            "text-[#4AFFBA] hover:text-[#4AFFBA]/80 transition-colors min-w-0 h-7 font-inter text-sm",
+            "text-[#4AFFBA] hover:text-[#4AFFBA]/80 transition-colors min-w-0 h-7 font-inter text-sm border-[0.01px]",
             (hoveredPrice?.index === index && 
             hoveredPrice?.side === side && 
             hoveredPrice?.type === 'bid') && "bg-[#4AFFBA]/20",
@@ -349,7 +349,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           onMouseEnter={() => setHoveredPrice({ index, side, type: 'ask' })}
           onMouseLeave={() => setHoveredPrice(null)}
           className={cn(
-            "text-red-400 hover:text-red-300 transition-colors min-w-0 h-7 font-inter text-sm",
+            "text-red-400 hover:text-red-300 transition-colors min-w-0 h-7 font-inter text-sm border-[0.01px]",
             (hoveredPrice?.index === index && 
             hoveredPrice?.side === side && 
             hoveredPrice?.type === 'ask') && "bg-red-500/20",
@@ -368,21 +368,21 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
     switch (columnKey) {
       case 'call-volume':
-        return <div className="text-center text-white font-inter text-sm">{formatInteger(item.callVolume)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatInteger(item.callVolume)}</div>;
       case 'call-oi':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatInteger(item.callOpenInterest)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatInteger(item.callOpenInterest)}</div>;
       case 'call-rho':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.callGreeks.rho)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.callGreeks.rho)}</div>;
       case 'call-oa':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatInteger(item.callOptionsAvailable)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatInteger(item.callOptionsAvailable)}</div>;
       case 'call-vega':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.callGreeks.vega)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.callGreeks.vega)}</div>;
       case 'call-gamma':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.callGreeks.gamma)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.callGreeks.gamma)}</div>;
       case 'call-theta':
-        return <div className="text-center text-white font-inter text-sm">{formatGreek(item.callGreeks.theta)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatGreek(item.callGreeks.theta)}</div>;
       case 'call-delta':
-        return <div className="text-center text-white font-inter text-sm">{formatGreek(item.callGreeks.delta, 2)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatGreek(item.callGreeks.delta, 2)}</div>;
       case 'call-price':
         return (
           <div className="font-medium">
@@ -402,21 +402,21 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
           </div>
         );
       case 'put-delta':
-        return <div className="text-center text-white font-inter text-sm">{formatGreek(item.putGreeks.delta, 2)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatGreek(item.putGreeks.delta, 2)}</div>;
       case 'put-theta':
-        return <div className="text-center text-white font-inter text-sm">{formatGreek(item.putGreeks.theta)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatGreek(item.putGreeks.theta)}</div>;
       case 'put-gamma':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.putGreeks.gamma)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.putGreeks.gamma)}</div>;
       case 'put-vega':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.putGreeks.vega)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.putGreeks.vega)}</div>;
       case 'put-rho':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatGreek(item.putGreeks.rho)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatGreek(item.putGreeks.rho)}</div>;
       case 'put-oa':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatInteger(item.putOptionsAvailable)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatInteger(item.putOptionsAvailable)}</div>;
       case 'put-oi':
-        return <div className="text-center text-white/60 font-inter text-sm">{formatInteger(item.putOpenInterest)}</div>;
+        return <div className="text-center text-white/60 font-inter text-sm font-normal">{formatInteger(item.putOpenInterest)}</div>;
       case 'put-volume':
-        return <div className="text-center text-white font-inter text-sm">{formatInteger(item.putVolume)}</div>;
+        return <div className="text-center text-white font-inter text-sm font-normal">{formatInteger(item.putVolume)}</div>;
       default:
         return null;
     }
@@ -438,12 +438,12 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               : 'translate-y-4 opacity-0'
           }`}>
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold text-[#4AFFBA] text-shadow-green-glow">CALLS</span>
+            <span className="text-lg font-bold text-[#4AFFBA]">CALLS</span>
           </div>
           <div className="w-[100px] text-center">
           </div>
           <div className="flex-1 text-center">
-            <span className="text-lg font-bold text-red-400 text-shadow-red-glow">PUTS</span>
+            <span className="text-lg font-bold text-red-400">PUTS</span>
           </div>
         </div>
 
@@ -467,11 +467,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
               className="bg-transparent"
               classNames={{
                 wrapper: "bg-transparent rounded-md overflow-visible",
-                th: "bg-black/80 text-white text-center backdrop-blur-md sticky top-0 z-20 font-inter text-xs",
-                td: "text-center bg-transparent font-inter",
+                th: "bg-black/20 text-white/80 text-center backdrop-blur-sm sticky top-0 z-20 font-inter text-xs font-medium !border-0",
+                td: "text-center bg-transparent font-inter font-normal",
                 table: "bg-transparent",
                 tbody: "bg-transparent",
-                tr: "bg-transparent hover:bg-white/5",
+                tr: "bg-transparent",
               }}
             >
             <TableHeader>
@@ -479,10 +479,10 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                 <TableColumn 
                   key={column.key} 
                   className={cn(
-                    "text-center w-[85px] bg-black/80 text-white backdrop-blur-sm font-inter",
+                    "text-center w-[85px] bg-black/20 text-white/80 backdrop-blur-sm font-inter font-medium",
                     column.key.startsWith('call-') && column.key !== 'call-price' && "text-white/60",
                     column.key.startsWith('put-') && column.key !== 'put-price' && "text-white/60",
-                    column.key === 'strike' && "bg-black/80 font-semibold text-white",
+                    column.key === 'strike' && "bg-black/20 font-semibold text-white/80",
                     `transform transition-all duration-300 ease-out ${
                       isVisible 
                         ? 'translate-y-0 opacity-100' 
@@ -539,7 +539,7 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
                   rows.push(
                     <TableRow
                       key={`${option.expiry}-${option.strike}`}
-                      className={`transition-all duration-400 ease-out text-white hover:bg-white/5 bg-transparent ${
+                      className={`transition-all duration-400 ease-out text-white bg-transparent ${
                         isVisible 
                           ? 'translate-y-0 opacity-100' 
                           : 'translate-y-4 opacity-0'
