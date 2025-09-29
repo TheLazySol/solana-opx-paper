@@ -21,7 +21,6 @@ import { OptionContract, SelectedOption, generateMockOptionData } from './option
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { MAX_OPTION_LEGS } from '@/constants/constants'
 import { toast } from "@/hooks/useToast"
-import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 interface OptionChainTableProps {
   assetId?: string
@@ -57,7 +56,6 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
   isParentVisible = true,
   onOptionChainDataChange
 }) => {
-  const mouseGlowRef = useMouseGlow();
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([])
   const [hoveredPrice, setHoveredPrice] = useState<{index: number, side: 'call' | 'put', type: 'bid' | 'ask'} | null>(null)
   const visibleGreeks = useMemo(() => greekFilters, [greekFilters])
@@ -427,32 +425,11 @@ export const OptionChainTable: FC<OptionChainTableProps> = ({
 
 
   return (
-    <div 
-      ref={mouseGlowRef}
-      className={`relative bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-700/40 border border-slate-600/30 backdrop-blur-md shadow-2xl overflow-hidden rounded-xl p-4
-        transform transition-all duration-700 ease-out delay-150 ${
-          isVisible 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : 'translate-y-12 opacity-0 scale-98'
-        }
-        font-inter`}
-      style={{
-        background: `
-          radial-gradient(var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-            rgba(74, 133, 255, calc(0.06 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-            rgba(88, 80, 236, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-            rgba(74, 133, 255, calc(0.01 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
-            transparent 75%
-          ),
-          linear-gradient(to bottom right, 
-            rgb(15 23 42 / 0.6), 
-            rgb(30 41 59 / 0.5), 
-            rgb(51 65 85 / 0.4)
-          )
-        `,
-        transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
-      }}
-    >
+    <div className={`font-inter transform transition-all duration-700 ease-out delay-150 ${
+      isVisible 
+        ? 'translate-y-0 opacity-100 scale-100' 
+        : 'translate-y-12 opacity-0 scale-98'
+    }`}>
         {/* Add visual header for CALLS and PUTS */}
         <div className={`flex items-center justify-center mb-2 
           transform transition-all duration-500 ease-out delay-300 ${
