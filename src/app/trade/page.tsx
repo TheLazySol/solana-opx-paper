@@ -3,6 +3,7 @@
 import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { ChartTabs } from '@/components/trade/chart-tabs'
+import { ChartContent } from '@/components/trade/chart-content'
 import { AssetType } from '@/components/trade/asset-underlying'
 import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
@@ -21,6 +22,7 @@ export default function TradePage() {
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
   const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
+  const [chartActiveTab, setChartActiveTab] = useState('asset')
   const openCollateralModalRef = useRef<(() => void) | null>(null)
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
   
@@ -125,27 +127,47 @@ export default function TradePage() {
         }`}>
           <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
             <CardBody className="p-2 sm:p-4">
-              {/* Asset Type Selector and Token Info Panel */}
-              <div className={`flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 
+              {/* Asset Type Selector and Token Info Panel - Desktop: Side by side with Chart Tabs */}
+              <div className={`xl:flex xl:items-center xl:gap-6 xl:mb-3 xl:sm:mb-4 
                 transform transition-all duration-500 ease-out delay-100 ${
                   isPageVisible 
                     ? 'translate-y-0 opacity-100' 
                     : 'translate-y-4 opacity-0'
                 }`}>
-                <AssetType 
-                  selectedAsset={selectedAsset} 
-                  onAssetChange={setSelectedAsset} 
-                />
-                <TokenInfoPanel selectedAsset={selectedAsset} />
+                
+                {/* Left side: Asset selector and token info */}
+                <div className="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 xl:mb-0 xl:flex-shrink-0">
+                  <AssetType 
+                    selectedAsset={selectedAsset} 
+                    onAssetChange={setSelectedAsset} 
+                  />
+                  <TokenInfoPanel selectedAsset={selectedAsset} />
+                </div>
+                
+                {/* Right side: Chart Tabs (Desktop: next to token info, Mobile: below) */}
+                <div className="mb-3 sm:mb-4 xl:mb-0 xl:flex-1 xl:flex xl:justify-end xl:max-w-md overflow-hidden">
+                  <div className="w-full xl:w-auto xl:min-w-[320px]">
+                    <ChartTabs 
+                      selectedAsset={selectedAsset} 
+                      selectedOptions={selectedOptions}
+                      collateralData={collateralData}
+                      onProvideCollateral={openCollateralModalRef.current || undefined}
+                      showTabsOnly={true}
+                      activeTab={chartActiveTab}
+                      onTabChange={setChartActiveTab}
+                    />
+                  </div>
+                </div>
               </div>
               
-              {/* Chart Tabs (Asset Chart + P&L Chart) */}
+              {/* Chart Content */}
               <div className="mb-3 sm:mb-4 overflow-hidden">
-                <ChartTabs 
+                <ChartContent 
                   selectedAsset={selectedAsset} 
                   selectedOptions={selectedOptions}
                   collateralData={collateralData}
                   onProvideCollateral={openCollateralModalRef.current || undefined}
+                  activeTab={chartActiveTab}
                 />
               </div>
               
