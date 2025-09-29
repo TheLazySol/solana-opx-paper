@@ -73,9 +73,9 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
 
 
   return (
-    <div className="flex items-center justify-center space-x-6 sm:space-x-8 lg:space-x-12 text-sm">
+    <div className="flex items-center justify-start space-x-4 sm:space-x-6 lg:space-x-8 text-sm overflow-hidden">
       {/* Price */}
-      <div className="text-center">
+      <div className="text-center flex-shrink-0 min-w-[80px]">
         <div className="text-neutral-400 text-xs mb-1">{selectedToken.symbol} Price</div>
         <motion.div 
           className="font-bold text-white px-1 rounded"
@@ -105,7 +105,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       </div>
 
       {/* 24h Change */}
-      <div className="text-center">
+      <div className="text-center flex-shrink-0 min-w-[80px]">
         <div className="text-neutral-400 text-xs mb-1">24h Change</div>
         <div className={`font-bold ${priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
           {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
@@ -113,7 +113,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       </div>
 
       {/* 24h Volume */}
-      <div className="text-center">
+      <div className="text-center flex-shrink-0 min-w-[85px]">
         <div className="text-neutral-400 text-xs mb-1">24h Volume</div>
         <div className="font-bold text-white">
           {formatCurrency(volumeUsd24h)}
@@ -121,7 +121,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       </div>
 
       {/* Market Cap */}
-      <div className="text-center hidden sm:block">
+      <div className="text-center hidden sm:block flex-shrink-0 min-w-[90px]">
         <div className="text-neutral-400 text-xs mb-1">Market Cap</div>
         <div className="font-bold text-white">
           {formatCurrency(marketCap)}
@@ -129,7 +129,7 @@ const TokenInfoPanelComponent: FC<TokenInfoPanelProps> = ({ selectedAsset }) => 
       </div>
 
       {/* Liquidity */}
-      <div className="text-center hidden md:block">
+      <div className="text-center hidden md:block flex-shrink-0 min-w-[85px]">
         <div className="text-neutral-400 text-xs mb-1">Liquidity</div>
         <div className="font-bold text-white">
           {formatCurrency(liquidity)}

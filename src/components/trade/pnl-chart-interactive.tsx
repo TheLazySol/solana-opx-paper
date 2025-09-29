@@ -5,12 +5,13 @@ import ReactECharts from 'echarts-for-react'
 import { Card, CardBody } from '@heroui/react'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 
 interface PnLChartProps {
   // New approach: use actual selected option data
   selectedOptions: SelectedOption[]
   currentPrice: number
+  optionChainData?: OptionContract[] // For live pricing
   
   // Optional props with defaults
   maxPrice?: number
@@ -52,6 +53,7 @@ interface ChartDataPoint {
 export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   selectedOptions,
   currentPrice,
+  optionChainData = [],
   maxPrice,
   contractMultiplier = 100,
   optionType = 'call',
@@ -71,6 +73,27 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   const [hoveredValue, setHoveredValue] = useState<{ price: number; pnl: number } | null>(null)
   const lastTooltipUpdate = useRef<number>(0)
   const lastTooltipContent = useRef<string>('')
+
+  // Helper function to get live option price from chain data
+  const getLiveOptionPrice = useCallback((option: SelectedOption): number => {
+    // Find the matching option contract from the live chain data
+    const optionContract = optionChainData.find(contract => 
+      contract.strike === option.strike && 
+      contract.expiry === option.expiry
+    );
+
+    if (!optionContract) {
+      // Fallback to stored price if not found in chain
+      return option.limitPrice !== undefined ? option.limitPrice : option.price;
+    }
+
+    // Get live bid/ask price based on option side and type
+    if (option.side === 'call') {
+      return option.type === 'bid' ? optionContract.callBid : optionContract.callAsk;
+    } else {
+      return option.type === 'bid' ? optionContract.putBid : optionContract.putAsk;
+    }
+  }, [optionChainData])
 
   // Input validation and processing
   const validatedInputs = useMemo(() => {
@@ -147,18 +170,21 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Process selected options - use actual quantities for accurate P&L calculations
-    const processedOptions = selectedOptions.map(option => ({
-      strike: Math.max(0, option.strike || 0),
-      premium: Math.max(0, option.price || 0),
-      contracts: Math.max(1, option.quantity || 1), // Use actual quantity for fractional options, default to 1 contract
-      side: option.side,
-      type: option.type,
-      position: option.type === 'bid' ? 'long' as const : 'short' as const, // Buying = long, selling = short
-      expiry: option.expiry,
-      asset: option.asset,
-      originalQuantity: option.quantity || 1 // Keep track of original selected quantity
-    }))
+    // Process selected options - use live prices for accurate real-time P&L calculations
+    const processedOptions = selectedOptions.map(option => {
+      const livePrice = getLiveOptionPrice(option);
+      return {
+        strike: Math.max(0, option.strike || 0),
+        premium: Math.max(0, livePrice || 0), // Use live price instead of static price
+        contracts: Math.max(1, option.quantity || 1), // Use actual quantity for fractional options, default to 1 contract
+        side: option.side,
+        type: option.type,
+        position: option.type === 'bid' ? 'long' as const : 'short' as const, // Buying = long, selling = short
+        expiry: option.expiry,
+        asset: option.asset,
+        originalQuantity: option.quantity || 1 // Keep track of original selected quantity
+      }
+    })
     
     // For multi-leg support, we'll use the first option for basic calculations
     // but store all options for future enhancements
@@ -219,7 +245,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       xAxisMin,
       isMobile
     }
-  }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts])
+  }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts, getLiveOptionPrice])
 
   // Always show the chart - collateral requirement is enforced at order placement time, not visualization time
 
@@ -448,8 +474,14 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     
     // Handle short positions differently for on-chain options
     if (hasShortPositions) {
-      // For short positions, max profit is the total premium received (when option expires worthless)
-      maxProfit = totalPremiumReceived - totalPremiumPaid // Net premium received
+      // For short positions, max profit is the net premium received after costs
+      // This should match the calculation in option lab: totalPremium - costs
+      const netPremium = totalPremiumReceived - totalPremiumPaid
+      
+      // For realistic max profit, we should account for typical costs
+      // Simplified cost estimation (in practice, this would come from collateral data)
+      const estimatedCosts = netPremium * 0.05 // Approximate 5% for borrowing costs, fees, etc.
+      maxProfit = Math.max(0, netPremium - estimatedCosts)
       
       if (collateralProvided && collateralProvided > 0) {
         // Max loss is limited to collateral provided for short positions
@@ -463,20 +495,24 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       // Only long positions
       maxLoss = -totalPremiumPaid // Max loss is premium paid
       
-      // Calculate max profit for long positions
+      // Calculate max profit for long positions - match order summary logic
       const hasLongCalls = options.some(opt => opt.side === 'call' && opt.position === 'long')
-      if (hasLongCalls) {
+      const hasLongPuts = options.some(opt => opt.side === 'put' && opt.position === 'long')
+      
+      if (hasLongCalls && !hasLongPuts) {
+        // Long calls only - theoretically unlimited profit
         maxProfit = 'Unlimited'
-      } else {
-        // For long puts, max profit is strike - premium
+      } else if (hasLongPuts && !hasLongCalls) {
+        // Long puts only - max profit is strikes minus premium paid
         const longPuts = options.filter(opt => opt.side === 'put' && opt.position === 'long')
-        if (longPuts.length > 0) {
-          maxProfit = longPuts.reduce((sum, opt) => 
-            sum + ((opt.strike - opt.premium) * opt.contracts * multiplier), 0
-          ) - totalPremiumPaid
-        } else {
-          maxProfit = 'Unlimited'
-        }
+        const maxStrike = Math.max(...longPuts.map(opt => opt.strike))
+        maxProfit = (maxStrike * multiplier) - totalPremiumPaid
+      } else if (hasLongCalls && hasLongPuts) {
+        // Complex strategy (straddle/strangle) - use conservative estimate
+        // Match the order summary's 2:1 risk/reward calculation
+        maxProfit = Math.abs(totalPremiumPaid) * 2
+      } else {
+        maxProfit = 'Unlimited'
       }
     }
     
@@ -485,11 +521,11 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
     let yAxisMax = 100
     
     if (hasShortPositions) {
-      // For short positions: Mirror max profit (+/- max profit + 5% breathing room)
-      // This focuses the chart on the realistic profit potential rather than extreme loss scenarios
+      // For short positions: Use a more realistic range based on premium received
+      // Focus on the realistic profit/loss range rather than extreme scenarios
       const maxProfitAmount = typeof maxProfit === 'number' ? Math.abs(maxProfit) : (totalPremiumReceived || 100)
-      const breathingRoom = maxProfitAmount * 0.05 // 5% breathing room
-      const rangeAmount = maxProfitAmount + breathingRoom
+      const breathingRoom = maxProfitAmount * 0.2 // 20% breathing room for better visualization
+      const rangeAmount = Math.max(maxProfitAmount + breathingRoom, totalPremiumReceived * 0.8) // Ensure minimum range
       
       yAxisMin = -rangeAmount // Mirror negative range
       yAxisMax = rangeAmount   // Positive range with breathing room
@@ -902,10 +938,8 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
                     if (metrics.hasShortPositions) {
                       return typeof metrics.maxProfit === 'number' ? `$${Math.round(Number(metrics.maxProfit) * 100) / 100}` : String(metrics.maxProfit)
                     } else {
-                      // For long positions, calculate from chart data
-                      const vals = chartData.map(d => d.pnl)
-                      const m = vals.length ? Math.max(...vals) : 0
-                      return Number.isFinite(m) ? `$${Math.round(m * 100) / 100}` : 'Unlimited'
+                      // For long positions, use the calculated max profit from metrics
+                      return typeof metrics.maxProfit === 'number' ? `$${Math.round(Number(metrics.maxProfit) * 100) / 100}` : String(metrics.maxProfit)
                     }
                   })()}
                 </span>

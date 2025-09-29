@@ -424,3 +424,51 @@ nav, header, .navbar-wrapper, [data-slot*="navbar"] {
 
 /* Original body::before gradient effect */
 
+  /* Mouse glow effect for option chain */
+  .mouse-glow-card {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .mouse-glow-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      var(--glow-size, 800px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(139, 92, 246, calc(0.15 * var(--glow-intensity, 1) * var(--glow-opacity, 0))),
+      rgba(74, 133, 255, calc(0.1 * var(--glow-intensity, 1) * var(--glow-opacity, 0))) 30%,
+      transparent 50%
+    );
+    border-radius: inherit;
+    opacity: var(--glow-opacity, 0);
+    transition: var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1));
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .mouse-glow-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      calc(var(--glow-size, 800px) * 0.7) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(74, 255, 186, calc(0.08 * var(--glow-intensity, 1) * var(--glow-opacity, 0))),
+      transparent 40%
+    );
+    border-radius: inherit;
+    opacity: var(--glow-opacity, 0);
+    transition: var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1));
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Text shadow glow effects */
+  .text-shadow-green-glow {
+    text-shadow: 0 0 20px rgba(74, 255, 186, 0.8), 0 0 40px rgba(74, 255, 186, 0.5);
+  }
+
+  .text-shadow-red-glow {
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.5);
+  }
+

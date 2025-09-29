@@ -100,7 +100,7 @@ export const OptionChainUtils: FC<OptionChainUtilsProps> = ({
 
 
   return (
-    <div className="flex flex-col sm:flex-row justify-start sm:justify-end items-start sm:items-center gap-2 mb-4">
+    <div className="flex flex-col sm:flex-row justify-start sm:justify-end items-start sm:items-center gap-2 font-inter">
       <ExpirationDateSelector
         selectedExpiration={selectedExpiration}
         onExpirationChange={onExpirationChange}

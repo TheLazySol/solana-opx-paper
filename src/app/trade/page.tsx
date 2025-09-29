@@ -3,6 +3,7 @@
 import { OptionChainControls } from '@/components/trade/option-chain-controls'
 import { TradeViewContainer } from '@/components/trade/trade-view-container'
 import { ChartTabs } from '@/components/trade/chart-tabs'
+import { ChartContent } from '@/components/trade/chart-content'
 import { AssetType } from '@/components/trade/asset-underlying'
 import { TokenInfoPanel } from '@/components/trade/token-info-panel'
 import { TOKENS } from '@/constants/token-list/token-list'
@@ -11,6 +12,7 @@ import { SelectedOption, OptionContract } from '@/components/trade/option-data'
 import { CollateralData } from '@/components/trade/collateral-modal'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardBody, Divider } from '@heroui/react'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 export default function TradePage() {
   const [selectedAsset, setSelectedAsset] = useState(Object.keys(TOKENS)[0])
@@ -21,8 +23,10 @@ export default function TradePage() {
   const [activeOrderTab, setActiveOrderTab] = useState('open')
   const [isPageVisible, setIsPageVisible] = useState(false)
   const [optionChainData, setOptionChainData] = useState<OptionContract[]>([])
+  const [chartActiveTab, setChartActiveTab] = useState('asset')
   const openCollateralModalRef = useRef<(() => void) | null>(null)
   const optionChainControlsRef = useRef<HTMLDivElement>(null)
+  const mainChartCardRef = useMouseGlow()
   
   // Get search parameters to determine which tabs to show
   const searchParams = useSearchParams()
@@ -123,46 +127,96 @@ export default function TradePage() {
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
         }`}>
-          <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
+          <Card 
+            ref={mainChartCardRef}
+            className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm shadow-lg"
+            style={{
+              background: `
+                radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                  rgba(74, 133, 255, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+                  rgba(88, 80, 236, calc(0.04 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+                  rgba(74, 133, 255, calc(0.015 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+                  transparent 75%
+                ),
+                linear-gradient(to bottom right, 
+                  rgb(15 23 42 / 0.15), 
+                  rgb(30 41 59 / 0.05), 
+                  rgb(51 65 85 / 0.01)
+                )
+              `,
+              transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+            }}
+          >
             <CardBody className="p-2 sm:p-4">
-              {/* Asset Type Selector and Token Info Panel */}
-              <div className={`flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 
+              {/* Fixed Layout Grid - Prevents horizontal shifting */}
+              <div className={`grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 xl:gap-6 mb-3 sm:mb-4 
                 transform transition-all duration-500 ease-out delay-100 ${
                   isPageVisible 
                     ? 'translate-y-0 opacity-100' 
                     : 'translate-y-4 opacity-0'
                 }`}>
-                <AssetType 
-                  selectedAsset={selectedAsset} 
-                  onAssetChange={setSelectedAsset} 
-                />
-                <TokenInfoPanel selectedAsset={selectedAsset} />
+                
+                {/* Left side: Asset selector and token info - Fixed width container */}
+                <div className="xl:min-w-0 xl:w-full">
+                  <div className="flex items-center gap-4 sm:gap-6 xl:max-w-none">
+                    <div className="flex-shrink-0">
+                      <AssetType 
+                        selectedAsset={selectedAsset} 
+                        onAssetChange={setSelectedAsset} 
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <TokenInfoPanel selectedAsset={selectedAsset} />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right side: Chart Tabs - Fixed 320px width on desktop */}
+                <div className="xl:w-[320px] xl:flex-shrink-0">
+                  <ChartTabs 
+                    selectedAsset={selectedAsset} 
+                    selectedOptions={selectedOptions}
+                    collateralData={collateralData}
+                    onProvideCollateral={openCollateralModalRef.current || undefined}
+                    showTabsOnly={true}
+                    activeTab={chartActiveTab}
+                    onTabChange={setChartActiveTab}
+                  />
+                </div>
               </div>
               
-              {/* Chart Tabs (Asset Chart + P&L Chart) */}
+              {/* Chart Content */}
               <div className="mb-3 sm:mb-4 overflow-hidden">
-                <ChartTabs 
+                <ChartContent 
                   selectedAsset={selectedAsset} 
                   selectedOptions={selectedOptions}
                   collateralData={collateralData}
                   onProvideCollateral={openCollateralModalRef.current || undefined}
-                />
-              </div>
-              
-              {/* Option Chain with Expiration Selector */}
-              <div className="-mx-2 px-2 overflow-hidden" ref={optionChainControlsRef}>
-                <OptionChainControls 
-                  key={`option-chain-controls-${volumeUpdateTrigger}`}
-                  assetId={selectedAsset} 
-                  onOptionsChange={handleOptionsChange}
-                  selectedOptions={selectedOptions}
-                  onOrderPlaced={handleOrderPlaced}
-                  onSwitchToCreateOrder={handleSwitchToCreateOrder}
-                  onOptionChainDataChange={handleOptionChainDataChange}
+                  activeTab={chartActiveTab}
+                  optionChainData={optionChainData}
                 />
               </div>
             </CardBody>
           </Card>
+
+          {/* Option Chain - Now integrated into OptionChainControls */}
+          <div className={`mt-2 sm:mt-4 transform transition-all duration-600 ease-out delay-400 ${
+            isPageVisible 
+              ? 'translate-y-0 opacity-100' 
+              : 'translate-y-8 opacity-0'
+          }`}>
+            <div className="overflow-hidden" ref={optionChainControlsRef}>
+              <OptionChainControls 
+                key={`option-chain-controls-${volumeUpdateTrigger}`}
+                assetId={selectedAsset} 
+                onOptionsChange={handleOptionsChange}
+                selectedOptions={selectedOptions}
+                onOrderPlaced={handleOrderPlaced}
+                onSwitchToCreateOrder={handleSwitchToCreateOrder}
+                onOptionChainDataChange={handleOptionChainDataChange}
+              />
+            </div>
+          </div>
         </div>
         
         {/* Right Column: Trading Controls Panel - 30% width */}

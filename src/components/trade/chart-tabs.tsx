@@ -7,9 +7,9 @@ import { AssetChart } from './asset-chart'
 import PnLChartInteractive from './pnl-chart-interactive'
 import { SelectedOption } from './option-data'
 import { BarChart3, TrendingUp } from 'lucide-react'
-import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { CollateralData } from './collateral-modal'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 interface ChartTabsProps {
   selectedAsset: string
@@ -17,6 +17,9 @@ interface ChartTabsProps {
   collateralData?: CollateralData | null
   onProvideCollateral?: () => void
   className?: string
+  showTabsOnly?: boolean
+  activeTab?: string
+  onTabChange?: (tab: string) => void
 }
 
 export const ChartTabs: FC<ChartTabsProps> = ({
@@ -24,15 +27,22 @@ export const ChartTabs: FC<ChartTabsProps> = ({
   selectedOptions,
   collateralData,
   onProvideCollateral,
-  className = ''
+  className = '',
+  showTabsOnly = false,
+  activeTab: externalActiveTab,
+  onTabChange: externalOnTabChange
 }) => {
-  const [activeTab, setActiveTab] = useState('asset')
+  const [internalActiveTab, setInternalActiveTab] = useState('asset')
   const [hasAutoSwitched, setHasAutoSwitched] = useState(false)
   const chartTabsCardRef = useMouseGlow()
 
+  // Use external state if provided, otherwise use internal state
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab
+  const setActiveTab = externalOnTabChange || setInternalActiveTab
+
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
-  }, [])
+  }, [setActiveTab])
 
   // Automatically switch to P&L chart when options are first selected
   useEffect(() => {
@@ -47,7 +57,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
     } else if (selectedOptions.length === 0) {
       setHasAutoSwitched(false)
     }
-  }, [selectedOptions.length, hasAutoSwitched])
+  }, [selectedOptions.length, hasAutoSwitched, setActiveTab])
 
   // Get real-time price from asset price provider
   const { price: currentPrice } = useAssetPriceInfo(selectedAsset)
@@ -73,12 +83,12 @@ export const ChartTabs: FC<ChartTabsProps> = ({
     return props
   }, [selectedOptions, currentPrice, collateralData])
 
-  return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Tab Navigation */}
+  // If only showing tabs, return just the tab navigation
+  if (showTabsOnly) {
+    return (
       <Card 
         ref={chartTabsCardRef}
-        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out p-1"
+        className={`w-full bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm p-1 ${className}`}
         style={{
           background: `
             radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
@@ -103,7 +113,64 @@ export const ChartTabs: FC<ChartTabsProps> = ({
           classNames={{
             tabList: "gap-1 w-full relative rounded-lg p-0",
             cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
-            tab: "flex-1 px-3 sm:px-4 h-10 data-[selected=true]:text-white text-white/60 min-w-0",
+            tab: "flex-1 px-2 sm:px-3 h-9 data-[selected=true]:text-white text-white/60 min-w-0",
+            tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
+          }}
+        >
+          <Tab
+            key="asset"
+            title={
+              <div className="flex items-center gap-1.5">
+                <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Price Chart</span>
+              </div>
+            }
+          />
+          <Tab
+            key="pnl"
+            title={
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>P&L Chart</span>
+              </div>
+            }
+          />
+        </Tabs>
+      </Card>
+    )
+  }
+
+  return (
+    <div className={`space-y-3 ${className}`}>
+      {/* Tab Navigation */}
+      <Card 
+        ref={chartTabsCardRef}
+        className="bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm p-1"
+        style={{
+          background: `
+            radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+              rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+              rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+              transparent 75%
+            ),
+            linear-gradient(to bottom right, 
+              rgb(15 23 42 / 0.4), 
+              rgb(30 41 59 / 0.3), 
+              rgb(51 65 85 / 0.2)
+            )
+          `,
+          transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+        }}
+      >
+        <Tabs
+          selectedKey={activeTab}
+          onSelectionChange={(key) => handleTabChange(key as string)}
+          variant="light"
+          classNames={{
+            tabList: "gap-1 w-full relative rounded-lg p-0",
+            cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
+            tab: "flex-1 px-2 sm:px-3 h-9 data-[selected=true]:text-white text-white/60 min-w-0",
             tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
           }}
         >

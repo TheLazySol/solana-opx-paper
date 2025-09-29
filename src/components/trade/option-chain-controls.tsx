@@ -6,6 +6,7 @@ import { OptionChainTable } from './option-chain-table'
 import { OptionChainUtils } from './option-chain-utils'
 import { GreekFilters, loadFiltersFromStorage, loadGreekSymbolsFromStorage, DEFAULT_FILTERS } from './option-chain-user-settings'
 import { SelectedOption, OptionContract } from './option-data'
+import { useMouseGlow } from '@/hooks/useMouseGlow'
 
 
 interface OptionChainControlsProps {
@@ -34,6 +35,7 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   const [isVisible, setIsVisible] = useState(false)
   const optionChainTableRef = useRef<{ refreshVolumes: () => void } | null>(null)
   const {isOpen: isClearModalOpen, onOpen: onClearModalOpen, onOpenChange: onClearModalOpenChange} = useDisclosure()
+  const optionChainContainerRef = useMouseGlow()
 
   // Trigger animation on mount
   useEffect(() => {
@@ -192,13 +194,32 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
   }, [onClearModalOpenChange])
 
   return (
-    <div className={`space-y-1 transform transition-all duration-500 ease-out ${
-      isVisible 
-        ? 'translate-y-0 opacity-100' 
-        : 'translate-y-4 opacity-0'
-    }`}>
+    <div 
+      ref={optionChainContainerRef}
+      className={`bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out rounded-xl p-4 space-y-4 transform transition-all duration-500 ease-out ${
+        isVisible 
+          ? 'translate-y-0 opacity-100' 
+          : 'translate-y-4 opacity-0'
+      }`}
+      style={{
+        background: `
+          radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(74, 133, 255, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+            rgba(88, 80, 236, calc(0.04 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+            rgba(74, 133, 255, calc(0.015 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+            transparent 75%
+          ),
+          linear-gradient(to bottom right, 
+            rgb(15 23 42 / 0.15), 
+            rgb(30 41 59 / 0.05), 
+            rgb(51 65 85 / 0.01)
+          )
+        `,
+        transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
+      }}
+    >
       <div className="w-full">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className={`transform transition-all duration-400 ease-out delay-100 ${
             isVisible 
               ? 'translate-x-0 opacity-100' 
