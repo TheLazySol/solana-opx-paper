@@ -127,36 +127,40 @@ export default function TradePage() {
         }`}>
           <Card className="card-glass backdrop-blur-sm bg-white/5 dark:bg-black/30 border-[#e5e5e5]/20 dark:border-white/5 transition-all duration-300 hover:bg-transparent shadow-lg h-full">
             <CardBody className="p-2 sm:p-4">
-              {/* Asset Type Selector and Token Info Panel - Desktop: Side by side with Chart Tabs */}
-              <div className={`xl:flex xl:items-center xl:gap-6 xl:mb-3 xl:sm:mb-4 
+              {/* Fixed Layout Grid - Prevents horizontal shifting */}
+              <div className={`grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 xl:gap-6 mb-3 sm:mb-4 
                 transform transition-all duration-500 ease-out delay-100 ${
                   isPageVisible 
                     ? 'translate-y-0 opacity-100' 
                     : 'translate-y-4 opacity-0'
                 }`}>
                 
-                {/* Left side: Asset selector and token info */}
-                <div className="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4 xl:mb-0 xl:flex-shrink-0">
-                  <AssetType 
-                    selectedAsset={selectedAsset} 
-                    onAssetChange={setSelectedAsset} 
-                  />
-                  <TokenInfoPanel selectedAsset={selectedAsset} />
+                {/* Left side: Asset selector and token info - Fixed width container */}
+                <div className="xl:min-w-0 xl:w-full">
+                  <div className="flex items-center gap-4 sm:gap-6 xl:max-w-none">
+                    <div className="flex-shrink-0">
+                      <AssetType 
+                        selectedAsset={selectedAsset} 
+                        onAssetChange={setSelectedAsset} 
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <TokenInfoPanel selectedAsset={selectedAsset} />
+                    </div>
+                  </div>
                 </div>
                 
-                {/* Right side: Chart Tabs (Desktop: next to token info, Mobile: below) */}
-                <div className="mb-3 sm:mb-4 xl:mb-0 xl:flex-1 xl:flex xl:justify-end xl:max-w-md overflow-hidden">
-                  <div className="w-full xl:w-auto xl:min-w-[320px]">
-                    <ChartTabs 
-                      selectedAsset={selectedAsset} 
-                      selectedOptions={selectedOptions}
-                      collateralData={collateralData}
-                      onProvideCollateral={openCollateralModalRef.current || undefined}
-                      showTabsOnly={true}
-                      activeTab={chartActiveTab}
-                      onTabChange={setChartActiveTab}
-                    />
-                  </div>
+                {/* Right side: Chart Tabs - Fixed 320px width on desktop */}
+                <div className="xl:w-[320px] xl:flex-shrink-0">
+                  <ChartTabs 
+                    selectedAsset={selectedAsset} 
+                    selectedOptions={selectedOptions}
+                    collateralData={collateralData}
+                    onProvideCollateral={openCollateralModalRef.current || undefined}
+                    showTabsOnly={true}
+                    activeTab={chartActiveTab}
+                    onTabChange={setChartActiveTab}
+                  />
                 </div>
               </div>
               

@@ -88,7 +88,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
     return (
       <Card 
         ref={chartTabsCardRef}
-        className={`bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out p-1 ${className}`}
+        className={`w-full bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-700/20 border border-slate-600/20 backdrop-blur-sm relative overflow-hidden transition-all duration-300 ease-out p-1 ${className}`}
         style={{
           background: `
             radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
@@ -113,7 +113,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
           classNames={{
             tabList: "gap-1 w-full relative rounded-lg p-0",
             cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
-            tab: "flex-1 px-3 sm:px-4 h-10 data-[selected=true]:text-white text-white/60 min-w-0",
+            tab: "flex-1 px-2 sm:px-3 h-9 data-[selected=true]:text-white text-white/60 min-w-0",
             tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
           }}
         >
@@ -170,7 +170,7 @@ export const ChartTabs: FC<ChartTabsProps> = ({
           classNames={{
             tabList: "gap-1 w-full relative rounded-lg p-0",
             cursor: "w-full bg-gradient-to-r from-[#4a85ff] to-[#1851c4] backdrop-blur-sm border border-[#4a85ff]/50 shadow-lg shadow-[#4a85ff]/25",
-            tab: "flex-1 px-3 sm:px-4 h-10 data-[selected=true]:text-white text-white/60 min-w-0",
+            tab: "flex-1 px-2 sm:px-3 h-9 data-[selected=true]:text-white text-white/60 min-w-0",
             tabContent: "group-data-[selected=true]:text-white font-medium text-sm"
           }}
         >
