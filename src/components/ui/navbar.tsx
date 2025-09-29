@@ -15,6 +15,8 @@ import {
 } from '@heroui/navbar'
 import { WalletButton } from '../solana/user-wallet/wallet-connect'
 import { ClusterUiSelect } from '../solana/user-settings/rpc-dropdown-select'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { ADMIN_WALLETS } from '@/constants/constants'
 
 interface NavbarProps {
   links: { label: string; path: string }[]
@@ -24,10 +26,23 @@ export function Navbar({ links }: NavbarProps) {
   const pathname = usePathname()
   const [mounted, setMounted] = React.useState(false)
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const { publicKey } = useWallet()
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Check if current wallet is authorized for admin access
+  const isAuthorized = mounted && publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+  
+  // Filter links to include admin only for authorized wallets (only after mounting)
+  const filteredLinks = React.useMemo(() => {
+    const baseLinks = links.filter(link => link.path !== '/admin')
+    if (mounted && isAuthorized) {
+      return [...baseLinks, { label: 'Admin', path: '/admin' }]
+    }
+    return baseLinks
+  }, [links, isAuthorized, mounted])
 
   // Always use the dark theme logo
   const logoSrc = '/epicentral-logo-light.png'
@@ -76,10 +91,10 @@ export function Navbar({ links }: NavbarProps) {
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
       classNames={{
-        base: "bg-transparent backdrop-blur-md border-none",
-        wrapper: "max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] px-4",
+        base: "bg-transparent backdrop-blur-md border-none overflow-visible",
+        wrapper: "max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] px-4 overflow-visible",
         brand: "w-[200px]",
-        content: "data-[justify=center]:flex-1 data-[justify=end]:w-[200px]",
+        content: "data-[justify=center]:flex-1 data-[justify=end]:w-[200px] overflow-visible",
         item: "data-[active=true]:font-normal",
         menu: "bg-slate-950/95 backdrop-blur-md border-none",
         menuItem: "text-lg font-normal"
@@ -107,7 +122,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarBrand>
 
       <NavbarContent className="hidden sm:flex gap-8" justify="center">
-        {links.map(({ label, path }) => (
+        {filteredLinks.map(({ label, path }) => (
           <NavbarItem key={path} isActive={isActive(path)}>
             <Link
               href={path}
@@ -120,7 +135,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem className="hidden sm:flex">
+        <NavbarItem className="hidden sm:flex relative z-[9999]">
           <WalletButton />
         </NavbarItem>
         <NavbarItem className="hidden sm:flex">
@@ -133,7 +148,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarContent>
 
       <NavbarMenu>
-        {links.map(({ label, path }) => (
+        {filteredLinks.map(({ label, path }) => (
           <NavbarMenuItem key={path}>
             <Link
               href={path}

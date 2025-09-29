@@ -105,7 +105,7 @@ body::after {
   background: 
     radial-gradient(circle at 20% 30%, rgba(74, 133, 255, 0.15) 0%, transparent 20%),
     radial-gradient(circle at 50% 50%, rgba(74, 133, 255, 0.1) 0%, transparent 40%);
-  pointer-events: none;
+  pointer-events: none !important;
   z-index: 1;
 }
 
@@ -155,7 +155,7 @@ body::before {
     radial-gradient(circle at 70% 30%, rgba(74, 133, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 30% 70%, rgba(37, 37, 37, 0.05) 0%, transparent 20%);
   animation: gradientMove 20s ease infinite;
-  pointer-events: none;
+  pointer-events: none !important;
   z-index: 1;
 }
 
@@ -188,10 +188,70 @@ body:not(:hover)::-webkit-scrollbar-thumb {
   opacity: 0;
 }
 
-/* Wallet dropdown container */
+/* CRITICAL: Force wallet dropdown to appear on top of everything */
 .wallet-adapter-dropdown {
+  position: relative !important;
+  display: inline-block !important;
+  z-index: 999999 !important;
+}
+
+/* Force dropdown positioning and visibility */
+.wallet-adapter-dropdown-list {
+  position: fixed !important;
+  z-index: 999999 !important;
+  background: #2c2d30 !important;
+  border-radius: 10px !important;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.6) !important;
+  min-width: 200px !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* Force active state to be visible */
+.wallet-adapter-dropdown-list-active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  display: grid !important;
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* Make dropdown items fully interactive */
+.wallet-adapter-dropdown-list-item {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  color: #fff !important;
+  padding: 0 20px !important;
+  height: 37px !important;
   display: flex !important;
   align-items: center !important;
+  border-radius: 6px !important;
+}
+
+.wallet-adapter-dropdown-list-item:hover {
+  background: #1a1f2e !important;
+}
+
+/* Ensure all clickable elements work */
+.wallet-adapter-dropdown button,
+.wallet-adapter-dropdown-list button,
+.wallet-adapter-dropdown-list-item button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 999999 !important;
+}
+
+/* Force navbar to allow overflow */
+nav, header, .navbar-wrapper, [data-slot*="navbar"] {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Override any transform or positioning that might interfere */
+.wallet-adapter-dropdown * {
+  transform: none !important;
 }
 
 /* Wallet modal styling */
