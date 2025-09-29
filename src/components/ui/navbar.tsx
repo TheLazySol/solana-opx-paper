@@ -15,6 +15,8 @@ import {
 } from '@heroui/navbar'
 import { WalletButton } from '../solana/user-wallet/wallet-connect'
 import { ClusterUiSelect } from '../solana/user-settings/rpc-dropdown-select'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { ADMIN_WALLETS } from '@/constants/constants'
 
 interface NavbarProps {
   links: { label: string; path: string }[]
@@ -24,10 +26,23 @@ export function Navbar({ links }: NavbarProps) {
   const pathname = usePathname()
   const [mounted, setMounted] = React.useState(false)
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const { publicKey } = useWallet()
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Check if current wallet is authorized for admin access
+  const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+  
+  // Filter links to include admin only for authorized wallets
+  const filteredLinks = React.useMemo(() => {
+    const baseLinks = links.filter(link => link.path !== '/admin')
+    if (isAuthorized) {
+      return [...baseLinks, { label: 'Admin', path: '/admin' }]
+    }
+    return baseLinks
+  }, [links, isAuthorized])
 
   // Always use the dark theme logo
   const logoSrc = '/epicentral-logo-light.png'
@@ -107,7 +122,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarBrand>
 
       <NavbarContent className="hidden sm:flex gap-8" justify="center">
-        {links.map(({ label, path }) => (
+        {filteredLinks.map(({ label, path }) => (
           <NavbarItem key={path} isActive={isActive(path)}>
             <Link
               href={path}
@@ -133,7 +148,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarContent>
 
       <NavbarMenu>
-        {links.map(({ label, path }) => (
+        {filteredLinks.map(({ label, path }) => (
           <NavbarMenuItem key={path}>
             <Link
               href={path}

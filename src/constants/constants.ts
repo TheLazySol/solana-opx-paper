@@ -173,3 +173,9 @@ export function getWeeklyFridayDates(startDate: Date, endDate: Date): Date[] {
 export const startDate = new Date(2025, 0, 1); // January 1st, 2025
 export const endDate = new Date(2026, 0, 1);   // January 1st, 2026
 export const allowedDates = getBiWeeklyDates(startDate, endDate);
+
+// Admin wallet addresses with access to admin features
+export const ADMIN_WALLETS: string[] = [
+  '3zxtSkehQA7Dtknwkt95FMnp4h4MDWYHM1epj9xeRsof',
+  'EJXC56Podb1L6KhuQtVTME2eSbLrU3Y8k5mKwW2oX58S'
+];
