@@ -204,15 +204,15 @@ export const OptionChainControls: FC<OptionChainControlsProps> = ({
       style={{
         background: `
           radial-gradient(var(--glow-size, 600px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-            rgba(74, 133, 255, calc(0.15 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
-            rgba(88, 80, 236, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
-            rgba(74, 133, 255, calc(0.03 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
+            rgba(74, 133, 255, calc(0.08 * var(--glow-opacity, 0) * var(--glow-intensity, 1))), 
+            rgba(88, 80, 236, calc(0.04 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 25%,
+            rgba(74, 133, 255, calc(0.015 * var(--glow-opacity, 0) * var(--glow-intensity, 1))) 50%,
             transparent 75%
           ),
           linear-gradient(to bottom right, 
-            rgb(15 23 42 / 0.4), 
-            rgb(30 41 59 / 0.3), 
-            rgb(51 65 85 / 0.2)
+            rgb(15 23 42 / 0.15), 
+            rgb(30 41 59 / 0.05), 
+            rgb(51 65 85 / 0.01)
           )
         `,
         transition: 'var(--glow-transition, all 200ms cubic-bezier(0.4, 0, 0.2, 1))'
