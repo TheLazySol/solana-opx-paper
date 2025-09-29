@@ -22,12 +22,54 @@ require('@solana/wallet-adapter-react-ui/styles.css')
 export const WalletButton = dynamic(
   async () => {
     const { WalletMultiButton } = await import('@solana/wallet-adapter-react-ui')
+    const React = await import('react')
+    
     return function CustomWalletButton(props: any) {
+      const buttonRef = React.useRef<HTMLDivElement>(null)
+      
+      React.useEffect(() => {
+        const fixDropdownPositioning = () => {
+          const dropdown = document.querySelector('.wallet-adapter-dropdown-list')
+          const button = buttonRef.current?.querySelector('.wallet-adapter-button-trigger')
+          
+          if (dropdown && button) {
+            const buttonRect = button.getBoundingClientRect()
+            const dropdownEl = dropdown as HTMLElement
+            
+            // Position dropdown relative to button
+            dropdownEl.style.position = 'fixed'
+            dropdownEl.style.top = `${buttonRect.bottom + 8}px`
+            dropdownEl.style.right = `${window.innerWidth - buttonRect.right}px`
+            dropdownEl.style.left = 'auto'
+            dropdownEl.style.zIndex = '999999'
+            dropdownEl.style.transform = 'none'
+          }
+        }
+        
+        // Fix positioning when dropdown becomes active
+        const observer = new MutationObserver(() => {
+          fixDropdownPositioning()
+        })
+        
+        if (buttonRef.current) {
+          observer.observe(buttonRef.current, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+          })
+        }
+        
+        return () => observer.disconnect()
+      }, [])
+      
       return (
-        <WalletMultiButton 
-          {...props} 
-          className="bg-[#4a85ff] hover:bg-[#4a85ff]/90 text-white border-0 h-9"
-        />
+        <div ref={buttonRef} style={{ position: 'relative', zIndex: 999999 }}>
+          <WalletMultiButton 
+            {...props} 
+            className="bg-[#4a85ff] hover:bg-[#4a85ff]/90 text-white border-0 h-9"
+          />
+        </div>
       )
     }
   },

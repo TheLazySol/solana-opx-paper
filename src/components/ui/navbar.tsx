@@ -33,16 +33,16 @@ export function Navbar({ links }: NavbarProps) {
   }, [])
 
   // Check if current wallet is authorized for admin access
-  const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+  const isAuthorized = mounted && publicKey && ADMIN_WALLETS.includes(publicKey.toString())
   
-  // Filter links to include admin only for authorized wallets
+  // Filter links to include admin only for authorized wallets (only after mounting)
   const filteredLinks = React.useMemo(() => {
     const baseLinks = links.filter(link => link.path !== '/admin')
-    if (isAuthorized) {
+    if (mounted && isAuthorized) {
       return [...baseLinks, { label: 'Admin', path: '/admin' }]
     }
     return baseLinks
-  }, [links, isAuthorized])
+  }, [links, isAuthorized, mounted])
 
   // Always use the dark theme logo
   const logoSrc = '/epicentral-logo-light.png'
@@ -91,10 +91,10 @@ export function Navbar({ links }: NavbarProps) {
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
       classNames={{
-        base: "bg-transparent backdrop-blur-md border-none",
-        wrapper: "max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] px-4",
+        base: "bg-transparent backdrop-blur-md border-none overflow-visible",
+        wrapper: "max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] px-4 overflow-visible",
         brand: "w-[200px]",
-        content: "data-[justify=center]:flex-1 data-[justify=end]:w-[200px]",
+        content: "data-[justify=center]:flex-1 data-[justify=end]:w-[200px] overflow-visible",
         item: "data-[active=true]:font-normal",
         menu: "bg-slate-950/95 backdrop-blur-md border-none",
         menuItem: "text-lg font-normal"
@@ -135,7 +135,7 @@ export function Navbar({ links }: NavbarProps) {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem className="hidden sm:flex">
+        <NavbarItem className="hidden sm:flex relative z-[9999]">
           <WalletButton />
         </NavbarItem>
         <NavbarItem className="hidden sm:flex">
