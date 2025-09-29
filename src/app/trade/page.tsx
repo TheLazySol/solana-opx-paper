@@ -168,6 +168,7 @@ export default function TradePage() {
                   collateralData={collateralData}
                   onProvideCollateral={openCollateralModalRef.current || undefined}
                   activeTab={chartActiveTab}
+                  optionChainData={optionChainData}
                 />
               </div>
               

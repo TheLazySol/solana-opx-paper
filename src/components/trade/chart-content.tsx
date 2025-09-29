@@ -4,7 +4,7 @@ import { FC, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AssetChart } from './asset-chart'
 import PnLChartInteractive from './pnl-chart-interactive'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 import { TrendingUp } from 'lucide-react'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { CollateralData } from './collateral-modal'
@@ -16,6 +16,7 @@ interface ChartContentProps {
   onProvideCollateral?: () => void
   activeTab: string
   className?: string
+  optionChainData?: OptionContract[]
 }
 
 export const ChartContent: FC<ChartContentProps> = ({
@@ -24,7 +25,8 @@ export const ChartContent: FC<ChartContentProps> = ({
   collateralData,
   onProvideCollateral,
   activeTab,
-  className = ''
+  className = '',
+  optionChainData = []
 }) => {
   // Get real-time price from asset price provider
   const { price: currentPrice } = useAssetPriceInfo(selectedAsset)
@@ -35,7 +37,8 @@ export const ChartContent: FC<ChartContentProps> = ({
     
     const props: any = {
       selectedOptions: selectedOptions,
-      currentPrice: currentPrice // Now using real asset price from context
+      currentPrice: currentPrice, // Now using real asset price from context
+      optionChainData: optionChainData // Pass option chain data for live pricing
     }
     
     // Add collateral amount if available for short positions
@@ -48,7 +51,7 @@ export const ChartContent: FC<ChartContentProps> = ({
     }
     
     return props
-  }, [selectedOptions, currentPrice, collateralData])
+  }, [selectedOptions, currentPrice, collateralData, optionChainData])
 
   return (
     <div className={className}>

@@ -5,12 +5,13 @@ import ReactECharts from 'echarts-for-react'
 import { Card, CardBody } from '@heroui/react'
 import { motion } from 'framer-motion'
 import * as echarts from 'echarts'
-import { SelectedOption } from './option-data'
+import { SelectedOption, OptionContract } from './option-data'
 
 interface PnLChartProps {
   // New approach: use actual selected option data
   selectedOptions: SelectedOption[]
   currentPrice: number
+  optionChainData?: OptionContract[] // For live pricing
   
   // Optional props with defaults
   maxPrice?: number
@@ -52,6 +53,7 @@ interface ChartDataPoint {
 export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   selectedOptions,
   currentPrice,
+  optionChainData = [],
   maxPrice,
   contractMultiplier = 100,
   optionType = 'call',
@@ -71,6 +73,27 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
   const [hoveredValue, setHoveredValue] = useState<{ price: number; pnl: number } | null>(null)
   const lastTooltipUpdate = useRef<number>(0)
   const lastTooltipContent = useRef<string>('')
+
+  // Helper function to get live option price from chain data
+  const getLiveOptionPrice = useCallback((option: SelectedOption): number => {
+    // Find the matching option contract from the live chain data
+    const optionContract = optionChainData.find(contract => 
+      contract.strike === option.strike && 
+      contract.expiry === option.expiry
+    );
+
+    if (!optionContract) {
+      // Fallback to stored price if not found in chain
+      return option.limitPrice !== undefined ? option.limitPrice : option.price;
+    }
+
+    // Get live bid/ask price based on option side and type
+    if (option.side === 'call') {
+      return option.type === 'bid' ? optionContract.callBid : optionContract.callAsk;
+    } else {
+      return option.type === 'bid' ? optionContract.putBid : optionContract.putAsk;
+    }
+  }, [optionChainData])
 
   // Input validation and processing
   const validatedInputs = useMemo(() => {
@@ -147,18 +170,21 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       }
     }
     
-    // Process selected options - use actual quantities for accurate P&L calculations
-    const processedOptions = selectedOptions.map(option => ({
-      strike: Math.max(0, option.strike || 0),
-      premium: Math.max(0, option.price || 0),
-      contracts: Math.max(1, option.quantity || 1), // Use actual quantity for fractional options, default to 1 contract
-      side: option.side,
-      type: option.type,
-      position: option.type === 'bid' ? 'long' as const : 'short' as const, // Buying = long, selling = short
-      expiry: option.expiry,
-      asset: option.asset,
-      originalQuantity: option.quantity || 1 // Keep track of original selected quantity
-    }))
+    // Process selected options - use live prices for accurate real-time P&L calculations
+    const processedOptions = selectedOptions.map(option => {
+      const livePrice = getLiveOptionPrice(option);
+      return {
+        strike: Math.max(0, option.strike || 0),
+        premium: Math.max(0, livePrice || 0), // Use live price instead of static price
+        contracts: Math.max(1, option.quantity || 1), // Use actual quantity for fractional options, default to 1 contract
+        side: option.side,
+        type: option.type,
+        position: option.type === 'bid' ? 'long' as const : 'short' as const, // Buying = long, selling = short
+        expiry: option.expiry,
+        asset: option.asset,
+        originalQuantity: option.quantity || 1 // Keep track of original selected quantity
+      }
+    })
     
     // For multi-leg support, we'll use the first option for basic calculations
     // but store all options for future enhancements
@@ -219,7 +245,7 @@ export const PnLChartInteractive: React.FC<PnLChartProps> = ({
       xAxisMin,
       isMobile
     }
-  }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts])
+  }, [selectedOptions, currentPrice, maxPrice, contractMultiplier, strikePrice, premium, contracts, getLiveOptionPrice])
 
   // Always show the chart - collateral requirement is enforced at order placement time, not visualization time
 
