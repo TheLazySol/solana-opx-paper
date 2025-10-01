@@ -257,7 +257,7 @@ export function OptionSuccessModal({
 
                 {/* Next Steps */}
                 <div className="p-4 rounded-lg bg-blue-950/30 border border-blue-500/20">
-                  <h4 className="text-sm font-medium text-blue-400 mb-2">What's Next?</h4>
+                  <h4 className="text-sm font-medium text-blue-400 mb-2">Whats Next?</h4>
                   <ul className="text-sm text-white/70 space-y-1">
                     <li>• Your option is now active and can be exercised or traded</li>
                     <li>• Monitor your position in the Portfolio section</li>
