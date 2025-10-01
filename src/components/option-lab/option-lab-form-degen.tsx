@@ -19,6 +19,7 @@ import { StepCollateral, StepReview } from './wizard-steps';
 import { Card, CardBody, Button, Progress, Switch, cn } from '@heroui/react';
 import { ChevronLeft, ChevronRight, Check, Circle, DollarSign, FileCheck } from 'lucide-react';
 import { CollateralState } from './collateral-provider';
+import { OptionSuccessModal } from './option-success-modal';
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -101,6 +102,18 @@ export function OptionLabFormDegen() {
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successOptionDetails, setSuccessOptionDetails] = useState<{
+    token: string;
+    type: 'Call' | 'Put';
+    direction: 'Long' | 'Short';
+    strikePrice: number;
+    premium: number;
+    quantity: number;
+    expirationDate: string;
+    totalValue: number;
+    transactionHash?: string;
+  } | null>(null);
   const [collateralState, setCollateralState] = useState<CollateralState>({
     hasEnoughCollateral: false,
     collateralProvided: "0",
@@ -252,8 +265,21 @@ export function OptionLabFormDegen() {
       
       console.log('Option created:', newOption);
       
-      // Navigate to trade page with orders view
-      router.push("/trade?view=orders&tab=open");
+      // Prepare success modal data
+      const optionDetails = {
+        token: values.asset,
+        type: (values.optionType === 'call' ? 'Call' : 'Put') as 'Call' | 'Put',
+        direction: 'Short' as 'Long' | 'Short', // Since we're minting/selling options
+        strikePrice: Number(values.strikePrice),
+        premium: Number(values.premium),
+        quantity: Number(values.quantity),
+        expirationDate: format(values.expirationDate, 'MMM dd, yyyy'),
+        totalValue: Number(values.premium) * Number(values.quantity) * 100,
+        transactionHash: `mock_tx_${Date.now()}` // Replace with actual transaction hash when available
+      };
+      
+      setSuccessOptionDetails(optionDetails);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error minting option:', error);
       methods.setError('root', { 
@@ -263,6 +289,13 @@ export function OptionLabFormDegen() {
       setIsSubmitting(false);
     }
   }
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    setSuccessOptionDetails(null);
+    // Navigate to trade page with orders view
+    router.push("/trade?view=orders&tab=open");
+  };
 
   return (
     <FormProvider {...methods}>
@@ -405,6 +438,12 @@ export function OptionLabFormDegen() {
               </div>
             </CardBody>
           </Card>
+          
+          <OptionSuccessModal
+            isOpen={showSuccessModal}
+            onOpenChange={handleSuccessModalClose}
+            optionDetails={successOptionDetails}
+          />
         </motion.div>
     </FormProvider>
   );
