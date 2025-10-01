@@ -14,6 +14,7 @@ import { OptionLabWizard } from './option-lab-wizard';
 import { useAssetPriceInfo } from '@/context/asset-price-provider';
 import { motion } from 'framer-motion';
 import { getWeeklyFridayDates, startDate, endDate } from '@/constants/constants';
+import { OptionSuccessModal } from './option-success-modal';
 
 const formSchema = z.object({
   asset: z.enum(["SOL", "LABS"]),
@@ -55,6 +56,18 @@ export function OptionLabFormPro() {
   const router = useRouter();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successOptionDetails, setSuccessOptionDetails] = useState<{
+    token: string;
+    type: 'Call' | 'Put';
+    direction: 'Long' | 'Short';
+    strikePrice: number;
+    premium: number;
+    quantity: number;
+    expirationDate: string;
+    totalValue: number;
+    transactionHash?: string;
+  } | null>(null);
   
   const defaultExpirationDate = getNextAvailableWeeklyDate();
 
@@ -163,8 +176,21 @@ export function OptionLabFormPro() {
       
       console.log('Option created:', newOption);
       
-      // Navigate to trade page with orders view
-      router.push("/trade?view=orders&tab=open");
+      // Prepare success modal data
+      const optionDetails = {
+        token: values.asset,
+        type: (values.optionType === 'call' ? 'Call' : 'Put') as 'Call' | 'Put',
+        direction: 'Short' as 'Long' | 'Short', // Since we're minting/selling options
+        strikePrice: Number(values.strikePrice),
+        premium: Number(values.premium),
+        quantity: Number(values.quantity),
+        expirationDate: format(values.expirationDate, 'MMM dd, yyyy'),
+        totalValue: Number(values.premium) * Number(values.quantity) * 100,
+        transactionHash: `mock_tx_${Date.now()}` // Replace with actual transaction hash when available
+      };
+      
+      setSuccessOptionDetails(optionDetails);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error minting option:', error);
       methods.setError('root', { 
@@ -174,6 +200,13 @@ export function OptionLabFormPro() {
       setIsSubmitting(false);
     }
   }
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    setSuccessOptionDetails(null);
+    // Navigate to trade page with orders view
+    router.push("/trade?view=orders&tab=open");
+  };
 
   return (
     <FormProvider {...methods}>
@@ -187,6 +220,12 @@ export function OptionLabFormPro() {
           assetPrice={assetPrice}
           onSubmitAction={onSubmit}
           isSubmitting={isSubmitting}
+        />
+        
+        <OptionSuccessModal
+          isOpen={showSuccessModal}
+          onOpenChange={handleSuccessModalClose}
+          optionDetails={successOptionDetails}
         />
       </motion.div>
     </FormProvider>
