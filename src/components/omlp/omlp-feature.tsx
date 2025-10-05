@@ -27,8 +27,16 @@ export function OMLPFeature() {
   }, [])
   
   // Get Redis pool data
-  const { pools: redisPools, isLoading: isLoadingPools, refetchPools } = useRedisPools()
+  const { pools: redisPools, isLoading: isLoadingPools, refetchPools, isInitialized } = useRedisPools()
   const [isLoadingPositions] = [false]
+
+  // Auto-refresh pools when OMLP page loads and wallet is connected
+  useEffect(() => {
+    if (mounted && publicKey && isInitialized && !isLoadingPools) {
+      // Fetch pools immediately when OMLP page loads
+      refetchPools()
+    }
+  }, [mounted, publicKey, isInitialized, isLoadingPools, refetchPools])
 
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()

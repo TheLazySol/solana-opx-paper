@@ -31,6 +31,23 @@ export function RedisPoolProvider({ children }: RedisPoolProviderProps) {
   const { pools, isLoading, isInitialized, error, refetch } = useRedisPoolsAPI();
   const { prices } = useAssetPrice();
   
+  // Enhanced refetch that forces a fresh fetch
+  const forceRefetch = useCallback(async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Force refetch failed:', error);
+    }
+  }, [refetch]);
+  
+  // Auto-refresh on mount when initialized
+  useEffect(() => {
+    if (isInitialized) {
+      // Force a refresh when the provider is first initialized
+      forceRefetch();
+    }
+  }, [isInitialized, forceRefetch]);
+  
   // Price sync function that updates pools via API
   const syncPrices = useCallback(async () => {
     if (!isInitialized || pools.length === 0) return;
@@ -76,7 +93,7 @@ export function RedisPoolProvider({ children }: RedisPoolProviderProps) {
     isLoading,
     isInitialized,
     error,
-    refetchPools: refetch,
+    refetchPools: forceRefetch, // Use the enhanced refetch function
   };
   
   return (

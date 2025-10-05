@@ -151,7 +151,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
     }
   }
 
-  const isFormValid = selectedToken && formData.initialSupply && formData.supplyLimit
+  const isFormValid = selectedToken && (formData.initialSupply !== undefined && formData.initialSupply !== null) && formData.supplyLimit
 
   return (
     <Card 
@@ -252,7 +252,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
             <Input
               type="number"
               label="Initial Supply"
-              placeholder="1000"
+              placeholder="0 (can be zero)"
               value={formData.initialSupply?.toString() || ''}
               onChange={(e) => handleInputChange('initialSupply', e.target.value)}
               endContent={<span className="text-white/60 text-sm" aria-label="Token unit">{selectedToken || 'tokens'}</span>}
@@ -405,7 +405,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
           {!isFormValid && !createError && (
             <div className="flex items-center gap-2 text-amber-400 text-sm">
               <AlertCircle className="h-4 w-4" />
-              <span>Please fill in all required fields</span>
+              <span>Please select a token and set supply limit (initial supply can be 0)</span>
             </div>
           )}
           

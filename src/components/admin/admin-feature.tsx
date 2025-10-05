@@ -21,11 +21,20 @@ const WalletButton = dynamic(
 export function AdminFeature() {
   const { publicKey } = useWallet()
   const [mounted, setMounted] = useState(false)
-  const { pools, refetchPools } = useRedisPools()
+  const { pools, refetchPools, isLoading, isInitialized } = useRedisPools()
   
   useEffect(() => {
     setMounted(true)
   }, [])
+  
+  // Auto-fetch pools when admin page loads and user is authorized
+  useEffect(() => {
+    const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+    if (mounted && isAuthorized && isInitialized && !isLoading) {
+      // Fetch pools immediately when admin page loads
+      refetchPools()
+    }
+  }, [mounted, publicKey, isInitialized, isLoading, refetchPools])
   
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()

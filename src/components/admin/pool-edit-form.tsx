@@ -450,7 +450,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
           {!selectedPool && pools.length > 0 && !updateError && !deleteError && (
             <div className="flex items-center gap-2 text-amber-400 text-sm">
               <AlertCircle className="h-4 w-4" />
-              <span>Please select a pool to edit</span>
+              <span>Please select a pool to edit or delete</span>
             </div>
           )}
           
@@ -462,9 +462,9 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
           )}
           
           {selectedPool && !canDelete && !updateError && !deleteError && (
-            <div className="flex items-center gap-2 text-amber-400 text-sm">
+            <div className="flex items-center gap-2 text-blue-400 text-sm">
               <AlertCircle className="h-4 w-4" />
-              <span>Pool has {selectedPool.totalSupply.toFixed(6)} {selectedPool.asset} remaining. Must have &lt; 0.001 assets to delete.</span>
+              <span>Pool can be edited but not deleted (has {selectedPool.totalSupply.toFixed(6)} {selectedPool.asset} remaining).</span>
             </div>
           )}
           
