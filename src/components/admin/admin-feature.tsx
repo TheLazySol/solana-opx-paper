@@ -1,13 +1,15 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardBody } from '@heroui/react'
 import { Shield, Wallet } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { ADMIN_WALLETS } from '@/constants/constants'
 import { PoolCreationForm } from './pool-creation-form'
+import { PoolEditForm } from './pool-edit-form'
+import { useRedisPools } from '../omlp/redis-pool-provider'
 import dynamic from 'next/dynamic'
 
 // Dynamically import wallet button with ssr disabled to prevent hydration mismatch
@@ -18,13 +20,42 @@ const WalletButton = dynamic(
 
 export function AdminFeature() {
   const { publicKey } = useWallet()
+  const [mounted, setMounted] = useState(false)
+  const { pools, refetchPools, isLoading, isInitialized } = useRedisPools()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Auto-fetch pools when admin page loads and user is authorized (once)
+  useEffect(() => {
+    const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+    if (mounted && isAuthorized && isInitialized && !isLoading) {
+      // Fetch pools after a small delay to prevent loops
+      const timeoutId = setTimeout(() => {
+        refetchPools()
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [mounted, publicKey, isInitialized]); // Remove refetchPools from deps
   
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()
   const unauthorizedCardRef = useMouseGlow()
+  
+  // Handle pool refresh after updates
+  const handlePoolUpdated = useCallback(async () => {
+    await refetchPools()
+  }, [refetchPools])
 
   // Check if current wallet is authorized for admin access
   const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+
+  // Avoid SSR/client divergence by rendering nothing until mounted
+  if (!mounted) {
+    return null
+  }
 
   if (!publicKey) {
     return (
@@ -171,7 +202,11 @@ export function AdminFeature() {
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <PoolCreationForm />
+          <PoolCreationForm onPoolCreated={handlePoolUpdated} />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <PoolEditForm pools={pools} onPoolUpdated={handlePoolUpdated} />
         </motion.div>
       </motion.div>
     </div>

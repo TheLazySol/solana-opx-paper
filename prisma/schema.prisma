@@ -72,3 +72,99 @@ model ErrorLog {
 
   @@map("error_logs")
 }
+
+// ==========================================
+// OMLP (Option Margin Liquidity Pool) Models
+// ==========================================
+
+// Model for OMLP Pools configuration and state
+model OMLPPool {
+  id                            String   @id @default(cuid())
+  poolId                        String   @unique // e.g., "SOL_POOL"
+  asset                         String   // e.g., "SOL"
+  tokenAddress                  String   // Token mint address
+  
+  // Pool configuration
+  baseSupplyApy                 Float
+  baseBorrowApy                 Float
+  utilizationRateMultiplier     Float
+  borrowSpread                  Float
+  supplyLimit                   Float
+  minUtilizationForDynamicRates Float
+  maxUtilizationThreshold       Float
+  liquidationThreshold          Float
+  liquidationPenalty            Float
+  
+  // Pool state (latest values - also stored in Redis)
+  totalSupply                   Float
+  availableSupply               Float
+  utilizedSupply                Float
+  utilizationRate               Float
+  currentSupplyApy              Float
+  currentBorrowApy              Float
+  
+  // Metadata
+  isActive                      Boolean  @default(true)
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+  deletedAt                     DateTime? // Soft delete
+  
+  // Relations
+  snapshots                     OMLPPoolSnapshot[]
+  transactions                  OMLPTransaction[]
+  
+  @@index([asset, isActive])
+  @@index([createdAt])
+  @@map("omlp_pools")
+}
+
+// Model for pool state snapshots (time series data)
+model OMLPPoolSnapshot {
+  id               String   @id @default(cuid())
+  poolId           String
+  
+  // Snapshot data
+  totalSupply      Float
+  availableSupply  Float
+  utilizedSupply   Float
+  utilizationRate  Float
+  currentSupplyApy Float
+  currentBorrowApy Float
+  assetPrice       Float
+  
+  // Timestamp
+  timestamp        DateTime @default(now())
+  
+  // Relations
+  pool             OMLPPool @relation(fields: [poolId], references: [poolId], onDelete: Cascade)
+  
+  @@index([poolId, timestamp])
+  @@map("omlp_pool_snapshots")
+}
+
+// Model for pool transactions
+model OMLPTransaction {
+  id          String   @id @default(cuid())
+  poolId      String
+  walletId    String
+  
+  // Transaction details
+  type        String   // "deposit", "withdraw", "borrow", "repay"
+  amount      Float
+  assetPrice  Float
+  
+  // Transaction state
+  status      String   @default("pending") // "pending", "completed", "failed"
+  txHash      String?  // Solana transaction hash
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  // Relations
+  pool        OMLPPool @relation(fields: [poolId], references: [poolId], onDelete: Cascade)
+  
+  @@index([poolId, walletId])
+  @@index([createdAt])
+  @@map("omlp_transactions")
+}

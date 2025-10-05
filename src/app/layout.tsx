@@ -1,4 +1,5 @@
 import './globals.css'
+import '@/utils/console-filter' // Import console filter to suppress HeroUI warnings
 import {ClusterProvider} from '@/solana/clusters/clusterDataAccess'
 import {SolanaProvider} from '@/components/solana/user-wallet/wallet-connect'
 import {UiLayout} from '@/components/ui/ui-layout'
