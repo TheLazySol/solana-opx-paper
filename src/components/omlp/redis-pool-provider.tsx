@@ -1,9 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useEffect } from 'react';
-import { useRedisPoolInitialization } from '@/hooks/useRedisPoolInitialization';
+import React, { createContext, useContext, useEffect, useCallback } from 'react';
+import { useRedisPoolsAPI } from '@/hooks/useRedisPoolsAPI';
 import { RedisPoolData } from '@/lib/redis/omlp-pool-service';
-import { createPriceSyncInterval } from '@/lib/redis/pool-price-sync';
 import { useAssetPrice } from '@/context/asset-price-provider';
 
 interface RedisPoolContextType {
@@ -29,28 +28,48 @@ interface RedisPoolProviderProps {
 }
 
 export function RedisPoolProvider({ children }: RedisPoolProviderProps) {
-  const { pools, isLoading, isInitialized, error, refetch } = useRedisPoolInitialization();
+  const { pools, isLoading, isInitialized, error, refetch } = useRedisPoolsAPI();
   const { prices } = useAssetPrice();
+  
+  // Price sync function that updates pools via API
+  const syncPrices = useCallback(async () => {
+    if (!isInitialized || pools.length === 0) return;
+    
+    // Update each pool's price via API
+    for (const pool of pools) {
+      const currentPrice = prices[pool.asset]?.price;
+      
+      if (currentPrice && currentPrice !== pool.assetPrice) {
+        try {
+          await fetch('/api/pools/update-price', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              poolId: pool.poolId,
+              price: currentPrice,
+            }),
+          });
+          console.log(`Updated ${pool.asset} pool price: ${pool.assetPrice} -> ${currentPrice}`);
+        } catch (error) {
+          console.error(`Failed to update price for ${pool.asset}:`, error);
+        }
+      }
+    }
+    
+    // Refetch pools to get updated data
+    await refetch();
+  }, [isInitialized, pools, prices, refetch]);
   
   // Set up price sync interval
   useEffect(() => {
     if (!isInitialized) return;
     
-    // Transform prices object to simple Record<string, number>
-    const getSimplePrices = () => {
-      return Object.entries(prices).reduce((acc, [asset, data]) => {
-        acc[asset] = data.price;
-        return acc;
-      }, {} as Record<string, number>);
-    };
+    const interval = setInterval(syncPrices, 10000); // Sync every 10 seconds
     
-    const cleanup = createPriceSyncInterval(
-      getSimplePrices,
-      10000 // Sync every 10 seconds
-    );
-    
-    return cleanup;
-  }, [isInitialized, prices]);
+    return () => clearInterval(interval);
+  }, [isInitialized, syncPrices]);
   
   const contextValue: RedisPoolContextType = {
     pools,

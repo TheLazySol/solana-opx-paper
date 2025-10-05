@@ -8,7 +8,7 @@ import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { BasePoolConfig } from '@/constants/omlp/omlp-pools'
-import { createCustomPool } from '@/lib/redis'
+// Removed Redis import - will use API instead
 
 export function PoolCreationForm() {
   const cardRef = useMouseGlow()
@@ -94,8 +94,22 @@ export function PoolCreationForm() {
         initialBorrowedPercentage: formData.initialBorrowedPercentage!,
       }
       
-      // Create pool in Redis
-      await createCustomPool(poolConfig, price)
+      // Create pool via API
+      const response = await fetch('/api/redis/create-pool', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          config: poolConfig,
+          price,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create pool')
+      }
       
       setCreateSuccess(true)
       console.log('Pool created successfully:', poolConfig)

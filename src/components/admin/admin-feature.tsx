@@ -1,7 +1,7 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardBody } from '@heroui/react'
 import { Shield, Wallet } from 'lucide-react'
@@ -18,6 +18,10 @@ const WalletButton = dynamic(
 
 export function AdminFeature() {
   const { publicKey } = useWallet()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()
@@ -25,6 +29,11 @@ export function AdminFeature() {
 
   // Check if current wallet is authorized for admin access
   const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
+
+  // Avoid SSR/client divergence by rendering nothing until mounted
+  if (!mounted) {
+    return null
+  }
 
   if (!publicKey) {
     return (
