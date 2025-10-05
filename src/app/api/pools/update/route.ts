@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updatePoolConfig } from '@/lib/redis/omlp-pool-service';
+import { updatePoolConfig, getPoolData } from '@/lib/redis/omlp-pool-service';
+import { savePoolToDatabase } from '@/lib/prisma/omlp-pool-sync';
 import { initializeRedisClient } from '@/lib/redis/redis-client';
 
 // POST /api/pools/update - Update pool configuration
@@ -18,6 +19,11 @@ export async function POST(request: NextRequest) {
     }
     
     const updatedPool = await updatePoolConfig(poolId, updates);
+    
+    // Save updated pool to PostgreSQL for persistence
+    if (updatedPool) {
+      await savePoolToDatabase(updatedPool);
+    }
     
     return NextResponse.json(updatedPool);
   } catch (error) {

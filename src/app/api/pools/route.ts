@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPools, initializeDefaultPools, getPoolData } from '@/lib/redis/omlp-pool-service';
 import { initializeRedisClient } from '@/lib/redis/redis-client';
+import { syncAllPoolsToRedis } from '@/lib/prisma/omlp-pool-sync';
 
 // GET /api/pools - Get all pools or a specific pool
 export async function GET(request: NextRequest) {
   try {
     await initializeRedisClient();
+    
+    // Sync pools from PostgreSQL to Redis on every request
+    // This ensures data persistence across server restarts
+    await syncAllPoolsToRedis();
     
     const searchParams = request.nextUrl.searchParams;
     const poolId = searchParams.get('poolId');

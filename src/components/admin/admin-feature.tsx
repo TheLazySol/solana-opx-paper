@@ -27,14 +27,18 @@ export function AdminFeature() {
     setMounted(true)
   }, [])
   
-  // Auto-fetch pools when admin page loads and user is authorized
+  // Auto-fetch pools when admin page loads and user is authorized (once)
   useEffect(() => {
     const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
     if (mounted && isAuthorized && isInitialized && !isLoading) {
-      // Fetch pools immediately when admin page loads
-      refetchPools()
+      // Fetch pools after a small delay to prevent loops
+      const timeoutId = setTimeout(() => {
+        refetchPools()
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [mounted, publicKey, isInitialized, isLoading, refetchPools])
+  }, [mounted, publicKey, isInitialized]); // Remove refetchPools from deps
   
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()

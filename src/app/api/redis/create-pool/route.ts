@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createCustomPool } from '@/lib/redis/omlp-pool-service'
+import { savePoolToDatabase } from '@/lib/prisma/omlp-pool-sync'
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +28,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
+    // Create pool in Redis
     const pool = await createCustomPool(config, price)
+    
+    // Save to PostgreSQL for persistence
+    await savePoolToDatabase(pool)
+    
     return NextResponse.json({ success: true, pool }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create pool'

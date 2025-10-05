@@ -40,13 +40,17 @@ export function RedisPoolProvider({ children }: RedisPoolProviderProps) {
     }
   }, [refetch]);
   
-  // Auto-refresh on mount when initialized
+  // Auto-refresh on mount when initialized (only once)
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && !isLoading) {
       // Force a refresh when the provider is first initialized
-      forceRefetch();
+      const timeoutId = setTimeout(() => {
+        forceRefetch();
+      }, 100); // Small delay to prevent immediate re-render loops
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [isInitialized, forceRefetch]);
+  }, [isInitialized]); // Remove forceRefetch from dependencies to prevent loops
   
   // Price sync function that updates pools via API
   const syncPrices = useCallback(async () => {

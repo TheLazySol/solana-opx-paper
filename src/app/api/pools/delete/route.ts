@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { deletePool } from '@/lib/redis/omlp-pool-service'
+import { softDeletePool } from '@/lib/prisma/omlp-pool-sync'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,9 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
+    
+    // Soft delete from PostgreSQL
+    await softDeletePool(poolId)
 
     return NextResponse.json({ 
       success: true,
