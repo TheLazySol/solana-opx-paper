@@ -10,7 +10,11 @@ import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { BasePoolConfig } from '@/constants/omlp/omlp-pools'
 // Removed Redis import - will use API instead
 
-export function PoolCreationForm() {
+interface PoolCreationFormProps {
+  onPoolCreated?: () => void
+}
+
+export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
   const cardRef = useMouseGlow()
   
   // Form state
@@ -113,6 +117,13 @@ export function PoolCreationForm() {
       
       setCreateSuccess(true)
       console.log('Pool created successfully:', poolConfig)
+      
+      // Notify parent component to refresh pools (with small delay to ensure Redis is updated)
+      if (onPoolCreated) {
+        setTimeout(() => {
+          onPoolCreated()
+        }, 400)
+      }
       
       // Reset form after 2 seconds
       setTimeout(() => {
@@ -416,7 +427,7 @@ export function PoolCreationForm() {
               className="flex items-center gap-2 text-green-400 text-sm p-3 rounded-lg bg-green-500/10 border border-green-500/20"
             >
               <CheckCircle className="h-4 w-4" />
-              <span>Pool created successfully! Refresh the OMLP page to see your new pool.</span>
+              <span>Pool created successfully! The pool is now available in the edit form below.</span>
             </motion.div>
           )}
         </div>

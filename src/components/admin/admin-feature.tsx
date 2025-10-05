@@ -189,7 +189,7 @@ export function AdminFeature() {
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <PoolCreationForm />
+          <PoolCreationForm onPoolCreated={handlePoolUpdated} />
         </motion.div>
         
         <motion.div variants={itemVariants}>
