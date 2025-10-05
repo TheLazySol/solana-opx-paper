@@ -3,7 +3,7 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { MyLendingPositions } from './my-lending-positions'
 import { LendingPools, type Pool } from './lending-pools'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardBody } from '@heroui/react'
 import { Wallet } from 'lucide-react'
@@ -20,6 +20,11 @@ const WalletButton = dynamic(
 
 export function OMLPFeature() {
   const { publicKey } = useWallet()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   // Get Redis pool data
   const { pools: redisPools, isLoading: isLoadingPools, refetchPools } = useRedisPools()
@@ -51,6 +56,11 @@ export function OMLPFeature() {
     // TODO: Implement positions refresh logic
     console.log('Refreshing positions...')
   }, [])
+
+  // Avoid SSR/client divergence by rendering nothing until mounted
+  if (!mounted) {
+    return null
+  }
 
   if (!publicKey) {
     return (

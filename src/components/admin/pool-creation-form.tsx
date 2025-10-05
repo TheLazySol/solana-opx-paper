@@ -255,7 +255,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="1000"
               value={formData.initialSupply?.toString() || ''}
               onChange={(e) => handleInputChange('initialSupply', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">{selectedToken || 'tokens'}</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Token unit">{selectedToken || 'tokens'}</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -268,7 +268,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="2500"
               value={formData.supplyLimit?.toString() || ''}
               onChange={(e) => handleInputChange('supplyLimit', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">{selectedToken || 'tokens'}</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Token unit">{selectedToken || 'tokens'}</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -281,7 +281,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="0.0"
               value={formData.baseSupplyApy?.toString() || ''}
               onChange={(e) => handleInputChange('baseSupplyApy', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -294,7 +294,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="0.0"
               value={formData.baseBorrowApy?.toString() || ''}
               onChange={(e) => handleInputChange('baseBorrowApy', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -319,7 +319,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="5.0"
               value={formData.borrowSpread?.toString() || ''}
               onChange={(e) => handleInputChange('borrowSpread', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -332,7 +332,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="10"
               value={formData.minUtilizationForDynamicRates?.toString() || ''}
               onChange={(e) => handleInputChange('minUtilizationForDynamicRates', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -345,7 +345,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="90"
               value={formData.maxUtilizationThreshold?.toString() || ''}
               onChange={(e) => handleInputChange('maxUtilizationThreshold', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -358,7 +358,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="100"
               value={formData.liquidationThreshold?.toString() || ''}
               onChange={(e) => handleInputChange('liquidationThreshold', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"
@@ -371,7 +371,7 @@ export function PoolCreationForm({ onPoolCreated }: PoolCreationFormProps) {
               placeholder="1.5"
               value={formData.liquidationPenalty?.toString() || ''}
               onChange={(e) => handleInputChange('liquidationPenalty', e.target.value)}
-              endContent={<span className="text-white/60 text-sm">%</span>}
+              endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
               classNames={{
                 input: "text-white/90",
                 inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-[#4a85ff]/50"

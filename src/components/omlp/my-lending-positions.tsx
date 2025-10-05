@@ -49,6 +49,12 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid SSR/client divergence by rendering nothing until mounted
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
@@ -275,6 +281,11 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
 
   const totalValue = positions.reduce((acc, pos) => acc + pos.amount, 0)
   const totalEarned = positions.reduce((acc, pos) => acc + pos.earned, 0)
+
+  // Avoid hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return null
+  }
 
   return (
     <>

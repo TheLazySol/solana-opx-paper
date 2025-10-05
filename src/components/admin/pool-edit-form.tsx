@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardBody, CardHeader, Button, Input, Select, SelectItem } from '@heroui/react'
-import { Edit, AlertCircle, Settings, CheckCircle, RefreshCw } from 'lucide-react'
+import { Edit, AlertCircle, Settings, CheckCircle, RefreshCw, Trash2 } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { RedisPoolData } from '@/lib/redis/omlp-pool-service'
 
@@ -32,6 +32,9 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const [updateSuccess, setUpdateSuccess] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteSuccess, setDeleteSuccess] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   
   // Update form data when pool is selected
   useEffect(() => {
@@ -109,7 +112,65 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
     }
   }
 
+  const handleDelete = async () => {
+    if (!selectedPoolId || !selectedPool) {
+      setDeleteError('Please select a pool')
+      return
+    }
+    
+    // Check if pool can be deleted (less than 0.001 assets)
+    if (selectedPool.totalSupply >= 0.001) {
+      setDeleteError(`Cannot delete pool: ${selectedPool.totalSupply.toFixed(6)} ${selectedPool.asset} remaining. Must have less than 0.001 assets to delete.`)
+      return
+    }
+    
+    setIsDeleting(true)
+    setDeleteError(null)
+    setDeleteSuccess(false)
+    
+    try {
+      // Delete pool via API
+      const response = await fetch('/api/pools/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          poolId: selectedPoolId,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete pool')
+      }
+      
+      setDeleteSuccess(true)
+      console.log('Pool deleted successfully:', selectedPoolId)
+      
+      // Clear selected pool
+      setSelectedPoolId('')
+      setSelectedPool(null)
+      
+      // Callback to refresh pools
+      if (onPoolUpdated) {
+        onPoolUpdated()
+      }
+      
+      // Reset success state after 3 seconds
+      setTimeout(() => {
+        setDeleteSuccess(false)
+      }, 3000)
+    } catch (error) {
+      console.error('Error deleting pool:', error)
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete pool')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const isFormValid = selectedPoolId && formData.supplyLimit > 0
+  const canDelete = selectedPool && selectedPool.totalSupply < 0.001
 
   return (
     <Card 
@@ -193,7 +254,9 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 </div>
                 <div>
                   <span className="text-white/60">Total Supply:</span>
-                  <span className="ml-2 text-white/90 font-medium">{selectedPool.totalSupply.toLocaleString()}</span>
+                  <span className={`ml-2 font-medium ${selectedPool.totalSupply < 0.001 ? 'text-green-400' : 'text-white/90'}`}>
+                    {selectedPool.totalSupply.toFixed(6)} {selectedPool.totalSupply < 0.001 && '(Deletable)'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-white/60">Utilization:</span>
@@ -227,7 +290,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="2500"
                 value={formData.supplyLimit?.toString() || ''}
                 onChange={(e) => handleInputChange('supplyLimit', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">{selectedPool.asset}</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Asset unit">{selectedPool.asset}</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -240,7 +303,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="0.0"
                 value={formData.baseSupplyApy?.toString() || ''}
                 onChange={(e) => handleInputChange('baseSupplyApy', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -253,7 +316,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="0.0"
                 value={formData.baseBorrowApy?.toString() || ''}
                 onChange={(e) => handleInputChange('baseBorrowApy', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -278,7 +341,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="5.0"
                 value={formData.borrowSpread?.toString() || ''}
                 onChange={(e) => handleInputChange('borrowSpread', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -291,7 +354,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="10"
                 value={formData.minUtilizationForDynamicRates?.toString() || ''}
                 onChange={(e) => handleInputChange('minUtilizationForDynamicRates', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -304,7 +367,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="90"
                 value={formData.maxUtilizationThreshold?.toString() || ''}
                 onChange={(e) => handleInputChange('maxUtilizationThreshold', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -317,7 +380,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="100"
                 value={formData.liquidationThreshold?.toString() || ''}
                 onChange={(e) => handleInputChange('liquidationThreshold', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -330,7 +393,7 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
                 placeholder="1.5"
                 value={formData.liquidationPenalty?.toString() || ''}
                 onChange={(e) => handleInputChange('liquidationPenalty', e.target.value)}
-                endContent={<span className="text-white/60 text-sm">%</span>}
+                endContent={<span className="text-white/60 text-sm" aria-label="Percentage">%</span>}
                 classNames={{
                   input: "text-white/90",
                   inputWrapper: "bg-slate-800/50 border-slate-600/50 hover:border-amber-500/50"
@@ -342,7 +405,29 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
 
         {/* Submit Button */}
         <div className="flex flex-col gap-3">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {/* Delete Button - Left side */}
+            {selectedPool && (
+              <Button
+                onClick={handleDelete}
+                disabled={!canDelete || isDeleting || deleteSuccess}
+                isLoading={isDeleting}
+                className={`
+                  ${canDelete && !deleteSuccess
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white' 
+                    : deleteSuccess
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                    : 'bg-slate-700/50 text-white/50 cursor-not-allowed'
+                  }
+                  font-medium transition-all duration-200
+                `}
+                startContent={deleteSuccess ? <CheckCircle className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+              >
+                {deleteSuccess ? 'Pool Deleted!' : isDeleting ? 'Deleting...' : `Delete Pool ${canDelete ? '✓' : '✗'}`}
+              </Button>
+            )}
+            
+            {/* Update Button - Right side */}
             <Button
               onClick={handleSubmit}
               disabled={!isFormValid || isUpdating || updateSuccess || !selectedPool}
@@ -362,17 +447,24 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
             </Button>
           </div>
           
-          {!selectedPool && pools.length > 0 && !updateError && (
+          {!selectedPool && pools.length > 0 && !updateError && !deleteError && (
             <div className="flex items-center gap-2 text-amber-400 text-sm">
               <AlertCircle className="h-4 w-4" />
               <span>Please select a pool to edit</span>
             </div>
           )}
           
-          {pools.length === 0 && !updateError && (
+          {pools.length === 0 && !updateError && !deleteError && (
             <div className="flex items-center gap-2 text-amber-400 text-sm">
               <AlertCircle className="h-4 w-4" />
               <span>No pools available to edit. Create a pool first.</span>
+            </div>
+          )}
+          
+          {selectedPool && !canDelete && !updateError && !deleteError && (
+            <div className="flex items-center gap-2 text-amber-400 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>Pool has {selectedPool.totalSupply.toFixed(6)} {selectedPool.asset} remaining. Must have &lt; 0.001 assets to delete.</span>
             </div>
           )}
           
@@ -387,6 +479,17 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
             </motion.div>
           )}
           
+          {deleteError && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-red-400 text-sm p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+            >
+              <AlertCircle className="h-4 w-4" />
+              <span>{deleteError}</span>
+            </motion.div>
+          )}
+          
           {updateSuccess && (
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
@@ -395,6 +498,17 @@ export function PoolEditForm({ pools, onPoolUpdated }: PoolEditFormProps) {
             >
               <CheckCircle className="h-4 w-4" />
               <span>Pool configuration updated successfully!</span>
+            </motion.div>
+          )}
+          
+          {deleteSuccess && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-green-400 text-sm p-3 rounded-lg bg-green-500/10 border border-green-500/20"
+            >
+              <CheckCircle className="h-4 w-4" />
+              <span>Pool deleted successfully! The pool has been permanently removed.</span>
             </motion.div>
           )}
         </div>

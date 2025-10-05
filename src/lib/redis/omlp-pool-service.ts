@@ -423,3 +423,42 @@ export async function createCustomPool(
   console.log(`Created custom ${config.token} pool in Redis`);
   return poolData;
 }
+
+/**
+ * Delete a pool from Redis
+ * Only allows deletion if the pool has less than 0.001 assets remaining
+ */
+export async function deletePool(poolId: string): Promise<boolean> {
+  const client = await getRedisClient();
+  
+  try {
+    // First, get the pool data to check if it can be deleted
+    const poolData = await getPoolData(poolId);
+    if (!poolData) {
+      console.log(`Pool ${poolId} not found`);
+      return false;
+    }
+    
+    // Check if pool has less than 0.001 assets left
+    if (poolData.totalSupply >= 0.001) {
+      throw new Error(`Cannot delete pool ${poolId}: Pool still has ${poolData.totalSupply} ${poolData.asset} remaining. Must have less than 0.001 assets to delete.`);
+    }
+    
+    // Remove pool data from Redis
+    const redisKey = `${REDIS_KEYS.POOL}${poolId}`;
+    await client.del(redisKey);
+    
+    // Remove pool from the active pools list
+    await client.sRem(REDIS_KEYS.POOL_LIST, poolId);
+    
+    // Remove any pool stats
+    const statsKey = `${REDIS_KEYS.POOL_STATS}${poolId}`;
+    await client.del(statsKey);
+    
+    console.log(`Deleted pool ${poolId} from Redis`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to delete pool ${poolId}:`, error);
+    throw error;
+  }
+}
