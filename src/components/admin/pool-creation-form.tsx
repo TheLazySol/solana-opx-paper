@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardBody, CardHeader, Button, Input, Select, SelectItem, Textarea } from '@heroui/react'
-import { Plus, DollarSign, TrendingUp, AlertCircle, Settings } from 'lucide-react'
+import { Card, CardBody, CardHeader, Button, Input, Select, SelectItem } from '@heroui/react'
+import { Plus, DollarSign, TrendingUp, AlertCircle, Settings, CheckCircle } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { TOKENS } from '@/constants/token-list/token-list'
 import { useAssetPriceInfo } from '@/context/asset-price-provider'
 import { BasePoolConfig } from '@/constants/omlp/omlp-pools'
+import { createCustomPool } from '@/lib/redis'
 
 export function PoolCreationForm() {
   const cardRef = useMouseGlow()
@@ -27,6 +28,9 @@ export function PoolCreationForm() {
     liquidationPenalty: 1.5,
     initialBorrowedPercentage: 0
   })
+  const [isCreating, setIsCreating] = useState(false)
+  const [createSuccess, setCreateSuccess] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   
   // Get real-time price for selected token
   const { price, priceChange, priceChange24h } = useAssetPriceInfo(selectedToken)
@@ -55,20 +59,71 @@ export function PoolCreationForm() {
     }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedToken || !formData.token) {
-      alert('Please select a token')
+      setCreateError('Please select a token')
       return
     }
     
-    // TODO: Implement pool creation logic
-    console.log('Creating pool with configuration:', {
-      ...formData,
-      token: selectedToken,
-      tokenAddress: TOKENS[selectedToken as keyof typeof TOKENS]?.address
-    })
+    if (price <= 0) {
+      setCreateError('Waiting for asset price to be available')
+      return
+    }
     
-    alert('Pool configuration created! (This is a demo - actual implementation would create the pool)')
+    setIsCreating(true)
+    setCreateError(null)
+    setCreateSuccess(false)
+    
+    try {
+      const token = TOKENS[selectedToken as keyof typeof TOKENS]
+      
+      // Create pool configuration
+      const poolConfig = {
+        token: token.symbol,
+        tokenAddress: token.address,
+        initialSupply: formData.initialSupply!,
+        baseSupplyApy: formData.baseSupplyApy!,
+        baseBorrowApy: formData.baseBorrowApy!,
+        utilizationRateMultiplier: formData.utilizationRateMultiplier!,
+        borrowSpread: formData.borrowSpread!,
+        supplyLimit: formData.supplyLimit!,
+        minUtilizationForDynamicRates: formData.minUtilizationForDynamicRates!,
+        maxUtilizationThreshold: formData.maxUtilizationThreshold!,
+        liquidationThreshold: formData.liquidationThreshold!,
+        liquidationPenalty: formData.liquidationPenalty!,
+        initialBorrowedPercentage: formData.initialBorrowedPercentage!,
+      }
+      
+      // Create pool in Redis
+      await createCustomPool(poolConfig, price)
+      
+      setCreateSuccess(true)
+      console.log('Pool created successfully:', poolConfig)
+      
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        setCreateSuccess(false)
+        setSelectedToken('')
+        setFormData({
+          initialSupply: 1000,
+          baseSupplyApy: 0.0,
+          baseBorrowApy: 0.0,
+          utilizationRateMultiplier: 0.05,
+          borrowSpread: 5.0,
+          supplyLimit: 2500,
+          minUtilizationForDynamicRates: 10,
+          maxUtilizationThreshold: 90,
+          liquidationThreshold: 100,
+          liquidationPenalty: 1.5,
+          initialBorrowedPercentage: 0
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error creating pool:', error)
+      setCreateError(error instanceof Error ? error.message : 'Failed to create pool')
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const isFormValid = selectedToken && formData.initialSupply && formData.supplyLimit
@@ -301,28 +356,56 @@ export function PoolCreationForm() {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid}
-            className={`
-              ${isFormValid 
-                ? 'bg-gradient-to-r from-[#4a85ff] to-[#1851c4] hover:from-[#5a95ff] hover:to-[#2861d4] text-white' 
-                : 'bg-slate-700/50 text-white/50 cursor-not-allowed'
-              }
-              font-medium transition-all duration-200
-            `}
-          >
-            Create Pool Configuration
-          </Button>
-        </div>
-        
-        {!isFormValid && (
-          <div className="flex items-center gap-2 text-amber-400 text-sm">
-            <AlertCircle className="h-4 w-4" />
-            <span>Please fill in all required fields</span>
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid || isCreating || createSuccess}
+              isLoading={isCreating}
+              className={`
+                ${isFormValid && !createSuccess
+                  ? 'bg-gradient-to-r from-[#4a85ff] to-[#1851c4] hover:from-[#5a95ff] hover:to-[#2861d4] text-white' 
+                  : createSuccess
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                  : 'bg-slate-700/50 text-white/50 cursor-not-allowed'
+                }
+                font-medium transition-all duration-200
+              `}
+              startContent={createSuccess ? <CheckCircle className="h-4 w-4" /> : undefined}
+            >
+              {createSuccess ? 'Pool Created Successfully!' : isCreating ? 'Creating Pool...' : 'Create Pool in Redis'}
+            </Button>
           </div>
-        )}
+          
+          {!isFormValid && !createError && (
+            <div className="flex items-center gap-2 text-amber-400 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>Please fill in all required fields</span>
+            </div>
+          )}
+          
+          {createError && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-red-400 text-sm p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+            >
+              <AlertCircle className="h-4 w-4" />
+              <span>{createError}</span>
+            </motion.div>
+          )}
+          
+          {createSuccess && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-green-400 text-sm p-3 rounded-lg bg-green-500/10 border border-green-500/20"
+            >
+              <CheckCircle className="h-4 w-4" />
+              <span>Pool created successfully! Refresh the OMLP page to see your new pool.</span>
+            </motion.div>
+          )}
+        </div>
       </CardBody>
     </Card>
   )
