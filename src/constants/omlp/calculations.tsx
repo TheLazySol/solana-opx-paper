@@ -1,5 +1,3 @@
-import { OMLP_POOL_CONFIG, SOL_POOL_CONFIG } from '@/constants/omlp/omlp-pools'
-
 /**
  * Calculate the utilization rate of a pool
  * @param borrowed - Amount borrowed from the pool
@@ -16,15 +14,17 @@ export function calculateUtilization(borrowed: number, supply: number): number {
  * @param baseApy - Base supply APY
  * @param utilization - Current utilization rate (0-100)
  * @param utilizationMultiplier - How much APY increases per 1% utilization
+ * @param minUtilizationForDynamicRates - Minimum utilization threshold before dynamic rates kick in
  * @returns Dynamic supply APY
  */
 export function calculateSupplyApy(
   baseApy: number, 
   utilization: number, 
-  utilizationMultiplier: number = SOL_POOL_CONFIG.utilizationRateMultiplier
+  utilizationMultiplier: number = 0.05,
+  minUtilizationForDynamicRates: number = 10
 ): number {
   // Supply APY increases with utilization
-  const utilizationBonus = Math.max(0, utilization - SOL_POOL_CONFIG.minUtilizationForDynamicRates) * utilizationMultiplier
+  const utilizationBonus = Math.max(0, utilization - minUtilizationForDynamicRates) * utilizationMultiplier
   return Number((baseApy + utilizationBonus).toFixed(2))
 }
 
@@ -33,19 +33,21 @@ export function calculateSupplyApy(
  * @param baseApy - Base borrow APY
  * @param utilization - Current utilization rate (0-100)
  * @param utilizationMultiplier - How much APY increases per 1% utilization
+ * @param maxUtilizationThreshold - High utilization threshold for additional penalties
  * @returns Dynamic borrow APY
  */
 export function calculateBorrowApy(
   baseApy: number, 
   utilization: number, 
-  utilizationMultiplier: number = SOL_POOL_CONFIG.utilizationRateMultiplier
+  utilizationMultiplier: number = 0.05,
+  maxUtilizationThreshold: number = 90
 ): number {
   // Borrow APY increases more aggressively with high utilization
   const utilizationPenalty = utilization * utilizationMultiplier * 1.5 // 1.5x multiplier for borrow rates
   
   // Additional penalty for high utilization (>90%)
-  const highUtilizationPenalty = utilization > SOL_POOL_CONFIG.maxUtilizationThreshold 
-    ? (utilization - SOL_POOL_CONFIG.maxUtilizationThreshold) * 0.5 
+  const highUtilizationPenalty = utilization > maxUtilizationThreshold 
+    ? (utilization - maxUtilizationThreshold) * 0.5 
     : 0
   
   return Number((baseApy + utilizationPenalty + highUtilizationPenalty).toFixed(2))
@@ -59,34 +61,6 @@ export function calculateBorrowApy(
  */
 export function calculateBorrowedAmount(supply: number, utilizationPercentage: number): number {
   return (supply * utilizationPercentage) / 100
-}
-
-
-/**
- * Generate a complete SOL pool object with calculated values
- * @param tokenPrice - Current SOL token price in USD
- * @param customSupply - Optional custom supply amount (defaults to initial supply)
- * @returns Complete SOL pool object with all calculated values
- */
-export function generateSolPoolData(tokenPrice: number, customSupply?: number) {
-  const config = SOL_POOL_CONFIG
-
-  const supply = customSupply ?? config.initialSupply
-  const borrowed = calculateBorrowedAmount(supply, config.initialBorrowedPercentage)
-  const utilization = calculateUtilization(borrowed, supply)
-  const supplyApy = calculateSupplyApy(config.baseSupplyApy, utilization, config.utilizationRateMultiplier)
-  const borrowApy = calculateBorrowApy(config.baseBorrowApy, utilization, config.utilizationRateMultiplier)
-
-  return {
-    token: config.token,
-    supply,
-    supplyApy,
-    borrowed,
-    borrowApy,
-    utilization: Number(utilization.toFixed(2)),
-    supplyLimit: config.supplyLimit, // Use static supply limit directly from config
-    tokenPrice,
-  }
 }
 
 /**
@@ -123,7 +97,7 @@ export function calculateCompoundInterest(principal: number, apy: number, timeIn
 export function calculateHealthFactor(
   collateralValue: number, 
   borrowedValue: number, 
-  liquidationThreshold: number = SOL_POOL_CONFIG.liquidationThreshold
+  liquidationThreshold: number = 100
 ): number {
   if (borrowedValue === 0) return Infinity
   return (collateralValue * liquidationThreshold / 100) / borrowedValue

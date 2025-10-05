@@ -8,6 +8,8 @@ import { Shield, Wallet } from 'lucide-react'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
 import { ADMIN_WALLETS } from '@/constants/constants'
 import { PoolCreationForm } from './pool-creation-form'
+import { PoolEditForm } from './pool-edit-form'
+import { useRedisPools } from '../omlp/redis-pool-provider'
 import dynamic from 'next/dynamic'
 
 // Dynamically import wallet button with ssr disabled to prevent hydration mismatch
@@ -19,6 +21,8 @@ const WalletButton = dynamic(
 export function AdminFeature() {
   const { publicKey } = useWallet()
   const [mounted, setMounted] = useState(false)
+  const { pools, refetchPools } = useRedisPools()
+  
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -26,6 +30,11 @@ export function AdminFeature() {
   // Mouse glow effect hook
   const walletCardRef = useMouseGlow()
   const unauthorizedCardRef = useMouseGlow()
+  
+  // Handle pool refresh after updates
+  const handlePoolUpdated = useCallback(async () => {
+    await refetchPools()
+  }, [refetchPools])
 
   // Check if current wallet is authorized for admin access
   const isAuthorized = publicKey && ADMIN_WALLETS.includes(publicKey.toString())
@@ -181,6 +190,10 @@ export function AdminFeature() {
         
         <motion.div variants={itemVariants}>
           <PoolCreationForm />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <PoolEditForm pools={pools} onPoolUpdated={handlePoolUpdated} />
         </motion.div>
       </motion.div>
     </div>

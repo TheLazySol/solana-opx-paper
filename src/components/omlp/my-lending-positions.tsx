@@ -25,8 +25,8 @@ import { DepositModal } from './deposit-modal'
 import { WithdrawModal } from './withdraw-modal'
 import { Pool } from './lending-pools'
 import { useAssetPriceInfo, useAssetPrice } from '@/context/asset-price-provider'
-import { POOL_CONFIGS, GLOBAL_OMLP_CONFIG } from '@/constants/omlp/omlp-pools'
-import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
+import { GLOBAL_OMLP_CONFIG } from '@/constants/omlp/omlp-pools'
+import { calculateUtilization, calculateSupplyApy, calculateBorrowApy, calculateBorrowedAmount } from '@/constants/omlp/calculations'
 
 export type Position = {
   token: string
@@ -90,13 +90,25 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
     }
   }
 
-  // Helper function to create pool data from position using real pool configurations
+  // Helper function to create pool data from position (fallback for when pool doesn't exist in Redis)
   const createPoolFromPosition = (position: Position): Pool => {
-    // Get the real pool config for this token
-    const poolConfig = POOL_CONFIGS[position.token as keyof typeof POOL_CONFIGS]
+    const tokenPrice = getTokenPrice(position.token)
     
-    if (!poolConfig) {
-      // Fallback to mock data if pool config not found
+    // Use default configuration values
+    const defaultConfig = {
+      initialSupply: 1000,
+      baseSupplyApy: 0,
+      baseBorrowApy: 0,
+      utilizationRateMultiplier: 0.05,
+      borrowSpread: 5.0,
+      supplyLimit: 2500,
+      minUtilizationForDynamicRates: 10,
+      maxUtilizationThreshold: 90,
+      initialBorrowedPercentage: 0,
+    }
+    
+    // Fallback to mock data if price not found
+    if (!tokenPrice || tokenPrice === 0) {
       return {
         token: position.token,
         supply: 1000000,
@@ -109,23 +121,24 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       }
     }
 
-    // For SOL, use the generated pool data with real price
-    if (position.token === 'SOL') {
-      const solPrice = getTokenPrice('SOL')
-      if (solPrice > 0) {
-        return generateSolPoolData(solPrice)
-      }
-    }
-
-    // Generate realistic pool data based on the configuration
-    const supply = poolConfig.initialSupply
-    const borrowed = supply * (poolConfig.initialBorrowedPercentage / 100)
+    // Generate realistic pool data based on default configuration
+    const supply = defaultConfig.initialSupply
+    const borrowed = calculateBorrowedAmount(supply, defaultConfig.initialBorrowedPercentage)
     const utilization = calculateUtilization(borrowed, supply)
     
-    // Calculate dynamic APYs based on utilization
-    const utilizationFactor = Math.max(0, utilization - poolConfig.minUtilizationForDynamicRates) / 100
-    const supplyApy = poolConfig.baseSupplyApy + (utilizationFactor * poolConfig.utilizationRateMultiplier)
-    const borrowApy = supplyApy + poolConfig.borrowSpread
+    // Calculate dynamic APYs
+    const supplyApy = calculateSupplyApy(
+      defaultConfig.baseSupplyApy, 
+      utilization, 
+      defaultConfig.utilizationRateMultiplier,
+      defaultConfig.minUtilizationForDynamicRates
+    )
+    const borrowApy = calculateBorrowApy(
+      defaultConfig.baseBorrowApy,
+      utilization,
+      defaultConfig.utilizationRateMultiplier,
+      defaultConfig.maxUtilizationThreshold
+    )
 
     return {
       token: position.token,
@@ -134,8 +147,8 @@ export function MyLendingPositions({ isLoading = false, onRefresh }: MyLendingPo
       borrowed,
       borrowApy,
       utilization,
-      supplyLimit: poolConfig.supplyLimit,
-      tokenPrice: getTokenPrice(position.token) // Use real token price for all assets
+      supplyLimit: defaultConfig.supplyLimit,
+      tokenPrice
     }
   }
 

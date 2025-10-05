@@ -1,5 +1,5 @@
 import { getRedisClient } from './redis-client';
-import { SOL_POOL_CONFIG, POOL_CONFIGS, PoolKey } from '@/constants/omlp/omlp-pools';
+import { POOL_CONFIGS, PoolKey } from '@/constants/omlp/omlp-pools';
 
 // Pool data structure in Redis
 export interface RedisPoolData {
@@ -266,20 +266,67 @@ export async function getAllPools(): Promise<RedisPoolData[]> {
 }
 
 /**
- * Initialize default pools (SOL for now)
+ * Initialize default pools (deprecated - pools are now created via admin panel)
+ * This function is kept for backward compatibility but does nothing
  */
 export async function initializeDefaultPools(assetPrices: Record<string, number>): Promise<void> {
-  // Initialize SOL pool if it doesn't exist
-  const solPoolId = 'SOL_POOL';
-  const existingPool = await getPoolData(solPoolId);
-  
-  if (!existingPool) {
-    const solPrice = assetPrices['SOL'] || 0;
-    await initializePool('SOL', solPrice);
-    console.log('Initialized default SOL pool');
-  } else {
-    console.log('SOL pool already exists');
+  // No longer initializes default pools - pools are created dynamically via admin panel
+  console.log('Pool initialization skipped - create pools via admin panel');
+}
+
+/**
+ * Update pool configuration in Redis
+ */
+export async function updatePoolConfig(
+  poolId: string,
+  updates: {
+    baseSupplyApy?: number;
+    baseBorrowApy?: number;
+    utilizationRateMultiplier?: number;
+    borrowSpread?: number;
+    supplyLimit?: number;
+    minUtilizationForDynamicRates?: number;
+    maxUtilizationThreshold?: number;
+    liquidationThreshold?: number;
+    liquidationPenalty?: number;
   }
+): Promise<RedisPoolData> {
+  const client = await getRedisClient();
+  const redisKey = `${REDIS_KEYS.POOL}${poolId}`;
+  
+  // Get existing pool data
+  const existingPool = await getPoolData(poolId);
+  if (!existingPool) {
+    throw new Error(`Pool ${poolId} not found`);
+  }
+  
+  // Update fields
+  const updatedData = {
+    ...existingPool,
+    ...updates,
+    updatedAt: Date.now(),
+  };
+  
+  // Store updated data in Redis
+  await client.hSet(redisKey, 
+    Object.entries(updatedData).reduce((acc, [key, value]) => {
+      acc[key] = value.toString();
+      return acc;
+    }, {} as Record<string, string>)
+  );
+  
+  // Recalculate rates if relevant parameters changed
+  if (
+    updates.baseSupplyApy !== undefined ||
+    updates.baseBorrowApy !== undefined ||
+    updates.utilizationRateMultiplier !== undefined ||
+    updates.borrowSpread !== undefined
+  ) {
+    await updatePoolRates(poolId);
+  }
+  
+  console.log(`Updated ${poolId} configuration`);
+  return updatedData;
 }
 
 /**

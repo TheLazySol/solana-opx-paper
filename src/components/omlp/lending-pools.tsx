@@ -31,8 +31,7 @@ import { cn } from '@/utils/utils'
 import { getTokenDisplayDecimals } from '@/constants/token-list/token-list'
 import { motion } from 'framer-motion'
 import { useMouseGlow } from '@/hooks/useMouseGlow'
-import { generateSolPoolData, calculateUtilization } from '@/constants/omlp/calculations'
-import { useAssetPriceInfo } from '@/context/asset-price-provider'
+import { calculateUtilization } from '@/constants/omlp/calculations'
 import { DepositModal } from './deposit-modal'
 import { useLendingPositions } from '@/context/lending-positions-provider'
 
@@ -67,27 +66,11 @@ export function LendingPools({
   // Mouse glow effect hook
   const cardRef = useMouseGlow()
   
-  // Get SOL price for mock pool
-  const { price: solPrice, refreshPrice } = useAssetPriceInfo('SOL')
-  
   // Use lending positions context
   const { addPosition } = useLendingPositions()
   
-  // Generate mock pools using constants and calculations
-  const generateMockPools = (): Pool[] => {
-    const mockPools: Pool[] = []
-    
-    // Generate SOL pool using our constants and calculations
-    if (solPrice > 0) {
-      const solPool = generateSolPoolData(solPrice)
-      mockPools.push(solPool)
-    }
-    
-    return mockPools
-  }
-  
-  // Use mock pools if no pools provided, otherwise use provided pools
-  const displayPools = pools.length > 0 ? pools : generateMockPools()
+  // Use provided pools directly from Redis
+  const displayPools = pools
   
   const tvl = displayPools.reduce((acc, pool) => {
     const poolValueUSD = pool.supply * pool.tokenPrice
@@ -98,9 +81,6 @@ export function LendingPools({
     setIsRefreshing(true)
     
     try {
-      // Refresh SOL price for mock pools
-      await refreshPrice()
-      
       if (onRefresh) {
         await onRefresh()
       }
